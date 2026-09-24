@@ -2,6 +2,10 @@
 
 Every Hushfacebook release, newest first.
 
+## 0.1.1 (2026-09-24)
+
+* **Facebook:** The Hushfacebook settings screen is readable. Its row titles were drawn in Facebook's near-black text on the black page, and the Export diagnostic report and Clear diagnostic data rows showed up blank. Both were found on a Galaxy S25 running 0.1.0.
+
 ## 0.1.0 (2026-09-24)
 
 * **Facebook:** First release, with 13 patches for Facebook 580.0.0.51.74 and 577.0.0.50.72 (arm64-v8a). They bring the Facebook patches of Andrew Liang's Morphe patches into one source, rewritten with the fixes below, and every one applies to both builds.

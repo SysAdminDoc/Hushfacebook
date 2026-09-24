@@ -14,6 +14,7 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
+import android.view.ContextThemeWrapper;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -43,7 +44,10 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         // Loads the switches before the shared fragment syncs them to the screen.
         Settings.HIDE_SPONSORED_POSTS.get();
 
-        Context context = getContext();
+        // Every row inflates with the theme of the context it was built with. Facebook's activity
+        // theme is light, so its near-black primary text vanished on this screen's black background
+        // on a phone (2026-09-24). The rows get a dark Material theme instead.
+        Context context = themed(getContext());
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
         setPreferenceScreen(screen);
 
@@ -128,8 +132,18 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                         + "weren't patched. Your settings stay as they are."));
         hushfacebook.addPreference(toggle(context, BaseSettings.DEBUG, "Debug logging",
                 "Writes what each patch does to the Android log. Leave it off unless you're reporting a problem."));
-        hushfacebook.addPreference(new ExportDiagnosticReportPreference(context));
-        hushfacebook.addPreference(new ClearLogBufferPreference(context));
+        // Both rows come without a title of their own: Hushfeed's gave them one from string
+        // resources that Facebook's APK doesn't have, and untitled they showed as blank rows.
+        ExportDiagnosticReportPreference export = new ExportDiagnosticReportPreference(context);
+        export.setTitle("Export diagnostic report");
+        export.setSummary("Copy a short report, or save the full one to Download/Morphe. Links, account and "
+                + "post ids, session cookies and names are left out.");
+        hushfacebook.addPreference(export);
+        ClearLogBufferPreference clear = new ClearLogBufferPreference(context);
+        clear.setTitle("Clear diagnostic data");
+        clear.setClearAndUndoSummaries("Empties the log and the filter counts a report would include.",
+                "Diagnostic data cleared. Tap again to put it back.");
+        hushfacebook.addPreference(clear);
 
         PreferenceCategory about = category(screen, "About");
         about.addPreference(info(context, "Version",
@@ -199,6 +213,11 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             default:
                 return "Facebook runs as if it weren't patched. Your settings stay as they are.";
         }
+    }
+
+    /** The dark Material theme every row on this screen is built with, over Facebook's own. */
+    static Context themed(Context base) {
+        return new ContextThemeWrapper(base, android.R.style.Theme_Material_NoActionBar);
     }
 
     private static PreferenceCategory category(PreferenceScreen screen, String title) {
