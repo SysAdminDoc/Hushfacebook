@@ -23,6 +23,7 @@ import java.util.List;
 
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
+import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 
 /** The two page filters that take server-inlined ads out of Reels. */
 @RunWith(RobolectricTestRunner.class)
@@ -54,6 +55,7 @@ public class ReelsAdFilterTest {
     @After
     public void restoreSwitch() {
         Settings.HIDE_SPONSORED_REELS.resetToDefault();
+        FeedFilterCounters.clear();
     }
 
     @Test
@@ -93,5 +95,23 @@ public class ReelsAdFilterTest {
         List<Object> page = Arrays.asList(new Reel(), new VideoAd());
 
         assertSame(page, ReelsAdFilter.withoutAds(page, AD));
+    }
+
+    /**
+     * Both levels report what they were handed and what they took out, switched on or off, so a
+     * diagnostic report says whether the hook ran without debug logging having been on.
+     */
+    @Test
+    public void bothLevelsCountWhatTheySawAndWhatTheyDropped() {
+        FeedFilterCounters.clear();
+        ReelsAdFilter.withoutAds(Arrays.asList(new Reel(), new VideoAd(), new Reel()), AD);
+        ReelsAdFilter.withoutAdSections(Collections.singletonList(
+                new Section(new ArrayList<>(Arrays.asList(new Reel(), new VideoAd())))), AD);
+        Settings.HIDE_SPONSORED_REELS.save(false);
+        ReelsAdFilter.withoutAds(Arrays.asList(new Reel(), new VideoAd()), AD);
+
+        String report = String.join("\n", FeedFilterCounters.report());
+        assertTrue(report, report.contains(ReelsAdFilter.PAGES_ROUTE + ": 2 lists, 5 items, 1 removed"));
+        assertTrue(report, report.contains(ReelsAdFilter.SECTIONS_ROUTE + ": 1 lists, 1 items, 1 removed"));
     }
 }

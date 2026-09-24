@@ -11,6 +11,7 @@ package app.morphe.extension.facebook.feed;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.facebook.settings.SettingsStatus;
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 
 /**
  * What the news feed guard asks about each edge before Facebook adds it to the feed.
@@ -28,6 +29,10 @@ import app.morphe.extension.shared.Logger;
 public final class FeedFilter {
     private static final String SPONSORED = "SPONSORED";
     private static final String PROMOTION = "PROMOTION";
+
+    /** The diagnostic counter routes. Each news feed edge counts as a list of one post. */
+    static final String FEED_ROUTE = "News feed posts";
+    static final String STORY_ROUTE = "Story ad sources";
 
     /**
      * Units Facebook injects into the feed that are not posts from anyone you follow. Every one
@@ -73,11 +78,35 @@ public final class FeedFilter {
      * @param feedUnit the edge's feed unit, inflated if the tree had not built it yet.
      */
     public static boolean hideEdge(Object category, Object feedUnit) {
+        return hideEdge(category, feedUnit, SettingsStatus.sponsoredPosts(), SettingsStatus.suggestedPosts());
+    }
+
+    /**
+     * The guard, with the two patch-time flags passed in so a test can stand in for the patches.
+     *
+     * <p>Every edge is counted before any rule runs, and every hidden one records why, so a
+     * diagnostic report shows the guard is alive and what it took out without anyone having to
+     * turn debug logging on first. The category name is an enum constant and the reason is a
+     * kept class name; neither is content.
+     */
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
         try {
-            if (SettingsStatus.sponsoredPosts() && hiddenCategory(category)) return true;
-            return SettingsStatus.suggestedPosts()
-                    && Settings.HIDE_SUGGESTED_POSTS.get()
-                    && isSuggested(feedUnit);
+            FeedFilterCounters.sawList(FEED_ROUTE, 1);
+            String categoryName = category instanceof Enum ? ((Enum<?>) category).name() : null;
+            FeedFilterCounters.sawKind(FEED_ROUTE, categoryName);
+
+            String reason = null;
+            if (sponsoredPatched && hiddenCategory(category)) {
+                reason = categoryName;
+            } else if (suggestedPatched && Settings.HIDE_SUGGESTED_POSTS.get()) {
+                reason = suggestedUnitName(feedUnit);
+            }
+            if (reason == null) return false;
+
+            FeedFilterCounters.removed(FEED_ROUTE, 1, reason);
+            final String hidden = reason;
+            Logger.printDebug(() -> "Feed filter: hid a " + hidden + " post");
+            return true;
         } catch (Throwable failure) {
             Logger.printException(() -> "Feed filter: could not judge an edge", failure);
             return false;
@@ -99,11 +128,16 @@ public final class FeedFilter {
 
     /** Whether the feed unit is one of the injected suggestion or upsell units. */
     static boolean isSuggested(Object feedUnit) {
-        if (feedUnit == null) return false;
+        return suggestedUnitName(feedUnit) != null;
+    }
+
+    /** The kept name of the suggestion or upsell unit this feed unit is, or null for any other. */
+    static String suggestedUnitName(Object feedUnit) {
+        if (feedUnit == null) return null;
         for (Class<?> type : suggestedClasses()) {
-            if (type.isInstance(feedUnit)) return true;
+            if (type.isInstance(feedUnit)) return type.getSimpleName();
         }
-        return false;
+        return null;
     }
 
     private static Class<?>[] suggestedClasses() {
@@ -129,7 +163,10 @@ public final class FeedFilter {
     /** Injection point. Whether the story viewer's ad bucket sources contribute nothing. */
     public static boolean hideSponsoredStories() {
         try {
-            return Settings.HIDE_SPONSORED_STORIES.get();
+            FeedFilterCounters.sawList(STORY_ROUTE, 1);
+            boolean hide = Settings.HIDE_SPONSORED_STORIES.get();
+            if (hide) FeedFilterCounters.removed(STORY_ROUTE, 1, "ad buckets skipped");
+            return hide;
         } catch (Throwable failure) {
             Logger.printException(() -> "Story filter: could not read its switch", failure);
             return false;

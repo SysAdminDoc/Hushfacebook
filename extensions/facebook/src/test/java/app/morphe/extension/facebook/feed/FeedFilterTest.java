@@ -18,6 +18,7 @@ import org.robolectric.annotation.Config;
 
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
+import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 
 /** The rules the shared feed guard asks about each edge. */
 @RunWith(RobolectricTestRunner.class)
@@ -33,6 +34,7 @@ public class FeedFilterTest {
         Settings.HIDE_SPONSORED_POSTS.resetToDefault();
         Settings.HIDE_PROMOTED_POSTS.resetToDefault();
         Settings.HIDE_SUGGESTED_POSTS.resetToDefault();
+        FeedFilterCounters.clear();
     }
 
     @Test
@@ -74,5 +76,33 @@ public class FeedFilterTest {
     @Test
     public void anUnpatchedBuildHidesNothing() {
         assertFalse(FeedFilter.hideEdge(Category.SPONSORED, new GraphQLPagesYouMayLikeFeedUnit()));
+    }
+
+    /** With both patches in, the guard hides by category first and by unit type second. */
+    @Test
+    public void thePatchedGuardHidesByCategoryAndByUnit() {
+        assertTrue(FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, false));
+        assertFalse("the suggested rule belongs to its own patch",
+                FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, false));
+        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), false, true));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true));
+    }
+
+    /**
+     * Every edge is counted before a rule runs, and a hidden one records why, so a diagnostic
+     * report shows the guard ran even on a build where no patch switched a rule on.
+     */
+    @Test
+    public void everyEdgeIsCountedAndEveryHiddenOneSaysWhy() {
+        FeedFilterCounters.clear();
+        FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true);
+        FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, true);
+        FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true);
+        FeedFilter.hideEdge(Category.SPONSORED, null);
+
+        String report = String.join("\n", FeedFilterCounters.report());
+        assertTrue(report, report.contains(FeedFilter.FEED_ROUTE + ": 4 lists, 4 items, 2 removed"));
+        assertTrue(report, report.contains("Last reason: GraphQLPagesYouMayLikeFeedUnit"));
+        assertTrue(report, report.contains("Kinds: ORGANIC 2, SPONSORED 2"));
     }
 }

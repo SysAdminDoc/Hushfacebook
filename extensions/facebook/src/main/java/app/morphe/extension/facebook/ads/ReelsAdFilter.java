@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.List;
 
 import app.morphe.extension.facebook.settings.Settings;
+import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 
 /**
  * Helper for the "[Reels] Hide sponsored reels" patch.
@@ -41,6 +42,10 @@ public final class ReelsAdFilter {
 
     private static final String TAG = "Hushfacebook.ReelsAds";
 
+    /** The diagnostic counter routes, one per level the patch filters. */
+    static final String SECTIONS_ROUTE = "Reels sections";
+    static final String PAGES_ROUTE = "Reels pages";
+
     /**
      * The same page with no ad left inside any of its sections.
      *
@@ -56,6 +61,7 @@ public final class ReelsAdFilter {
      * @param adClassName binary name of the ad item base class, for example {@code X.B89}.
      */
     public static List<?> withoutAdSections(List<?> page, String adClassName) {
+        FeedFilterCounters.sawList(SECTIONS_ROUTE, page == null ? 0 : page.size());
         if (page == null || page.isEmpty() || !switchedOn()) return page;
 
         int dropped = 0;
@@ -78,6 +84,7 @@ public final class ReelsAdFilter {
 
         if (dropped == 0) return page;
 
+        FeedFilterCounters.removed(SECTIONS_ROUTE, dropped, "ad item in a section");
         Log.i(TAG, "section filter dropped " + dropped + " item(s) from " + page.size() + " section(s)");
 
         return sectionEmptied ? kept : page;
@@ -157,6 +164,7 @@ public final class ReelsAdFilter {
      * @param adClassName binary name of the ad item base class, for example {@code X.B89}.
      */
     public static Collection<?> withoutAds(Collection<?> items, String adClassName) {
+        FeedFilterCounters.sawList(PAGES_ROUTE, items == null ? 0 : items.size());
         if (items == null || items.isEmpty() || !switchedOn()) return items;
 
         boolean found = false;
@@ -175,6 +183,7 @@ public final class ReelsAdFilter {
 
         // Only when something was actually dropped, so this stays silent on an ordinary page while
         // still confirming on a device that the filter is reached and doing its job.
+        FeedFilterCounters.removed(PAGES_ROUTE, items.size() - kept.size(), "ad item");
         Log.i(TAG, "dropped " + (items.size() - kept.size()) + " of " + items.size());
 
         return kept;
