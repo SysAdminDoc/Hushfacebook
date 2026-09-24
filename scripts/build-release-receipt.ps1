@@ -192,15 +192,17 @@ foreach ($apk in $Fixture) {
     $label = Split-Path -Leaf $apk
     Write-Host "[receipt] patching $label with $($patchNames.Count) patches"
 
-    $stock = Get-ApkManifestFacts -Apk $apk -Aapt2 $Aapt2
-    if ($stock.package -ne $expectedTarget.PackageName) {
-        throw "$label is $($stock.package), not the catalog's target $($expectedTarget.PackageName)."
-    }
-
     $runId = [guid]::NewGuid().ToString('N')
     $runDir = Resolve-WithinRoot -Path (Join-Path $workRoot "receipt-$runId") -Root $workRoot
     New-Item -ItemType Directory -Force -Path $runDir | Out-Null
     try {
+        # Facebook ships as a split bundle, which aapt2 can't read; its manifest is the base APK's.
+        $stockApk = Get-BaseApk -Apk $apk -Destination (Join-Path $runDir 'stock-base.apk')
+        $stock = Get-ApkManifestFacts -Apk $stockApk -Aapt2 $Aapt2
+        if ($stock.package -ne $expectedTarget.PackageName) {
+            throw "$label is $($stock.package), not the catalog's target $($expectedTarget.PackageName)."
+        }
+
         $out = Resolve-WithinRoot -Path (Join-Path $runDir 'patched.apk') -Root $workRoot
         $temp = Resolve-WithinRoot -Path (Join-Path $runDir 'tmp') -Root $workRoot
         $resultPath = Resolve-WithinRoot -Path (Join-Path $runDir 'result.json') -Root $workRoot
@@ -231,7 +233,12 @@ foreach ($apk in $Fixture) {
         if ($cliExitCode -ne 0) { throw "The desktop CLI exited with $cliExitCode on $label." }
 
         $patched = Get-ApkManifestFacts -Apk $out -Aapt2 $Aapt2
-        $delta = Get-ManifestDelta -Stock $stock -Patched $patched
+        # The CLI merges a bundle's splits into one APK before it patches, and leaves that merge
+        # beside its output. Its manifest, not the base APK's, is what the patches started from,
+        # so the delta against it is the patches' own and not the merge's.
+        $merged = Get-ChildItem -LiteralPath $runDir -Filter '*-merged.apk' -File | Select-Object -First 1
+        $baseline = if ($merged) { Get-ApkManifestFacts -Apk $merged.FullName -Aapt2 $Aapt2 } else { $stock }
+        $delta = Get-ManifestDelta -Stock $baseline -Patched $patched
         $verdicts = Get-PatchVerdicts -Report $report -Names $patchNames
         $changes = @(ConvertTo-ManifestDeltaEntries -Delta $delta)
         Write-Host ("[receipt] $label" + ": $(@($verdicts | Where-Object { $_.applied }).Count)/" +
