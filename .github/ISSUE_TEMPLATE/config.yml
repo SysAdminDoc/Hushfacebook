@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/SysAdminDoc/Hushfacebook/discussions
+    about: Setup help, how a switch works, whether a Facebook version works. Answers there help the next person too.

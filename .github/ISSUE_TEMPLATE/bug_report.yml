@@ -1,0 +1,129 @@
+name: 🐞 Bug report
+description: Something in Hushfacebook doesn't work the way it should.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Hushfacebook bug report
+
+        Thanks for taking the time to report this. Before you start:
+
+        - **Check whether it's already reported.** Search the [open and closed bug reports](https://github.com/SysAdminDoc/Hushfacebook/issues?q=is%3Aissue%20label%3Abug). If yours was closed and it still happens, comment on it and we'll reopen it. GitHub doesn't let the person who reported something reopen it.
+        - **Not sure it's a bug?** Ask in [Discussions](https://github.com/SysAdminDoc/Hushfacebook/discussions) instead.
+        - **Patching stopped with an error?** That usually means Facebook moved something in a new build. Say which Facebook version you picked, and paste the error.
+  - type: input
+    id: versions
+    attributes:
+      label: Hushfacebook and Facebook versions
+      description: Long-press Facebook's icon and tap Hushfacebook. The first row says "Hushfacebook is on", with both versions on the line under it. Copy that line here.
+      placeholder: Version 0.1.0 for Facebook 580.0.0.51.74
+    validations:
+      required: true
+  - type: input
+    id: variant
+    attributes:
+      label: Which Facebook file did you patch?
+      description: The APKMirror variant, if you know it. Most bugs on a build that should work come from a different variant.
+      placeholder: arm64-v8a, Android 11+, 240-640dpi (.apkm)
+  - type: dropdown
+    id: manager
+    attributes:
+      label: What did you patch Facebook with?
+      options:
+        - Morphe Manager (the Android app)
+        - morphe-desktop (on a computer)
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: manager_version
+    attributes:
+      label: Its version
+      description: Morphe Manager shows its version in its own settings. If you picked "Something else", name the program too.
+      placeholder: Morphe Manager 1.31.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: How was it installed?
+      options:
+        - Standard install (re-signed)
+        - Root Mount
+        - I don't know
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone and Android version
+      description: Both are in your phone's Settings, under About phone.
+      placeholder: Samsung Galaxy S25, Android 16
+    validations:
+      required: true
+  - type: textarea
+    id: selected_patches
+    attributes:
+      label: Which patches did you select?
+      description: If you kept the manager's own selection, just say so. Otherwise list what you added or removed.
+      placeholder: The default selection, plus Download any reel.
+    validations:
+      required: true
+  - type: dropdown
+    id: affected_surface
+    attributes:
+      label: Where did it happen?
+      options:
+        - News feed
+        - Stories
+        - Reels or Watch
+        - Links and the in-app browser
+        - Downloads
+        - Profiles or Settings pages
+        - Dark mode
+        - Hushfacebook settings
+        - Patching (Morphe Manager)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: What went wrong?
+      description: What happened, and what did you expect to happen instead? A screenshot or a screen recording helps a lot. Cover names and private messages first.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: What did you tap, in order?
+      description: Start from opening Facebook. Include every Hushfacebook switch you changed before it went wrong, and say whether it still happens after you close Facebook and open it again.
+      placeholder: |
+        1. Opened Facebook
+        2. Scrolled the news feed
+        3. A sponsored post showed after about twenty posts
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic_report
+    attributes:
+      label: Diagnostic report
+      description: |
+        This answers most of our questions, so please add it if you can. Long-press Facebook's icon, tap Hushfacebook, turn on Debug logging, do the thing that goes wrong, then come back and tap Export diagnostic report. Drag the file into this box.
+        The report leaves out links, account and post ids, session cookies and names, but please look it over before you post it.
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Anything else?
+      description: A workaround you found, an older version where it still worked, or anything else that might help.
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before you send it
+      options:
+        - label: I searched the open and closed bug reports and this isn't one of them.
+          required: true
+        - label: I answered every question above as well as I could.
+          required: true

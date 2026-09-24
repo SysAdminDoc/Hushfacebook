@@ -1,0 +1,16 @@
+# Reviewed Android manifest changes the Hushfacebook patches make to a stock Facebook APK.
+#
+# One line per change, as "<kind> <value>":
+#   permission-added     <permission name>      the patched app asks for something stock did not
+#   permission-removed   <permission name>      the patched app no longer asks for it
+#   exported-added       <kind>:<class>         something other apps can now reach
+#   exported-removed     <kind>:<class>         something other apps can no longer reach
+#
+# scripts/build-release-receipt.ps1 writes the delta it measures into the release receipt, and
+# scripts/validate-release-facts.ps1 refuses a receipt carrying a change that is not listed here.
+# A line nothing produces any more fails the run as well, so this cannot quietly outlive the
+# change it approved.
+#
+# The list is deliberately empty. The patches change bytecode, not the manifest, and that is a
+# claim worth failing on: if patching ever starts asking for a permission or exporting a
+# component, the release stops until somebody says why.

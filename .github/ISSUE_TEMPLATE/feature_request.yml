@@ -1,0 +1,63 @@
+name: ⭐ Feature request
+description: Ask for a new patch or a change to one.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Hushfacebook feature request
+
+        Before you start:
+
+        - **Check whether someone already asked.** Search the [feature requests](https://github.com/SysAdminDoc/Hushfacebook/issues?q=is%3Aissue%20label%3Aenhancement). If yours was closed and you have something to add, comment on it and we'll reopen it. GitHub doesn't let the person who asked reopen it.
+        - **Seen it done elsewhere?** A link to another patch source, an LSPosed module or a browser extension that does it helps a lot.
+  - type: textarea
+    id: requested_behavior
+    attributes:
+      label: What should it do?
+      description: |
+        Describe what you want, where in Facebook it happens, and what should stay the same.
+        Screenshots, a screen recording or links help. Cover names and private messages first.
+    validations:
+      required: true
+  - type: dropdown
+    id: affected_surface
+    attributes:
+      label: Where in Facebook?
+      options:
+        - News feed
+        - Stories
+        - Reels or Watch
+        - Marketplace
+        - Search
+        - Notifications
+        - Profiles
+        - Links and the in-app browser
+        - Downloads
+        - Appearance
+        - Hushfacebook settings
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: What happens today?
+      description: What Facebook does now, and how that differs from what you'd like.
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why does it matter?
+      description: What it would change for you, and how often you run into it.
+    validations:
+      required: true
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before you send it
+      options:
+        - label: I searched the open and closed feature requests and this isn't one of them.
+          required: true

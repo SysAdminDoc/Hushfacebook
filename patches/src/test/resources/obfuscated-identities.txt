@@ -1,0 +1,4 @@
+# Names Meta's obfuscator made up for one Facebook build that the code writes down as identities.
+# One path|name per line. ObfuscatedIdentityTest fails on a name found in the code that is not
+# listed here, and on a line here that no longer matches the code, so this list can only shrink.
+# The patches resolve every such name while patching, which is why this list is empty.

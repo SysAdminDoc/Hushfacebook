@@ -1,0 +1,78 @@
+{
+  "note": "Where every shipped source file under patches/ and extensions/ came from. Each file matches exactly one rule, checked by ProvenanceTest. A ported rule names the upstream repository, the commit it was copied from and its licence; every upstream named here must also appear in NOTICE.",
+  "rules": [
+    {
+      "paths": [
+        "extensions/shared/**",
+        "patches/src/main/kotlin/app/morphe/util/**",
+        "patches/src/main/kotlin/app/morphe/patches/shared/misc/extension/**",
+        "patches/stub/**"
+      ],
+      "origin": "ported",
+      "upstream": "https://github.com/SysAdminDoc/hushfeed",
+      "commit": "1f1f81a29ffbe8468a41067b22c05a50283ef9c4",
+      "via": [
+        "https://github.com/icysymmetra/tiktok-patches-for-morphe",
+        "https://github.com/MorpheApp/morphe-patches",
+        "https://gitlab.com/ReVanced/revanced-patches"
+      ],
+      "license": "GPL-3.0-only with the Morphe section 7 notices",
+      "changes": "Facebook host and id names in DiagnosticRedactor, Facebook wording in user-facing messages, HushfeedPause renamed HushfacebookPause with its keys and marker file, the extension name BundleVerifier expects. Changed files carry a 'Modified for Hushfacebook' line."
+    },
+    {
+      "paths": [
+        "patches/src/main/kotlin/app/morphe/patches/shared/compat/**"
+      ],
+      "origin": "ported",
+      "upstream": "https://github.com/SysAdminDoc/hushfeed",
+      "commit": "1f1f81a29ffbe8468a41067b22c05a50283ef9c4",
+      "via": [
+        "https://gitlab.com/ReVanced/revanced-patches",
+        "https://github.com/andrewliang25/morphe-patches"
+      ],
+      "license": "GPL-3.0-only",
+      "changes": "Rewritten for Facebook: package, both Meta signer digests, and the 577.0.0.50.72 arm64 target with its version code and floor as andrewliang25/morphe-patches declares it."
+    },
+    {
+      "paths": [
+        "patches/src/main/kotlin/app/morphe/patches/facebook/shared/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/ads/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/feed/suggested/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/misc/externalbrowser/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/misc/resignedtrust/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/layout/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/downloads/**",
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/ads/**",
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/misc/**",
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/theme/**",
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/download/**"
+      ],
+      "origin": "ported",
+      "upstream": "https://github.com/andrewliang25/morphe-patches",
+      "commit": "5db2e57e133aede5297c48b419168cf30fd89953",
+      "via": [
+        "https://github.com/SapitoSucio/FroggoMorphePatches"
+      ],
+      "license": "GPL-3.0",
+      "changes": "Rewritten from the source at that commit, not cherry-picked. Packages, extension descriptors, log tags, injected method names and the cache folder renamed; plain patch names with categories; the two feed guards merged into one shared hook; a settings switch in front of the story, reel, browser and download hooks; the list register of the story filter computed for static and wide parameters; the borrowed v0 in the reel collection hooks checked; the DASH join ends a track on an empty read and shifts both tracks by one lead-in; the reel handler answers null instead of Facebook's renamed kotlin.Unit; the debug println lines removed. Andrew Liang credits FroggoMorphePatches for some ideas and implementations."
+    },
+    {
+      "paths": [
+        "patches/src/main/kotlin/app/morphe/patches/facebook/feed/hook/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/misc/extension/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/misc/settings/**",
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/feed/**",
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/settings/**"
+      ],
+      "origin": "original",
+      "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
+      "via": [
+        "https://github.com/SysAdminDoc/hushfeed",
+        "https://github.com/andrewliang25/morphe-patches",
+        "https://github.com/SapitoSucio/FroggoMorphePatches"
+      ],
+      "license": "GPL-3.0-only",
+      "changes": "Written for Hushfacebook: the shared feed hook and filter (the chokepoint and getters follow andrewliang25/morphe-patches, the PROMOTION rule follows FroggoMorphePatches), the extension context hook, the settings switches and status flags, and the launcher-shortcut settings screen built the way Hushfeed's settings are."
+    }
+  ]
+}
