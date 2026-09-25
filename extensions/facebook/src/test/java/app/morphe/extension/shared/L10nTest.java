@@ -87,6 +87,59 @@ public class L10nTest {
         assertEquals(Arrays.asList("fr-rfr", "fr", "de-rde", "de"), L10n.tags(in(Locale.FRANCE, Locale.GERMANY)));
     }
 
+    /**
+     * English is the language the keys are written in, so it answers wherever the phone lists it.
+     * An English-first phone with German second read every string in German, which Android's own
+     * lookup never gives it.
+     */
+    @Test
+    public void englishAnswersWhereThePhoneListsIt() {
+        assertEquals(KEY, L10n.t(in(Locale.US, Locale.GERMANY), KEY));
+        assertEquals(KEY, L10n.t(in(Locale.FRANCE, Locale.US, Locale.GERMANY), KEY));
+        assertEquals("the English list word, not German's", "a, b, and c",
+                L10n.join(in(Locale.US, Locale.GERMANY), Arrays.asList("a", "b", "c")));
+        assertEquals(table("de").get(KEY), L10n.t(in(Locale.FRANCE, Locale.GERMANY, Locale.US), KEY));
+    }
+
+    /** Portugal's Portuguese first and Brazil's second: the Brazilian table answers. */
+    @Test
+    public void aSecondRegionOfTheSameLanguageIsStillTried() {
+        assertEquals(table("pt-rbr").get(KEY), L10n.t(in(new Locale("pt", "PT"), new Locale("pt", "BR")), KEY));
+        assertEquals(Arrays.asList("pt-rpt", "pt", "pt-rbr"),
+                L10n.tags(in(new Locale("pt", "PT"), new Locale("pt", "BR"))));
+    }
+
+    /**
+     * With no table for the phone's first language, the second one's text comes out, and so do
+     * its list word and its plural rule. Tested only where the two languages were the same, a
+     * rule read from the phone's first language passed.
+     */
+    @Test
+    public void aSecondLanguagesTextTakesItsOwnListWordAndPluralRule() {
+        assertEquals("a, b und c", L10n.join(in(Locale.FRANCE, Locale.GERMANY), Arrays.asList("a", "b", "c")));
+        Context indonesianSecond = in(Locale.FRANCE, new Locale("in", "ID"));
+        // French calls 1 "one"; Indonesian has no such form.
+        assertEquals("other", L10n.pluralCategory(indonesianSecond, 1));
+        assertEquals("one", L10n.pluralCategory(in(Locale.FRANCE, Locale.US), 1));
+    }
+
+    @Test
+    public void aSentenceStartIsRaisedPastAQuoteOrAnIsolateMark() {
+        char quote = (char) 0x201E;
+        assertEquals(quote + "Speichern", L10n.capitalize(in(Locale.GERMANY), quote + "speichern"));
+        char isolate = (char) 0x2068;
+        assertEquals(isolate + "Photo", L10n.capitalize(in(Locale.US), isolate + "photo"));
+        assertEquals("3 Things", L10n.capitalize(in(Locale.US), "3 things"));
+        assertEquals("...", L10n.capitalize(in(Locale.US), "..."));
+    }
+
+    /** A format's numbers come out the phone's way even when its sentence is English. */
+    @Test
+    public void aFormatWritesItsNumbersThePhonesWay() {
+        assertEquals("4,2 MB", L10n.f(in(Locale.FRANCE), "%1$.1f MB", 4.2));
+        assertEquals("4.2 MB", L10n.f(in(Locale.US), "%1$.1f MB", 4.2));
+    }
+
     @Test
     public void englishAndEveryLanguageWithNoTableReadTheEnglish() {
         assertEquals(KEY, L10n.t(in(Locale.US), KEY));

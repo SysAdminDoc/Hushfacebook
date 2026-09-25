@@ -80,7 +80,9 @@ public class SettingsL10nTest {
     /**
      * Under en-XA everything the catalog draws is bracketed and accented, so a plain English word
      * on the screen is one that never went through it. That is how an English label on a German
-     * phone is found before a German phone finds it.
+     * phone is found before a German phone finds it. Anywhere in a string, not only at its ends:
+     * an English sentence set between two of the catalog's in the paused card passed a check
+     * that looked at the first and last characters.
      */
     @Test
     @Config(qualifiers = "en-rXA")
@@ -89,22 +91,57 @@ public class SettingsL10nTest {
         Set<String> shown = everythingShown();
         for (String text : shown) {
             if (AS_IS.contains(text)) continue;
-            if (!text.startsWith("[") || !text.endsWith("]")) plain.add(text);
+            String outside = without(without(text, ISOLATE, POP_ISOLATE), '[', ']');
+            if (LETTER.matcher(outside).find()) plain.add(text);
         }
         assertEquals("shown without going through the catalog: " + plain, 0, plain.size());
         assertTrue("the screen came out nearly empty: " + shown.size(), shown.size() > 60);
     }
 
-    /** Under ar-XB every word the catalog draws carries a right-to-left override. */
+    /** Under ar-XB every word the catalog draws is inside a right-to-left override. */
     @Test
     @Config(qualifiers = "ar-rXB-ldrtl")
     public void underArXbEveryWordOnTheScreenIsMirrored() {
-        String override = String.valueOf((char) 0x202E);
         List<String> plain = new ArrayList<>();
         for (String text : everythingShown()) {
-            if (!AS_IS.contains(text) && !text.contains(override)) plain.add(text);
+            if (AS_IS.contains(text)) continue;
+            String outside = without(without(text, ISOLATE, POP_ISOLATE), OVERRIDE, POP_OVERRIDE);
+            if (LETTER.matcher(outside).find()) plain.add(text);
         }
         assertEquals("shown without going through the catalog: " + plain, 0, plain.size());
+    }
+
+    /** The check above has to see English set between two of the catalog's own strings. */
+    @Test
+    public void thePseudoLocaleCheckFindsEnglishInTheMiddle() {
+        String isolated = ISOLATE + "0.1.2" + POP_ISOLATE;
+        assertFalse(LETTER.matcher(without(without("[" + isolated + " one] [two]", ISOLATE, POP_ISOLATE), '[', ']')).find());
+        assertTrue(LETTER.matcher(without("[one] Your feed is unfiltered. [two]", '[', ']')).find());
+        assertTrue(LETTER.matcher(without("[[nested] one] plain", '[', ']')).find());
+        assertTrue(LETTER.matcher(without(OVERRIDE + "eno" + POP_OVERRIDE + " plain", OVERRIDE, POP_OVERRIDE)).find());
+    }
+
+    private static final char ISOLATE = (char) 0x2068;
+    private static final char POP_ISOLATE = (char) 0x2069;
+    private static final char OVERRIDE = (char) 0x202E;
+    private static final char POP_OVERRIDE = (char) 0x202C;
+    private static final java.util.regex.Pattern LETTER = java.util.regex.Pattern.compile("[A-Za-z]");
+
+    /** [text] with every span from [open] to its [close] taken out, nested spans included. */
+    private static String without(String text, char open, char close) {
+        StringBuilder outside = new StringBuilder();
+        int depth = 0;
+        for (int index = 0; index < text.length(); index++) {
+            char at = text.charAt(index);
+            if (at == open) {
+                depth++;
+            } else if (at == close && depth > 0) {
+                depth--;
+            } else if (depth == 0) {
+                outside.append(at);
+            }
+        }
+        return outside.toString();
     }
 
     /**
@@ -196,7 +233,19 @@ public class SettingsL10nTest {
             ShadowAlertDialog shadow = org.robolectric.Shadows.shadowOf(choices);
             shown.add(String.valueOf(shadow.getTitle()));
             for (CharSequence item : shadow.getItems()) shown.add(String.valueOf(item));
+            // Its button is Android's own Cancel, which the phone has in every language.
+            assertEquals(activity.getString(android.R.string.cancel),
+                    String.valueOf(choices.getButton(AlertDialog.BUTTON_NEGATIVE).getText()));
             choices.dismiss();
+
+            // The licences dialog's title; the notice under it stays English, as the licences do.
+            Preference licenses = rows.get(rows.size() - 1);
+            licenses.getOnPreferenceClickListener().onPreferenceClick(licenses);
+            ShadowLooper.idleMainLooper();
+            AlertDialog notice = (AlertDialog) ShadowAlertDialog.getLatestDialog();
+            assertNotNull("the licences row opened no dialog", notice);
+            shown.add(String.valueOf(org.robolectric.Shadows.shadowOf(notice).getTitle()));
+            notice.dismiss();
 
             // What the diagnostics rows say in a toast, with nothing to export or clear.
             LogBufferManager.exportToClipboard();

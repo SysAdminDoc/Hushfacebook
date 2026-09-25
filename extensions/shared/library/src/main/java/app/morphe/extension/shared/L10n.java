@@ -223,14 +223,24 @@ public final class L10n {
     public static String join(Context context, List<? extends CharSequence> items) {
         if (items.isEmpty()) return "";
         if (items.size() == 1) return items.get(0).toString();
+        String first = tags(context).get(0);
+        if (pseudo(first)) {
+            // A pseudo-locale draws the "and" as it draws every other word, so a screen check
+            // can tell English left outside the catalog from the words that went through it.
+            return joinWith(items, ACCENTED.equals(first) ? accent("and") : mirror("and"));
+        }
         try {
             return android.icu.text.ListFormatter.getInstance(textLocale(context)).format(items);
         } catch (Throwable ignored) {
-            // Fall through to the English join below.
+            return joinWith(items, "and");
         }
+    }
+
+    /** "a, b and c" with [and] between the last two. */
+    private static String joinWith(List<? extends CharSequence> items, String and) {
         StringBuilder joined = new StringBuilder();
         for (int index = 0; index < items.size(); index++) {
-            if (index > 0) joined.append(index == items.size() - 1 ? " and " : ", ");
+            if (index > 0) joined.append(index == items.size() - 1 ? " " + and + " " : ", ");
             joined.append(items.get(index));
         }
         return joined.toString();
@@ -244,10 +254,15 @@ public final class L10n {
     /** {@code text} with its first letter raised the way the text's language does it. */
     public static String capitalize(Context context, String text) {
         if (text == null || text.isEmpty()) return text;
-        int first = text.codePointAt(0);
-        int end = Character.charCount(first);
+        // The first letter, past a quotation mark, a bracket or an isolate mark in front of it.
+        int at = 0;
+        while (at < text.length() && !Character.isLetter(text.codePointAt(at))) {
+            at += Character.charCount(text.codePointAt(at));
+        }
+        if (at >= text.length()) return text;
+        int end = at + Character.charCount(text.codePointAt(at));
         // Turkish raises i to a dotted capital, which Character.toUpperCase can't know.
-        return text.substring(0, end).toUpperCase(textLocale(context)) + text.substring(end);
+        return text.substring(0, at) + text.substring(at, end).toUpperCase(textLocale(context)) + text.substring(end);
     }
 
     /** {@link #locale(Context)} with the extension's context. */
@@ -283,14 +298,17 @@ public final class L10n {
         List<String> tags = new ArrayList<>(4);
         for (Locale locale : locales(context)) {
             String language = locale.getLanguage().toLowerCase(Locale.ROOT);
-            if (language.isEmpty() || tags.contains(language)) {
+            if (language.isEmpty()) {
                 continue;
             }
+            // A second region of a language already listed still counts: with Portugal's
+            // Portuguese first and Brazil's second, the Brazilian table is the one that answers.
             String country = locale.getCountry();
             if (country != null && !country.isEmpty()) {
-                tags.add(language + "-r" + country.toLowerCase(Locale.ROOT));
+                String regional = language + "-r" + country.toLowerCase(Locale.ROOT);
+                if (!tags.contains(regional)) tags.add(regional);
             }
-            tags.add(language);
+            if (!tags.contains(language)) tags.add(language);
         }
         if (tags.isEmpty()) {
             tags.add(Locale.getDefault().getLanguage().toLowerCase(Locale.ROOT));
@@ -353,6 +371,13 @@ public final class L10n {
         Map<String, String> found = null;
         String foundTag = null;
         for (String tag : tags) {
+            // English is the language the keys are written in, so it answers where the phone
+            // lists it, with no table. Read past, an English-first phone with German second got
+            // the German table, which Android's own lookup never gives it.
+            if (tag.equals("en") || tag.startsWith("en-r")) {
+                foundTag = "en";
+                break;
+            }
             found = L10nTranslations.of(tag);
             if (found != null) {
                 foundTag = tag;
