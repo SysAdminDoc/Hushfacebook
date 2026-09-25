@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
@@ -1771,8 +1770,15 @@ public final class FingerprintCandidates {
     static void writeText(File file, String text) throws IOException {
         File parent = file.getParentFile();
         if (parent != null && !parent.isDirectory() && !parent.mkdirs()) throw new IOException("Cannot create " + parent);
-        try (PrintWriter w = new PrintWriter(file, "UTF-8")) {
-            w.print(text);
+        // A new file moved over the name, never a write through it: the name can be a hard link to a
+        // file anywhere, patch source included, and writing through it would change that file.
+        java.nio.file.Path target = file.toPath().toAbsolutePath();
+        java.nio.file.Path part = Files.createTempFile(target.getParent(), target.getFileName() + ".", ".part");
+        try {
+            Files.write(part, text.getBytes(StandardCharsets.UTF_8));
+            Files.move(part, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } finally {
+            Files.deleteIfExists(part);
         }
     }
 

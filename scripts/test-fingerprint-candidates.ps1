@@ -26,7 +26,8 @@
     .kt or .java, has to be refused by both the tool and the wrapper. The tool has to refuse it
     however the path spells or reaches it: in another case, with a trailing dot, through a
     junction, or on a subst drive standing for patches/ or a folder inside it, directly or through
-    another subst drive.
+    another subst drive. An output name that is a hard link to patch source is replaced, and the
+    source it shared stays as it was.
 #>
 [CmdletBinding()]
 param(
@@ -308,6 +309,15 @@ try {
     $lost = Invoke-Tool @('capture', $oldApk, $target, "$($letter):\fingerprint-probe.json") `
         -JavaOptions @("-Dhushfacebook.subst=$($letter):\: => $(Join-Path $caseRoot 'no-such-folder')")
     Assert-True ($lost.ExitCode -eq 2 -and $lost.Text -match 'is a subst drive for') "A subst drive whose folder can't be found was passed.`n$($lost.Text)"
+    # An output name that is a hard link to patch source is replaced, never written through.
+    $sharedSource = Join-Path $fakePatches 'src\Shared.kt'
+    [System.IO.File]::WriteAllText($sharedSource, 'ORIGINAL PATCH SOURCE')
+    $linkedReport = Join-Path $caseRoot 'linked-signature.json'
+    New-Item -ItemType HardLink -Path $linkedReport -Target $sharedSource | Out-Null
+    $linked = Invoke-Tool @('capture', $oldApk, $target, $linkedReport)
+    Assert-True ($linked.ExitCode -eq 0 -and [System.IO.File]::ReadAllText($sharedSource) -ceq 'ORIGINAL PATCH SOURCE' -and
+        [System.IO.File]::ReadAllText($linkedReport) -match 'hushfacebook-fingerprint-signature') `
+        "A signature written to a hard link changed the patch source it shared.`n$($linked.Text)"
     foreach ($name in 'Candidate.kt', 'Candidate.JAVA', 'Candidate.kt.') {
         $blockedSource = Invoke-Tool @('rank', $signature, (Join-Path $caseRoot 'moved.apk'), (Join-Path $caseRoot $name))
         Assert-True ($blockedSource.ExitCode -eq 2 -and $blockedSource.Text -match 'only reports' -and
