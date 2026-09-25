@@ -214,6 +214,10 @@ public class ScreenColorsTest {
             assertEquals(light, colors.light);
             assertEquals(ScreenColors.of(TonePalette.fallback(), light).background, colors.background);
             assertEquals(colors.background, ((ColorDrawable) dialog.getView().getBackground()).getColor());
+            // Below Android 15 the window draws its own bars; the theme's grey and black under a
+            // light page's dark icons can't be read, so the page's colour goes there.
+            assertEquals(colors.background, dialog.getDialog().getWindow().getStatusBarColor());
+            assertEquals(colors.background, dialog.getDialog().getWindow().getNavigationBarColor());
 
             int titles = 0;
             int switches = 0;

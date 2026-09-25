@@ -72,6 +72,13 @@ public final class SettingsDialog extends DialogFragment {
             // With three-button navigation Android lays a grey scrim under the buttons; the
             // screen is black edge to edge, so the scrim only shows as a grey band.
             window.setNavigationBarContrastEnforced(false);
+            // Below Android 15 this window draws its own bars in the framework theme's colours,
+            // grey and black, which a light page's dark icons can't be read on. The page's colour
+            // goes behind them instead. Android 15 and newer draw the page there already.
+            if (colors != null) {
+                window.setStatusBarColor(colors.background);
+                window.setNavigationBarColor(colors.background);
+            }
         }
         return dialog;
     }
