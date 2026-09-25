@@ -265,7 +265,10 @@ public class SettingsBackupPreference extends Preference {
         shown.dismiss();
     }
 
-    /** How many switches the waiting file changes, and what's in it that this build doesn't know. */
+    /**
+     * How many switches the waiting file changes, the folder it moves the saves to, and what's in
+     * it that this build doesn't know.
+     */
     static void showPreview(HushfacebookPreferenceFragment page) {
         if (page.importPreview != null) return;
         SettingsBackup.Snapshot snapshot = SettingsBackup.Snapshot.fromBundle(page.pendingImport);
@@ -275,9 +278,17 @@ public class SettingsBackupPreference extends Preference {
             return;
         }
         int changes = snapshot.changes().size();
-        String message = changes == 0
-                ? L10n.t("Your switches already match that file, so nothing will change.")
-                : L10n.quantity(changes, "%1$d switch will change.", "%1$d switches will change.", changes);
+        int switches = snapshot.switchChanges();
+        String folder = snapshot.folderChange();
+        String message;
+        if (changes == 0) {
+            message = L10n.t("Your switches already match that file, so nothing will change.");
+        } else if (switches == 0) {
+            message = folderSentence(folder);
+        } else {
+            message = L10n.quantity(switches, "%1$d switch will change.", "%1$d switches will change.", switches);
+            if (folder != null) message += "\n\n" + folderSentence(folder);
+        }
         if (snapshot.unknown > 0) {
             message += "\n\n" + L10n.quantity(snapshot.unknown,
                     "%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.",
@@ -301,6 +312,11 @@ public class SettingsBackupPreference extends Preference {
         page.importPreview = builder.show();
     }
 
+    /** The sentence that says where saves go after an import, for the folder name [folder]. */
+    static String folderSentence(String folder) {
+        return L10n.f("Saves will go to a folder named %1$s.", L10n.isolate(folder));
+    }
+
     private static void answered(HushfacebookPreferenceFragment page) {
         page.pendingImport = null;
         page.importPreview = null;
@@ -312,11 +328,17 @@ public class SettingsBackupPreference extends Preference {
         if (!start(IMPORT, L10n.t("Importing settings"))) return;
         // The page shows what the store now holds rather than reading its own switches back into it.
         AbstractPreferenceFragment.settingImportInProgress = true;
+        // Counted before the write, which makes every change match the store.
+        int switches = snapshot.switchChanges();
+        String folder = snapshot.folderChange();
         boolean accepted = Utils.runOnBackgroundThread(() -> {
             try {
-                int changed = SettingsBackup.apply(snapshot);
-                Utils.showToastLong(L10n.quantity(changed, "Settings imported. %1$d switch changed.",
-                        "Settings imported. %1$d switches changed.", changed));
+                SettingsBackup.apply(snapshot);
+                Utils.showToastLong(switches == 0 && folder != null
+                        ? L10n.f("Settings imported. Saves will go to a folder named %1$s.", L10n.isolate(folder))
+                        : L10n.quantity(switches, "Settings imported. %1$d switch changed.",
+                                "Settings imported. %1$d switches changed.", switches)
+                                + (folder == null ? "" : " " + folderSentence(folder)));
             } catch (SettingsBackup.ApplyFailed failure) {
                 Logger.printInfo(() -> "Settings import failed: " + failure.getMessage()
                         + (failure.rolledBack ? ", rolled back" : ", not rolled back"));

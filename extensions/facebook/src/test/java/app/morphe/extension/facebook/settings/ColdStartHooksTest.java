@@ -32,6 +32,7 @@ import app.morphe.extension.facebook.ads.ReelsAdFilter;
 import app.morphe.extension.facebook.download.MediaDownload;
 import app.morphe.extension.facebook.download.PlayerSourcesForTests;
 import app.morphe.extension.facebook.download.ReelDownload;
+import app.morphe.extension.facebook.download.VideoMenuItemForTests;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.feed.TypedFeedUnit;
@@ -112,6 +113,8 @@ public class ColdStartHooksTest {
         assertTrue("Facebook's own yes has to stand", MediaDownload.offersSave(true));
         assertFalse(ReelDownload.showsButton());
         assertFalse(PlayerSourcesForTests.recordsAPlayer());
+        assertFalse("a post menu built before the context got the video item", VideoMenuItemForTests.addsAnItem());
+        assertFalse(PlayerSourcesForTests.recordsAVideoPlayer());
         String shared = "https://www.facebook.com/share/p/1AbCdEf/?mibextid=WC7FNe";
         assertEquals("a link shared before the context was cleaned", shared, LinkCleaner.sanitizeShared(shared));
 

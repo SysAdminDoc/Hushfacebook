@@ -43,9 +43,6 @@ final class MediaStoreWriter implements Downloader.Sink {
     /** The source every gallery event carries in the diagnostic report. */
     private static final String SOURCE = "MediaStoreWriter";
 
-    /** Where the files go. One folder, so that the two halves of the feature land together. */
-    private static final String FOLDER = "Facebook";
-
     private final Context context;
     private final boolean video;
 
@@ -58,7 +55,10 @@ final class MediaStoreWriter implements Downloader.Sink {
         this.video = video;
     }
 
-    /** {@code Movies/Facebook} or {@code Pictures/Facebook}, for the message to the user. */
+    /**
+     * {@code Movies/Facebook} or {@code Pictures/Facebook}, or the folder the person named in
+     * place of Facebook, for the message to the user.
+     */
     String savedLocation() {
         return location;
     }
@@ -67,7 +67,10 @@ final class MediaStoreWriter implements Downloader.Sink {
     public OutputStream open(String mimeFromServer) throws IOException {
         String mime = mime(mimeFromServer);
         String directory = video ? Environment.DIRECTORY_MOVIES : Environment.DIRECTORY_PICTURES;
-        location = directory + "/" + FOLDER;
+        // One folder name for both kinds, so a story's photos and its videos land side by side.
+        // It's read here, per file, and cleaned where it's read: a slash or a dot segment in the
+        // setting can't turn this into a path of the setting's choosing.
+        location = directory + "/" + SaveFolder.leaf();
 
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, name(mime));

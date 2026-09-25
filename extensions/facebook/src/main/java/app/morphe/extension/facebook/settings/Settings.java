@@ -9,8 +9,10 @@ package app.morphe.extension.facebook.settings;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
+import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
+import app.morphe.extension.shared.settings.StringSetting;
 
 /**
  * The switches behind the hooks that ask before they act.
@@ -80,4 +82,20 @@ public class Settings extends BaseSettings {
     /** The Download button the reel patch adds to every reel's sidebar. */
     public static final BooleanSetting DOWNLOAD_REELS =
             new BooleanSetting("hushfacebook_download_reels", TRUE);
+
+    /**
+     * The Download to phone item the video patch adds to the menu of a feed or Watch video. Off,
+     * the menu is Facebook's own.
+     */
+    public static final BooleanSetting DOWNLOAD_VIDEOS =
+            new BooleanSetting("hushfacebook_download_videos", TRUE);
+
+    /**
+     * The folder every save goes to, under Movies for a video and Pictures for a photo. The
+     * settings row and an import keep it clean, and {@link SaveFolder#sanitize} cleans it again
+     * wherever it's read, so whatever wrote the store, a save lands in one folder under each.
+     * It isn't a switch, and a paused Facebook makes no Hushfacebook saves for it to steer.
+     */
+    public static final StringSetting SAVE_FOLDER =
+            new StringSetting("hushfacebook_save_folder", SaveFolder.DEFAULT);
 }

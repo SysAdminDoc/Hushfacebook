@@ -15,6 +15,7 @@ A file named %1$s in %2$s paused Hushfacebook.	Eine Datei namens %1$s in %2$s ha
 About	Info
 Ad cards between the stories people posted.	Werbekarten zwischen den Stories, die Leute gepostet haben.
 Ad telemetry blocked	Werbe-Telemetrie blockiert
+Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.	Fügt „Aufs Handy herunterladen“ unter Facebooks eigenen Einträgen zum Menü eines Videos im Feed oder in Watch hinzu und speichert das Video in der besten Qualität, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, zeigt das Menü nur Facebooks eigene Einträge.
 Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Fügt „Speichern“ zum Menü jeder Story hinzu, egal von wem, und speichert sie in der besten Qualität, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, gibt es „Speichern“ nur bei deinen eigenen Stories, und dort läuft Facebooks eigene Speicherfunktion.
 Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Anzeigen, die in einem Schwung Reels mitkommen. Banner und Werbeunterbrechungen bleiben blockiert, solange der Patch eingebaut ist, unabhängig von diesem Schalter und der Pause. Das gilt auch für Anzeigen, die die App selbst einfügt.
 AMOLED black theme	Schwarzes AMOLED-Design
@@ -33,6 +34,7 @@ Couldn't open that file. Nothing was changed.	Diese Datei ließ sich nicht öffn
 Couldn't open the file picker. Try again.	Die Dateiauswahl ließ sich nicht öffnen. Versuche es noch einmal.
 Couldn't put back the diagnostic data. Try again.	Die Diagnosedaten ließen sich nicht wiederherstellen. Versuche es noch einmal.
 Couldn't save the settings file. Try again.	Die Einstellungsdatei ließ sich nicht speichern. Versuche es noch einmal.
+Couldn't save this video. Play it for a moment, then try again.	Dieses Video ließ sich nicht speichern. Spiel es kurz ab und versuche es dann noch einmal.
 Couldn't start that. Try again in a moment.	Das ließ sich nicht starten. Versuche es gleich noch einmal.
 Couldn't start the report export. Try again shortly.	Der Export des Berichts ließ sich nicht starten. Versuche es gleich noch einmal.
 Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	Der Dunkelmodus zeigt Schwarz statt Dunkelgrau. Schalte in Facebook den Dunkelmodus ein, um das zu sehen.
@@ -43,6 +45,9 @@ Diagnostic report copied to the clipboard.	Diagnosebericht in die Zwischenablage
 Download	Download
 Download button on reels	Download-Button bei Reels
 Download failed	Download fehlgeschlagen
+Download feed and Watch videos	Videos aus Feed und Watch herunterladen
+Download to phone	Aufs Handy herunterladen
+Downloads	Downloads
 Empties the log and the filter counts a report would include.	Leert das Protokoll und die Filterzähler, die ein Bericht enthalten würde.
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Jeder Schalter außer der Debug-Protokollierung verhält sich, als wäre er aus, und was beim Patchen festgelegt wurde, bleibt aktiv. Deine Einstellungen bleiben, wie sie sind.
 Export diagnostic report	Diagnosebericht exportieren
@@ -82,6 +87,7 @@ No screenshot watching for ads, and no reports of which apps you install.	Keine 
 Not saved: that isn't a Facebook photo or video	Nicht gespeichert: Das ist kein Foto oder Video von Facebook
 Not saved: the file is over 512 MB	Nicht gespeichert: Die Datei ist über 512 MB groß
 OK	OK
+One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.	Ein Ordnername für alles, was du speicherst. Schrägstriche und andere Zeichen, die in einem Ordnernamen nicht stehen dürfen, werden zu Unterstrichen. Lass das Feld leer, um %1$s zu verwenden.
 Open links in your browser	Links in deinem Browser öffnen
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Bezahlte Anzeigen im Feed. Diese werden aussortiert, bevor Facebook sie einfügt, sodass keine Lücke bleibt.
 Pause Hushfacebook	Hushfacebook pausieren
@@ -96,11 +102,13 @@ Remove tracking from shared links	Tracking aus geteilten Links entfernen
 Retry	Erneut versuchen
 Save any story	Jede Story speichern
 Save cancelled	Speichern abgebrochen
+Save folder	Speicherordner
 Save full report	Vollständigen Bericht speichern
 Saved to %1$s	Gespeichert unter %1$s
 Saved to the gallery	In der Galerie gespeichert
 Saved. Restart Facebook to apply this change.	Gespeichert. Starte Facebook neu, um diese Änderung zu übernehmen.
-Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.	Speichert die Schalter aus den Abschnitten weiter oben in einer Datei deiner Wahl. Die Pause und die Debug-Protokollierung sind nicht dabei.
+Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.	Speichert die Schalter und den Speicherordner aus den Abschnitten weiter oben in einer Datei deiner Wahl. Die Pause und die Debug-Protokollierung sind nicht dabei.
+Saves will go to a folder named %1$s.	Was du speicherst, landet dann in einem Ordner namens %1$s.
 Saving a photo	Foto wird gespeichert
 Saving a video	Video wird gespeichert
 Saving the settings file	Einstellungsdatei wird gespeichert
@@ -111,6 +119,7 @@ Settings couldn't refresh completely. Reopen settings and try again.	Die Einstel
 Settings exported.	Einstellungen exportiert.
 Settings imported. %1$d switch changed.	Einstellungen importiert. %1$d Schalter wurde geändert.
 Settings imported. %1$d switches changed.	Einstellungen importiert. %1$d Schalter wurden geändert.
+Settings imported. Saves will go to a folder named %1$s.	Einstellungen importiert. Was du speicherst, landet jetzt in einem Ordner namens %1$s.
 Source code and issues	Quellcode und Issues
 Stays in while paused	Bleibt während der Pause aktiv
 Stories	Stories
@@ -142,6 +151,7 @@ This phone has no file picker, so there's no way to choose a file here.	Dieses H
 Try again, or go back to Facebook.	Versuche es noch einmal oder kehre zu Facebook zurück.
 Version	Version
 Version %1$s for Facebook %2$s	Version %1$s für Facebook %2$s
+Videos go to %1$s and photos to %2$s.	Videos landen in %1$s und Fotos in %2$s.
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Weblinks öffnen sich nicht mehr im In-App-Browser von Facebook. Facebooks eigene Seiten öffnen sich weiterhin in der App.
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Schreibt ins Android-Protokoll, was jeder Patch tut. Lass sie ausgeschaltet, außer du meldest ein Problem.
 You paused Hushfacebook.	Du hast Hushfacebook pausiert.

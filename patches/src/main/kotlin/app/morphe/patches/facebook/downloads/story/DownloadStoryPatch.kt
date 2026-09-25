@@ -207,8 +207,14 @@ val downloadStoryPatch = bytecodePatch(
  * built then holds a different video from the one on the screen.
  *
  * The field names come from the debug dumps of the two classes. No Redex name is in this patch.
+ *
+ * The video patch records through the same code under its own [helperName] and [recorder], so
+ * each call asks its own patch's switch. Both in, each constructor calls the two helpers in turn.
  */
-private fun BytecodePatchContext.rememberPlayerSources() {
+internal fun BytecodePatchContext.rememberPlayerSources(
+    helperName: String = REMEMBER_HELPER,
+    recorder: String = REMEMBER_SOURCE,
+) {
     val sourceNames = reportedFieldNames(VIDEO_DATA_SOURCE, marker = "abrManifestContent")
     val paramNames = reportedFieldNames(VIDEO_PLAYER_PARAMS, marker = "videoId")
 
@@ -226,7 +232,7 @@ private fun BytecodePatchContext.rememberPlayerSources() {
     // range call can read `p0` at any register number.
     val helper = ImmutableMethod(
         VIDEO_PLAYER_PARAMS,
-        REMEMBER_HELPER,
+        helperName,
         listOf(ImmutableMethodParameter(VIDEO_PLAYER_PARAMS, null, null)),
         "V",
         AccessFlags.PUBLIC.value or AccessFlags.STATIC.value,
@@ -240,7 +246,7 @@ private fun BytecodePatchContext.rememberPlayerSources() {
                 const-string v0, "$videoId"
                 const-string v1, "$hd"
                 const-string v2, "$manifest"
-                invoke-static { p0, v0, v1, v2 }, $REMEMBER_SOURCE
+                invoke-static { p0, v0, v1, v2 }, $recorder
                 return-void
             """,
         )
@@ -263,7 +269,7 @@ private fun BytecodePatchContext.rememberPlayerSources() {
             constructor.replaceInstruction(
                 index,
                 "invoke-static/range { p0 .. p0 }, " +
-                    "$VIDEO_PLAYER_PARAMS->$REMEMBER_HELPER($VIDEO_PLAYER_PARAMS)V",
+                    "$VIDEO_PLAYER_PARAMS->$helperName($VIDEO_PLAYER_PARAMS)V",
             )
             constructor.addInstruction(index + 1, "return-void")
             hooked++

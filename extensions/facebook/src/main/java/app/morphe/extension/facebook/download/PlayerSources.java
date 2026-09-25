@@ -35,6 +35,11 @@ import app.morphe.extension.shared.diagnostics.HookStatus;
  * <p>The id is what makes this safe. The app builds the players of the next items early, so "the
  * last source" is often a different video. A search by id finds the video on the screen, or
  * nothing.
+ *
+ * <p>The video patch reads the same record. A post's menu holds the post and not its player, and
+ * the post's media carries the same id, so its Download to phone finds the player's manifest here
+ * too. Each patch records through a call of its own, behind its own switch, so either one on its
+ * own does no work while its feature is off.
  */
 public final class PlayerSources {
 
@@ -60,6 +65,9 @@ public final class PlayerSources {
      * counting it under the story save would bury the Save taps that line is there to count.
      */
     static final String FAMILY = FamilyNames.STORY_DOWNLOAD + " (player sources)";
+
+    /** The same for the recorder the video patch adds, under the video patch's name. */
+    static final String VIDEO_FAMILY = FamilyNames.VIDEO_DOWNLOAD + " (player sources)";
 
     /**
      * How many sources to keep. A manifest is about 20 KB of text, so 48 sources use about 1 MB.
@@ -89,18 +97,39 @@ public final class PlayerSources {
      * often and on any thread, and it must never throw. The three names are the real names of the
      * fields. The patch reads them from the app.
      *
-     * <p>Only a story save reads what is kept here, so with its switch off or Hushfacebook paused
-     * the player is left as Facebook built it. The price: a player built while the switch was off
+     * <p>This is the story patch's hook, and only a story save or a video save reads what is kept
+     * here. So with Save any story off or Hushfacebook paused, this call leaves the player as
+     * Facebook built it. The price: a player built while the switch was off
      * is never recorded, so a story already open when someone turns Save any story on saves at
      * the card's own 360p until Facebook builds its player again. Recording regardless would do
      * this work in every player while the feature is off or paused, which Pause promises not to.
      */
     public static void remember(Object params, String idField, String hdField, String manifestField) {
+        record(false, params, idField, hdField, manifestField);
+    }
+
+    /**
+     * The video patch's copy of {@link #remember}, run behind Download any video's switch and
+     * counted on that patch's own line. With both patches in, a player is recorded twice with the
+     * same source, which costs a map write.
+     */
+    public static void rememberVideo(Object params, String idField, String hdField, String manifestField) {
+        record(true, params, idField, hdField, manifestField);
+    }
+
+    /**
+     * The one recorder behind both hooks. The switch is picked by a flag and read only after the
+     * settings are ready: naming a Setting any earlier loads the settings with no context to read
+     * them from, and that start crashes (ColdStartHooksTest).
+     */
+    private static void record(boolean video, Object params, String idField, String hdField, String manifestField) {
+        final String family = video ? VIDEO_FAMILY : FAMILY;
         try {
-            HookStatus.invoked(FAMILY);
+            HookStatus.invoked(family);
             // Facebook can build a player before the settings are ready, and no switch can be
             // read then.
-            if (!Utils.settingsReady() || !Settings.DOWNLOAD_STORIES.get()) return;
+            if (!Utils.settingsReady()) return;
+            if (!(video ? Settings.DOWNLOAD_VIDEOS.get() : Settings.DOWNLOAD_STORIES.get())) return;
 
             String videoId = RenditionPicker.fieldValue(params, idField);
             if (videoId == null || videoId.isEmpty()) return;
@@ -110,7 +139,7 @@ public final class PlayerSources {
                 // A source not set yet is ordinary. A params class with no field of the type is a
                 // build that moved it, and every story save then falls back to 360p.
                 if (!hasFieldOfType(params, VIDEO_DATA_SOURCE)) {
-                    HookStatus.missingMember(FAMILY, "field", params.getClass().getName(),
+                    HookStatus.missingMember(family, "field", params.getClass().getName(),
                         VIDEO_DATA_SOURCE);
                 }
                 return;
@@ -123,11 +152,11 @@ public final class PlayerSources {
             synchronized (SOURCES) {
                 SOURCES.put(videoId, new Source(videoId, hd, manifest));
             }
-            HookStatus.bound(FAMILY, "player source");
+            HookStatus.bound(family, "player source");
         } catch (Throwable failure) {
             // This runs inside a constructor of the app. No error can go out of it.
             try {
-                HookStatus.threw(FAMILY, "player source", failure);
+                HookStatus.threw(family, "player source", failure);
             } catch (Throwable ignored) {
                 // Not even the report of one.
             }
@@ -164,6 +193,14 @@ public final class PlayerSources {
         }
 
         return null;
+    }
+
+    /** The recorded source of the video with this id, or {@code null}. */
+    static Source byId(String videoId) {
+        if (videoId == null || videoId.isEmpty()) return null;
+        synchronized (SOURCES) {
+            return SOURCES.get(videoId);
+        }
     }
 
     // ---------------------------------------------------------------- internals

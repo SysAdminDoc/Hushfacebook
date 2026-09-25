@@ -115,7 +115,7 @@ public final class MediaDownload {
                 if (beginDash(context, "the story video", source.manifest, urls)) return true;
             }
 
-            return begin(context, urls);
+            return begin(context, urls, true);
         } catch (Throwable t) {
             // Throwable and not Exception. A renamed field surfaces as NoSuchFieldError, and a
             // reflective call on a changed class surfaces as a LinkageError. Neither is an
@@ -154,9 +154,51 @@ public final class MediaDownload {
             String manifest = RenditionPicker.fieldValue(host, manifestField);
             if (beginDash(context, "the reel", manifest, urls)) return true;
 
-            return begin(context, urls);
+            return begin(context, urls, true);
         } catch (Throwable t) {
             HookStatus.threw(FamilyNames.REEL_DOWNLOAD, "reel save", t);
+            failure(() -> "the video save could not start", t);
+            return false;
+        }
+    }
+
+    /**
+     * Save the video of a post in the feed or in Watch: the item the video patch adds to the
+     * post's menu calls this when it's tapped.
+     *
+     * <p>[videoId] is the id the post's media carries, and the player Facebook built for the same
+     * video recorded its source under it ({@link PlayerSources#rememberVideo}). That source holds
+     * the DASH manifest, which lists better tracks than the single files, so it goes first, as
+     * for a story. [hdUrl] and [sdUrl] are the single files the post itself names. They're the
+     * fallback, and the whole answer when Facebook never built a player for the video.
+     *
+     * <p>Only a video is saved. The post also reaches its thumbnail, and saving a picture from a
+     * tap on a video item would look like it worked.
+     *
+     * @return whether a download started. {@code false} means nothing was saved, and the report
+     *     says why.
+     */
+    static boolean saveFeedVideo(Context context, String videoId, String hdUrl, String sdUrl) {
+        try {
+            // The item was added while the switch was on; the menu can stay open past a change.
+            if (!Utils.settingsReady() || !Settings.DOWNLOAD_VIDEOS.get()) return false;
+
+            List<String> urls = new ArrayList<>();
+            PlayerSources.Source source = PlayerSources.byId(videoId);
+            if (source != null) addIfUsable(urls, source.hdUrl);
+            addIfUsable(urls, hdUrl);
+            addIfUsable(urls, sdUrl);
+
+            if (source == null && urls.isEmpty()) {
+                failure(() -> "nothing to save: no player of this video was recorded and the post names no file", null);
+                return false;
+            }
+
+            if (source != null && beginDash(context, "the video", source.manifest, urls)) return true;
+
+            return begin(context, urls, false);
+        } catch (Throwable t) {
+            HookStatus.threw(FamilyNames.VIDEO_DOWNLOAD, "video save", t);
             failure(() -> "the video save could not start", t);
             return false;
         }
@@ -212,8 +254,11 @@ public final class MediaDownload {
      * <p>This ranks the item both ways and keeps the better answer. It does not read the type of
      * the item from the app. The app records that type in an enum whose constants move between
      * releases, and one constant mistaken for another saves the wrong file without a word.
+     *
+     * <p>[imagesToo] is false for a caller that knows the item is a video, so a thumbnail can't
+     * stand in for a video it couldn't find.
      */
-    private static boolean begin(Context context, List<String> urls) {
+    private static boolean begin(Context context, List<String> urls, boolean imagesToo) {
         if (urls == null || urls.isEmpty()) {
             failure(() -> "nothing to save: the item carried no address", null);
             return false;
@@ -229,14 +274,15 @@ public final class MediaDownload {
         }
 
         String video = RenditionPicker.bestOf(urls, true);
-        String image = RenditionPicker.bestOf(urls, false);
+        String image = imagesToo ? RenditionPicker.bestOf(urls, false) : null;
 
         boolean isVideo = video != null;
         String chosen = isVideo ? video : image;
 
         if (chosen == null) {
             final int candidates = urls.size();
-            failure(() -> "nothing to save: none of the " + candidates + " addresses was a file", null);
+            final String kind = imagesToo ? "a file" : "a video file";
+            failure(() -> "nothing to save: none of the " + candidates + " addresses was " + kind, null);
             return false;
         }
 
@@ -259,8 +305,13 @@ public final class MediaDownload {
             + " from " + candidates + " candidate(s): " + all);
 
         Downloader.Kind kind = isVideo ? Downloader.Kind.VIDEO : Downloader.Kind.IMAGE;
-        start(safe, isVideo, (writer, progress) -> saveFile(safe, chosen, kind, writer, progress));
+        start(safe, isVideo, fileJob(safe, chosen, kind));
         return true;
+    }
+
+    /** The save of one single file at [url]: the job every save of a single file runs. */
+    static Job fileJob(Context application, String url, Downloader.Kind kind) {
+        return (writer, progress) -> saveFile(application, url, kind, writer, progress);
     }
 
     /** One checked file, fetched into the cache and then published. */

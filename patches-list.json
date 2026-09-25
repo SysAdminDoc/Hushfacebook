@@ -277,6 +277,51 @@
       "options": []
     },
     {
+      "name": "Download any video",
+      "description": "Adds Download to phone to the menu of videos in the feed and in Watch, below Facebook's own items. Videos save at the best quality the player streams.",
+      "category": "Downloads",
+      "use": false,
+      "dependencies": [
+        "BytecodePatch",
+        "Hushfacebook settings"
+      ],
+      "compatiblePackages": {
+        "com.facebook.katana": [
+          "580.0.0.51.74",
+          "577.0.0.50.72"
+        ]
+      },
+      "compatibility": [
+        {
+          "name": "Facebook",
+          "packageName": "com.facebook.katana",
+          "description": null,
+          "appIconColor": 550655,
+          "signatures": [
+            "911d604446084ca7f4760b775bfc160fa8702441240a7258645d7a72c4312d27",
+            "e3f9e1e0cf99d0e56a055ba65e241b3399f7cea524326b0cdd6ec1327ed0fdc1"
+          ],
+          "targets": [
+            {
+              "version": "580.0.0.51.74",
+              "experimental": false,
+              "versionCodes": {
+                "ARM64_V8A": 475019344
+              }
+            },
+            {
+              "version": "577.0.0.50.72",
+              "experimental": false,
+              "versionCodes": {
+                "ARM64_V8A": 474426275
+              }
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
       "name": "Hide AI-detected posts",
       "description": "Removes feed posts that Facebook's own detection marked as made with AI. Its switch starts off, so turn it on in Hushfacebook's settings.",
       "category": "Feed",

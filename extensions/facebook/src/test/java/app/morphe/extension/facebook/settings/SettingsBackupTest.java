@@ -121,6 +121,7 @@ public class SettingsBackupTest {
         Utils.awaitBackgroundTasksForTests();
         ShadowLooper.idleMainLooper();
         for (BooleanSetting setting : SettingsBackup.ALLOWLIST) setting.resetToDefault();
+        Settings.SAVE_FOLDER.resetToDefault();
         BaseSettings.PAUSED.resetToDefault();
         BaseSettings.DEBUG.resetToDefault();
         BaseSettings.DEBUG_LOG_FILTERS.resetToDefault();
@@ -148,12 +149,15 @@ public class SettingsBackupTest {
         assertTrue("STAYS_OUT names a switch Settings no longer has", switches.containsAll(STAYS_OUT.keySet()));
         assertEquals("the list names a switch twice", SettingsBackup.ALLOWLIST.size(),
                 new HashSet<>(SettingsBackup.ALLOWLIST).size());
-        // A file carries true or false. A setting of another kind in Settings needs a format that
-        // can carry it before it can be decided on.
+        // A file carries true or false, and one folder name it checks as a folder name. Any other
+        // setting in Settings needs a format that can carry it before it can be decided on.
+        List<Setting<?>> notSwitches = new ArrayList<>();
         for (Setting<?> setting : declaredSettings(Settings.class)) {
-            assertTrue(setting.key + " isn't a switch, and a settings file carries only switches",
-                    setting instanceof BooleanSetting);
+            if (!(setting instanceof BooleanSetting)) notSwitches.add(setting);
         }
+        assertEquals("a setting in Settings that isn't a switch has no format in a settings file",
+                Collections.singletonList(SettingsBackup.FOLDER), notSwitches);
+        assertEquals(Settings.SAVE_FOLDER, SettingsBackup.FOLDER);
     }
 
     @Test
@@ -169,14 +173,16 @@ public class SettingsBackupTest {
     }
 
     /**
-     * A file is a format name, a version and one true or false per switch, whatever else the
-     * phone holds: not the pause, not debug logging or safe mode, not the log, the diagnostic
-     * counts or anything that names the phone or the person.
+     * A file is a format name, a version, one true or false per switch and the save folder's
+     * name, whatever else the phone holds: not the pause, not debug logging or safe mode, not the
+     * log, the diagnostic counts or anything that names the phone or the person.
      */
     @Test
     public void aFileIsItsFormatItsVersionAndOneValuePerSwitch() throws Exception {
         Settings.HIDE_PROMOTED_POSTS.save(false);
         Settings.DOWNLOAD_REELS.save(false);
+        // Stored as it came, and written as the folder the saves really use.
+        Settings.SAVE_FOLDER.save("../My/Clips");
         BaseSettings.PAUSED.save(true);
         BaseSettings.DEBUG.save(true);
         BaseSettings.DEBUG_LOG_FILTERS.save("downloads");
@@ -192,14 +198,17 @@ public class SettingsBackupTest {
         assertEquals("hushfacebook-settings", root.get("format"));
         assertEquals(1, root.get("schema"));
         JSONObject switches = root.getJSONObject("settings");
-        assertEquals(keys(SettingsBackup.ALLOWLIST), names(switches));
+        Set<String> carried = keys(SettingsBackup.ALLOWLIST);
+        carried.add(SettingsBackup.FOLDER.key);
+        assertEquals(carried, names(switches));
         for (BooleanSetting setting : SettingsBackup.ALLOWLIST) {
             // Saved, not what a paused Facebook is answered: paused, every switch answers false.
             assertFalse(setting.get());
             assertEquals(setting.key, setting.savedValue(), switches.get(setting.key));
         }
+        assertEquals("My_Clips", switches.get(SettingsBackup.FOLDER.key));
         for (Setting<?> setting : Setting.allLoadedSettings()) {
-            if (SettingsBackup.ALLOWLIST.contains(setting)) continue;
+            if (SettingsBackup.ALLOWLIST.contains(setting) || setting == SettingsBackup.FOLDER) continue;
             assertFalse(setting.key + " is in the file", text.contains(setting.key));
         }
         for (String leak : new String[]{"sentinel", "c_user", "100012345678901", "secret-session",
@@ -448,6 +457,64 @@ public class SettingsBackupTest {
         assertFalse("a file turned on debug logging", BaseSettings.DEBUG.savedValue());
     }
 
+    /**
+     * The folder goes out as the name the saves use and comes back only as one: a value the
+     * sanitizer would change, or that isn't text, refuses the whole file, so a file can't point
+     * the saves at a path or hide them.
+     */
+    @Test
+    public void theFolderRoundTripsAndComesBackOnlyAsOneCleanName() throws Exception {
+        Settings.SAVE_FOLDER.save("Clips");
+        String file = SettingsBackup.create();
+        Settings.SAVE_FOLDER.resetToDefault();
+
+        SettingsBackup.Snapshot snapshot = SettingsBackup.parse(file);
+        assertEquals("Clips", snapshot.folder);
+        assertEquals("Clips", snapshot.folderChange());
+        assertEquals(0, snapshot.switchChanges());
+        assertEquals(Collections.singletonMap(SettingsBackup.FOLDER, "Clips"), snapshot.changes());
+        assertEquals(1, SettingsBackup.apply(snapshot));
+        assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
+        assertEquals("a file read back is the file", file, SettingsBackup.create());
+        assertEquals("the same folder again changes nothing", 0, SettingsBackup.parse(file).changes().size());
+
+        Map<String, ?> before = store();
+        for (Object refused : new Object[]{"../Clips", "My/Clips", "My\\Clips", ".hidden", "Clips.", " Clips", "",
+                "a\u200Bb", "a\u202Eb", "a\nb", repeat('a', 51), 5, true, JSONObject.NULL, new JSONObject()}) {
+            JSONObject hostile = new JSONObject(file);
+            hostile.getJSONObject("settings").put(SettingsBackup.FOLDER.key, refused);
+            try {
+                SettingsBackup.parse(hostile.toString());
+                fail("a file with the folder " + printable(String.valueOf(refused)) + " was read");
+            } catch (SettingsBackup.Rejected rejected) {
+                assertEquals(printable(String.valueOf(refused)), SettingsBackup.Reason.VALUE, rejected.reason);
+            }
+        }
+        assertEquals("a refused file wrote something", before, store());
+        assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
+
+        // A file from before the folder was carried leaves it alone.
+        SettingsBackup.Snapshot older = SettingsBackup.parse(fileWith(Settings.HIDE_SUGGESTED_POSTS, false));
+        assertNull(older.folder);
+        assertNull(older.folderChange());
+        SettingsBackup.apply(older);
+        assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
+    }
+
+    /** A preview kept across a rebuild keeps its folder, and only a clean one comes back. */
+    @Test
+    public void aWaitingImportKeepsItsFolderOnlyWhileItIsClean() throws Exception {
+        Settings.SAVE_FOLDER.save("Clips");
+        SettingsBackup.Snapshot read = SettingsBackup.parse(SettingsBackup.create());
+        Bundle state = read.toBundle();
+        assertEquals("Clips", SettingsBackup.Snapshot.fromBundle(state).folder);
+
+        state.putString("folder", "../Clips");
+        assertNull(SettingsBackup.Snapshot.fromBundle(state).folder);
+        state.putInt("folder", 5);
+        assertNull(SettingsBackup.Snapshot.fromBundle(state).folder);
+    }
+
     @Test
     public void aFileThatNamesSomeSwitchesLeavesTheRestAlone() throws Exception {
         Settings.OPEN_LINKS_EXTERNALLY.save(false);
@@ -607,6 +674,49 @@ public class SettingsBackupTest {
                     ((SwitchPreference) page.findPreference(Settings.HIDE_SPONSORED_POSTS.key)).isChecked());
             assertNull(page.pendingImport);
             assertFalse(AbstractPreferenceFragment.settingImportInProgress);
+        }
+    }
+
+    /** A file that moves only the folder says where saves will go, before and after. */
+    @Test
+    public void importOfAFolderAloneSaysWhereSavesWillGo() throws Exception {
+        JSONObject file = new JSONObject(SettingsBackup.create());
+        file.getJSONObject("settings").put(SettingsBackup.FOLDER.key, "Clips");
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            HushfacebookPreferenceFragment page = SettingsL10nTest.pageOf(SettingsL10nTest.show(activity));
+            deliver(activity, tap(activity, page, IMPORT_ROW), file.toString());
+            AlertDialog preview = shownPreview();
+            assertEquals("Saves will go to a folder named " + app.morphe.extension.shared.L10n.isolate("Clips") + ".",
+                    String.valueOf(shadowOf(preview).getMessage()));
+            preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            settle();
+            assertEquals("Settings imported. Saves will go to a folder named "
+                    + app.morphe.extension.shared.L10n.isolate("Clips") + ".", ShadowToast.getTextOfLatestToast());
+            assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
+            assertEquals("the folder row still shows the old folder",
+                    HushfacebookPreferenceFragment.folderSummary("Clips"),
+                    String.valueOf(page.findPreference(Settings.SAVE_FOLDER.key).getSummary()));
+        }
+    }
+
+    /** A file that moves switches and the folder counts the switches and names the folder. */
+    @Test
+    public void importOfSwitchesAndAFolderSaysBoth() throws Exception {
+        JSONObject file = new JSONObject(fileWith(Settings.DOWNLOAD_REELS, false));
+        file.getJSONObject("settings").put(SettingsBackup.FOLDER.key, "Clips");
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            HushfacebookPreferenceFragment page = SettingsL10nTest.pageOf(SettingsL10nTest.show(activity));
+            deliver(activity, tap(activity, page, IMPORT_ROW), file.toString());
+            AlertDialog preview = shownPreview();
+            String folder = "Saves will go to a folder named " + app.morphe.extension.shared.L10n.isolate("Clips") + ".";
+            assertEquals("1 switch will change.\n\n" + folder, String.valueOf(shadowOf(preview).getMessage()));
+            preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            settle();
+            assertEquals("Settings imported. 1 switch changed. " + folder, ShadowToast.getTextOfLatestToast());
+            assertFalse(Settings.DOWNLOAD_REELS.savedValue());
+            assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
         }
     }
 

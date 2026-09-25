@@ -18,7 +18,7 @@ Hushfacebook is a Morphe patch bundle for Android that takes the clutter out of 
 
 - **A quieter feed.** Sponsored and suggested posts disappear, along with ads in Stories, Reels, and Watch.
 - **Less tracking.** Selected ad telemetry and background ad downloads stop. Common trackers also come off links you open or share.
-- **Media you can keep.** Save stories and reels at the best quality Facebook streams, with progress and cancellation controls.
+- **Media you can keep.** Save videos from stories, Reels, your feed and Watch at the best quality Facebook streams, with progress and cancellation controls.
 - **Controls that recover.** Every runtime feature has a switch. Pause mode, automatic safe mode, settings backups, and privacy-filtered diagnostics help when Facebook changes.
 
 The project brings the Facebook patches from Morphe sources into one maintained bundle. Most started with [Andrew Liang's patches](https://github.com/andrewliang25/morphe-patches) and were rewritten here with fixes. The feed filter also removes promoted posts using the approach from [FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches). Its build, settings screen, and release checks share a foundation with the sister project [Hushfeed](https://github.com/SysAdminDoc/hushfeed). See [Where the patches come from](#where-the-patches-come-from) for the full provenance.
@@ -32,7 +32,7 @@ This project has no connection to Meta or to the Morphe project. Neither endorse
 3. Get Facebook 580.0.0.51.74 for arm64-v8a from [APKMirror](https://www.apkmirror.com/apk/facebook-2/facebook/). Take the Android 11+ bundle (.apkm). Facebook 577.0.0.50.72 works too.
 4. In Morphe Manager, pick that file, keep the default patch selection or change it, and patch.
 
-There are 16 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
+There are 17 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
 
 Facebook releases a new version about once a week, and each one renames most of its code. Every patch here finds what it changes by names Facebook keeps (its GraphQL model classes, log strings, enum names, manifest components) rather than by the names that change, which is why most of them carry over from one build to the next. When one doesn't, patching stops with a message naming what it couldn't find, instead of producing an app that quietly does nothing. Please report it.
 
@@ -66,6 +66,7 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Block background ad prefetch` | Stops Facebook downloading ads and its ad model in the background. That saves data and battery. The ads don't take up storage either. |
 | `Disable Audience Network` | Stops Facebook serving ads to other apps. Those apps then show their own ads or none, and rewarded ads can fail. |
 | `Download any reel` | Adds a Download button beside every reel. Videos save at the best quality the player streams. |
+| `Download any video` | Adds Download to phone to the menu of videos in the feed and in Watch, below Facebook's own items. Videos save at the best quality the player streams. |
 | `Download any story` | Adds Save to the menu of any story, including stories with music. Videos save at the best quality the player streams. |
 | `Hide AI-detected posts` | Removes feed posts that Facebook's own detection marked as made with AI. Its switch starts off, so turn it on in Hushfacebook's settings. |
 | `Hide sponsored posts` | Removes sponsored and promoted posts from the news feed, with no gap left behind. |
@@ -78,20 +79,21 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Restore screens on re-signed builds` | Makes profiles and some Settings pages open again on a re-signed build. A Root Mount install doesn't need this patch. |
 | `Sanitize sharing links` | Takes Facebook's tracking tags, such as mibextid, off the links you share or copy. The post or reel a link opens stays the same. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you. |
 
-`Download any reel`, `AMOLED black theme` and `Hide Stories tray` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
+`Download any reel`, `Download any video`, `AMOLED black theme` and `Hide Stories tray` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
 
-While a story or reel saves, a notification shows how far it's got, with a Cancel button. Facebook has to be allowed to post notifications for it. You can also turn off its "Hushfacebook saves" channel in Facebook's notification settings, and a save then runs with just a message when it starts and one when it ends. A cancelled save leaves nothing behind. One that Android stops half way leaves nothing in the gallery either, and the next save clears what it left in Facebook's cache.
+While a save runs, a notification shows how far it's got, with a Cancel button. Facebook has to be allowed to post notifications for it. You can also turn off its "Hushfacebook saves" channel in Facebook's notification settings, and a save then runs with just a message when it starts and one when it ends. A cancelled save leaves nothing behind. One that Android stops half way leaves nothing in the gallery either, and the next save clears what it left in Facebook's cache.
 
 ## Settings
 
 Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
 
-- A switch for each filter. Opening links in your browser and the two download features have switches too. They take effect straight away, with no restart and no new patching, though a reel already on screen keeps the buttons it was built with. While Hushfacebook is paused, a change waits until it's back on.
+- A switch for each filter. Opening links in your browser and the download features have switches too. They take effect straight away, with no restart and no new patching, though a reel already on screen keeps the buttons it was built with. While Hushfacebook is paused, a change waits until it's back on.
+- **Save folder**, the one folder every save goes to. Videos land in `Movies/Facebook` and photos in `Pictures/Facebook` until you pick another name. It takes a folder name, not a path, so slashes and other characters a folder can't hold become underscores, and dots or spaces at either end are dropped.
 - **Pause Hushfacebook**. From the next start, every one of those switches acts as if it were off and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
 - **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build and says, for every patch but the settings entry itself, whether a switch runs it. For each of those whose hooks have run, it gives how often they ran and the first thing they couldn't find. Failed saves and links no browser opened are in it too.
 - **Licenses**, the notices of every project this is built on.
 
-Morphe Manager can export your patch choices and your signing key, but not the switches on this screen. **Export settings** saves them to a JSON file wherever you pick, and **Import settings** reads one back, on this phone or a new one. Before anything changes, the screen says how many switches the file would change and how many entries in it this version doesn't know, which it skips. A damaged file or one from a newer Hushfacebook changes nothing. Pause and debug logging stay out of the file, and so does anything about you or your phone.
+Morphe Manager can export your patch choices and your signing key, but not the switches on this screen. **Export settings** saves them, with the save folder, to a JSON file wherever you pick, and **Import settings** reads one back, on this phone or a new one. Before anything changes, the screen says how many switches the file would change and how many entries in it this version doesn't know, which it skips. A damaged file or one from a newer Hushfacebook changes nothing. Pause and debug logging stay out of the file, and so does anything about you or your phone.
 
 Everything Hushfacebook shows, from the settings screen to the save notification and the long-press shortcut, is in the language Facebook itself shows. That's the one you picked in Facebook's language settings, or your phone's if you never picked one. German, Spanish, Indonesian, Brazilian Portuguese and Turkish are translated, and any other language gets English. Hushfacebook never changes Facebook's language. The diagnostic report stays in English, so whoever reads it can, and so do the error toasts Debug logging shows. With TalkBack on, section titles are headings you can jump between, and each switch says it's a switch and whether it's on. Every row's text wraps in full, even at the largest text size.
 
@@ -111,6 +113,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 | Sanitize sharing links | Off. Links you share keep Facebook's tracking tags. |
 | Download any story | Off. Only your own stories have Save, and it's Facebook's own. |
 | Download any reel | Off. Reels show only Facebook's own buttons. |
+| Download any video | Off. Post menus show only Facebook's own items. |
 | Block ad telemetry, Block background ad prefetch, Disable Audience Network, AMOLED black theme, Restore screens on re-signed builds | Stay. They were set when you patched, and changing one means patching again. |
 
 ## Known limitations
@@ -118,17 +121,17 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 - **Other Meta apps.** A patched Facebook is signed with your key, not Meta's. Meta's apps share permissions that Android only lets one signer own, so with a re-signed Facebook installed, the official Messenger, Facebook Lite, Instagram or Threads may refuse to install (`INSTALL_FAILED_DUPLICATE_PERMISSION`), and signing in to one of them through Facebook may fail. Installing through Morphe Manager's Root Mount keeps Meta's signature and avoids both.
 - **Links from other apps.** Android may stop sending facebook.com links to a re-signed Facebook, because the app's link verification is tied to Meta's signature.
 - **Two Facebook builds.** Patches are checked on Facebook 580.0.0.51.74 and 577.0.0.50.72. Another build will often work, and Morphe Manager can patch it if you allow other versions, but it hasn't been checked.
-- **Downloads.** Stories encoded only as VP9 save at 360p, because Android can't join VP9 video with AAC sound in an MP4. Stories Facebook sends only as AV1 save at the lower single-file quality before Android 14, or on a phone that can't decode AV1. And a story that was already open when you turned Save any story on saves at 360p until you open it again.
+- **Downloads.** A feed or Watch video saves at its best quality once Facebook has built its player, which happens when it starts playing. Until then Download to phone falls back to the single file the post names. When there's none, it asks you to play the video for a moment and try again. Stories encoded only as VP9 save at 360p, because Android can't join VP9 video with AAC sound in an MP4. Stories Facebook sends only as AV1 save at the lower single-file quality before Android 14, or on a phone that can't decode AV1. And a story that was already open when you turned Save any story on saves at 360p until you open it again.
 
 ## Privacy
 
-Hushfacebook doesn't collect anything and has no server. The only time the patched app goes online on Hushfacebook's behalf is to download a story or reel you asked to save, from the same Facebook address the player streams it from. A save only follows HTTPS addresses on Meta's media servers (fbcdn.net, fbsbx.com and cdninstagram.com), redirects included, and the file lands in Facebook's cache first. It goes to your gallery only once it's whole and under 512 MB, and only if it's really a photo or video.
+Hushfacebook doesn't collect anything and has no server. The only time the patched app goes online on Hushfacebook's behalf is to download something you asked it to save, from the same Facebook address the player streams it from. A save only follows HTTPS addresses on Meta's media servers (fbcdn.net, fbsbx.com and cdninstagram.com), redirects included, and the file lands in Facebook's cache first. It goes to your gallery only once it's whole and under 512 MB, and only if it's really a photo or video.
 
 ## Where the patches come from
 
 | Source | What came from it |
 |---|---|
-| [andrewliang25/morphe-patches](https://github.com/andrewliang25/morphe-patches) at `5db2e57` | Every Facebook patch here but Sanitize sharing links, Hide Stories tray and Hide AI-detected posts, from the ad filters to both downloads. They were rewritten rather than copied commit by commit, and the fixes are listed in the [changelog](CHANGELOG.md). |
+| [andrewliang25/morphe-patches](https://github.com/andrewliang25/morphe-patches) at `5db2e57` | Every Facebook patch here but Sanitize sharing links, Hide Stories tray, Hide AI-detected posts and Download any video, from the ad filters to the story and reel downloads. They were rewritten rather than copied commit by commit, and the fixes are listed in the [changelog](CHANGELOG.md). |
 | [SapitoSucio/FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) | The idea of dropping promoted posts beside sponsored ones, and of hiding posts Facebook detected as AI, which its 573 filter reads from the same flag. Andrew Liang credits it for some ideas and implementations too. |
 | [SysAdminDoc/hushfeed](https://github.com/SysAdminDoc/hushfeed) at `1f1f81a` | The Gradle build, the shared extension library with its settings screen and diagnostics, the pause, the bytecode helpers, and the checks that apply every patch to real Facebook builds before a release. The settings export and import came later, from `bcc57ee`. |
 | [Morphe](https://github.com/MorpheApp) and [ReVanced](https://gitlab.com/ReVanced/revanced-patches) | The patcher and the patch template. Both of the above grew from their code. |

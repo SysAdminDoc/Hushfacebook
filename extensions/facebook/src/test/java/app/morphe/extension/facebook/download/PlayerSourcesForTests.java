@@ -55,4 +55,12 @@ public final class PlayerSourcesForTests {
         PlayerSources.remember(params, "videoId", "hd", "manifest");
         return PlayerSources.find(new Card(id)) != null;
     }
+
+    /** The same through the video patch's recorder, which a feed or Watch video's menu reads. */
+    public static boolean recordsAVideoPlayer() {
+        String id = Long.toString(NEXT_ID.getAndIncrement());
+        Params params = new Params(id, new HdSource("https://video.xx.fbcdn.net/v/hd.mp4", null));
+        PlayerSources.rememberVideo(params, "videoId", "hd", "manifest");
+        return PlayerSources.byId(id) != null;
+    }
 }

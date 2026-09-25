@@ -33,6 +33,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -60,6 +61,7 @@ public class HushfacebookPreferenceFragmentTest {
     public void restore() {
         PatchFamily.inBuildForTests = null;
         PauseForTests.resume();
+        Settings.SAVE_FOLDER.resetToDefault();
     }
 
     @Test
@@ -165,6 +167,51 @@ public class HushfacebookPreferenceFragmentTest {
             }
             assertNotNull("no Version row", version);
             assertTrue(String.valueOf(version.getSummary()), String.valueOf(version.getSummary()).contains(L10n.isolate(facebook)));
+        }
+    }
+
+    /**
+     * The save folder's row keeps the one clean folder name a save would use, whatever is typed
+     * into it, and says where videos and photos go. It's there with any download in the build.
+     */
+    @Test
+    public void theFolderRowKeepsOneCleanNameAndSaysWhereSavesGo() {
+        PatchFamily.inBuildForTests = EnumSet.of(PatchFamily.STORY_DOWNLOAD);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            HushfacebookPreferenceFragment.FolderRow folder = null;
+            for (Preference row : rowsOf(controller)) {
+                if (row instanceof HushfacebookPreferenceFragment.FolderRow) folder = (HushfacebookPreferenceFragment.FolderRow) row;
+            }
+            assertNotNull("no folder row with a download in the build", folder);
+            assertEquals(Settings.SAVE_FOLDER.key, folder.getKey());
+            assertEquals("Videos go to " + L10n.isolate("Movies/Facebook") + " and photos to "
+                    + L10n.isolate("Pictures/Facebook") + ".", String.valueOf(folder.getSummary()));
+
+            // What's typed reaches the row's check the way the dialog's OK sends it.
+            Preference.OnPreferenceChangeListener ok = folder.getOnPreferenceChangeListener();
+            assertFalse("a path was kept as typed", ok.onPreferenceChange(folder, "../My/Clips"));
+            ShadowLooper.idleMainLooper();
+            assertEquals("My_Clips", folder.getText());
+            assertEquals("My_Clips", Settings.SAVE_FOLDER.savedValue());
+            assertEquals(HushfacebookPreferenceFragment.folderSummary("My_Clips"), String.valueOf(folder.getSummary()));
+
+            assertTrue("a clean name was changed", ok.onPreferenceChange(folder, "Clips"));
+            folder.setText("Clips");
+            ShadowLooper.idleMainLooper();
+            assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
+
+            assertFalse("an empty name was kept", ok.onPreferenceChange(folder, "  "));
+            ShadowLooper.idleMainLooper();
+            assertEquals("Facebook", folder.getText());
+            assertEquals("Facebook", Settings.SAVE_FOLDER.savedValue());
+        }
+
+        PatchFamily.inBuildForTests = EnumSet.of(PatchFamily.SPONSORED_POSTS);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            for (Preference row : rowsOf(controller)) {
+                assertFalse("a folder row with no download in the build",
+                        row instanceof HushfacebookPreferenceFragment.FolderRow);
+            }
         }
     }
 

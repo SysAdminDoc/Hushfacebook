@@ -28,8 +28,8 @@ import app.morphe.extension.shared.settings.preference.LogBufferManager;
  * only its answer changes, and Debug logging keeps its saved value. An edit made when you patched
  * has no switch to ask: a neutered method or a disabled manifest component stays in until you
  * patch again. The reel sidebar's Download button and the story menu's Save item were edits like
- * that until each asked its switch before it goes in. Some patches are both, so each one says
- * which of its parts stay.
+ * that until each asked its switch before it goes in, and the video menu's item asks its own the
+ * same way. Some patches are both, so each one says which of its parts stay.
  *
  * <p>The settings screen and the diagnostic report read this list, so they can't disagree about
  * it. A family is found in this build by the name of its {@link SettingsStatus} method, the same
@@ -57,6 +57,8 @@ public enum PatchFamily {
             Settings.DOWNLOAD_STORIES),
     REEL_DOWNLOAD(FamilyNames.REEL_DOWNLOAD, "reelDownload", null,
             Settings.DOWNLOAD_REELS),
+    VIDEO_DOWNLOAD(FamilyNames.VIDEO_DOWNLOAD, "videoDownload", null,
+            Settings.DOWNLOAD_VIDEOS),
     AD_PREFETCH(FamilyNames.AD_PREFETCH, "adPrefetch", "the background ad prefetch block"),
     AD_TELEMETRY(FamilyNames.AD_TELEMETRY, "adTelemetry", "the ad telemetry block"),
     AUDIENCE_NETWORK(FamilyNames.AUDIENCE_NETWORK, "audienceNetwork", "the Audience Network block"),

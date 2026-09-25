@@ -117,8 +117,9 @@ public class PatchFamilyTest {
         assertEquals("The background ad prefetch block. It was set when you patched, so Pause can't turn it off. "
                         + "To rule it out, patch again without the patch it comes from.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.AD_PREFETCH)));
-        // Both downloads ask their switch before they go in, so a pause takes them out whole.
-        assertNull(PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD, PatchFamily.STORY_DOWNLOAD)));
+        // Every download asks its switch before it goes in, so a pause takes them out whole.
+        assertNull(PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD, PatchFamily.STORY_DOWNLOAD,
+                PatchFamily.VIDEO_DOWNLOAD)));
         // Alone, a family's text is followed by "It was set", so a text naming several parts still
         // has to be one thing. 4a7bba9 made the Reels one plural and this sentence stopped reading.
         assertEquals("The part of the Reels ad block patched into the app. It was set when you patched, so "
@@ -153,12 +154,17 @@ public class PatchFamilyTest {
                 "not in this build: Hide suggested and promoted posts, Hide Stories tray, Hide AI-detected posts, "
                         + "Hide sponsored stories, Open links in "
                         + "external browser, Sanitize sharing links, Download any story, Download any reel, "
-                        + "Block ad telemetry, Disable Audience Network, AMOLED black theme, Restore screens on "
-                        + "re-signed builds"),
+                        + "Download any video, Block ad telemetry, Disable Audience Network, AMOLED black theme, "
+                        + "Restore screens on re-signed builds"),
                 running);
         // The reel button has a switch now, so the report says what it's set to.
         assertEquals("Download any reel: on (hushfacebook_download_reels=on)",
                 PatchFamily.reportLines(EnumSet.of(PatchFamily.REEL_DOWNLOAD), false).get(0));
+        // So has the video menu's item, and a pause takes it out whole.
+        assertEquals("Download any video: on (hushfacebook_download_videos=on)",
+                PatchFamily.reportLines(EnumSet.of(PatchFamily.VIDEO_DOWNLOAD), false).get(0));
+        assertEquals("Download any video: disabled while paused (saved hushfacebook_download_videos=on)",
+                PatchFamily.reportLines(EnumSet.of(PatchFamily.VIDEO_DOWNLOAD), true).get(0));
 
         List<String> paused = PatchFamily.reportLines(build, true);
         assertEquals("Hide sponsored posts: disabled while paused (saved "

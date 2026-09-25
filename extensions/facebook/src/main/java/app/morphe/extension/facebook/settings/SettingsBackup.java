@@ -31,9 +31,11 @@ import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.Setting;
 import app.morphe.extension.shared.settings.SettingsJson;
+import app.morphe.extension.shared.settings.StringSetting;
 
 /**
  * Hushfacebook's switches as a file, and back.
@@ -42,12 +44,13 @@ import app.morphe.extension.shared.settings.SettingsJson;
  * switches, which live in Facebook's own data, so a reinstall or a new phone started them all
  * over. This writes them to a JSON file the person chooses and reads one back.
  *
- * <p>Only the switches in {@link #ALLOWLIST} go out or come in. Pause, safe mode, the debug
- * settings, the app language and the counters Hushfacebook keeps for itself stay out, and so do
- * the log, the diagnostic data and anything about the person or the phone: a file is a format
- * name, a version number and one true or false per switch. An import applies what it read in one
- * preference commit. A file that is too large, isn't JSON, names something twice, holds a value
- * of the wrong type or comes from a newer version changes nothing.
+ * <p>Only the switches in {@link #ALLOWLIST} and the save folder ({@link #FOLDER}) go out or
+ * come in. Pause, safe mode, the debug settings, the app language and the counters Hushfacebook
+ * keeps for itself stay out, and so do the log, the diagnostic data and anything about the person
+ * or the phone: a file is a format name, a version number, one true or false per switch and one
+ * folder name. An import applies what it read in one preference commit. A file that is too large,
+ * isn't JSON, names something twice, holds a value of the wrong type or a folder that isn't one
+ * clean folder name, or comes from a newer version changes nothing.
  *
  * <p>Call the file and preference work on a worker thread.
  */
@@ -80,7 +83,16 @@ public final class SettingsBackup {
             Settings.OPEN_LINKS_EXTERNALLY,
             Settings.SANITIZE_SHARING_LINKS,
             Settings.DOWNLOAD_STORIES,
-            Settings.DOWNLOAD_REELS));
+            Settings.DOWNLOAD_REELS,
+            Settings.DOWNLOAD_VIDEOS));
+
+    /**
+     * The one setting a file carries that isn't a switch: the folder saves go to. A file holds it
+     * as the clean folder name the saves use, and an import takes nothing else there. A value
+     * {@link SaveFolder#sanitize} would change refuses the whole file, as a switch that isn't true
+     * or false does, so a file can't point the saves at a path.
+     */
+    static final StringSetting FOLDER = Settings.SAVE_FOLDER;
 
     /**
      * Bounds for the parser, well past anything this class writes, so a file built to be
@@ -138,24 +150,32 @@ public final class SettingsBackup {
         }
     }
 
-    /** What a file says: a value for each switch it names, and how many other names it holds. */
+    /**
+     * What a file says: a value for each switch it names, the folder when it names one, and how
+     * many other names it holds.
+     */
     public static final class Snapshot {
         private static final String SWITCHES = "switches";
         private static final String UNKNOWN = "unknown";
+        private static final String FOLDER_NAME = "folder";
 
         /** In {@link #ALLOWLIST} order, and only the switches the file named. */
         final Map<BooleanSetting, Boolean> values;
-        /** Names the file holds that aren't switches this build knows. They're left out. */
+        /** The clean folder name the file holds, or null when it names none. */
+        @Nullable
+        final String folder;
+        /** Names the file holds that aren't settings this build knows. They're left out. */
         final int unknown;
 
-        Snapshot(Map<BooleanSetting, Boolean> values, int unknown) {
+        Snapshot(Map<BooleanSetting, Boolean> values, @Nullable String folder, int unknown) {
             this.values = Collections.unmodifiableMap(values);
+            this.folder = folder;
             this.unknown = unknown;
         }
 
         /**
-         * The switches whose saved value this file changes. Saved, not what a paused Facebook is
-         * answered: a file holds what the person chose.
+         * The settings whose saved value this file changes, the switches first. Saved, not what a
+         * paused Facebook is answered: a file holds what the person chose.
          */
         Map<Setting<?>, Object> changes() {
             Map<Setting<?>, Object> changes = new LinkedHashMap<>();
@@ -164,7 +184,28 @@ public final class SettingsBackup {
                     changes.put(entry.getKey(), entry.getValue());
                 }
             }
+            String folderChange = folderChange();
+            if (folderChange != null) changes.put(FOLDER, folderChange);
             return changes;
+        }
+
+        /** How many switches this file changes, the number the preview and the toast give. */
+        int switchChanges() {
+            int count = 0;
+            for (Map.Entry<BooleanSetting, Boolean> entry : values.entrySet()) {
+                if (!entry.getValue().equals(entry.getKey().savedValue())) count++;
+            }
+            return count;
+        }
+
+        /**
+         * The folder name this file moves the saves to, or null when it names none or the one the
+         * saves already use.
+         */
+        @Nullable
+        String folderChange() {
+            if (folder == null) return null;
+            return folder.equals(SaveFolder.sanitize(FOLDER.savedValue())) ? null : folder;
         }
 
         /** For the settings page's saved state, so a preview outlives the page being rebuilt. */
@@ -175,6 +216,7 @@ public final class SettingsBackup {
             }
             Bundle state = new Bundle();
             state.putBundle(SWITCHES, switches);
+            if (folder != null) state.putString(FOLDER_NAME, folder);
             state.putInt(UNKNOWN, unknown);
             return state;
         }
@@ -195,7 +237,9 @@ public final class SettingsBackup {
                 Object value = switches.get(setting.key);
                 if (value instanceof Boolean) values.put(setting, (Boolean) value);
             }
-            return new Snapshot(values, unknown);
+            Object folder = state.get(FOLDER_NAME);
+            return new Snapshot(values, folder instanceof String && SaveFolder.isClean((String) folder)
+                    ? (String) folder : null, unknown);
         }
     }
 
@@ -208,6 +252,8 @@ public final class SettingsBackup {
         for (BooleanSetting setting : ALLOWLIST) {
             switches.put(setting.key, setting.savedValue().booleanValue());
         }
+        // The name the saves use, so a file never carries one an import would refuse.
+        switches.put(FOLDER.key, SaveFolder.sanitize(FOLDER.savedValue()));
         return new JSONObject()
                 .put(FORMAT_NAME, FORMAT)
                 .put(SCHEMA_NAME, SCHEMA)
@@ -291,9 +337,18 @@ public final class SettingsBackup {
         Map<String, BooleanSetting> known = new HashMap<>();
         for (BooleanSetting setting : ALLOWLIST) known.put(setting.key, setting);
         Map<BooleanSetting, Boolean> found = new HashMap<>();
+        String folder = null;
         JSONObject values = (JSONObject) settings;
         for (Iterator<String> names = values.keys(); names.hasNext(); ) {
             String name = names.next();
+            if (FOLDER.key.equals(name)) {
+                Object value = values.opt(name);
+                if (!(value instanceof String) || !SaveFolder.isClean((String) value)) {
+                    throw new Rejected(Reason.VALUE, "Not one clean folder name: " + name);
+                }
+                folder = (String) value;
+                continue;
+            }
             BooleanSetting setting = known.get(name);
             if (setting == null) {
                 // A name this build doesn't know, Pause and the debug settings included: left
@@ -312,14 +367,14 @@ public final class SettingsBackup {
             Boolean value = found.get(setting);
             if (value != null) ordered.put(setting, value);
         }
-        return new Snapshot(ordered, unknown);
+        return new Snapshot(ordered, folder, unknown);
     }
 
     /**
-     * Writes the switches a file changes, all of them in one preference commit. A switch the
-     * file doesn't name is left as it is.
+     * Writes the switches and the folder a file changes, all of them in one preference commit. A
+     * setting the file doesn't name is left as it is.
      *
-     * @return how many switches changed.
+     * @return how many settings changed, the folder counted as one.
      * @throws ApplyFailed when the commit failed. {@link Setting#saveAll} puts the switches
      *                     back; {@link ApplyFailed#rolledBack} says whether that worked.
      */

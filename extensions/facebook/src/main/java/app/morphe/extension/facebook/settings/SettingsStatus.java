@@ -77,4 +77,8 @@ public final class SettingsStatus {
     public static boolean reelDownload() {
         return false;
     }
+
+    public static boolean videoDownload() {
+        return false;
+    }
 }

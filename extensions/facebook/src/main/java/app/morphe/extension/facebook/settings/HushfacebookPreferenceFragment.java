@@ -12,6 +12,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
@@ -24,6 +26,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -32,6 +35,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Set;
 
+import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.settings.BaseSettings;
@@ -195,6 +199,18 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
         }
 
+        if (build.contains(PatchFamily.STORY_DOWNLOAD) || build.contains(PatchFamily.REEL_DOWNLOAD)
+                || build.contains(PatchFamily.VIDEO_DOWNLOAD)) {
+            PreferenceCategory downloads = category(screen, L10n.t("Downloads"));
+            if (build.contains(PatchFamily.VIDEO_DOWNLOAD)) {
+                downloads.addPreference(toggle(context, Settings.DOWNLOAD_VIDEOS, L10n.t("Download feed and Watch videos"),
+                        L10n.t("Adds Download to phone to the menu of a video in the feed or in Watch, below "
+                                + "Facebook's own items, and saves at the best quality the player streams. Off or "
+                                + "paused, the menu is Facebook's own.")));
+            }
+            downloads.addPreference(folderRow(context));
+        }
+
         if (build.contains(PatchFamily.EXTERNAL_BROWSER) || build.contains(PatchFamily.SANITIZE_SHARING_LINKS)) {
             PreferenceCategory links = category(screen, L10n.t("Links"));
             if (build.contains(PatchFamily.EXTERNAL_BROWSER)) {
@@ -247,8 +263,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         // Morphe Manager can export the patch choices and the signing key, not these switches.
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.EXPORT,
                 L10n.t("Export settings"),
-                L10n.t("Saves the switches from the sections above to a file you choose. Pause and Debug logging "
-                        + "stay out of it.")));
+                L10n.t("Saves the switches and the save folder from the sections above to a file you choose. "
+                        + "Pause and Debug logging stay out of it.")));
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.IMPORT,
                 L10n.t("Import settings"),
                 L10n.t("Choose a settings file. You'll see how many switches it changes before anything does.")));
@@ -381,6 +397,40 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         return preference;
     }
 
+    /**
+     * The folder every save goes to. What's typed is cleaned before it's kept, so the row, the
+     * setting and the next save all show the one folder name the save will use.
+     */
+    static FolderRow folderRow(Context context) {
+        FolderRow row = new FolderRow(context);
+        row.setKey(Settings.SAVE_FOLDER.key);
+        row.setTitle(L10n.t("Save folder"));
+        row.setDialogTitle(L10n.t("Save folder"));
+        row.setDialogMessage(L10n.f("One folder name for your saves. Slashes and other characters a folder name "
+                + "can't hold become underscores. Leave it empty to use %1$s.", L10n.isolate(SaveFolder.DEFAULT)));
+        EditText field = row.getEditText();
+        field.setSingleLine(true);
+        field.setHint(SaveFolder.DEFAULT);
+        row.setText(Settings.SAVE_FOLDER.savedValue());
+        row.setOnPreferenceChangeListener((preference, typed) -> {
+            String raw = typed == null ? "" : typed.toString();
+            String clean = SaveFolder.sanitize(raw);
+            if (clean.equals(raw)) return true;
+            // Keeps the clean name in place of what was typed. The store changes, and the shared
+            // page reads the setting from the row as it does for any change.
+            ((FolderRow) preference).setText(clean);
+            return false;
+        });
+        return row;
+    }
+
+    /** "Videos go to Movies/Clips and photos to Pictures/Clips." for the folder [leaf]. */
+    static String folderSummary(String leaf) {
+        String videos = Environment.DIRECTORY_MOVIES + "/" + leaf;
+        String photos = Environment.DIRECTORY_PICTURES + "/" + leaf;
+        return L10n.f("Videos go to %1$s and photos to %2$s.", L10n.isolate(videos), L10n.isolate(photos));
+    }
+
     private static Preference info(Context context, String title, String summary) {
         Preference preference = new Row(context);
         preference.setTitle(title);
@@ -444,6 +494,29 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             super.onBindView(view);
             showAllText(view);
             view.setAccessibilityDelegate(new RowSemantics(this, Switch.class));
+        }
+    }
+
+    /**
+     * The save folder's row. Its summary follows its text, whoever sets it: the person, the shared
+     * page syncing it from the setting, or an import.
+     */
+    static final class FolderRow extends EditTextPreference {
+        FolderRow(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void setText(String text) {
+            super.setText(text);
+            setSummary(folderSummary(SaveFolder.sanitize(text)));
+        }
+
+        @Override
+        protected void onBindView(View view) {
+            super.onBindView(view);
+            showAllText(view);
+            view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
     }
 

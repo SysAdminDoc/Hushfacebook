@@ -23,7 +23,8 @@ import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
  * The recorder runs in every player Facebook builds, feed, Reels and Watch included, and only a
- * story save reads what it keeps.
+ * story save or a feed or Watch video's Download to phone reads what it keeps. Each patch records
+ * through its own call, behind its own switch, on its own Hook status line.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 30)
@@ -33,6 +34,7 @@ public class PlayerSourcesTest {
     @After
     public void restore() {
         Settings.DOWNLOAD_STORIES.resetToDefault();
+        Settings.DOWNLOAD_VIDEOS.resetToDefault();
         HookStatus.clear();
     }
 
@@ -74,6 +76,47 @@ public class PlayerSourcesTest {
         ParamsWithoutSource(String videoId) {
             this.videoId = videoId;
         }
+    }
+
+    /**
+     * The video patch's recorder asks Download any video's switch and nothing else, so a build
+     * with only one of the two patches does no work for the one it lacks, and the story switch
+     * can't turn the video recorder on or off.
+     */
+    @Test
+    public void aVideoPlayerIsRecordedOnlyWhileVideoSavesAreOn() {
+        Settings.DOWNLOAD_STORIES.save(false);
+        Settings.DOWNLOAD_VIDEOS.save(true);
+        assertTrue("with the video switch on, its recorder keeps the player's source",
+                PlayerSourcesForTests.recordsAVideoPlayer());
+        assertFalse("the story recorder still asks the story switch", PlayerSourcesForTests.recordsAPlayer());
+
+        Settings.DOWNLOAD_STORIES.save(true);
+        Settings.DOWNLOAD_VIDEOS.save(false);
+        assertFalse("with the video switch off, its recorder leaves the player alone",
+                PlayerSourcesForTests.recordsAVideoPlayer());
+        assertTrue(PlayerSourcesForTests.recordsAPlayer());
+    }
+
+    @Test
+    public void theVideoRecorderCountsOnItsOwnLine() {
+        HookStatus.clear();
+        Settings.DOWNLOAD_VIDEOS.save(false);
+        PlayerSourcesForTests.recordsAVideoPlayer();
+        Settings.DOWNLOAD_VIDEOS.save(true);
+        PlayerSourcesForTests.recordsAVideoPlayer();
+
+        assertEquals(Collections.singletonList("Download any video (player sources): invoked 2, 1 found, 0 missing"),
+                HookStatus.report());
+    }
+
+    @Test
+    public void aPlayerIsFoundByItsIdAndNoOtherWay() {
+        Settings.DOWNLOAD_VIDEOS.save(true);
+        assertTrue(PlayerSourcesForTests.recordsAVideoPlayer());
+        assertEquals(null, PlayerSources.byId(null));
+        assertEquals(null, PlayerSources.byId(""));
+        assertEquals("an id no player was built for", null, PlayerSources.byId("99999999999999999"));
     }
 
     @Test

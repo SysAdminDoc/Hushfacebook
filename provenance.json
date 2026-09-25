@@ -55,7 +55,7 @@
         "https://github.com/SapitoSucio/FroggoMorphePatches"
       ],
       "license": "GPL-3.0",
-      "changes": "Rewritten from the source at that commit, not cherry-picked. Packages, extension descriptors, log tags, injected method names and the cache folder renamed; plain patch names with categories; the two feed guards merged into one shared hook; a settings switch in front of the story, reel, browser and download hooks, and the reel sidebar's Download button and the story menu's Save item asking theirs before they go in, so Pause takes both out; the list register of the story filter computed for static and wide parameters; the borrowed v0 in the reel collection hooks checked; the DASH join ends a track on an empty read and shifts both tracks by one lead-in; the reel handler answers null instead of Facebook's renamed kotlin.Unit; the debug println lines removed. Saves fetch only what MediaUrlPolicy allows, every redirect included, into a cache file first, and reach MediaStore only once the declared type, the first bytes, the length and the 512 MB cap (the two DASH tracks together) all check out; save steps go to the diagnostic report without file names; a save reports its progress to a notification with a Cancel button and stops when cancelled, and lists its pending gallery row until it's settled. Andrew Liang credits FroggoMorphePatches for some ideas and implementations."
+      "changes": "Rewritten from the source at that commit, not cherry-picked. Packages, extension descriptors, log tags, injected method names and the cache folder renamed; plain patch names with categories; the two feed guards merged into one shared hook; a settings switch in front of the story, reel, browser and download hooks, and the reel sidebar's Download button and the story menu's Save item asking theirs before they go in, so Pause takes both out; the player-source recorder shared with Download any video through a call and a switch of each patch's own; the save folder read per file from the settings; the list register of the story filter computed for static and wide parameters; the borrowed v0 in the reel collection hooks checked; the DASH join ends a track on an empty read and shifts both tracks by one lead-in; the reel handler answers null instead of Facebook's renamed kotlin.Unit; the debug println lines removed. Saves fetch only what MediaUrlPolicy allows, every redirect included, into a cache file first, and reach MediaStore only once the declared type, the first bytes, the length and the 512 MB cap (the two DASH tracks together) all check out; save steps go to the diagnostic report without file names; a save reports its progress to a notification with a Cancel button and stops when cancelled, and lists its pending gallery row until it's settled. Andrew Liang credits FroggoMorphePatches for some ideas and implementations."
     },
     {
       "paths": [
@@ -65,6 +65,18 @@
       "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
       "license": "GPL-3.0-only",
       "changes": "Written for Hushfacebook: which addresses a save may fetch (HTTPS on 443, no user name, Meta's media CDNs only, and on a direct route a public or fake-IP answer)."
+    },
+    {
+      "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/download/SaveFolder.java",
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/download/VideoMenuItem.java",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/downloads/video/DownloadVideoPatch.kt",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/downloads/video/Fingerprints.kt"
+      ],
+      "origin": "original",
+      "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
+      "license": "GPL-3.0-only",
+      "changes": "Written for Hushfacebook: Download to phone in the menu of a feed or Watch video, added after Facebook fills the menu so its own Save and Download rows stay as they are, found in Facebook 577 and 580 through the video feed menu's log tag, the kept GraphQL models and the hashes of their field names; and the save folder, one sanitized folder name under Movies and Pictures."
     },
     {
       "paths": [
@@ -119,7 +131,7 @@
         "https://github.com/icysymmetra/tiktok-patches-for-morphe"
       ],
       "license": "GPL-3.0-only",
-      "changes": "Ported from Hushfeed's settings backup and cut down to what Hushfacebook keeps: an exact list of its feature switches in place of every setting, with no Feature Gate Lab, reset, undo or journal. An import is read into a snapshot that a preview shows before anything is written, and applied in one preference commit. A file declaring a newer version, a name given twice, a switch that isn't true or false, or more than 64 KB changes nothing, each with its own reason, and names this build doesn't know are counted rather than applied."
+      "changes": "Ported from Hushfeed's settings backup and cut down to what Hushfacebook keeps: an exact list of its feature switches and the save folder in place of every setting, with no Feature Gate Lab, reset, undo or journal. An import is read into a snapshot that a preview shows before anything is written, and applied in one preference commit. A file declaring a newer version, a name given twice, a switch that isn't true or false, a folder that isn't one clean folder name, or more than 64 KB changes nothing, each with its own reason, and names this build doesn't know are counted rather than applied."
     },
     {
       "paths": [

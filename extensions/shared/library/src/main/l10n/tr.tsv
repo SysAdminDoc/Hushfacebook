@@ -15,6 +15,7 @@ A file named %1$s in %2$s paused Hushfacebook.	%2$s içindeki %1$s adlı bir dos
 About	Hakkında
 Ad cards between the stories people posted.	İnsanların paylaştığı hikayeler arasındaki reklam kartları.
 Ad telemetry blocked	Reklam telemetrisi engellendi
+Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.	Akıştaki veya Watch'taki bir videonun menüsüne, Facebook'un kendi seçeneklerinin altına Telefona indir seçeneğini ekler ve videoyu oynatıcının sunduğu en iyi kalitede kaydeder. Kapalıyken veya duraklatılmışken menüde yalnızca Facebook'un kendi seçenekleri görünür.
 Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Kimin olursa olsun her hikayenin menüsüne Kaydet seçeneğini ekler ve hikayeyi oynatıcının sunduğu en iyi kalitede kaydeder. Kapalıyken veya duraklatılmışken Kaydet seçeneği yalnızca kendi hikayelerinde bulunur ve Facebook'un kendi kaydetme işlevini çalıştırır.
 Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Reels videoları arasında gelen reklamlar. Banner ve video ortası reklamlar ise yama uygulandığı sürece, bu anahtar veya Duraklatma ne derse desin, engellenmiş kalır. Uygulamanın kendi başına eklediği reklamlar da öyle.
 AMOLED black theme	AMOLED siyah tema
@@ -33,6 +34,7 @@ Couldn't open that file. Nothing was changed.	Bu dosya açılamadı. Hiçbir şe
 Couldn't open the file picker. Try again.	Dosya seçici açılamadı. Tekrar dene.
 Couldn't put back the diagnostic data. Try again.	Tanılama verileri geri getirilemedi. Tekrar dene.
 Couldn't save the settings file. Try again.	Ayar dosyası kaydedilemedi. Tekrar dene.
+Couldn't save this video. Play it for a moment, then try again.	Bu video kaydedilemedi. Biraz oynat, sonra tekrar dene.
 Couldn't start that. Try again in a moment.	Bu işlem başlatılamadı. Birazdan tekrar dene.
 Couldn't start the report export. Try again shortly.	Rapor dışa aktarımı başlatılamadı. Birazdan tekrar dene.
 Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	Karanlık mod koyu gri yerine siyah görünür. Görmek için Facebook'ta karanlık modu aç.
@@ -43,6 +45,9 @@ Diagnostic report copied to the clipboard.	Tanılama raporu panoya kopyalandı.
 Download	İndir
 Download button on reels	Reels'teki İndir düğmesi
 Download failed	İndirme başarısız oldu
+Download feed and Watch videos	Akış ve Watch videolarını indir
+Download to phone	Telefona indir
+Downloads	İndirmeler
 Empties the log and the filter counts a report would include.	Bir raporun içereceği günlüğü ve filtre sayaçlarını boşaltır.
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Hata ayıklama günlüğü dışındaki her anahtar kapalıymış gibi davranır, yamaladığında ayarlananlar ise devrede kalır. Ayarların olduğu gibi kalır.
 Export diagnostic report	Tanılama raporunu dışa aktar
@@ -82,6 +87,7 @@ No screenshot watching for ads, and no reports of which apps you install.	Reklam
 Not saved: that isn't a Facebook photo or video	Kaydedilmedi: Bu bir Facebook fotoğrafı veya videosu değil
 Not saved: the file is over 512 MB	Kaydedilmedi: Dosya 512 MB'tan büyük
 OK	Tamam
+One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.	Kaydettiklerin için tek bir klasör adı. Eğik çizgiler ve klasör adında kullanılamayan diğer karakterler alt çizgiye dönüşür. %1$s kullanmak için boş bırak.
 Open links in your browser	Bağlantıları tarayıcında aç
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Akıştaki ücretli reklamlar. Facebook eklemeden önce çıkarıldıkları için yerlerinde boşluk kalmaz.
 Pause Hushfacebook	Hushfacebook'u duraklat
@@ -96,11 +102,13 @@ Remove tracking from shared links	Paylaşılan bağlantılardan izlemeyi kaldır
 Retry	Yeniden dene
 Save any story	Herhangi bir hikayeyi kaydet
 Save cancelled	Kaydetme iptal edildi
+Save folder	Kayıt klasörü
 Save full report	Tam raporu kaydet
 Saved to %1$s	Şuraya kaydedildi: %1$s
 Saved to the gallery	Galeriye kaydedildi
 Saved. Restart Facebook to apply this change.	Kaydedildi. Bu değişikliği uygulamak için Facebook'u yeniden başlat.
-Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.	Yukarıdaki bölümlerin anahtarlarını seçtiğin bir dosyaya kaydeder. Duraklatma ve Hata ayıklama günlüğü dahil edilmez.
+Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.	Yukarıdaki bölümlerin anahtarlarını ve kayıt klasörünü seçtiğin bir dosyaya kaydeder. Duraklatma ve Hata ayıklama günlüğü dahil edilmez.
+Saves will go to a folder named %1$s.	Kaydettiklerin %1$s adlı bir klasöre gidecek.
 Saving a photo	Fotoğraf kaydediliyor
 Saving a video	Video kaydediliyor
 Saving the settings file	Ayar dosyası kaydediliyor
@@ -111,6 +119,7 @@ Settings couldn't refresh completely. Reopen settings and try again.	Ayarlar tam
 Settings exported.	Ayarlar dışa aktarıldı.
 Settings imported. %1$d switch changed.	Ayarlar içe aktarıldı. %1$d anahtar değişti.
 Settings imported. %1$d switches changed.	Ayarlar içe aktarıldı. %1$d anahtar değişti.
+Settings imported. Saves will go to a folder named %1$s.	Ayarlar içe aktarıldı. Kaydettiklerin %1$s adlı bir klasöre gidecek.
 Source code and issues	Kaynak kodu ve sorunlar
 Stays in while paused	Duraklatılsa da devrede kalır
 Stories	Hikayeler
@@ -142,6 +151,7 @@ This phone has no file picker, so there's no way to choose a file here.	Bu telef
 Try again, or go back to Facebook.	Tekrar dene veya Facebook'a geri dön.
 Version	Sürüm
 Version %1$s for Facebook %2$s	Facebook %2$s için %1$s sürümü
+Videos go to %1$s and photos to %2$s.	Videolar %1$s klasörüne, fotoğraflar %2$s klasörüne kaydedilir.
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Web bağlantıları Facebook'un uygulama içi tarayıcısında açılmaz. Facebook'un kendi sayfaları yine uygulamada açılır.
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Her yamanın ne yaptığını Android günlüğüne yazar. Bir sorun bildirmiyorsan kapalı bırak.
 You paused Hushfacebook.	Hushfacebook'u duraklattın.
