@@ -1,4 +1,4 @@
-<h1 align="center">Hushfacebook</h1>
+![Hushfacebook. Keep the people. Cut the noise.](assets/readme-hero.png)
 
 <p align="center">
   <a href="https://github.com/SysAdminDoc/Hushfacebook/releases"><img src="https://img.shields.io/badge/version-0.1.1-0866FF" alt="Version 0.1.1"></a>
@@ -8,9 +8,20 @@
   <img src="https://img.shields.io/badge/for-Morphe%20Manager%201.32.0%2B-8A2BE2" alt="For Morphe Manager 1.32.0 or newer">
 </p>
 
-Patches for the Facebook app on Android, for use with Morphe. They take sponsored posts and stories out of Facebook along with the ads in Reels, stop its background ad downloads and ad tracking, add story and reel downloads, open links in your own browser, and fix the screens a re-signed build breaks.
+# Hushfacebook
 
-Hushfacebook brings the Facebook patches from the Morphe patch sources that have them into one place, so they can be kept working as Facebook updates. Most of them come from [Andrew Liang's patches](https://github.com/andrewliang25/morphe-patches), rewritten here with fixes, and the feed filter also drops promoted posts the way [FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) does. The build and the settings screen come from [Hushfeed](https://github.com/SysAdminDoc/hushfeed), and so do the checks behind every release. See [Where the patches come from](#where-the-patches-come-from).
+Hushfacebook is a Morphe patch bundle for Android that takes the clutter out of Facebook and puts useful controls back in your hands.
+
+[Add to Morphe](https://morphe.software/add-source?github=SysAdminDoc%2FHushfacebook) | [Download a release](https://github.com/SysAdminDoc/Hushfacebook/releases/latest) | [Browse the patches](#patches) | [Support development](https://ko-fi.com/X8K126YVER)
+
+## Why use it
+
+- **A quieter feed.** Sponsored and suggested posts disappear, along with ads in Stories, Reels, and Watch.
+- **Less tracking.** Selected ad telemetry and background ad downloads stop. Common trackers also come off links you open or share.
+- **Media you can keep.** Save stories and reels at the best quality Facebook streams, with progress and cancellation controls.
+- **Controls that recover.** Every runtime feature has a switch. Pause mode, automatic safe mode, settings backups, and privacy-filtered diagnostics help when Facebook changes.
+
+The project brings the Facebook patches from Morphe sources into one maintained bundle. Most started with [Andrew Liang's patches](https://github.com/andrewliang25/morphe-patches) and were rewritten here with fixes. The feed filter also removes promoted posts using the approach from [FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches). Its build, settings screen, and release checks share a foundation with the sister project [Hushfeed](https://github.com/SysAdminDoc/hushfeed). See [Where the patches come from](#where-the-patches-come-from) for the full provenance.
 
 This project has no connection to Meta or to the Morphe project. Neither endorses it, and neither wrote it.
 

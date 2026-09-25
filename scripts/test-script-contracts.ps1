@@ -4,9 +4,9 @@
     pre-push routing, the changelog, d8 and Java resolution, split bundles and the shared helpers.
 .DESCRIPTION
     Ported from Hushfeed's suite on 2026-09-25 and held to Facebook's facts: two declared builds,
-    both of Meta's signers, and .apkm split bundles. The pre-push hook runs it for every change
-    under scripts/, to patches-list.json or to patches/build.gradle.kts, and stops the push when
-    it is missing.
+    both of Meta's signers, and .apkm split bundles. The pre-push hook runs it for changes under
+    scripts/, assets/ or concepts/marketing/, and for README.md, patches-list.json or
+    patches/build.gradle.kts. A missing suite stops the push.
 #>
 [CmdletBinding()]
 param([string]$Root)
@@ -3387,3 +3387,11 @@ Write-Host '[scripts] tracked-file machine name contracts passed'
 
 $global:LASTEXITCODE = 0
 Write-Host '[scripts] report, target, Java and guarded replacement contracts passed'
+$marketingAssets = Join-Path $Root 'scripts/test-marketing-assets.ps1'
+if (-not (Test-Path -LiteralPath $marketingAssets -PathType Leaf)) {
+    throw 'scripts/test-marketing-assets.ps1 is missing. Marketing changes need a repeatable asset check.'
+}
+& $marketingAssets -Root $Root
+if ($LASTEXITCODE -ne 0) {
+    throw 'The marketing asset checks did not pass.'
+}
