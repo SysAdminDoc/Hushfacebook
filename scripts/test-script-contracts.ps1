@@ -1908,10 +1908,10 @@ try {
         Set-Content -LiteralPath $contractsStubPath -Value $contractsStubText -Encoding UTF8 -NoNewline
     }
 
-    # The three verifier suites run only when their own files move, and pre-push.ps1 decides which
+    # The four verifier suites run only when their own files move, and pre-push.ps1 decides which
     # files those are. A push of pre-push.ps1 runs this suite and no other, so an edit that put a
     # suite line behind a dead branch, or dropped a file from a suite's list, went out through the
-    # gate it switched off. This suite is the one place that holds the routing, then: all four
+    # gate it switched off. This suite is the one place that holds the routing, then: all five
     # suite lines read through the parser (script-wiring.ps1), each also tried behind a dead
     # branch so the check can't pass by passing everything, and every file a verifier suite guards
     # pushed through the hook against stub suites that record they ran. A file starts exactly the
@@ -1926,6 +1926,9 @@ try {
             'verify-all-patches.ps1')
         'scripts/test-injected-register-device.ps1' = @('injected-register-device.ps1', 'script-wiring.ps1',
             'test-injected-register-device.ps1', 'verify-injected-registers.ps1')
+        'scripts/test-fingerprint-candidates.ps1' = @('FingerprintCandidates.java', 'FingerprintFixture.java',
+            'fingerprint-calibration.txt', 'fingerprint-candidates.ps1', 'fingerprint-signature.schema.json',
+            'test-fingerprint-candidates.ps1')
     }
     foreach ($suite in @('scripts/test-script-contracts.ps1') + @($verifierRoutes.Keys)) {
         Assert-True (Test-PushGateRunsSuite $prePushScript $suite) "The push gate does not run $suite."

@@ -418,6 +418,17 @@ try {
     $touchesInjectedRegisterDevice = @($paths | Where-Object {
         $_ -in $injectedRegisterDevicePaths
     }).Count -gt 0
+    $fingerprintCandidatePaths = @(
+        'scripts/FingerprintCandidates.java',
+        'scripts/FingerprintFixture.java',
+        'scripts/fingerprint-calibration.txt',
+        'scripts/fingerprint-candidates.ps1',
+        'scripts/fingerprint-signature.schema.json',
+        'scripts/test-fingerprint-candidates.ps1'
+    )
+    $touchesFingerprintCandidates = @($paths | Where-Object {
+        $_ -in $fingerprintCandidatePaths
+    }).Count -gt 0
     $touchesRelease = @($paths | Where-Object {
         $_ -eq 'patches-bundle.json' -or $_ -eq 'patches-list.json' -or
         $_ -eq 'gradle.properties' -or $_ -eq 'README.md' -or
@@ -502,6 +513,10 @@ try {
     if ($touchesInjectedRegisterDevice) {
         $suites += , @('scripts/test-injected-register-device.ps1', 'injected-register device helper changed, running its cleanup fixtures',
             'The injected-register device cleanup fixtures did not pass.')
+    }
+    if ($touchesFingerprintCandidates) {
+        $suites += , @('scripts/test-fingerprint-candidates.ps1', 'fingerprint ranking changed, running its calibration',
+            'The fingerprint ranking calibration did not pass.')
     }
     if ($suites.Count -gt 0) {
         $scriptsLock = $null
