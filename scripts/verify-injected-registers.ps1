@@ -85,6 +85,9 @@ function Get-SignerDigests {
     param([string]$Apk)
     $apksigner = Join-Path (Split-Path -Parent $Aapt2) 'apksigner.bat'
     if (-not (Test-Path -LiteralPath $apksigner -PathType Leaf)) { throw "No apksigner beside aapt2: $apksigner" }
+    # A newer JDK prints warnings on stderr, which Windows PowerShell 5.1 turns into a terminating
+    # error under Stop. The exit code is what gets judged.
+    $ErrorActionPreference = 'Continue'
     $lines = @(& $apksigner verify --print-certs $Apk 2>&1 | ForEach-Object { "$_" })
     if ($LASTEXITCODE -ne 0) { throw "apksigner could not verify ${Apk}: $($lines -join ' ')" }
     return @($lines | Where-Object { $_ -match 'certificate SHA-256 digest: ([0-9a-f]{64})' } |
@@ -169,11 +172,13 @@ if (@($cleanSigners | Where-Object { $_ -in $metaSigners }).Count -eq 0) {
 Write-Host "[registers] clean   $CleanApk (Facebook $($clean.versionName), signed by Meta)"
 Write-Host "[registers] patched $PatchedApk"
 
+$ErrorActionPreference = 'Continue'
 $diffOutput = & $Java '-Xmx8g' '-cp' $DesktopJar (Join-Path $PSScriptRoot 'DexDiff.java') `
     $cleanBase $PatchedApk $ReportPath `
     (Join-Path $PSScriptRoot 'injected-register-removal-allowlist.txt') `
     (Join-Path $PSScriptRoot 'injected-mutation-contracts.txt') 2>&1
 $diffExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
 $diffOutput | ForEach-Object { Write-Host "[registers] $_" }
 
 if ($diffExit -ne 0) {

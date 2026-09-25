@@ -437,14 +437,19 @@ public class DexDiff {
         return out;
     }
 
-    /** One register's new kind, and the wide pair it breaks if it was half of one. */
+    /**
+     * One register's new kind, and the wide pair it breaks if it was half of one. Writing over the
+     * upper half leaves the lower half as B, a broken pair: ART makes that register undefined,
+     * and every later read of it is a finding. A patch that borrows the upper half of a live long
+     * as a free local does exactly this.
+     */
     private static void write(char[] out, int register, char kind) {
         if (register >= out.length) return;
         if (out[register] == 'W' && register + 1 < out.length && out[register + 1] == 'w' && kind != 'W') {
             out[register + 1] = 'T';
         }
         if (out[register] == 'w' && register > 0 && out[register - 1] == 'W' && kind != 'w') {
-            out[register - 1] = 'T';
+            out[register - 1] = 'B';
         }
         out[register] = kind;
     }
@@ -452,6 +457,7 @@ public class DexDiff {
     /** Whether a register of this kind can be read as that kind. T is never in doubt here. */
     private static boolean readableAs(char have, char want) {
         if (have == 'T') return true;
+        if (have == 'B') return false;
         switch (want) {
             case 'W': return have == 'W';
             case 'I': return have == 'I' || have == 'Z';
@@ -613,6 +619,12 @@ public class DexDiff {
                         findings.add("branch: " + opcode.name + " at " + at + " sends case "
                                 + element.getKey() + " to " + caseTarget
                                 + ", which is not the start of an instruction");
+                        continue;
+                    }
+                    String bad = badLanding(layout.byAddress.get(caseTarget));
+                    if (bad != null) {
+                        findings.add("branch: " + opcode.name + " at " + at + " sends case " + element.getKey()
+                                + " to " + caseTarget + ", " + bad + ", which a branch may not land on");
                     }
                 }
             } else if (opcode == Opcode.FILL_ARRAY_DATA) {
@@ -622,6 +634,12 @@ public class DexDiff {
                 }
             } else if (payload instanceof SwitchPayload || payload instanceof ArrayPayload) {
                 findings.add("branch: " + opcode.name + " at " + at + " jumps into a payload at " + target);
+            } else {
+                String bad = badLanding(payload);
+                if (bad != null) {
+                    findings.add("branch: " + opcode.name + " at " + at + " targets " + target + ", " + bad
+                            + ", which a branch may not land on");
+                }
             }
         }
 
@@ -707,7 +725,7 @@ public class DexDiff {
 
             for (int[] read : valueReads(i)) {
                 if (read[0] >= kinds[k].length || readableAs(kinds[k][read[0]], (char) read[1])) continue;
-                findings.add(origin(read[0], firstParameter, writes[k]) + opcode.name + " at " + at
+                findings.add(origin(read[0], firstParameter, writes[k], kinds[k][read[0]]) + opcode.name + " at " + at
                         + " reads v" + read[0] + ", which holds " + describe(kinds[k][read[0]])
                         + ", as " + describe((char) read[1]));
             }
@@ -723,19 +741,43 @@ public class DexDiff {
                 if (want == 'w' || regs[a] >= kinds[k].length) continue;
                 char have = kinds[k][regs[a]];
                 if (!readableAs(have, want)) {
-                    findings.add(origin(regs[a], firstParameter, writes[k]) + opcode.name + " at " + at
+                    findings.add(origin(regs[a], firstParameter, writes[k], have) + opcode.name + " at " + at
                             + " passes v" + regs[a] + ", which holds " + describe(have) + ", where "
                             + callee + " takes " + describe(want));
                 }
             }
         }
+
+        // A move-exception takes the exception a handler caught, so only a throw may reach it.
+        // Falling into one from the instruction above is what ART calls flowing through to it.
+        for (int k = 1; k < layout.instructions.size(); k++) {
+            if (layout.instructions.get(k).getOpcode() != Opcode.MOVE_EXCEPTION) continue;
+            Instruction above = layout.instructions.get(k - 1);
+            if (kinds[k - 1] != null && above.getOpcode().canContinue()) {
+                findings.add("try: move-exception at " + layout.addresses.get(k) + " is reached by falling through from "
+                        + above.getOpcode().name + " at " + layout.addresses.get(k - 1));
+            }
+        }
         return findings;
     }
 
-    /** "parameter" for a register that still holds its argument on every path, else "width". */
-    private static String origin(int register, int firstParameter, BitSet written) {
+    /**
+     * "parameter" for a register that still holds its argument on every path, else "width". A
+     * broken pair is always the body's doing, even on an argument's register.
+     */
+    private static String origin(int register, int firstParameter, BitSet written, char have) {
+        if (have == 'B') return "width: ";
         boolean argument = register >= firstParameter && !written.get(register - firstParameter);
         return argument ? "parameter: " : "width: ";
+    }
+
+    /** Whether a branch may not land on this: ART refuses a move-result or move-exception there. */
+    private static String badLanding(Instruction landing) {
+        if (landing == null) return null;
+        Opcode opcode = landing.getOpcode();
+        if (isMoveResult(opcode)) return "a move-result";
+        if (opcode == Opcode.MOVE_EXCEPTION) return "a move-exception";
+        return null;
     }
 
     /** The kind of each register an invoke passes: the receiver, then each parameter's slots. */
@@ -754,6 +796,7 @@ public class DexDiff {
             case 'L': return "an object";
             case 'W': return "a wide value";
             case 'w': return "the upper half of a wide value";
+            case 'B': return "the lower half of a wide value whose upper half was overwritten";
             case 'Z': return "a zero constant";
             default: return "a narrow value";
         }

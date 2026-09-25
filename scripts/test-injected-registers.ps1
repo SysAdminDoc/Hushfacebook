@@ -32,12 +32,49 @@ function Assert-True {
     if (-not $Condition) { throw $Message }
 }
 
+# Native calls run with Continue: Windows PowerShell 5.1, which the push hook uses when pwsh isn't
+# on git's PATH, turns any line a program writes to stderr into a terminating error under Stop,
+# and several cases here are meant to make a program fail. The exit code is what gets judged.
 function Invoke-Checked {
     param([string]$Program, [string[]]$Arguments, [string]$Description)
+    $ErrorActionPreference = 'Continue'
     $output = @(& $Program @Arguments 2>&1 | ForEach-Object { "$_" })
     if ($LASTEXITCODE -ne 0) {
         throw "$Description exited $LASTEXITCODE.`n$($output -join "`n")"
     }
+}
+
+# The commands a script runs, as PowerShell's parser sees them. Comment-based help and comments
+# aren't commands, so a wiring check can't be satisfied by a script describing a call it dropped.
+function Get-CommandTexts {
+    param([string]$Path)
+    $tokens = $null
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
+    if ($errors.Count -ne 0) { throw "$Path does not parse: $($errors[0].Message)" }
+    @($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.CommandAst] }, $true) |
+        ForEach-Object { $_.Extent.Text })
+}
+
+function Test-RunsCommand {
+    param([string]$Path, [string[]]$AllOf)
+    foreach ($text in (Get-CommandTexts $Path)) {
+        $all = $true
+        foreach ($needle in $AllOf) { if ($text.IndexOf($needle, [StringComparison]::Ordinal) -lt 0) { $all = $false } }
+        if ($all) { return $true }
+    }
+    return $false
+}
+
+function Test-DotSources {
+    param([string]$Path, [string]$File)
+    $tokens = $null
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
+    @($ast.FindAll({ param($node)
+        $node -is [System.Management.Automation.Language.CommandAst] -and
+        $node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
+        $node.Extent.Text.Contains($File) }, $true)).Count -gt 0
 }
 
 function New-DexApk {
@@ -62,6 +99,7 @@ function Invoke-DexDiff {
     $report = Join-Path $caseRoot "$Name-report.txt"
     $arguments = @('-Xmx1g', '-cp', $classPath, 'DexDiff', $Clean, $Patched, $report, $Allowlist)
     if ($Contracts) { $arguments += $Contracts }
+    $ErrorActionPreference = 'Continue'
     $global:LASTEXITCODE = 0
     $output = @(& $Java @arguments 2>&1 | ForEach-Object { "$_" })
     [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output; Report = $report }
@@ -100,16 +138,14 @@ $newError = Compare-VerifierTallies -Clean @{} -Patched @{ 'Verification error i
 Assert-True (-not $newError.Valid -and $newError.Deltas[0].Kind -eq 'extra') `
     'A verifier error the clean build does not raise was accepted.'
 
-# The call lines themselves, not any mention: help text names these files too.
-$verifierText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'verify-injected-registers.ps1') -Raw
-Assert-True ($verifierText -match 'injected-register-contracts\.ps1' -and `
-    $verifierText -match 'Compare-VerifierTallies') `
+# The calls themselves, read through the parser: help text names these files too.
+$verifier = Join-Path $PSScriptRoot 'verify-injected-registers.ps1'
+Assert-True ((Test-DotSources $verifier 'injected-register-contracts.ps1') -and `
+    (Test-RunsCommand $verifier @('Compare-VerifierTallies', '-Clean', '-Patched'))) `
     'The device verifier does not use the exact tally comparison contract.'
-Assert-True ($verifierText -match '(?m)^[^#\r\n]*DexDiff\.java[^\r\n]*' -and `
-    $verifierText -match '(?m)^[^#\r\n]*injected-mutation-contracts\.txt') `
+Assert-True (Test-RunsCommand $verifier @('DexDiff.java', 'injected-mutation-contracts.txt')) `
     'The verifier does not hold the patched APK to the mutation contracts.'
-$verifyAllText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'verify-all-patches.ps1') -Raw
-Assert-True ($verifyAllText -match '(?m)^[^#\r\n]*verify-injected-registers\.ps1') `
+Assert-True (Test-RunsCommand (Join-Path $PSScriptRoot 'verify-all-patches.ps1') @('verify-injected-registers.ps1', '-PatchedApk')) `
     'verify-all-patches.ps1 does not run the structural checks on the APK it patched.'
 $prePushText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'pre-push.ps1') -Raw
 Assert-True ($prePushText -match "(?m)^\s*\`$suites \+= , @\('scripts/test-injected-registers\.ps1'") `
@@ -165,6 +201,10 @@ try {
         'bad-branch' = 'branch'
         'bad-branch-self' = 'branch'
         'bad-switch-case' = 'branch'
+        'bad-branch-to-result' = 'branch'
+        'bad-goto-to-handler' = 'branch'
+        'bad-fallthrough-handler' = 'try'
+        'bad-wide-high-clobber' = 'width'
         'bad-invoke-count' = 'invoke'
         'bad-wide-split' = 'invoke'
         'bad-static-parameter' = 'parameter'

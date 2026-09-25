@@ -139,10 +139,15 @@ public class BadDexFixture {
 
     /** risky() inside a try whose handler is a move-exception at 5. */
     private static Method tryHost(ImmutableTryBlock block) {
+        return tryHost(block, op(Opcode.RETURN_VOID));
+    }
+
+    /** The same, with [beforeHandler] as the one-unit instruction that ends the try path at 4. */
+    private static Method tryHost(ImmutableTryBlock block, Instruction beforeHandler) {
         return define(HOST, "tryHost", "V", true, body(1, Collections.singletonList(block),
                 invoke(RISKY),                      // 0
                 op(Opcode.MOVE_RESULT, 0),          // 3
-                op(Opcode.RETURN_VOID),             // 4
+                beforeHandler,                      // 4
                 op(Opcode.MOVE_EXCEPTION, 0),       // 5
                 op(Opcode.RETURN_VOID)));           // 6
     }
@@ -229,8 +234,10 @@ public class BadDexFixture {
                         new ImmutableInstruction10t(Opcode.GOTO, -6)), "I"),                    // 7 -> 1
                 define(FILTER, "nulls", "V", true, body(1,
                         new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), invoke(INSPECT, 0, 0), op(Opcode.RETURN_VOID))),
+                // The pair is broken after its last read, which is valid: only a read of it isn't.
                 define(FILTER, "longs", "V", true, body(2,
                         new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK), invoke(WIDE, 0, 1),
+                        new ImmutableInstruction11n(Opcode.CONST_4, 1, 0), invoke(REUSE, 1),
                         op(Opcode.RETURN_VOID))),
                 define(FILTER, "ints", "V", true, body(1,
                         new ImmutableInstruction31i(Opcode.CONST, 0, BLACK), invoke(REUSE, 0), op(Opcode.RETURN_VOID))),
@@ -261,7 +268,11 @@ public class BadDexFixture {
     }
 
     private static List<ClassDef> withTry(ImmutableTryBlock block) {
-        return patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST), switchHost(7), tryHost(block));
+        return withTryHost(tryHost(block));
+    }
+
+    private static List<ClassDef> withTryHost(Method tryHost) {
+        return patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST), switchHost(7), tryHost);
     }
 
     public static void main(String[] args) throws Exception {
@@ -290,6 +301,18 @@ public class BadDexFixture {
         dexes.put("bad-branch-self", withFeedEdge(body(4,
                 invoke(HIDE_EDGE, 2, 3), op(Opcode.MOVE_RESULT, 0), ifEqz(0, 0),
                 op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID))));
+        // branch: the guard's if-eqz jumps back onto its own move-result.
+        dexes.put("bad-branch-to-result", withFeedEdge(body(4,
+                invoke(HIDE_EDGE, 2, 3), op(Opcode.MOVE_RESULT, 0), ifEqz(0, -1),
+                op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID))));
+        // branch: the try path jumps onto the handler's move-exception.
+        dexes.put("bad-goto-to-handler", withTryHost(tryHost(CLEAN_TRY, new ImmutableInstruction10t(Opcode.GOTO, 1))));
+        // try: the try path falls straight into the handler's move-exception.
+        dexes.put("bad-fallthrough-handler", withTryHost(tryHost(CLEAN_TRY, op(Opcode.NOP))));
+        // width: a patch borrows v2 as a free local, but it is the upper half of the long argument.
+        dexes.put("bad-wide-high-clobber", withStaticHost(body(3,
+                new ImmutableInstruction11n(Opcode.CONST_4, 2, 0), invoke(INSPECT, 0, 0), invoke(WIDE, 1, 2),
+                op(Opcode.RETURN_VOID))));
         // branch: case 1 lands inside the packed-switch instruction itself.
         dexes.put("bad-switch-case", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 switchHost(2), tryHost(CLEAN_TRY)));

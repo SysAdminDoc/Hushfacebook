@@ -33,8 +33,11 @@ function Assert-True {
     if (-not $Condition) { throw $Message }
 }
 
+# Native calls run with Continue: under Stop, Windows PowerShell 5.1 (the hook's fallback host)
+# turns any stderr line, a JDK warning included, into a terminating error. The exit code is judged.
 function Invoke-Checked {
     param([string]$Program, [string[]]$Arguments, [string]$Description)
+    $ErrorActionPreference = 'Continue'
     $output = @(& $Program @Arguments 2>&1 | ForEach-Object { "$_" })
     if ($LASTEXITCODE -ne 0) {
         throw "$Description exited $LASTEXITCODE.`n$($output -join "`n")"
@@ -135,6 +138,7 @@ function Edit-Table {
 function Invoke-Check {
     param([string]$Patched, [string]$Name, [string]$Stock = $stockApk)
     $report = Join-Path $caseRoot "$Name-report.txt"
+    $ErrorActionPreference = 'Continue'
     $global:LASTEXITCODE = 0
     $output = @(& $Java '-Xmx1g' '-cp' $DesktopJar (Join-Path $PSScriptRoot 'ResourceTableCheck.java') `
         $Stock $Patched $report 2>&1 | ForEach-Object { "$_" })

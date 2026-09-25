@@ -180,12 +180,21 @@ try {
         'A cleanup failure after successful verification was accepted.'
     Assert-BothCleanupCalls -State $successWithCleanupFailure.State -Context 'success cleanup failure'
 
-    $verifierText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'verify-injected-registers.ps1') -Raw
-    Assert-True ($verifierText -match 'injected-register-device\.ps1' -and
-        $verifierText -match 'Invoke-AndroidVerifierTally') `
-        'The device verifier does not use the cleanup helper.'
+    # Through the parser, so help text can't stand in for the calls: the helper dot-sourced, and
+    # the tally taken with it for both sides.
+    $tokens = $null
+    $errors = $null
+    $verifierAst = [System.Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $PSScriptRoot 'verify-injected-registers.ps1'), [ref]$tokens, [ref]$errors)
+    $commands = @($verifierAst.FindAll({ param($node) $node -is [System.Management.Automation.Language.CommandAst] }, $true))
+    $dotSourced = @($commands | Where-Object {
+        $_.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
+        $_.Extent.Text.Contains('injected-register-device.ps1') }).Count -gt 0
+    $tallies = @($commands | Where-Object { $_.GetCommandName() -eq 'Invoke-AndroidVerifierTally' }).Count
+    Assert-True ($dotSourced -and $tallies -ge 2) 'The device verifier does not use the cleanup helper for both sides.'
+    # The line that adds the suite to the run, not the path list that only decides when to run it.
     $prePushText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'pre-push.ps1') -Raw
-    Assert-True ($prePushText -match 'scripts/test-injected-register-device\.ps1') `
+    Assert-True ($prePushText -match "(?m)^\s*\`$suites \+= , @\('scripts/test-injected-register-device\.ps1'") `
         'The push gate does not run the verifier cleanup fixtures.'
 
 } finally {
