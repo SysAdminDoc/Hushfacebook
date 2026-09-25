@@ -117,7 +117,13 @@ public class PatchFamilyTest {
         assertEquals("The Download button on reels. It was set when you patched, so Pause can't turn it off. "
                         + "To rule it out, patch again without the patch it comes from.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD)));
-        assertEquals("The Reels ad blocks (banners, mid-rolls and ads the app adds on its own) and Save in every "
+        // Alone, a family's text is followed by "It was set", so a text naming several parts still
+        // has to be one thing. 4a7bba9 made the Reels one plural and this sentence stopped reading.
+        assertEquals("The Reels ad block (banners, mid-rolls and ads the app adds on its own). It was set when "
+                        + "you patched, so Pause can't turn it off. To rule it out, patch again without the patch "
+                        + "it comes from.",
+                PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS)));
+        assertEquals("The Reels ad block (banners, mid-rolls and ads the app adds on its own) and Save in every "
                         + "story's menu. They were set when you patched, so Pause can't turn them off. To rule one "
                         + "out, patch again without the patch it comes from.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS, PatchFamily.STORY_DOWNLOAD,
@@ -141,7 +147,7 @@ public class PatchFamilyTest {
         assertEquals(Arrays.asList(
                 "Hide sponsored posts: on (hushfacebook_hide_sponsored_posts=on, hushfacebook_hide_promoted_posts=off)",
                 "Hide sponsored reels: on (hushfacebook_hide_sponsored_reels=on); stays in while paused: "
-                        + "the Reels ad blocks (banners, mid-rolls and ads the app adds on its own)",
+                        + "the Reels ad block (banners, mid-rolls and ads the app adds on its own)",
                 "Download any reel: no switch, stays in while paused: the Download button on reels",
                 "not in this build: Hide suggested and promoted posts, Hide sponsored stories, Open links in "
                         + "external browser, Download any story, Block background ad prefetch, Block ad telemetry, "
@@ -152,7 +158,7 @@ public class PatchFamilyTest {
         assertEquals("Hide sponsored posts: disabled while paused (saved "
                 + "hushfacebook_hide_sponsored_posts=on, hushfacebook_hide_promoted_posts=off)", paused.get(0));
         assertEquals("Hide sponsored reels: disabled while paused (saved "
-                + "hushfacebook_hide_sponsored_reels=on); stays in while paused: the Reels ad blocks (banners, "
+                + "hushfacebook_hide_sponsored_reels=on); stays in while paused: the Reels ad block (banners, "
                 + "mid-rolls and ads the app adds on its own)",
                 paused.get(1));
         assertEquals("a patch with no switch reads the same paused", running.get(2), paused.get(2));

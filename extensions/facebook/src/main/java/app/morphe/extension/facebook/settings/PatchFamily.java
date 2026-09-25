@@ -41,7 +41,7 @@ public enum PatchFamily {
     SPONSORED_STORIES(FamilyNames.SPONSORED_STORIES, "sponsoredStories", null,
             Settings.HIDE_SPONSORED_STORIES),
     SPONSORED_REELS(FamilyNames.SPONSORED_REELS, "sponsoredReels",
-            "the Reels ad blocks (banners, mid-rolls and ads the app adds on its own)",
+            "the Reels ad block (banners, mid-rolls and ads the app adds on its own)",
             Settings.HIDE_SPONSORED_REELS),
     EXTERNAL_BROWSER(FamilyNames.EXTERNAL_BROWSER, "externalBrowser", null,
             Settings.OPEN_LINKS_EXTERNALLY),
@@ -60,7 +60,10 @@ public enum PatchFamily {
     /** The {@link SettingsStatus} method the patch switches on. */
     final String statusMethod;
 
-    /** What of this patch stays in while Hushfacebook is paused, or null when nothing does. */
+    /**
+     * What of this patch stays in while Hushfacebook is paused, or null when nothing does. One
+     * thing, never a plural: alone on the screen it's followed by "It was set when you patched".
+     */
     @Nullable
     public final String staysWhilePaused;
 
