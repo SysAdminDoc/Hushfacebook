@@ -223,6 +223,20 @@ try {
         @{ Name = 'the contracts helper dot-sourced inside a function the script calls'; Check = $dotSourcesContracts
             Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text)
                 "function Import-Contracts { $Text }`nImport-Contracts" } }
+        # A script block run with & has a scope of its own too, even around a . { } block, while
+        # . { } and ForEach-Object run in the script's.
+        @{ Name = 'the contracts helper dot-sourced inside & { }'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "& { $Text }" } }
+        @{ Name = 'the contracts helper dot-sourced inside . { } inside & { }'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "& { . { $Text } }" } }
+        @{ Name = 'the contracts helper dot-sourced inside & { } inside . { }'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) ". { & { $Text } }" } }
+        @{ Name = 'the contracts helper dot-sourced behind if ($false) inside . { }'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) ". { if (`$false) { $Text } }" } }
+        @{ Name = 'the contracts helper dot-sourced inside . { }'; Check = $dotSourcesContracts; Expect = $true
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) ". { $Text }" } }
+        @{ Name = 'the contracts helper dot-sourced inside ForEach-Object { }'; Check = $dotSourcesContracts; Expect = $true
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "1 | ForEach-Object { $Text }" } }
         @{ Name = 'the DexDiff call behind exit'; Check = $runsDexDiff
             Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text) "exit 0`n    $Text" } }
         @{ Name = 'the DexDiff call behind throw'; Check = $runsDexDiff

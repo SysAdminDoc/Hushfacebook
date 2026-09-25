@@ -578,15 +578,32 @@ function Get-LiveCommands {
         Where-Object { Test-AstReachable $_ $called $ending })
 }
 
+function Test-InScriptBlock {
+    <#
+    .SYNOPSIS
+        Whether a node sits in a script block, -Within itself included, on its way up to -Within.
+    #>
+    param($Node, $Within)
+
+    for ($up = $Node; $null -ne $up; $up = $up.Parent) {
+        if ($up -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) { return $true }
+        if ([object]::ReferenceEquals($up, $Within)) { return $false }
+    }
+    return $false
+}
+
 function Test-NamesFile {
     <#
     .SYNOPSIS
         Whether part of a command names this file in a string, as (Join-Path $PSScriptRoot 'x.ps1') does.
+        A string inside a script block doesn't count: '. { . x.ps1 }' dot-sources the block, and
+        only the dot-source inside it, with its own place in the script, names the file.
     #>
     param($Element, [string]$File)
 
     $null -ne $Element.Find({ param($node)
         $node -is [System.Management.Automation.Language.StringConstantExpressionAst] -and
+        -not (Test-InScriptBlock $node $Element) -and
         [System.IO.Path]::GetFileName($node.Value) -eq $File }, $true)
 }
 
@@ -632,19 +649,25 @@ function Get-AssignedVariable {
 function Test-DotSourcesFile {
     <#
     .SYNOPSIS
-        Whether a script dot-sources this file where it runs, outside every function, so what the
-        file defines is there for the rest of the script.
+        Whether a script dot-sources this file where it runs, outside every function and every
+        script block run with &, so what the file defines is there for the rest of the script.
+        Each of those runs in a scope of its own, and what's defined there goes when it returns.
+        A script block run with . or by ForEach-Object or Where-Object runs in the script's own.
     #>
     param([string]$Path, [string]$File)
 
     foreach ($command in @(Get-LiveCommands (Get-ScriptAst $Path))) {
         if ($command.InvocationOperator -ne [System.Management.Automation.Language.TokenKind]::Dot -or
             -not (Test-NamesFile $command.CommandElements[0] $File)) { continue }
-        $insideFunction = $false
+        $scoped = $false
         for ($parent = $command.Parent; $null -ne $parent; $parent = $parent.Parent) {
-            if ($parent -is [System.Management.Automation.Language.FunctionDefinitionAst]) { $insideFunction = $true }
+            if ($parent -is [System.Management.Automation.Language.FunctionDefinitionAst]) { $scoped = $true }
+            if ($parent -is [System.Management.Automation.Language.ScriptBlockExpressionAst] -and
+                $parent.Parent -is [System.Management.Automation.Language.CommandAst] -and
+                [object]::ReferenceEquals($parent.Parent.CommandElements[0], $parent) -and
+                $parent.Parent.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Ampersand) { $scoped = $true }
         }
-        if (-not $insideFunction) { return $true }
+        if (-not $scoped) { return $true }
     }
     return $false
 }
