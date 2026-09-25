@@ -14,10 +14,12 @@
     where the script can reach it: not in a function nothing reachable calls, not in a script
     block nothing runs, not in an if arm a constant condition rules out, not in a while or for body
     a constant false condition skips, and not after a statement that ends its block. That is an
-    exit, return, throw, break or continue, a call to a function that never returns, an if that
-    ends on every arm that can run, or a loop a constant true condition keeps going with no break
-    to leave it. The checks built on that match the call and its arguments, not a line that names
-    them.
+    exit, return, throw, break or continue, a call to a function that never returns, a script
+    block run with & or . that ends by anything but a return, an if that ends on every arm that
+    can run, a try whose finally ends or whose body ends where no catch can carry on past it, a
+    switch whose every clause ends, default included, a do loop whose body ends, or a loop a
+    constant true condition keeps going with no break to leave it. The checks built on that match
+    the call and its arguments, not a line that names them.
 #>
 
 function Get-ScriptAst {
@@ -139,25 +141,32 @@ function Test-StatementEnds {
     <#
     .SYNOPSIS
         Whether nothing after this statement in its block can run: an exit, return, throw, break
-        or continue; a call to a function that never returns, on its own, in a pipeline or
-        assigned; an if one of whose arms always runs, where every arm that can run ends; or a
-        while or for loop that a constant true condition keeps going, with no break in it.
+        or continue; a call to a function that never returns, or a script block run with & or .
+        that leaves (Test-RunBlockEnds), on its own, in a pipeline or assigned; an if one of whose
+        arms always runs, where every arm that can run ends; a try whose finally ends, or whose
+        body ends where no catch can run or every catch ends too; a switch with a default, every
+        clause of which ends; a do loop whose body ends; or a while or for loop that a constant
+        true condition keeps going, with no break in it.
+    .DESCRIPTION
+        -Escapes names the jumps that leave the block the statement sits in: all five at the top
+        of a block. A break or continue in a switch clause or a do body only leaves that switch or
+        loop, so a switch or do with one in it never counts as ending, and inside its clauses or
+        body only an exit, return or throw leaves the block around it. A script block run with &
+        or . is the other way round: a return only leaves the script block (Test-RunBlockEnds).
     #>
-    param($Statement, [System.Collections.Generic.HashSet[string]]$Ending)
+    param($Statement, [System.Collections.Generic.HashSet[string]]$Ending,
+        [string[]]$Escapes = @('exit', 'return', 'throw', 'break', 'continue'))
 
-    if ($Statement -is [System.Management.Automation.Language.ExitStatementAst] -or
-            $Statement -is [System.Management.Automation.Language.ReturnStatementAst] -or
-            $Statement -is [System.Management.Automation.Language.ThrowStatementAst] -or
-            $Statement -is [System.Management.Automation.Language.BreakStatementAst] -or
-            $Statement -is [System.Management.Automation.Language.ContinueStatementAst]) {
-        return $true
-    }
+    $jump = Get-JumpKind $Statement
+    if ($jump) { return $Escapes -contains $jump }
     $pipeline = $Statement
     while ($pipeline -is [System.Management.Automation.Language.AssignmentStatementAst]) { $pipeline = $pipeline.Right }
     if ($pipeline -is [System.Management.Automation.Language.PipelineAst]) {
-        foreach ($element in $pipeline.PipelineElements) {
-            if ($element -is [System.Management.Automation.Language.CommandAst] -and
-                $Ending.Contains([string]$element.GetCommandName())) { return $true }
+        for ($k = 0; $k -lt $pipeline.PipelineElements.Count; $k++) {
+            $element = $pipeline.PipelineElements[$k]
+            if ($element -isnot [System.Management.Automation.Language.CommandAst]) { continue }
+            if ($Ending.Contains([string]$element.GetCommandName())) { return $true }
+            if (Test-RunBlockEnds $element $Ending ($k -eq 0)) { return $true }
         }
         return $false
     }
@@ -165,10 +174,43 @@ function Test-StatementEnds {
         foreach ($clause in $Statement.Clauses) {
             $truth = Get-ConstantTruth $clause.Item1
             if ($truth -eq $false) { continue }
-            if (-not (Test-BlockEnds $clause.Item2 $Ending)) { return $false }
+            if (-not (Test-BlockEnds $clause.Item2 $Ending $Escapes)) { return $false }
             if ($truth -eq $true) { return $true }
         }
-        return $null -ne $Statement.ElseClause -and (Test-BlockEnds $Statement.ElseClause $Ending)
+        return $null -ne $Statement.ElseClause -and (Test-BlockEnds $Statement.ElseClause $Ending $Escapes)
+    }
+    if ($Statement -is [System.Management.Automation.Language.TryStatementAst]) {
+        # A finally that ends ends the try whatever came before it. Otherwise the body has to end,
+        # and a catch that finishes carries on after the try, so every catch has to end as well,
+        # unless the body leaves at its first statement with nothing that could throw, as a bare
+        # exit does. No catch catches a jump.
+        if ($null -ne $Statement.Finally -and (Test-BlockEnds $Statement.Finally $Ending $Escapes)) { return $true }
+        if (-not (Test-BlockEnds $Statement.Body $Ending $Escapes)) { return $false }
+        if (Test-PlainJump $Statement.Body.Statements[0]) { return $true }
+        foreach ($catch in $Statement.CatchClauses) {
+            if (-not (Test-BlockEnds $catch.Body $Ending $Escapes)) { return $false }
+        }
+        return $true
+    }
+    # What a switch clause or a loop body can use to leave the statement it's in.
+    $inner = @($Escapes | Where-Object { $_ -ne 'break' -and $_ -ne 'continue' })
+    if ($Statement -is [System.Management.Automation.Language.SwitchStatementAst]) {
+        # Whichever clause runs has to end, the default included, and a literal empty array runs
+        # none of them.
+        if ($null -eq $Statement.Default -or (Test-LeavesLoop $Statement)) { return $false }
+        $subject = Get-SinglePipelineExpression $Statement.Condition
+        if ($subject -is [System.Management.Automation.Language.ArrayExpressionAst] -and
+            $subject.SubExpression.Statements.Count -eq 0) { return $false }
+        foreach ($clause in $Statement.Clauses) {
+            if (-not (Test-BlockEnds $clause.Item2 $Ending $inner)) { return $false }
+        }
+        return Test-BlockEnds $Statement.Default $Ending $inner
+    }
+    if ($Statement -is [System.Management.Automation.Language.DoWhileStatementAst] -or
+            $Statement -is [System.Management.Automation.Language.DoUntilStatementAst]) {
+        # The body runs once before the condition is asked at all.
+        if (Test-LeavesLoop $Statement.Body) { return $false }
+        return Test-BlockEnds $Statement.Body $Ending $inner
     }
     if ($Statement -is [System.Management.Automation.Language.WhileStatementAst] -or
             $Statement -is [System.Management.Automation.Language.ForStatementAst]) {
@@ -179,15 +221,109 @@ function Test-StatementEnds {
     return $false
 }
 
+function Get-JumpKind {
+    <#
+    .SYNOPSIS
+        'exit', 'return', 'throw', 'break' or 'continue' for a statement that is one, else $null.
+    #>
+    param($Statement)
+
+    if ($Statement -is [System.Management.Automation.Language.ExitStatementAst]) { return 'exit' }
+    if ($Statement -is [System.Management.Automation.Language.ReturnStatementAst]) { return 'return' }
+    if ($Statement -is [System.Management.Automation.Language.ThrowStatementAst]) { return 'throw' }
+    if ($Statement -is [System.Management.Automation.Language.BreakStatementAst]) { return 'break' }
+    if ($Statement -is [System.Management.Automation.Language.ContinueStatementAst]) { return 'continue' }
+    return $null
+}
+
+function Test-PlainJump {
+    <#
+    .SYNOPSIS
+        Whether a statement is an exit, return, break or continue that runs nothing first that
+        could throw: no value or label, or a constant one.
+    #>
+    param($Statement)
+
+    if ($Statement -is [System.Management.Automation.Language.ExitStatementAst] -or
+            $Statement -is [System.Management.Automation.Language.ReturnStatementAst]) {
+        return $null -eq $Statement.Pipeline -or $null -ne (Get-ConstantValue $Statement.Pipeline)
+    }
+    if ($Statement -is [System.Management.Automation.Language.BreakStatementAst] -or
+            $Statement -is [System.Management.Automation.Language.ContinueStatementAst]) {
+        return $null -eq $Statement.Label -or $null -ne (Get-ConstantValue $Statement.Label)
+    }
+    return $false
+}
+
+function Test-RunBlockEnds {
+    <#
+    .SYNOPSIS
+        Whether a command is a script block run with & or . that leaves the block the command
+        sits in: its begin block, its end block, or its process block when it's first in the
+        pipeline and so runs once, ends with an exit, throw, break or continue. A break or
+        continue carries on out to the loop around the command. A return only leaves the named
+        block it's in, so a named block with one of its own doesn't count.
+    #>
+    param([System.Management.Automation.Language.CommandAst]$Command,
+        [System.Collections.Generic.HashSet[string]]$Ending, [bool]$First)
+
+    $expression = $Command.CommandElements[0]
+    if ($expression -isnot [System.Management.Automation.Language.ScriptBlockExpressionAst] -or
+        ($Command.InvocationOperator -ne [System.Management.Automation.Language.TokenKind]::Ampersand -and
+        $Command.InvocationOperator -ne [System.Management.Automation.Language.TokenKind]::Dot)) { return $false }
+    $body = $expression.ScriptBlock
+    $named = @($body.BeginBlock, $body.EndBlock)
+    if ($First) { $named += $body.ProcessBlock }
+    foreach ($block in $named) {
+        if ($null -eq $block) { continue }
+        $returns = $block.Find({ param($node)
+            if ($node -isnot [System.Management.Automation.Language.ReturnStatementAst]) { return $false }
+            $owner = $node.Parent
+            while ($owner -isnot [System.Management.Automation.Language.ScriptBlockAst]) { $owner = $owner.Parent }
+            [object]::ReferenceEquals($owner, $body) }, $true)
+        if ($null -eq $returns -and (Test-BlockEnds $block $Ending @('exit', 'throw', 'break', 'continue'))) { return $true }
+    }
+    return $false
+}
+
+function Test-LeavesLoop {
+    <#
+    .SYNOPSIS
+        Whether a break or continue sits anywhere in this node, which may leave the loop or switch
+        it belongs to early.
+    #>
+    param($Node)
+
+    return $null -ne $Node.Find({ param($node)
+        $node -is [System.Management.Automation.Language.BreakStatementAst] -or
+        $node -is [System.Management.Automation.Language.ContinueStatementAst] }, $true)
+}
+
+function Get-SinglePipelineExpression {
+    <#
+    .SYNOPSIS
+        The expression a pipeline of one plain expression holds, else the node itself.
+    #>
+    param($Node)
+
+    if ($Node -is [System.Management.Automation.Language.PipelineAst] -and $Node.PipelineElements.Count -eq 1 -and
+            $Node.PipelineElements[0] -is [System.Management.Automation.Language.CommandExpressionAst]) {
+        return $Node.PipelineElements[0].Expression
+    }
+    return $Node
+}
+
 function Test-BlockEnds {
     <#
     .SYNOPSIS
-        Whether one of a block's statements ends it (Test-StatementEnds).
+        Whether one of a block's statements ends it (Test-StatementEnds), with what leaves the
+        block counted as -Escapes says.
     #>
-    param($Block, [System.Collections.Generic.HashSet[string]]$Ending)
+    param($Block, [System.Collections.Generic.HashSet[string]]$Ending,
+        [string[]]$Escapes = @('exit', 'return', 'throw', 'break', 'continue'))
 
     foreach ($statement in $Block.Statements) {
-        if (Test-StatementEnds $statement $Ending) { return $true }
+        if (Test-StatementEnds $statement $Ending $Escapes) { return $true }
     }
     return $false
 }

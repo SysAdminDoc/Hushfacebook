@@ -206,6 +206,12 @@ try {
             $Node -is [System.Management.Automation.Language.CommandAst] -and
             $Node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
             $Node.Extent.Text -like '*injected-register-device.ps1*' }
+        # The device half's first statement, which the copies below put a statement in front of.
+        $deviceHalfStart = { param($Node)
+            $Node -is [System.Management.Automation.Language.CommandAst] -and
+            $Node.Extent.Text -like '*running the device verifier on*' }
+        $beforeDeviceHalf = { param([string]$Statement)
+            Edit-ScriptNode $verifierText $deviceHalfStart { param($Text) "$Statement`n    $Text" }.GetNewClosure() }
         $wiringCases = @(
             @{ Name = 'the untouched verifier'; Check = $dotSourcesDevice; Expect = $true; Text = $verifierText }
             @{ Name = 'the untouched verifier'; Check = $talliesBothSides; Expect = $true; Text = $verifierText }
@@ -238,6 +244,50 @@ try {
                     $Node.Clauses[0].Item1.Extent.Text -eq '$Serial' } { param($Text) "function Invoke-DeviceHalf {`n$Text`n}" } }
             @{ Name = 'the device helper dot-sourced in a dead branch'; Check = $dotSourcesDevice
                 Text = Edit-ScriptNode $verifierText $deviceDotSource { param($Text) "if (`$false) { $Text }" } }
+            # Statements that end their block with the exit nested inside them. First in the device
+            # half, each leaves every -Serial run passing with no tally taken. The copies expected
+            # to pass keep those rules off statements that can still carry on: a catch that
+            # finishes, a clause that matches and finishes, a break out of the do, and a return
+            # out of the script block.
+            @{ Name = 'the device half after try { exit 0 } finally { }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'try { exit 0 } finally { }' }
+            @{ Name = 'the device half after try { exit 0 } catch { }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'try { exit 0 } catch { }' }
+            @{ Name = "the device half after try { throw 'skip' } catch { exit 0 }"; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf "try { throw 'skip' } catch { exit 0 }" }
+            @{ Name = 'the device half after try { } finally { exit 0 }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'try { } finally { exit 0 }' }
+            @{ Name = "the device half after try { throw 'skip' } catch { }"; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf "try { throw 'skip' } catch { }" }
+            @{ Name = 'the device half after switch (1) { default { exit 0 } }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'switch (1) { default { exit 0 } }' }
+            @{ Name = "the device half after switch (1) { 1 { 'one' } default { exit 0 } }"; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf "switch (1) { 1 { 'one' } default { exit 0 } }" }
+            @{ Name = 'the device half after a switch with no default'; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf 'switch (1) { 2 { exit 0 } }' }
+            @{ Name = 'the device half after a switch a break can leave'; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf 'switch (1) { default { if ($Serial) { break }; exit 0 } }' }
+            @{ Name = 'the device half after a switch over @()'; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf 'switch (@()) { default { exit 0 } }' }
+            @{ Name = 'the device half after do { exit 0 } while ($false)'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'do { exit 0 } while ($false)' }
+            @{ Name = 'the device half after do { exit 0 } until ($true)'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'do { exit 0 } until ($true)' }
+            @{ Name = 'the device half after a do a break can leave'; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf 'do { if ($Serial) { break }; exit 0 } while ($false)' }
+            @{ Name = 'the device half after & { exit 0 }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf '& { exit 0 }' }
+            @{ Name = "the device half after . { throw 'skip' }"; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf ". { throw 'skip' }" }
+            @{ Name = 'the device half after & { begin { exit 0 } }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf '& { begin { exit 0 } }' }
+            @{ Name = 'the device half after & { process { exit 0 } }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf '& { process { exit 0 } }' }
+            @{ Name = 'the device half after @() | & { process { exit 0 } }, which runs no process block'
+                Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf '@() | & { process { exit 0 } }' }
+            @{ Name = 'the device half after a script block a return can leave'; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeDeviceHalf '& { if ($Serial) { return }; exit 0 }' }
             @{ Name = 'the suite line in a block comment'; Check = $gateRunsSuite
                 Text = Edit-ScriptNode $prePushSource { param($Node)
                     $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
