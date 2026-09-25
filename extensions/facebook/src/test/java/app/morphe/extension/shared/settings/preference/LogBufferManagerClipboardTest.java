@@ -123,14 +123,86 @@ public class LogBufferManagerClipboardTest {
         assertFalse(whole.contains("clipboard_note"));
     }
 
+    private static final String CUT_AT_1000 =
+            "\nclipboard_note: cut at 1000 characters; use Save full report for everything\n";
+
+    /** The report up to its events, as the full export writes it. */
+    private static String headOf(String report) {
+        int events = report.indexOf("\n\n[SELECTED EVENTS]");
+        return events < 0 ? report : report.substring(0, events);
+    }
+
+    /** A section whose one line the test sets, to put the head at any length it wants. */
+    private static final class Adjustable implements LogBufferManager.ReportSection {
+        String line = "";
+
+        @Override
+        public String title() {
+            return "ADJUSTABLE";
+        }
+
+        @Override
+        public List<String> lines() {
+            return Collections.singletonList(line);
+        }
+    }
+
     @Test
     public void aHeadTooLongForTheCopyIsCutAtItsEndNotItsStart() {
         LogBufferManager.registerReportSection(section("LONG", run('y', 5_000)));
         events(3);
+        String head = headOf(LogBufferManager.buildExportText());
         String copy = LogBufferManager.clipboardText(1_000);
         assertTrue(copy.length() + " characters", copy.length() <= 1_000);
-        assertTrue(copy, copy.startsWith("MORPHE DIAGNOSTIC REPORT\n"));
-        assertTrue(copy, copy.endsWith(
-                "\nclipboard_note: cut at 1000 characters; use Save full report for everything\n"));
+        assertTrue(copy, copy.endsWith(CUT_AT_1000));
+        // What's kept is the start of the head: the banner, the build lines and [PATCHES].
+        int kept = copy.length() - CUT_AT_1000.length();
+        assertEquals(timeless(head.substring(0, kept)), timeless(copy.substring(0, kept)));
+    }
+
+    /**
+     * Every head length around the limit. A head just short of it used to throw, so nothing was
+     * copied, or lose every event with no count. Now nothing throws, and whenever a line saying
+     * the events were left out fits beside the head, the head arrives whole.
+     */
+    @Test
+    public void everyHeadLengthNearTheLimitCopiesAndKeepsTheHeadWholeWhenANoteFits() {
+        Adjustable adjustable = new Adjustable();
+        LogBufferManager.registerReportSection(adjustable);
+        events(20);
+        int limit = 3_000;
+        int bare = headOf(LogBufferManager.buildExportText()).length();
+        String allLeftOut = "\nclipboard_note: 20 events left out; use Save full report for everything\n";
+
+        for (int target = limit - 400; target <= limit + 20; target++) {
+            if (target < bare) continue;
+            adjustable.line = run('y', target - bare);
+            String head = headOf(LogBufferManager.buildExportText());
+            String copy = LogBufferManager.clipboardText(limit);
+            assertTrue(target + ": " + copy.length() + " characters", copy.length() <= limit);
+            assertTrue(target + ": " + copy, copy.startsWith("MORPHE DIAGNOSTIC REPORT\n"));
+            if (head.length() + allLeftOut.length() <= limit) {
+                assertTrue("a head of " + head.length() + " was not kept whole", timeless(copy).startsWith(timeless(head)));
+            }
+        }
+    }
+
+    /** A cut never leaves half of a character in front of the note. */
+    @Test
+    public void aCutNeverSplitsACharacter() {
+        Adjustable adjustable = new Adjustable();
+        LogBufferManager.registerReportSection(adjustable);
+        // An event, or the report has nothing worth sending and is empty.
+        events(1);
+        String bareHead = headOf(LogBufferManager.buildExportText());
+        int lineStart = bareHead.indexOf("[ADJUSTABLE]\n") + "[ADJUSTABLE]\n".length();
+        int end = 1_000 - CUT_AT_1000.length();
+        // The emoji's first half sits at the last place the cut would keep.
+        adjustable.line = run('h', end - 1 - lineStart) + "😀" + run('t', 500);
+
+        String copy = LogBufferManager.clipboardText(1_000);
+        assertTrue(copy, copy.endsWith(CUT_AT_1000));
+        assertEquals("the copy holds half a character",
+                copy, new String(copy.getBytes(java.nio.charset.StandardCharsets.UTF_8), java.nio.charset.StandardCharsets.UTF_8));
     }
 }

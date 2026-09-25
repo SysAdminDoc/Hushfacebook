@@ -356,8 +356,17 @@ public final class LogBufferManager {
             return export.head + eventsSection(export.events.subList(from, total), droppedNote(from));
         }
 
+        // The events' heading doesn't fit beside the head, but a line saying they were left out
+        // may. The head stays whole whenever it does.
+        String allLeftOut = "\nclipboard_note: " + total + " events left out; use Save full report for everything\n";
+        if (total > 0 && export.head.length() + allLeftOut.length() <= maxChars) return export.head + allLeftOut;
+
+        // Only a head too long on its own is cut, at its end, and never between the two halves
+        // of a character.
         String cut = "\nclipboard_note: cut at " + maxChars + " characters; use Save full report for everything\n";
-        return export.head.substring(0, Math.max(0, maxChars - cut.length())) + cut;
+        int end = Math.max(0, Math.min(export.head.length(), maxChars - cut.length()));
+        if (end > 0 && Character.isHighSurrogate(export.head.charAt(end - 1))) end--;
+        return export.head.substring(0, end) + cut;
     }
 
     private static String droppedNote(int dropped) {
