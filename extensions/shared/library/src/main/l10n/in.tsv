@@ -1,6 +1,10 @@
 # Indonesian for Hushfacebook: the English key, a tab, the translation. One row per string.
 # After editing, run python scripts/gen-l10n.py from the repository root.
 "Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Halaman yang mungkin Anda sukai” dan kartu penawaran dari Facebook sendiri. Survei di Kabar Beranda ikut hilang.
+%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.
+%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.
+%1$d switch will change.	%1$d sakelar akan berubah.
+%1$d switches will change.	%1$d sakelar akan berubah.
 %1$s of %2$s	%1$s dari %2$s
 %1$s so far	%1$s terunduh
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
@@ -18,10 +22,17 @@ Audience Network off	Audience Network nonaktif
 Back	Kembali
 Background ad prefetch blocked	Pramuat iklan di latar belakang diblokir
 Changing these	Mengubah pilihan ini
+Choose a settings file. You'll see how many switches it changes before anything does.	Pilih file pengaturan. Anda akan melihat berapa sakelar yang diubahnya sebelum ada yang berubah.
 Clear diagnostic data	Hapus data diagnostik
 Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Salin laporan singkat, atau simpan laporan lengkap ke Download/Morphe. Tautan, ID akun dan postingan, cookie sesi, serta nama tidak disertakan.
 Copy quick report	Salin laporan singkat
+Couldn't import every setting. Check the switches on this screen.	Tidak semua pengaturan dapat diimpor. Periksa sakelar di layar ini.
+Couldn't import the settings. Nothing was changed.	Pengaturan tidak dapat diimpor. Tidak ada yang diubah.
+Couldn't open that file. Nothing was changed.	File itu tidak dapat dibuka. Tidak ada yang diubah.
+Couldn't open the file picker. Try again.	Pemilih file tidak dapat dibuka. Coba lagi.
 Couldn't put back the diagnostic data. Try again.	Data diagnostik tidak dapat dikembalikan. Coba lagi.
+Couldn't save the settings file. Try again.	File pengaturan tidak dapat disimpan. Coba lagi.
+Couldn't start that. Try again in a moment.	Tidak dapat dimulai. Coba lagi dalam beberapa saat.
 Couldn't start the report export. Try again shortly.	Ekspor laporan tidak dapat dimulai. Coba lagi dalam beberapa saat.
 Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	Mode gelap memakai warna hitam, bukan abu-abu gelap. Aktifkan mode gelap di Facebook untuk melihatnya.
 Debug logging	Pencatatan debug
@@ -34,6 +45,7 @@ Download failed	Unduhan gagal
 Empties the log and the filter counts a report would include.	Mengosongkan log dan hitungan filter yang akan dimasukkan ke laporan.
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Semua sakelar kecuali Pencatatan debug dianggap nonaktif, dan yang diatur saat Anda menambal tetap aktif. Pengaturan Anda tetap seperti semula.
 Export diagnostic report	Ekspor laporan diagnostik
+Export settings	Ekspor pengaturan
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook tertutup tiga kali dalam satu menit setelah dibuka, jadi Hushfacebook menjeda dirinya sendiri.
 Facebook doesn't download ads or its ad model in the background.	Facebook tidak mengunduh iklan atau model iklannya di latar belakang.
 Facebook doesn't serve ads to other apps on this phone.	Facebook tidak menayangkan iklan ke aplikasi lain di ponsel ini.
@@ -53,6 +65,9 @@ Hushfacebook saves	Penyimpanan Hushfacebook
 Hushfacebook settings	Pengaturan Hushfacebook
 Hushfacebook settings couldn't open	Pengaturan Hushfacebook tidak dapat dibuka
 Hushfacebook turns back on when Facebook restarts.	Hushfacebook aktif lagi saat Facebook dimulai ulang.
+Import	Impor
+Import settings	Impor pengaturan
+Importing settings	Mengimpor pengaturan
 Licenses	Lisensi
 Link expired. Reopen the item and try again	Tautan kedaluwarsa. Buka ulang kontennya lalu coba lagi
 Links	Tautan
@@ -67,6 +82,7 @@ Pause Hushfacebook	Jeda Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.
 Profiles and some Settings pages open again on this re-signed build.	Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.
 Re-signed build fix	Perbaikan build yang ditandatangani ulang
+Reading the settings file	Membaca file pengaturan
 Reels and Watch	Reels dan Watch
 Retry	Coba lagi
 Save any story	Simpan cerita apa pun
@@ -75,16 +91,28 @@ Save full report	Simpan laporan lengkap
 Saved to %1$s	Disimpan ke %1$s
 Saved to the gallery	Disimpan ke galeri
 Saved. Restart Facebook to apply this change.	Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.
+Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.	Menyimpan sakelar dari bagian-bagian di atas ke file pilihan Anda. Jeda dan Pencatatan debug tidak ikut disimpan.
 Saving a photo	Menyimpan foto
 Saving a video	Menyimpan video
+Saving the settings file	Menyimpan file pengaturan
 Saving...	Menyimpan...
 Set when you patched	Diatur saat Anda menambal
 Settings couldn't open	Pengaturan tidak dapat dibuka
 Settings couldn't refresh completely. Reopen settings and try again.	Pengaturan tidak dapat dimuat ulang sepenuhnya. Buka kembali pengaturan lalu coba lagi.
+Settings exported.	Pengaturan diekspor.
+Settings imported. %1$d switch changed.	Pengaturan diimpor. %1$d sakelar berubah.
+Settings imported. %1$d switches changed.	Pengaturan diimpor. %1$d sakelar berubah.
 Source code and issues	Kode sumber dan laporan masalah
 Stays in while paused	Tetap aktif saat dijeda
 Stories	Cerita
 Tap to turn it back on.	Ketuk untuk mengaktifkan Hushfacebook lagi.
+That file is too large to be a settings file. Nothing was changed.	File itu terlalu besar untuk sebuah file pengaturan. Tidak ada yang diubah.
+That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	File itu bukan teks yang dapat dibaca, jadi mungkin rusak saat dikirim. Tidak ada yang diubah.
+That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	File itu mencantumkan satu pengaturan dua kali, jadi tidak jelas nilai mana yang dipakai. Tidak ada yang diubah.
+That isn't a Hushfacebook settings file. Nothing was changed.	Itu bukan file pengaturan Hushfacebook. Tidak ada yang diubah.
+That settings file holds a value Hushfacebook can't read. Nothing was changed.	File pengaturan itu memuat nilai yang tidak dapat dibaca Hushfacebook. Tidak ada yang diubah.
+That settings file is damaged or only partly downloaded. Nothing was changed.	File pengaturan itu rusak atau hanya terunduh sebagian. Tidak ada yang diubah.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	File pengaturan itu dibuat oleh Hushfacebook yang lebih baru dari ini. Tidak ada yang diubah.
 the ad telemetry block	pemblokir telemetri iklan
 the AMOLED black theme	tema hitam AMOLED
 the Audience Network block	pemblokir Audience Network
@@ -98,9 +126,11 @@ The setting couldn't finish updating. Its saved value is shown.	Pengaturan ini t
 There is no diagnostic data to clear.	Tidak ada data diagnostik yang dapat dihapus.
 There is no diagnostic data to put back.	Tidak ada data diagnostik yang dapat dikembalikan.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Semua ini dipilih di Morphe Manager saat Anda menambal, dan Jeda tidak mematikannya. Tambal ulang untuk mengubahnya.
+This phone has no file picker, so there's no way to choose a file here.	Ponsel ini tidak memiliki pemilih file, jadi file tidak dapat dipilih di sini.
 Try again, or go back to Facebook.	Coba lagi, atau kembali ke Facebook.
 Version	Versi
 Version %1$s for Facebook %2$s	Versi %1$s untuk Facebook %2$s
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Tautan web tidak lagi dibuka di browser dalam aplikasi Facebook. Tautan ke Facebook sendiri tetap dibuka di aplikasi.
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Mencatat ke log Android apa yang dilakukan setiap tambalan. Biarkan nonaktif kecuali Anda sedang melaporkan masalah.
 You paused Hushfacebook.	Anda menjeda Hushfacebook.
+Your switches already match that file, so nothing will change.	Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang berubah.

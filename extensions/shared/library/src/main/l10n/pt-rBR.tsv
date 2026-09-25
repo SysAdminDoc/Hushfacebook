@@ -1,6 +1,10 @@
 # Brazilian Portuguese for Hushfacebook: the English key, a tab, the translation. One row per string.
 # After editing, run python scripts/gen-l10n.py from the repository root.
 "Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Páginas que você talvez curta” e os blocos de autopromoção do Facebook. As pesquisas no feed também somem.
+%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	%1$d item desse arquivo não é uma configuração que esta versão do Hushfacebook conhece, então vai ficar de fora.
+%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	%1$d itens desse arquivo não são configurações que esta versão do Hushfacebook conhece, então vão ficar de fora.
+%1$d switch will change.	%1$d opção vai mudar.
+%1$d switches will change.	%1$d opções vão mudar.
 %1$s of %2$s	%1$s de %2$s
 %1$s so far	%1$s até agora
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Isso foi definido quando você aplicou os patches, então a pausa não consegue desligá-lo. Para descartar isso como causa, aplique os patches de novo sem o patch responsável.
@@ -18,10 +22,17 @@ Audience Network off	Audience Network desativado
 Back	Voltar
 Background ad prefetch blocked	Pré-carregamento de anúncios em segundo plano bloqueado
 Changing these	Como mudar esses itens
+Choose a settings file. You'll see how many switches it changes before anything does.	Escolha um arquivo de configurações. Você vai ver quantas opções ele muda antes de qualquer coisa mudar.
 Clear diagnostic data	Limpar dados de diagnóstico
 Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Copie um relatório curto ou salve o completo em Download/Morphe. Links, IDs de conta e de post, cookies de sessão e nomes ficam de fora.
 Copy quick report	Copiar relatório rápido
+Couldn't import every setting. Check the switches on this screen.	Não foi possível importar todas as configurações. Confira as opções nesta tela.
+Couldn't import the settings. Nothing was changed.	Não foi possível importar as configurações. Nada foi alterado.
+Couldn't open that file. Nothing was changed.	Não foi possível abrir esse arquivo. Nada foi alterado.
+Couldn't open the file picker. Try again.	Não foi possível abrir o seletor de arquivos. Tente de novo.
 Couldn't put back the diagnostic data. Try again.	Não foi possível restaurar os dados de diagnóstico. Tente de novo.
+Couldn't save the settings file. Try again.	Não foi possível salvar o arquivo de configurações. Tente de novo.
+Couldn't start that. Try again in a moment.	Não foi possível começar. Tente de novo daqui a pouco.
 Couldn't start the report export. Try again shortly.	Não foi possível iniciar a exportação do relatório. Tente de novo daqui a pouco.
 Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	O modo escuro fica preto em vez de cinza-escuro. Ative o modo escuro no Facebook para ver.
 Debug logging	Registro de depuração
@@ -34,6 +45,7 @@ Download failed	Falha no download
 Empties the log and the filter counts a report would include.	Apaga o registro e as contagens dos filtros que iriam para um relatório.
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Todas as opções, menos o Registro de depuração, funcionam como se estivessem desligadas, e o que foi definido ao aplicar os patches continua ativo. Suas configurações ficam como estão.
 Export diagnostic report	Exportar relatório de diagnóstico
+Export settings	Exportar configurações
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	O Facebook fechou três vezes no primeiro minuto depois de abrir, então o Hushfacebook entrou em pausa automaticamente.
 Facebook doesn't download ads or its ad model in the background.	O Facebook não baixa anúncios nem o modelo de anúncios dele em segundo plano.
 Facebook doesn't serve ads to other apps on this phone.	O Facebook não envia anúncios para outros apps deste celular.
@@ -53,6 +65,9 @@ Hushfacebook saves	Salvamentos do Hushfacebook
 Hushfacebook settings	Configurações do Hushfacebook
 Hushfacebook settings couldn't open	Não foi possível abrir as configurações do Hushfacebook
 Hushfacebook turns back on when Facebook restarts.	O Hushfacebook será reativado quando o Facebook reiniciar.
+Import	Importar
+Import settings	Importar configurações
+Importing settings	Importando as configurações
 Licenses	Licenças
 Link expired. Reopen the item and try again	Link expirado. Reabra o item e tente de novo
 Links	Links
@@ -67,6 +82,7 @@ Pause Hushfacebook	Pausar o Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Posts que o Facebook classifica como promoções, e não como anúncios.
 Profiles and some Settings pages open again on this re-signed build.	Perfis e algumas páginas de Configurações voltam a abrir nesta versão reassinada.
 Re-signed build fix	Correção para versão reassinada
+Reading the settings file	Lendo o arquivo de configurações
 Reels and Watch	Reels e Watch
 Retry	Tentar novamente
 Save any story	Salvar qualquer story
@@ -75,16 +91,28 @@ Save full report	Salvar relatório completo
 Saved to %1$s	Salvo em %1$s
 Saved to the gallery	Salvo na galeria
 Saved. Restart Facebook to apply this change.	Salvo. Reinicie o Facebook para aplicar esta alteração.
+Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.	Salva as opções das seções acima em um arquivo que você escolher. A pausa e o Registro de depuração ficam de fora.
 Saving a photo	Salvando uma foto
 Saving a video	Salvando um vídeo
+Saving the settings file	Salvando o arquivo de configurações
 Saving...	Salvando...
 Set when you patched	Definido ao aplicar os patches
 Settings couldn't open	Não foi possível abrir as configurações
 Settings couldn't refresh completely. Reopen settings and try again.	Não foi possível atualizar as configurações por completo. Reabra as configurações e tente de novo.
+Settings exported.	Configurações exportadas.
+Settings imported. %1$d switch changed.	Configurações importadas. %1$d opção mudou.
+Settings imported. %1$d switches changed.	Configurações importadas. %1$d opções mudaram.
 Source code and issues	Código-fonte e relatos de problemas
 Stays in while paused	O que continua ativo na pausa
 Stories	Stories
 Tap to turn it back on.	Toque para reativar.
+That file is too large to be a settings file. Nothing was changed.	Esse arquivo é grande demais para ser um arquivo de configurações. Nada foi alterado.
+That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Esse arquivo não é texto legível, então pode ter se danificado no caminho. Nada foi alterado.
+That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	Esse arquivo lista uma configuração duas vezes, então não dá para saber qual valor usar. Nada foi alterado.
+That isn't a Hushfacebook settings file. Nothing was changed.	Isso não é um arquivo de configurações do Hushfacebook. Nada foi alterado.
+That settings file holds a value Hushfacebook can't read. Nothing was changed.	Esse arquivo de configurações tem um valor que o Hushfacebook não consegue ler. Nada foi alterado.
+That settings file is damaged or only partly downloaded. Nothing was changed.	Esse arquivo de configurações está danificado ou só foi baixado em parte. Nada foi alterado.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Esse arquivo de configurações foi escrito por um Hushfacebook mais novo que este. Nada foi alterado.
 the ad telemetry block	o bloqueio da telemetria de anúncios
 the AMOLED black theme	o tema preto AMOLED
 the Audience Network block	o bloqueio do Audience Network
@@ -98,9 +126,11 @@ The setting couldn't finish updating. Its saved value is shown.	Não foi possív
 There is no diagnostic data to clear.	Não há dados de diagnóstico para limpar.
 There is no diagnostic data to put back.	Não há dados de diagnóstico para restaurar.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Eles são escolhidos no Morphe Manager quando você aplica os patches, e a pausa não os desliga. Aplique os patches de novo para mudá-los.
+This phone has no file picker, so there's no way to choose a file here.	Este celular não tem seletor de arquivos, então não dá para escolher um aqui.
 Try again, or go back to Facebook.	Tente de novo ou volte para o Facebook.
 Version	Versão
 Version %1$s for Facebook %2$s	Versão %1$s para o Facebook %2$s
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Os links da web deixam de abrir no navegador interno do Facebook. As páginas do próprio Facebook continuam abrindo no app.
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Grava no registro do Android o que cada patch faz. Deixe desligado, a não ser que esteja relatando um problema.
 You paused Hushfacebook.	Você pausou o Hushfacebook.
+Your switches already match that file, so nothing will change.	Suas opções já correspondem a esse arquivo, então nada vai mudar.

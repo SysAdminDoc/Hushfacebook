@@ -58,6 +58,61 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
     /** Thrown by the next initialize() and then cleared: how a test reaches the recovery page. */
     static volatile RuntimeException failNextInitialization;
 
+    /** Where a settings file waiting on the person's answer is kept across the page being rebuilt. */
+    static final String PENDING_IMPORT_STATE = "hushfacebook_pending_import";
+
+    /**
+     * A settings file that was read and waits on the person's answer, as
+     * {@link SettingsBackup.Snapshot#toBundle()} wrote it, or null.
+     */
+    @Nullable
+    Bundle pendingImport;
+
+    /** The preview of {@link #pendingImport} while it's on screen. */
+    @Nullable
+    AlertDialog importPreview;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        if (savedInstanceState != null) pendingImport = savedInstanceState.getBundle(PENDING_IMPORT_STATE);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        SettingsBackupPreference.onPageResumed(this);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (pendingImport != null) outState.putBundle(PENDING_IMPORT_STATE, pendingImport);
+    }
+
+    @Override
+    public void onDestroyView() {
+        // The preview is drawn over this page's window. It stays unanswered, and the page that
+        // replaces this one shows it again.
+        SettingsBackupPreference.closePreview(this);
+        super.onDestroyView();
+    }
+
+    /**
+     * The file pickers' answers. Android finds this page by the name the framework gave it when
+     * the picker was opened, and a page rebuilt while the picker was up is given the same name.
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        SettingsBackupPreference.onResult(this, requestCode, resultCode, data);
+    }
+
+    /** Shows what the switches are saved as, after an import wrote them. */
+    void refreshSwitches() {
+        updateUIToSettingValues();
+    }
+
     @Override
     protected void initialize() {
         RuntimeException fault = failNextInitialization;
@@ -164,6 +219,14 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                         + "runs in its place. Debug logging keeps working, and your settings stay as they are.")));
         String stays = PatchFamily.staysWhilePausedSummary(build);
         if (stays != null) hushfacebook.addPreference(info(context, L10n.t(STAYS_WHILE_PAUSED), stays));
+        // Morphe Manager can export the patch choices and the signing key, not these switches.
+        hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.EXPORT,
+                L10n.t("Export settings"),
+                L10n.t("Saves the switches from the sections above to a file you choose. Pause and Debug logging "
+                        + "stay out of it.")));
+        hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.IMPORT,
+                L10n.t("Import settings"),
+                L10n.t("Choose a settings file. You'll see how many switches it changes before anything does.")));
         hushfacebook.addPreference(toggle(context, BaseSettings.DEBUG, L10n.t("Debug logging"),
                 L10n.t("Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.")));
         // Both rows come without a title of their own: Hushfeed's gave them one from string
@@ -375,6 +438,20 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
     static final class ClearRow extends ClearLogBufferPreference {
         ClearRow(Context context) {
             super(context);
+        }
+
+        @Override
+        protected void onBindView(View view) {
+            super.onBindView(view);
+            showAllText(view);
+            view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
+        }
+    }
+
+    /** Export settings or Import settings. */
+    static final class BackupRow extends SettingsBackupPreference {
+        BackupRow(HushfacebookPreferenceFragment page, Context context, int action, String title, String summary) {
+            super(page, context, action, title, summary);
         }
 
         @Override

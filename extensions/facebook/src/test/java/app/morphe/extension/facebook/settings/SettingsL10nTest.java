@@ -12,6 +12,8 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.Intent;
+import android.net.Uri;
 import android.preference.Preference;
 import android.preference.PreferenceGroup;
 
@@ -47,7 +49,8 @@ import app.morphe.extension.shared.settings.preference.LogBufferManager;
 /**
  * What the settings screen shows, in each language the bundle carries and under the two
  * pseudo-locales. The screen is built with every patch in, once running and once for each reason
- * it can be paused, with its recovery page, its export dialog and the toasts its rows raise.
+ * it can be paused, with its recovery page, its export dialog, the settings file's preview and
+ * the toasts its rows raise.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 30)
@@ -86,7 +89,7 @@ public class SettingsL10nTest {
      */
     @Test
     @Config(qualifiers = "en-rXA")
-    public void underEnXaEveryWordOnTheScreenComesFromTheCatalog() {
+    public void underEnXaEveryWordOnTheScreenComesFromTheCatalog() throws Exception {
         List<String> plain = new ArrayList<>();
         Set<String> shown = everythingShown();
         for (String text : shown) {
@@ -101,7 +104,7 @@ public class SettingsL10nTest {
     /** Under ar-XB every word the catalog draws is inside a right-to-left override. */
     @Test
     @Config(qualifiers = "ar-rXB-ldrtl")
-    public void underArXbEveryWordOnTheScreenIsMirrored() {
+    public void underArXbEveryWordOnTheScreenIsMirrored() throws Exception {
         List<String> plain = new ArrayList<>();
         for (String text : everythingShown()) {
             if (AS_IS.contains(text)) continue;
@@ -149,7 +152,7 @@ public class SettingsL10nTest {
      * spells the same way can't tell the two apart, so only rows that change are evidence.
      */
     @Test
-    public void inEveryShippedLanguageNothingOnTheScreenStaysEnglish() {
+    public void inEveryShippedLanguageNothingOnTheScreenStaysEnglish() throws Exception {
         String[][] languages = {{"de", "de"}, {"es", "es"}, {"in-rID", "in"}, {"pt-rBR", "pt-rbr"}, {"tr", "tr"}};
         for (String[] language : languages) {
             RuntimeEnvironment.setQualifiers("+" + language[0]);
@@ -213,7 +216,7 @@ public class SettingsL10nTest {
     }
 
     /** Titles, summaries, dialog text and toasts, from every state the screen can be drawn in. */
-    private static Set<String> everythingShown() {
+    private static Set<String> everythingShown() throws Exception {
         Set<String> shown = new LinkedHashSet<>();
         try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
             Activity activity = controller.get();
@@ -246,6 +249,8 @@ public class SettingsL10nTest {
             assertNotNull("the licences row opened no dialog", notice);
             shown.add(String.valueOf(org.robolectric.Shadows.shadowOf(notice).getTitle()));
             notice.dismiss();
+
+            addSettingsFileText(activity, rows, shown);
 
             // What the diagnostics rows say in a toast, with nothing to export or clear.
             LogBufferManager.exportToClipboard();
@@ -292,6 +297,76 @@ public class SettingsL10nTest {
         }
         shown.remove("null");
         return shown;
+    }
+
+    /**
+     * Export settings and Import settings through the picker: the toast an export ends with, the
+     * preview an import shows, both ways it can read, the toast after it, and every refusal.
+     */
+    private static void addSettingsFileText(Activity activity, List<Preference> rows, Set<String> shown)
+            throws Exception {
+        android.content.ContentResolver resolver = RuntimeEnvironment.getApplication().getContentResolver();
+        Uri written = Uri.parse("content://settings-l10n/export.json");
+        org.robolectric.Shadows.shadowOf(resolver).registerOutputStream(written, new java.io.ByteArrayOutputStream());
+        answer(activity, pick(activity, find(rows, "action_export_settings")), written);
+        addToast(shown);
+
+        String key = Settings.HIDE_SPONSORED_POSTS.key;
+        String changesOne = "{\"format\":\"hushfacebook-settings\",\"schema\":1,\"settings\":{\"" + key
+                + "\":false,\"a_later_switch\":true}}";
+        AlertDialog preview = importPreview(activity, rows, changesOne);
+        org.robolectric.shadows.ShadowAlertDialog shadow = org.robolectric.Shadows.shadowOf(preview);
+        shown.add(String.valueOf(shadow.getTitle()));
+        shown.add(String.valueOf(shadow.getMessage()));
+        shown.add(String.valueOf(preview.getButton(AlertDialog.BUTTON_POSITIVE).getText()));
+        assertEquals(activity.getString(android.R.string.cancel),
+                String.valueOf(preview.getButton(AlertDialog.BUTTON_NEGATIVE).getText()));
+        preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        settle();
+        addToast(shown);
+        Settings.HIDE_SPONSORED_POSTS.resetToDefault();
+
+        String changesNothing = "{\"format\":\"hushfacebook-settings\",\"schema\":1,\"settings\":{\"" + key + "\":true}}";
+        AlertDialog unchanged = importPreview(activity, rows, changesNothing);
+        shown.add(String.valueOf(org.robolectric.Shadows.shadowOf(unchanged).getMessage()));
+        unchanged.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        settle();
+
+        for (SettingsBackup.Reason reason : SettingsBackup.Reason.values()) {
+            shown.add(SettingsBackupPreference.refusal(reason));
+        }
+    }
+
+    private static AlertDialog importPreview(Activity activity, List<Preference> rows, String file) throws Exception {
+        Uri uri = Uri.parse("content://settings-l10n/" + System.nanoTime() + ".json");
+        byte[] bytes = file.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        org.robolectric.Shadows.shadowOf(RuntimeEnvironment.getApplication().getContentResolver())
+                .registerInputStreamSupplier(uri, () -> new java.io.ByteArrayInputStream(bytes));
+        answer(activity, pick(activity, find(rows, "action_import_settings")), uri);
+        AlertDialog preview = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog();
+        assertNotNull("the import showed no preview", preview);
+        assertTrue(preview.isShowing());
+        return preview;
+    }
+
+    private static Intent pick(Activity activity, Preference row) {
+        row.getOnPreferenceClickListener().onPreferenceClick(row);
+        org.robolectric.shadows.ShadowActivity.IntentForResult started =
+                org.robolectric.Shadows.shadowOf(activity).getNextStartedActivityForResult();
+        assertNotNull(row.getKey() + " opened no picker", started);
+        return started.intent;
+    }
+
+    private static void answer(Activity activity, Intent picker, Uri chosen) throws Exception {
+        org.robolectric.Shadows.shadowOf(activity).receiveResult(picker, Activity.RESULT_OK, new Intent().setData(chosen));
+        settle();
+    }
+
+    private static void settle() throws Exception {
+        app.morphe.extension.shared.Utils.awaitBackgroundTasksForTests();
+        ShadowLooper.idleMainLooper();
+        app.morphe.extension.shared.Utils.awaitBackgroundTasksForTests();
+        ShadowLooper.idleMainLooper();
     }
 
     private static void addToast(Set<String> shown) {

@@ -1,6 +1,10 @@
 # Turkish for Hushfacebook: the English key, a tab, the translation. One row per string.
 # After editing, run python scripts/gen-l10n.py from the repository root.
 "Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Beğenebileceğin Sayfalar” ve Facebook'un kendi tanıtım kartları. Akıştaki anketler de kalkar.
+%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	O dosyadaki %1$d öğe, Hushfacebook'un bu sürümünün tanıdığı ayarlardan değil, bu yüzden atlanacak.
+%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	O dosyadaki %1$d öğe, Hushfacebook'un bu sürümünün tanıdığı ayarlardan değil, bu yüzden atlanacak.
+%1$d switch will change.	%1$d anahtar değişecek.
+%1$d switches will change.	%1$d anahtar değişecek.
 %1$s of %2$s	%1$s / %2$s
 %1$s so far	Şimdiye kadar %1$s
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Yamaladığında ayarlandığı için Duraklatma bunu kapatamaz. Bunu elemek için, ait olduğu yama olmadan yeniden yamala.
@@ -18,10 +22,17 @@ Audience Network off	Audience Network kapalı
 Back	Geri
 Background ad prefetch blocked	Arka planda reklam indirme engellendi
 Changing these	Bunları değiştirmek
+Choose a settings file. You'll see how many switches it changes before anything does.	Bir ayar dosyası seç. Herhangi bir şey değişmeden önce kaç anahtarı değiştireceğini görürsün.
 Clear diagnostic data	Tanılama verilerini temizle
 Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Kısa bir rapor kopyala veya tam raporu Download/Morphe klasörüne kaydet. Bağlantılar, hesap ve gönderi kimlikleri, oturum çerezleri ve adlar dahil edilmez.
 Copy quick report	Hızlı raporu kopyala
+Couldn't import every setting. Check the switches on this screen.	Ayarların hepsi içe aktarılamadı. Bu ekrandaki anahtarları kontrol et.
+Couldn't import the settings. Nothing was changed.	Ayarlar içe aktarılamadı. Hiçbir şey değiştirilmedi.
+Couldn't open that file. Nothing was changed.	Bu dosya açılamadı. Hiçbir şey değiştirilmedi.
+Couldn't open the file picker. Try again.	Dosya seçici açılamadı. Tekrar dene.
 Couldn't put back the diagnostic data. Try again.	Tanılama verileri geri getirilemedi. Tekrar dene.
+Couldn't save the settings file. Try again.	Ayar dosyası kaydedilemedi. Tekrar dene.
+Couldn't start that. Try again in a moment.	Başlatılamadı. Birazdan tekrar dene.
 Couldn't start the report export. Try again shortly.	Rapor dışa aktarımı başlatılamadı. Birazdan tekrar dene.
 Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	Karanlık mod koyu gri yerine siyah görünür. Görmek için Facebook'ta karanlık modu aç.
 Debug logging	Hata ayıklama günlüğü
@@ -34,6 +45,7 @@ Download failed	İndirme başarısız oldu
 Empties the log and the filter counts a report would include.	Bir raporun içereceği günlüğü ve filtre sayaçlarını boşaltır.
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Hata ayıklama günlüğü dışındaki her anahtar kapalıymış gibi davranır, yamaladığında ayarlananlar ise devrede kalır. Ayarların olduğu gibi kalır.
 Export diagnostic report	Tanılama raporunu dışa aktar
+Export settings	Ayarları dışa aktar
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook açıldıktan sonraki bir dakika içinde üç kez kapandı, bu yüzden Hushfacebook kendini duraklattı.
 Facebook doesn't download ads or its ad model in the background.	Facebook reklamları veya reklam modelini arka planda indirmez.
 Facebook doesn't serve ads to other apps on this phone.	Facebook bu telefondaki diğer uygulamalara reklam sunmaz.
@@ -53,6 +65,9 @@ Hushfacebook saves	Hushfacebook kaydetme işlemleri
 Hushfacebook settings	Hushfacebook ayarları
 Hushfacebook settings couldn't open	Hushfacebook ayarları açılamadı
 Hushfacebook turns back on when Facebook restarts.	Hushfacebook, Facebook yeniden başladığında tekrar açılır.
+Import	İçe aktar
+Import settings	Ayarları içe aktar
+Importing settings	Ayarlar içe aktarılıyor
 Licenses	Lisanslar
 Link expired. Reopen the item and try again	Bağlantının süresi doldu. Öğeyi yeniden açıp tekrar dene
 Links	Bağlantılar
@@ -67,6 +82,7 @@ Pause Hushfacebook	Hushfacebook'u duraklat
 Posts Facebook files as promotions rather than as ads.	Facebook'un reklam yerine tanıtım olarak saydığı gönderiler.
 Profiles and some Settings pages open again on this re-signed build.	Profiller ve bazı Ayarlar sayfaları bu yeniden imzalanmış sürümde tekrar açılır.
 Re-signed build fix	Yeniden imzalanmış sürüm düzeltmesi
+Reading the settings file	Ayar dosyası okunuyor
 Reels and Watch	Reels ve Watch
 Retry	Yeniden dene
 Save any story	Herhangi bir hikayeyi kaydet
@@ -75,16 +91,28 @@ Save full report	Tam raporu kaydet
 Saved to %1$s	Şuraya kaydedildi: %1$s
 Saved to the gallery	Galeriye kaydedildi
 Saved. Restart Facebook to apply this change.	Kaydedildi. Bu değişikliği uygulamak için Facebook'u yeniden başlat.
+Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.	Yukarıdaki bölümlerin anahtarlarını seçtiğin bir dosyaya kaydeder. Duraklatma ve Hata ayıklama günlüğü dahil edilmez.
 Saving a photo	Fotoğraf kaydediliyor
 Saving a video	Video kaydediliyor
+Saving the settings file	Ayar dosyası kaydediliyor
 Saving...	Kaydediliyor...
 Set when you patched	Yamaladığında ayarlananlar
 Settings couldn't open	Ayarlar açılamadı
 Settings couldn't refresh completely. Reopen settings and try again.	Ayarlar tamamen yenilenemedi. Ayarları yeniden açıp tekrar dene.
+Settings exported.	Ayarlar dışa aktarıldı.
+Settings imported. %1$d switch changed.	Ayarlar içe aktarıldı. %1$d anahtar değişti.
+Settings imported. %1$d switches changed.	Ayarlar içe aktarıldı. %1$d anahtar değişti.
 Source code and issues	Kaynak kodu ve sorunlar
 Stays in while paused	Duraklatılsa da devrede kalır
 Stories	Hikayeler
 Tap to turn it back on.	Yeniden açmak için dokun.
+That file is too large to be a settings file. Nothing was changed.	Bu dosya bir ayar dosyası olamayacak kadar büyük. Hiçbir şey değiştirilmedi.
+That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Bu dosya okunabilir bir metin değil, aktarım sırasında zarar görmüş olabilir. Hiçbir şey değiştirilmedi.
+That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	Bu dosyada bir ayar iki kez geçiyor, bu yüzden hangi değerin kullanılacağı belli değil. Hiçbir şey değiştirilmedi.
+That isn't a Hushfacebook settings file. Nothing was changed.	Bu bir Hushfacebook ayar dosyası değil. Hiçbir şey değiştirilmedi.
+That settings file holds a value Hushfacebook can't read. Nothing was changed.	Bu ayar dosyasında Hushfacebook'un okuyamadığı bir değer var. Hiçbir şey değiştirilmedi.
+That settings file is damaged or only partly downloaded. Nothing was changed.	Bu ayar dosyası hasarlı ya da yalnızca bir kısmı indirilmiş. Hiçbir şey değiştirilmedi.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Bu ayar dosyası, bundan daha yeni bir Hushfacebook sürümüyle yazılmış. Hiçbir şey değiştirilmedi.
 the ad telemetry block	reklam telemetrisi engeli
 the AMOLED black theme	AMOLED siyah tema
 the Audience Network block	Audience Network engeli
@@ -98,9 +126,11 @@ The setting couldn't finish updating. Its saved value is shown.	Ayarın güncell
 There is no diagnostic data to clear.	Temizlenecek tanılama verisi yok.
 There is no diagnostic data to put back.	Geri getirilecek tanılama verisi yok.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Bunlar yamalarken Morphe Manager'da seçilir ve Duraklatma bunları kapatmaz. Değiştirmek için yeniden yamala.
+This phone has no file picker, so there's no way to choose a file here.	Bu telefonda dosya seçici yok, bu yüzden burada dosya seçmenin bir yolu yok.
 Try again, or go back to Facebook.	Tekrar dene veya Facebook'a geri dön.
 Version	Sürüm
 Version %1$s for Facebook %2$s	Facebook %2$s için %1$s sürümü
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Web bağlantıları Facebook'un uygulama içi tarayıcısında açılmaz. Facebook'un kendi sayfaları yine uygulamada açılır.
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Her yamanın ne yaptığını Android günlüğüne yazar. Bir sorun bildirmiyorsan kapalı bırak.
 You paused Hushfacebook.	Hushfacebook'u duraklattın.
+Your switches already match that file, so nothing will change.	Anahtarların zaten o dosyayla aynı, bu yüzden hiçbir şey değişmeyecek.

@@ -18,7 +18,7 @@
         "https://gitlab.com/ReVanced/revanced-patches"
       ],
       "license": "GPL-3.0-only with the Morphe section 7 notices",
-      "changes": "Facebook host and id names in DiagnosticRedactor, Facebook wording in user-facing messages, HushfeedPause renamed HushfacebookPause with its keys and marker file, the extension name BundleVerifier expects. L10n moved from Hushfeed's TikTok extension into the shared library, with the en-XA and ar-XB pseudo-locales, lists joined and sentences capitalized in the text's own language, and the messages the shared settings screen shows read through it (Logger's debug toast stays English, for whoever reads the report). Changed files carry a 'Modified for Hushfacebook' line."
+      "changes": "Facebook host and id names in DiagnosticRedactor, Facebook wording in user-facing messages, HushfeedPause renamed HushfacebookPause with its keys and marker file, the extension name BundleVerifier expects. L10n moved from Hushfeed's TikTok extension into the shared library, with the en-XA and ar-XB pseudo-locales, lists joined and sentences capitalized in the text's own language, and the messages the shared settings screen shows read through it (Logger's debug toast stays English, for whoever reads the report). SettingsJson refuses a name given twice with an exception of its own. Changed files carry a 'Modified for Hushfacebook' line."
     },
     {
       "paths": [
@@ -84,6 +84,32 @@
       "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
       "license": "GPL-3.0-only",
       "changes": "Written for Hushfacebook: a running save's notification with its progress and a Cancel button, and the removal of the work files and pending gallery rows a save left when Android ended the process."
+    },
+    {
+      "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/settings/SettingsBackup.java"
+      ],
+      "origin": "ported",
+      "upstream": "https://github.com/SysAdminDoc/hushfeed",
+      "commit": "bcc57ee555f4346c4eb1cbdae9f6ca8a3fa6fef4",
+      "via": [
+        "https://github.com/icysymmetra/tiktok-patches-for-morphe"
+      ],
+      "license": "GPL-3.0-only",
+      "changes": "Ported from Hushfeed's settings backup and cut down to what Hushfacebook keeps: an exact list of its eight feature switches in place of every setting, with no Feature Gate Lab, reset, undo or journal. An import is read into a snapshot that a preview shows before anything is written, and applied in one preference commit. A file declaring a newer version, a name given twice, a switch that isn't true or false, or more than 64 KB changes nothing, each with its own reason, and names this build doesn't know are counted rather than applied."
+    },
+    {
+      "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/settings/SettingsBackupPreference.java"
+      ],
+      "origin": "ported",
+      "upstream": "https://github.com/SysAdminDoc/hushfeed",
+      "commit": "bcc57ee555f4346c4eb1cbdae9f6ca8a3fa6fef4",
+      "via": [
+        "https://github.com/icysymmetra/tiktok-patches-for-morphe"
+      ],
+      "license": "GPL-3.0-only",
+      "changes": "Ported from Hushfeed's backup rows: Export settings and Import settings on the framework preference page inside Hushfacebook's settings dialog, answered through the page's onActivityResult, with the import's preview dialog kept in the page's saved state so it comes back after the activity is rebuilt. No Reset or Undo rows, and every message read from L10n."
     },
     {
       "paths": [

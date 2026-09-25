@@ -3,6 +3,9 @@
  * https://github.com/SysAdminDoc/hushfeed
  *
  * Built on icysymmetra/tiktok-patches-for-morphe (GPL-3.0).
+ *
+ * Modified for Hushfacebook (Facebook), 2026: a name given twice is refused with an exception of
+ * its own, so a caller can say which of its refusals it was.
  */
 package app.morphe.extension.shared.settings;
 
@@ -41,6 +44,20 @@ public final class SettingsJson {
             this.maxStringChars = maxStringChars;
             this.maxArrayItems = maxArrayItems;
             this.maxBytes = maxBytes;
+        }
+    }
+
+    /**
+     * A name that appears twice in one object. Which of its two values was meant can't be told,
+     * and keeping the last one, as org.json does, would apply a value the reader may never have
+     * seen in the file.
+     */
+    public static final class DuplicateNameException extends IOException {
+        public final String name;
+
+        DuplicateNameException(String name) {
+            super("Duplicate setting: " + name);
+            this.name = name;
         }
     }
 
@@ -93,7 +110,7 @@ public final class SettingsJson {
                 while (reader.hasNext()) {
                     String name = reader.nextName();
                     checkString(name, state);
-                    if (object.has(name)) throw new IOException("Duplicate setting: " + name);
+                    if (object.has(name)) throw new DuplicateNameException(name);
                     object.put(name, read(reader, depth + 1, state));
                 }
                 reader.endObject();

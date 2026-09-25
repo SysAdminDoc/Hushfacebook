@@ -44,15 +44,24 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(208);
+        Map<String, String> table = new HashMap<>(268);
         fillDe0(table);
         fillDe1(table);
+        fillDe2(table);
         return table;
     }
 
     private static void fillDe0(Map<String, String> table) {
         table.put("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.",
                 "\u201eSeiten, die dir gefallen k\u00f6nnten\u201c und Facebooks Werbekarten in eigener Sache. Die Umfragen im Feed verschwinden auch.");
+        table.put("%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.",
+                "%1$d Eintrag in dieser Datei ist keine Einstellung, die diese Version von Hushfacebook kennt, und wird deshalb ausgelassen.");
+        table.put("%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.",
+                "%1$d Eintr\u00e4ge in dieser Datei sind keine Einstellungen, die diese Version von Hushfacebook kennt, und werden deshalb ausgelassen.");
+        table.put("%1$d switch will change.",
+                "%1$d Schalter wird ge\u00e4ndert.");
+        table.put("%1$d switches will change.",
+                "%1$d Schalter werden ge\u00e4ndert.");
         table.put("%1$s of %2$s",
                 "%1$s von %2$s");
         table.put("%1$s so far",
@@ -87,14 +96,28 @@ public final class L10nTranslations {
                 "Vorabladen von Werbung im Hintergrund blockiert");
         table.put("Changing these",
                 "So \u00e4nderst du sie");
+        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
+                "W\u00e4hle eine Einstellungsdatei. Du siehst, wie viele Schalter sie \u00e4ndert, bevor sich etwas \u00e4ndert.");
         table.put("Clear diagnostic data",
                 "Diagnosedaten l\u00f6schen");
         table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
                 "Kopiere einen Kurzbericht oder speichere den vollst\u00e4ndigen unter Download/Morphe. Links, Konto- und Beitrags-IDs, Sitzungscookies und Namen werden weggelassen.");
         table.put("Copy quick report",
                 "Kurzbericht kopieren");
+        table.put("Couldn't import every setting. Check the switches on this screen.",
+                "Nicht alle Einstellungen lie\u00dfen sich importieren. Pr\u00fcfe die Schalter auf diesem Bildschirm.");
+        table.put("Couldn't import the settings. Nothing was changed.",
+                "Die Einstellungen lie\u00dfen sich nicht importieren. Es wurde nichts ge\u00e4ndert.");
+        table.put("Couldn't open that file. Nothing was changed.",
+                "Diese Datei lie\u00df sich nicht \u00f6ffnen. Es wurde nichts ge\u00e4ndert.");
+        table.put("Couldn't open the file picker. Try again.",
+                "Die Dateiauswahl lie\u00df sich nicht \u00f6ffnen. Versuche es noch einmal.");
         table.put("Couldn't put back the diagnostic data. Try again.",
                 "Die Diagnosedaten lie\u00dfen sich nicht wiederherstellen. Versuche es noch einmal.");
+        table.put("Couldn't save the settings file. Try again.",
+                "Die Einstellungsdatei lie\u00df sich nicht speichern. Versuche es noch einmal.");
+        table.put("Couldn't start that. Try again in a moment.",
+                "Das lie\u00df sich nicht starten. Versuche es gleich noch einmal.");
         table.put("Couldn't start the report export. Try again shortly.",
                 "Der Export des Berichts lie\u00df sich nicht starten. Versuche es gleich noch einmal.");
         table.put("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.",
@@ -119,6 +142,8 @@ public final class L10nTranslations {
                 "Jeder Schalter au\u00dfer der Debug-Protokollierung verh\u00e4lt sich, als w\u00e4re er aus, und was beim Patchen festgelegt wurde, bleibt aktiv. Deine Einstellungen bleiben, wie sie sind.");
         table.put("Export diagnostic report",
                 "Diagnosebericht exportieren");
+        table.put("Export settings",
+                "Einstellungen exportieren");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook wurde dreimal innerhalb einer Minute nach dem Start beendet, deshalb hat sich Hushfacebook selbst pausiert.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
@@ -147,6 +172,9 @@ public final class L10nTranslations {
                 "Hushfacebook %1$s auf Facebook %2$s");
         table.put("Hushfacebook is on",
                 "Hushfacebook ist aktiv");
+    }
+
+    private static void fillDe1(Map<String, String> table) {
         table.put("Hushfacebook is paused",
                 "Hushfacebook ist pausiert");
         table.put("Hushfacebook saves",
@@ -157,6 +185,12 @@ public final class L10nTranslations {
                 "Hushfacebook-Einstellungen lie\u00dfen sich nicht \u00f6ffnen");
         table.put("Hushfacebook turns back on when Facebook restarts.",
                 "Hushfacebook ist wieder aktiv, sobald Facebook neu startet.");
+        table.put("Import",
+                "Importieren");
+        table.put("Import settings",
+                "Einstellungen importieren");
+        table.put("Importing settings",
+                "Einstellungen werden importiert");
         table.put("Licenses",
                 "Lizenzen");
         table.put("Link expired. Reopen the item and try again",
@@ -171,9 +205,6 @@ public final class L10nTranslations {
                 "Keine Screenshot-Erkennung bei Werbung und keine Meldungen dar\u00fcber, welche Apps du installierst.");
         table.put("Not saved: that isn't a Facebook photo or video",
                 "Nicht gespeichert: Das ist kein Foto oder Video von Facebook");
-    }
-
-    private static void fillDe1(Map<String, String> table) {
         table.put("Not saved: the file is over 512 MB",
                 "Nicht gespeichert: Die Datei ist \u00fcber 512 MB gro\u00df");
         table.put("Open links in your browser",
@@ -188,6 +219,8 @@ public final class L10nTranslations {
                 "Profile und einige Einstellungsseiten \u00f6ffnen sich in diesem neu signierten Build wieder.");
         table.put("Re-signed build fix",
                 "Fix f\u00fcr neu signierte Builds");
+        table.put("Reading the settings file",
+                "Einstellungsdatei wird gelesen");
         table.put("Reels and Watch",
                 "Reels und Watch");
         table.put("Retry",
@@ -204,10 +237,14 @@ public final class L10nTranslations {
                 "In der Galerie gespeichert");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Gespeichert. Starte Facebook neu, um diese \u00c4nderung zu \u00fcbernehmen.");
+        table.put("Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.",
+                "Speichert die Schalter aus den Abschnitten weiter oben in einer Datei deiner Wahl. Die Pause und die Debug-Protokollierung sind nicht dabei.");
         table.put("Saving a photo",
                 "Foto wird gespeichert");
         table.put("Saving a video",
                 "Video wird gespeichert");
+        table.put("Saving the settings file",
+                "Einstellungsdatei wird gespeichert");
         table.put("Saving...",
                 "Wird gespeichert \u2026");
         table.put("Set when you patched",
@@ -216,6 +253,12 @@ public final class L10nTranslations {
                 "Einstellungen lie\u00dfen sich nicht \u00f6ffnen");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "Die Einstellungen lie\u00dfen sich nicht vollst\u00e4ndig aktualisieren. \u00d6ffne sie neu und versuche es noch einmal.");
+        table.put("Settings exported.",
+                "Einstellungen exportiert.");
+        table.put("Settings imported. %1$d switch changed.",
+                "Einstellungen importiert. %1$d Schalter wurde ge\u00e4ndert.");
+        table.put("Settings imported. %1$d switches changed.",
+                "Einstellungen importiert. %1$d Schalter wurden ge\u00e4ndert.");
         table.put("Source code and issues",
                 "Quellcode und Issues");
         table.put("Stays in while paused",
@@ -224,6 +267,20 @@ public final class L10nTranslations {
                 "Stories");
         table.put("Tap to turn it back on.",
                 "Zum Wiedereinschalten tippen.");
+        table.put("That file is too large to be a settings file. Nothing was changed.",
+                "Diese Datei ist zu gro\u00df f\u00fcr eine Einstellungsdatei. Es wurde nichts ge\u00e4ndert.");
+        table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
+                "Diese Datei ist kein lesbarer Text und wurde wom\u00f6glich bei der \u00dcbertragung besch\u00e4digt. Es wurde nichts ge\u00e4ndert.");
+        table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
+                "Diese Datei f\u00fchrt eine Einstellung zweimal auf, daher ist unklar, welcher Wert gilt. Es wurde nichts ge\u00e4ndert.");
+        table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
+                "Das ist keine Hushfacebook-Einstellungsdatei. Es wurde nichts ge\u00e4ndert.");
+        table.put("That settings file holds a value Hushfacebook can't read. Nothing was changed.",
+                "Diese Einstellungsdatei enth\u00e4lt einen Wert, den Hushfacebook nicht lesen kann. Es wurde nichts ge\u00e4ndert.");
+        table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
+                "Diese Einstellungsdatei ist besch\u00e4digt oder nur teilweise heruntergeladen. Es wurde nichts ge\u00e4ndert.");
+        table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
+                "Diese Einstellungsdatei stammt aus einem neueren Hushfacebook als diesem. Es wurde nichts ge\u00e4ndert.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Der Diagnosebericht lie\u00df sich noch nicht speichern. Versuche es gleich noch einmal.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -238,6 +295,11 @@ public final class L10nTranslations {
                 "Es gibt keine Diagnosedaten zum Wiederherstellen.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Diese werden beim Patchen in Morphe Manager ausgew\u00e4hlt, und die Pause schaltet sie nicht aus. Patche erneut, um sie zu \u00e4ndern.");
+    }
+
+    private static void fillDe2(Map<String, String> table) {
+        table.put("This phone has no file picker, so there's no way to choose a file here.",
+                "Dieses Handy hat keine Dateiauswahl, hier l\u00e4sst sich also keine Datei w\u00e4hlen.");
         table.put("Try again, or go back to Facebook.",
                 "Versuche es noch einmal oder kehre zu Facebook zur\u00fcck.");
         table.put("Version",
@@ -250,6 +312,8 @@ public final class L10nTranslations {
                 "Schreibt ins Android-Protokoll, was jeder Patch tut. Lass sie ausgeschaltet, au\u00dfer du meldest ein Problem.");
         table.put("You paused Hushfacebook.",
                 "Du hast Hushfacebook pausiert.");
+        table.put("Your switches already match that file, so nothing will change.",
+                "Deine Schalter entsprechen bereits dieser Datei, es \u00e4ndert sich also nichts.");
         table.put("the AMOLED black theme",
                 "das schwarze AMOLED-Design");
         table.put("the Audience Network block",
@@ -265,15 +329,24 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(208);
+        Map<String, String> table = new HashMap<>(268);
         fillEs0(table);
         fillEs1(table);
+        fillEs2(table);
         return table;
     }
 
     private static void fillEs0(Map<String, String> table) {
         table.put("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.",
                 "\u201cP\u00e1ginas que quiz\u00e1 te gusten\u201d y las tarjetas de autopromoci\u00f3n de Facebook. Tambi\u00e9n se ocultan las encuestas del feed.");
+        table.put("%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.",
+                "%1$d elemento de ese archivo no es un ajuste que conozca esta versi\u00f3n de Hushfacebook, as\u00ed que se omitir\u00e1.");
+        table.put("%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.",
+                "%1$d elementos de ese archivo no son ajustes que conozca esta versi\u00f3n de Hushfacebook, as\u00ed que se omitir\u00e1n.");
+        table.put("%1$d switch will change.",
+                "Cambiar\u00e1 %1$d interruptor.");
+        table.put("%1$d switches will change.",
+                "Cambiar\u00e1n %1$d interruptores.");
         table.put("%1$s of %2$s",
                 "%1$s de %2$s");
         table.put("%1$s so far",
@@ -308,14 +381,28 @@ public final class L10nTranslations {
                 "Precarga de anuncios en segundo plano bloqueada");
         table.put("Changing these",
                 "C\u00f3mo cambiarlos");
+        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
+                "Elige un archivo de configuraci\u00f3n. Ver\u00e1s cu\u00e1ntos interruptores cambia antes de que cambie nada.");
         table.put("Clear diagnostic data",
                 "Borrar datos de diagn\u00f3stico");
         table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
                 "Copia un informe breve o guarda el completo en Download/Morphe. Se omiten los enlaces, los ID de cuentas y de publicaciones, las cookies de sesi\u00f3n y los nombres.");
         table.put("Copy quick report",
                 "Copiar informe r\u00e1pido");
+        table.put("Couldn't import every setting. Check the switches on this screen.",
+                "No se pudieron importar todos los ajustes. Revisa los interruptores de esta pantalla.");
+        table.put("Couldn't import the settings. Nothing was changed.",
+                "No se pudo importar la configuraci\u00f3n. No se cambi\u00f3 nada.");
+        table.put("Couldn't open that file. Nothing was changed.",
+                "No se pudo abrir ese archivo. No se cambi\u00f3 nada.");
+        table.put("Couldn't open the file picker. Try again.",
+                "No se pudo abrir el selector de archivos. Int\u00e9ntalo de nuevo.");
         table.put("Couldn't put back the diagnostic data. Try again.",
                 "No se pudieron restaurar los datos de diagn\u00f3stico. Int\u00e9ntalo de nuevo.");
+        table.put("Couldn't save the settings file. Try again.",
+                "No se pudo guardar el archivo de configuraci\u00f3n. Int\u00e9ntalo de nuevo.");
+        table.put("Couldn't start that. Try again in a moment.",
+                "No se pudo iniciar. Int\u00e9ntalo de nuevo en un momento.");
         table.put("Couldn't start the report export. Try again shortly.",
                 "No se pudo iniciar la exportaci\u00f3n del informe. Int\u00e9ntalo de nuevo en breve.");
         table.put("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.",
@@ -340,6 +427,8 @@ public final class L10nTranslations {
                 "Todos los interruptores, salvo el Registro de depuraci\u00f3n, funcionan como si estuvieran desactivados, y lo que se aplic\u00f3 al parchear se mantiene. Tu configuraci\u00f3n no cambia.");
         table.put("Export diagnostic report",
                 "Exportar informe de diagn\u00f3stico");
+        table.put("Export settings",
+                "Exportar configuraci\u00f3n");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook se cerr\u00f3 tres veces durante el primer minuto tras iniciarse, as\u00ed que Hushfacebook se paus\u00f3 solo.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
@@ -368,6 +457,9 @@ public final class L10nTranslations {
                 "Hushfacebook %1$s en Facebook %2$s");
         table.put("Hushfacebook is on",
                 "Hushfacebook est\u00e1 activado");
+    }
+
+    private static void fillEs1(Map<String, String> table) {
         table.put("Hushfacebook is paused",
                 "Hushfacebook est\u00e1 en pausa");
         table.put("Hushfacebook saves",
@@ -378,6 +470,12 @@ public final class L10nTranslations {
                 "No se pudo abrir la configuraci\u00f3n de Hushfacebook");
         table.put("Hushfacebook turns back on when Facebook restarts.",
                 "Hushfacebook vuelve a activarse cuando Facebook se reinicie.");
+        table.put("Import",
+                "Importar");
+        table.put("Import settings",
+                "Importar configuraci\u00f3n");
+        table.put("Importing settings",
+                "Importando la configuraci\u00f3n");
         table.put("Licenses",
                 "Licencias");
         table.put("Link expired. Reopen the item and try again",
@@ -392,9 +490,6 @@ public final class L10nTranslations {
                 "Sin vigilancia de capturas de pantalla para anuncios ni informes sobre las apps que instalas.");
         table.put("Not saved: that isn't a Facebook photo or video",
                 "No se guard\u00f3: no es una foto ni un video de Facebook");
-    }
-
-    private static void fillEs1(Map<String, String> table) {
         table.put("Not saved: the file is over 512 MB",
                 "No se guard\u00f3: el archivo supera los 512 MB");
         table.put("Open links in your browser",
@@ -409,6 +504,8 @@ public final class L10nTranslations {
                 "Los perfiles y algunas p\u00e1ginas de Configuraci\u00f3n vuelven a abrirse en esta versi\u00f3n firmada de nuevo.");
         table.put("Re-signed build fix",
                 "Arreglo para la nueva firma");
+        table.put("Reading the settings file",
+                "Leyendo el archivo de configuraci\u00f3n");
         table.put("Reels and Watch",
                 "Reels y Watch");
         table.put("Retry",
@@ -425,10 +522,14 @@ public final class L10nTranslations {
                 "Se guard\u00f3 en la galer\u00eda");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Guardado. Reinicia Facebook para aplicar este cambio.");
+        table.put("Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.",
+                "Guarda los interruptores de las secciones de arriba en el archivo que elijas. Pausar y el Registro de depuraci\u00f3n quedan fuera.");
         table.put("Saving a photo",
                 "Guardando una foto");
         table.put("Saving a video",
                 "Guardando un video");
+        table.put("Saving the settings file",
+                "Guardando el archivo de configuraci\u00f3n");
         table.put("Saving...",
                 "Guardando...");
         table.put("Set when you patched",
@@ -437,6 +538,12 @@ public final class L10nTranslations {
                 "No se pudo abrir la configuraci\u00f3n");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "No se pudo actualizar la configuraci\u00f3n por completo. Vuelve a abrirla e int\u00e9ntalo de nuevo.");
+        table.put("Settings exported.",
+                "Configuraci\u00f3n exportada.");
+        table.put("Settings imported. %1$d switch changed.",
+                "Configuraci\u00f3n importada. Cambi\u00f3 %1$d interruptor.");
+        table.put("Settings imported. %1$d switches changed.",
+                "Configuraci\u00f3n importada. Cambiaron %1$d interruptores.");
         table.put("Source code and issues",
                 "C\u00f3digo fuente e incidencias");
         table.put("Stays in while paused",
@@ -445,6 +552,20 @@ public final class L10nTranslations {
                 "Historias");
         table.put("Tap to turn it back on.",
                 "Toca para volver a activarlo.");
+        table.put("That file is too large to be a settings file. Nothing was changed.",
+                "Ese archivo es demasiado grande para ser un archivo de configuraci\u00f3n. No se cambi\u00f3 nada.");
+        table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
+                "Ese archivo no es texto legible, as\u00ed que puede haberse da\u00f1ado por el camino. No se cambi\u00f3 nada.");
+        table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
+                "Ese archivo incluye un ajuste dos veces, as\u00ed que no se sabe qu\u00e9 valor usar. No se cambi\u00f3 nada.");
+        table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
+                "Eso no es un archivo de configuraci\u00f3n de Hushfacebook. No se cambi\u00f3 nada.");
+        table.put("That settings file holds a value Hushfacebook can't read. Nothing was changed.",
+                "Ese archivo de configuraci\u00f3n contiene un valor que Hushfacebook no puede leer. No se cambi\u00f3 nada.");
+        table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
+                "Ese archivo de configuraci\u00f3n est\u00e1 da\u00f1ado o solo se descarg\u00f3 en parte. No se cambi\u00f3 nada.");
+        table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
+                "Ese archivo de configuraci\u00f3n lo escribi\u00f3 un Hushfacebook m\u00e1s nuevo que este. No se cambi\u00f3 nada.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Todav\u00eda no se pudo guardar el informe de diagn\u00f3stico. Int\u00e9ntalo de nuevo en un momento.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -459,6 +580,11 @@ public final class L10nTranslations {
                 "No hay datos de diagn\u00f3stico que restaurar.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Se eligen en Morphe Manager al parchear, y Pausar no los desactiva. Vuelve a parchear para cambiarlos.");
+    }
+
+    private static void fillEs2(Map<String, String> table) {
+        table.put("This phone has no file picker, so there's no way to choose a file here.",
+                "Este tel\u00e9fono no tiene selector de archivos, as\u00ed que aqu\u00ed no se puede elegir uno.");
         table.put("Try again, or go back to Facebook.",
                 "Int\u00e9ntalo de nuevo o vuelve a Facebook.");
         table.put("Version",
@@ -471,6 +597,8 @@ public final class L10nTranslations {
                 "Escribe en el registro de Android lo que hace cada parche. D\u00e9jalo desactivado salvo que est\u00e9s reportando un problema.");
         table.put("You paused Hushfacebook.",
                 "Pausaste Hushfacebook.");
+        table.put("Your switches already match that file, so nothing will change.",
+                "Tus interruptores ya coinciden con ese archivo, as\u00ed que no cambiar\u00e1 nada.");
         table.put("the AMOLED black theme",
                 "el tema negro AMOLED");
         table.put("the Audience Network block",
@@ -486,15 +614,24 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(208);
+        Map<String, String> table = new HashMap<>(268);
         fillIn0(table);
         fillIn1(table);
+        fillIn2(table);
         return table;
     }
 
     private static void fillIn0(Map<String, String> table) {
         table.put("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.",
                 "\u201cHalaman yang mungkin Anda sukai\u201d dan kartu penawaran dari Facebook sendiri. Survei di Kabar Beranda ikut hilang.");
+        table.put("%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.",
+                "%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.");
+        table.put("%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.",
+                "%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.");
+        table.put("%1$d switch will change.",
+                "%1$d sakelar akan berubah.");
+        table.put("%1$d switches will change.",
+                "%1$d sakelar akan berubah.");
         table.put("%1$s of %2$s",
                 "%1$s dari %2$s");
         table.put("%1$s so far",
@@ -529,14 +666,28 @@ public final class L10nTranslations {
                 "Pramuat iklan di latar belakang diblokir");
         table.put("Changing these",
                 "Mengubah pilihan ini");
+        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
+                "Pilih file pengaturan. Anda akan melihat berapa sakelar yang diubahnya sebelum ada yang berubah.");
         table.put("Clear diagnostic data",
                 "Hapus data diagnostik");
         table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
                 "Salin laporan singkat, atau simpan laporan lengkap ke Download/Morphe. Tautan, ID akun dan postingan, cookie sesi, serta nama tidak disertakan.");
         table.put("Copy quick report",
                 "Salin laporan singkat");
+        table.put("Couldn't import every setting. Check the switches on this screen.",
+                "Tidak semua pengaturan dapat diimpor. Periksa sakelar di layar ini.");
+        table.put("Couldn't import the settings. Nothing was changed.",
+                "Pengaturan tidak dapat diimpor. Tidak ada yang diubah.");
+        table.put("Couldn't open that file. Nothing was changed.",
+                "File itu tidak dapat dibuka. Tidak ada yang diubah.");
+        table.put("Couldn't open the file picker. Try again.",
+                "Pemilih file tidak dapat dibuka. Coba lagi.");
         table.put("Couldn't put back the diagnostic data. Try again.",
                 "Data diagnostik tidak dapat dikembalikan. Coba lagi.");
+        table.put("Couldn't save the settings file. Try again.",
+                "File pengaturan tidak dapat disimpan. Coba lagi.");
+        table.put("Couldn't start that. Try again in a moment.",
+                "Tidak dapat dimulai. Coba lagi dalam beberapa saat.");
         table.put("Couldn't start the report export. Try again shortly.",
                 "Ekspor laporan tidak dapat dimulai. Coba lagi dalam beberapa saat.");
         table.put("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.",
@@ -561,6 +712,8 @@ public final class L10nTranslations {
                 "Semua sakelar kecuali Pencatatan debug dianggap nonaktif, dan yang diatur saat Anda menambal tetap aktif. Pengaturan Anda tetap seperti semula.");
         table.put("Export diagnostic report",
                 "Ekspor laporan diagnostik");
+        table.put("Export settings",
+                "Ekspor pengaturan");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook tertutup tiga kali dalam satu menit setelah dibuka, jadi Hushfacebook menjeda dirinya sendiri.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
@@ -589,6 +742,9 @@ public final class L10nTranslations {
                 "Hushfacebook %1$s di Facebook %2$s");
         table.put("Hushfacebook is on",
                 "Hushfacebook aktif");
+    }
+
+    private static void fillIn1(Map<String, String> table) {
         table.put("Hushfacebook is paused",
                 "Hushfacebook dijeda");
         table.put("Hushfacebook saves",
@@ -599,6 +755,12 @@ public final class L10nTranslations {
                 "Pengaturan Hushfacebook tidak dapat dibuka");
         table.put("Hushfacebook turns back on when Facebook restarts.",
                 "Hushfacebook aktif lagi saat Facebook dimulai ulang.");
+        table.put("Import",
+                "Impor");
+        table.put("Import settings",
+                "Impor pengaturan");
+        table.put("Importing settings",
+                "Mengimpor pengaturan");
         table.put("Licenses",
                 "Lisensi");
         table.put("Link expired. Reopen the item and try again",
@@ -613,9 +775,6 @@ public final class L10nTranslations {
                 "Tangkapan layar iklan tidak dipantau, dan aplikasi yang Anda pasang tidak dilaporkan.");
         table.put("Not saved: that isn't a Facebook photo or video",
                 "Tidak disimpan: itu bukan foto atau video Facebook");
-    }
-
-    private static void fillIn1(Map<String, String> table) {
         table.put("Not saved: the file is over 512 MB",
                 "Tidak disimpan: file lebih dari 512 MB");
         table.put("Open links in your browser",
@@ -630,6 +789,8 @@ public final class L10nTranslations {
                 "Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.");
         table.put("Re-signed build fix",
                 "Perbaikan build yang ditandatangani ulang");
+        table.put("Reading the settings file",
+                "Membaca file pengaturan");
         table.put("Reels and Watch",
                 "Reels dan Watch");
         table.put("Retry",
@@ -646,10 +807,14 @@ public final class L10nTranslations {
                 "Disimpan ke galeri");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.");
+        table.put("Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.",
+                "Menyimpan sakelar dari bagian-bagian di atas ke file pilihan Anda. Jeda dan Pencatatan debug tidak ikut disimpan.");
         table.put("Saving a photo",
                 "Menyimpan foto");
         table.put("Saving a video",
                 "Menyimpan video");
+        table.put("Saving the settings file",
+                "Menyimpan file pengaturan");
         table.put("Saving...",
                 "Menyimpan...");
         table.put("Set when you patched",
@@ -658,6 +823,12 @@ public final class L10nTranslations {
                 "Pengaturan tidak dapat dibuka");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "Pengaturan tidak dapat dimuat ulang sepenuhnya. Buka kembali pengaturan lalu coba lagi.");
+        table.put("Settings exported.",
+                "Pengaturan diekspor.");
+        table.put("Settings imported. %1$d switch changed.",
+                "Pengaturan diimpor. %1$d sakelar berubah.");
+        table.put("Settings imported. %1$d switches changed.",
+                "Pengaturan diimpor. %1$d sakelar berubah.");
         table.put("Source code and issues",
                 "Kode sumber dan laporan masalah");
         table.put("Stays in while paused",
@@ -666,6 +837,20 @@ public final class L10nTranslations {
                 "Cerita");
         table.put("Tap to turn it back on.",
                 "Ketuk untuk mengaktifkan Hushfacebook lagi.");
+        table.put("That file is too large to be a settings file. Nothing was changed.",
+                "File itu terlalu besar untuk sebuah file pengaturan. Tidak ada yang diubah.");
+        table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
+                "File itu bukan teks yang dapat dibaca, jadi mungkin rusak saat dikirim. Tidak ada yang diubah.");
+        table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
+                "File itu mencantumkan satu pengaturan dua kali, jadi tidak jelas nilai mana yang dipakai. Tidak ada yang diubah.");
+        table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
+                "Itu bukan file pengaturan Hushfacebook. Tidak ada yang diubah.");
+        table.put("That settings file holds a value Hushfacebook can't read. Nothing was changed.",
+                "File pengaturan itu memuat nilai yang tidak dapat dibaca Hushfacebook. Tidak ada yang diubah.");
+        table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
+                "File pengaturan itu rusak atau hanya terunduh sebagian. Tidak ada yang diubah.");
+        table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
+                "File pengaturan itu dibuat oleh Hushfacebook yang lebih baru dari ini. Tidak ada yang diubah.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Laporan diagnostik belum dapat disimpan. Coba lagi dalam beberapa saat.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -680,6 +865,11 @@ public final class L10nTranslations {
                 "Tidak ada data diagnostik yang dapat dikembalikan.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Semua ini dipilih di Morphe Manager saat Anda menambal, dan Jeda tidak mematikannya. Tambal ulang untuk mengubahnya.");
+    }
+
+    private static void fillIn2(Map<String, String> table) {
+        table.put("This phone has no file picker, so there's no way to choose a file here.",
+                "Ponsel ini tidak memiliki pemilih file, jadi file tidak dapat dipilih di sini.");
         table.put("Try again, or go back to Facebook.",
                 "Coba lagi, atau kembali ke Facebook.");
         table.put("Version",
@@ -692,6 +882,8 @@ public final class L10nTranslations {
                 "Mencatat ke log Android apa yang dilakukan setiap tambalan. Biarkan nonaktif kecuali Anda sedang melaporkan masalah.");
         table.put("You paused Hushfacebook.",
                 "Anda menjeda Hushfacebook.");
+        table.put("Your switches already match that file, so nothing will change.",
+                "Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang berubah.");
         table.put("the AMOLED black theme",
                 "tema hitam AMOLED");
         table.put("the Audience Network block",
@@ -707,15 +899,24 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(208);
+        Map<String, String> table = new HashMap<>(268);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
+        fillPt_rBR2(table);
         return table;
     }
 
     private static void fillPt_rBR0(Map<String, String> table) {
         table.put("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.",
                 "\u201cP\u00e1ginas que voc\u00ea talvez curta\u201d e os blocos de autopromo\u00e7\u00e3o do Facebook. As pesquisas no feed tamb\u00e9m somem.");
+        table.put("%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.",
+                "%1$d item desse arquivo n\u00e3o \u00e9 uma configura\u00e7\u00e3o que esta vers\u00e3o do Hushfacebook conhece, ent\u00e3o vai ficar de fora.");
+        table.put("%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.",
+                "%1$d itens desse arquivo n\u00e3o s\u00e3o configura\u00e7\u00f5es que esta vers\u00e3o do Hushfacebook conhece, ent\u00e3o v\u00e3o ficar de fora.");
+        table.put("%1$d switch will change.",
+                "%1$d op\u00e7\u00e3o vai mudar.");
+        table.put("%1$d switches will change.",
+                "%1$d op\u00e7\u00f5es v\u00e3o mudar.");
         table.put("%1$s of %2$s",
                 "%1$s de %2$s");
         table.put("%1$s so far",
@@ -750,14 +951,28 @@ public final class L10nTranslations {
                 "Pr\u00e9-carregamento de an\u00fancios em segundo plano bloqueado");
         table.put("Changing these",
                 "Como mudar esses itens");
+        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
+                "Escolha um arquivo de configura\u00e7\u00f5es. Voc\u00ea vai ver quantas op\u00e7\u00f5es ele muda antes de qualquer coisa mudar.");
         table.put("Clear diagnostic data",
                 "Limpar dados de diagn\u00f3stico");
         table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
                 "Copie um relat\u00f3rio curto ou salve o completo em Download/Morphe. Links, IDs de conta e de post, cookies de sess\u00e3o e nomes ficam de fora.");
         table.put("Copy quick report",
                 "Copiar relat\u00f3rio r\u00e1pido");
+        table.put("Couldn't import every setting. Check the switches on this screen.",
+                "N\u00e3o foi poss\u00edvel importar todas as configura\u00e7\u00f5es. Confira as op\u00e7\u00f5es nesta tela.");
+        table.put("Couldn't import the settings. Nothing was changed.",
+                "N\u00e3o foi poss\u00edvel importar as configura\u00e7\u00f5es. Nada foi alterado.");
+        table.put("Couldn't open that file. Nothing was changed.",
+                "N\u00e3o foi poss\u00edvel abrir esse arquivo. Nada foi alterado.");
+        table.put("Couldn't open the file picker. Try again.",
+                "N\u00e3o foi poss\u00edvel abrir o seletor de arquivos. Tente de novo.");
         table.put("Couldn't put back the diagnostic data. Try again.",
                 "N\u00e3o foi poss\u00edvel restaurar os dados de diagn\u00f3stico. Tente de novo.");
+        table.put("Couldn't save the settings file. Try again.",
+                "N\u00e3o foi poss\u00edvel salvar o arquivo de configura\u00e7\u00f5es. Tente de novo.");
+        table.put("Couldn't start that. Try again in a moment.",
+                "N\u00e3o foi poss\u00edvel come\u00e7ar. Tente de novo daqui a pouco.");
         table.put("Couldn't start the report export. Try again shortly.",
                 "N\u00e3o foi poss\u00edvel iniciar a exporta\u00e7\u00e3o do relat\u00f3rio. Tente de novo daqui a pouco.");
         table.put("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.",
@@ -782,6 +997,8 @@ public final class L10nTranslations {
                 "Todas as op\u00e7\u00f5es, menos o Registro de depura\u00e7\u00e3o, funcionam como se estivessem desligadas, e o que foi definido ao aplicar os patches continua ativo. Suas configura\u00e7\u00f5es ficam como est\u00e3o.");
         table.put("Export diagnostic report",
                 "Exportar relat\u00f3rio de diagn\u00f3stico");
+        table.put("Export settings",
+                "Exportar configura\u00e7\u00f5es");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "O Facebook fechou tr\u00eas vezes no primeiro minuto depois de abrir, ent\u00e3o o Hushfacebook entrou em pausa automaticamente.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
@@ -810,6 +1027,9 @@ public final class L10nTranslations {
                 "Hushfacebook %1$s no Facebook %2$s");
         table.put("Hushfacebook is on",
                 "O Hushfacebook est\u00e1 ativo");
+    }
+
+    private static void fillPt_rBR1(Map<String, String> table) {
         table.put("Hushfacebook is paused",
                 "O Hushfacebook est\u00e1 pausado");
         table.put("Hushfacebook saves",
@@ -820,6 +1040,12 @@ public final class L10nTranslations {
                 "N\u00e3o foi poss\u00edvel abrir as configura\u00e7\u00f5es do Hushfacebook");
         table.put("Hushfacebook turns back on when Facebook restarts.",
                 "O Hushfacebook ser\u00e1 reativado quando o Facebook reiniciar.");
+        table.put("Import",
+                "Importar");
+        table.put("Import settings",
+                "Importar configura\u00e7\u00f5es");
+        table.put("Importing settings",
+                "Importando as configura\u00e7\u00f5es");
         table.put("Licenses",
                 "Licen\u00e7as");
         table.put("Link expired. Reopen the item and try again",
@@ -834,9 +1060,6 @@ public final class L10nTranslations {
                 "Sem monitoramento de capturas de tela de an\u00fancios e sem relat\u00f3rios sobre quais apps voc\u00ea instala.");
         table.put("Not saved: that isn't a Facebook photo or video",
                 "N\u00e3o foi salvo: isso n\u00e3o \u00e9 uma foto nem um v\u00eddeo do Facebook");
-    }
-
-    private static void fillPt_rBR1(Map<String, String> table) {
         table.put("Not saved: the file is over 512 MB",
                 "N\u00e3o foi salvo: o arquivo tem mais de 512 MB");
         table.put("Open links in your browser",
@@ -851,6 +1074,8 @@ public final class L10nTranslations {
                 "Perfis e algumas p\u00e1ginas de Configura\u00e7\u00f5es voltam a abrir nesta vers\u00e3o reassinada.");
         table.put("Re-signed build fix",
                 "Corre\u00e7\u00e3o para vers\u00e3o reassinada");
+        table.put("Reading the settings file",
+                "Lendo o arquivo de configura\u00e7\u00f5es");
         table.put("Reels and Watch",
                 "Reels e Watch");
         table.put("Retry",
@@ -867,10 +1092,14 @@ public final class L10nTranslations {
                 "Salvo na galeria");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Salvo. Reinicie o Facebook para aplicar esta altera\u00e7\u00e3o.");
+        table.put("Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.",
+                "Salva as op\u00e7\u00f5es das se\u00e7\u00f5es acima em um arquivo que voc\u00ea escolher. A pausa e o Registro de depura\u00e7\u00e3o ficam de fora.");
         table.put("Saving a photo",
                 "Salvando uma foto");
         table.put("Saving a video",
                 "Salvando um v\u00eddeo");
+        table.put("Saving the settings file",
+                "Salvando o arquivo de configura\u00e7\u00f5es");
         table.put("Saving...",
                 "Salvando...");
         table.put("Set when you patched",
@@ -879,6 +1108,12 @@ public final class L10nTranslations {
                 "N\u00e3o foi poss\u00edvel abrir as configura\u00e7\u00f5es");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "N\u00e3o foi poss\u00edvel atualizar as configura\u00e7\u00f5es por completo. Reabra as configura\u00e7\u00f5es e tente de novo.");
+        table.put("Settings exported.",
+                "Configura\u00e7\u00f5es exportadas.");
+        table.put("Settings imported. %1$d switch changed.",
+                "Configura\u00e7\u00f5es importadas. %1$d op\u00e7\u00e3o mudou.");
+        table.put("Settings imported. %1$d switches changed.",
+                "Configura\u00e7\u00f5es importadas. %1$d op\u00e7\u00f5es mudaram.");
         table.put("Source code and issues",
                 "C\u00f3digo-fonte e relatos de problemas");
         table.put("Stays in while paused",
@@ -887,6 +1122,20 @@ public final class L10nTranslations {
                 "Stories");
         table.put("Tap to turn it back on.",
                 "Toque para reativar.");
+        table.put("That file is too large to be a settings file. Nothing was changed.",
+                "Esse arquivo \u00e9 grande demais para ser um arquivo de configura\u00e7\u00f5es. Nada foi alterado.");
+        table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
+                "Esse arquivo n\u00e3o \u00e9 texto leg\u00edvel, ent\u00e3o pode ter se danificado no caminho. Nada foi alterado.");
+        table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
+                "Esse arquivo lista uma configura\u00e7\u00e3o duas vezes, ent\u00e3o n\u00e3o d\u00e1 para saber qual valor usar. Nada foi alterado.");
+        table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
+                "Isso n\u00e3o \u00e9 um arquivo de configura\u00e7\u00f5es do Hushfacebook. Nada foi alterado.");
+        table.put("That settings file holds a value Hushfacebook can't read. Nothing was changed.",
+                "Esse arquivo de configura\u00e7\u00f5es tem um valor que o Hushfacebook n\u00e3o consegue ler. Nada foi alterado.");
+        table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
+                "Esse arquivo de configura\u00e7\u00f5es est\u00e1 danificado ou s\u00f3 foi baixado em parte. Nada foi alterado.");
+        table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
+                "Esse arquivo de configura\u00e7\u00f5es foi escrito por um Hushfacebook mais novo que este. Nada foi alterado.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "O relat\u00f3rio de diagn\u00f3stico ainda n\u00e3o p\u00f4de ser salvo. Tente de novo em instantes.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -901,6 +1150,11 @@ public final class L10nTranslations {
                 "N\u00e3o h\u00e1 dados de diagn\u00f3stico para restaurar.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Eles s\u00e3o escolhidos no Morphe Manager quando voc\u00ea aplica os patches, e a pausa n\u00e3o os desliga. Aplique os patches de novo para mud\u00e1-los.");
+    }
+
+    private static void fillPt_rBR2(Map<String, String> table) {
+        table.put("This phone has no file picker, so there's no way to choose a file here.",
+                "Este celular n\u00e3o tem seletor de arquivos, ent\u00e3o n\u00e3o d\u00e1 para escolher um aqui.");
         table.put("Try again, or go back to Facebook.",
                 "Tente de novo ou volte para o Facebook.");
         table.put("Version",
@@ -913,6 +1167,8 @@ public final class L10nTranslations {
                 "Grava no registro do Android o que cada patch faz. Deixe desligado, a n\u00e3o ser que esteja relatando um problema.");
         table.put("You paused Hushfacebook.",
                 "Voc\u00ea pausou o Hushfacebook.");
+        table.put("Your switches already match that file, so nothing will change.",
+                "Suas op\u00e7\u00f5es j\u00e1 correspondem a esse arquivo, ent\u00e3o nada vai mudar.");
         table.put("the AMOLED black theme",
                 "o tema preto AMOLED");
         table.put("the Audience Network block",
@@ -928,15 +1184,24 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(208);
+        Map<String, String> table = new HashMap<>(268);
         fillTr0(table);
         fillTr1(table);
+        fillTr2(table);
         return table;
     }
 
     private static void fillTr0(Map<String, String> table) {
         table.put("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.",
                 "\u201cBe\u011fenebilece\u011fin Sayfalar\u201d ve Facebook'un kendi tan\u0131t\u0131m kartlar\u0131. Ak\u0131\u015ftaki anketler de kalkar.");
+        table.put("%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.",
+                "O dosyadaki %1$d \u00f6\u011fe, Hushfacebook'un bu s\u00fcr\u00fcm\u00fcn\u00fcn tan\u0131d\u0131\u011f\u0131 ayarlardan de\u011fil, bu y\u00fczden atlanacak.");
+        table.put("%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.",
+                "O dosyadaki %1$d \u00f6\u011fe, Hushfacebook'un bu s\u00fcr\u00fcm\u00fcn\u00fcn tan\u0131d\u0131\u011f\u0131 ayarlardan de\u011fil, bu y\u00fczden atlanacak.");
+        table.put("%1$d switch will change.",
+                "%1$d anahtar de\u011fi\u015fecek.");
+        table.put("%1$d switches will change.",
+                "%1$d anahtar de\u011fi\u015fecek.");
         table.put("%1$s of %2$s",
                 "%1$s / %2$s");
         table.put("%1$s so far",
@@ -971,14 +1236,28 @@ public final class L10nTranslations {
                 "Arka planda reklam indirme engellendi");
         table.put("Changing these",
                 "Bunlar\u0131 de\u011fi\u015ftirmek");
+        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
+                "Bir ayar dosyas\u0131 se\u00e7. Herhangi bir \u015fey de\u011fi\u015fmeden \u00f6nce ka\u00e7 anahtar\u0131 de\u011fi\u015ftirece\u011fini g\u00f6r\u00fcrs\u00fcn.");
         table.put("Clear diagnostic data",
                 "Tan\u0131lama verilerini temizle");
         table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
                 "K\u0131sa bir rapor kopyala veya tam raporu Download/Morphe klas\u00f6r\u00fcne kaydet. Ba\u011flant\u0131lar, hesap ve g\u00f6nderi kimlikleri, oturum \u00e7erezleri ve adlar dahil edilmez.");
         table.put("Copy quick report",
                 "H\u0131zl\u0131 raporu kopyala");
+        table.put("Couldn't import every setting. Check the switches on this screen.",
+                "Ayarlar\u0131n hepsi i\u00e7e aktar\u0131lamad\u0131. Bu ekrandaki anahtarlar\u0131 kontrol et.");
+        table.put("Couldn't import the settings. Nothing was changed.",
+                "Ayarlar i\u00e7e aktar\u0131lamad\u0131. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("Couldn't open that file. Nothing was changed.",
+                "Bu dosya a\u00e7\u0131lamad\u0131. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("Couldn't open the file picker. Try again.",
+                "Dosya se\u00e7ici a\u00e7\u0131lamad\u0131. Tekrar dene.");
         table.put("Couldn't put back the diagnostic data. Try again.",
                 "Tan\u0131lama verileri geri getirilemedi. Tekrar dene.");
+        table.put("Couldn't save the settings file. Try again.",
+                "Ayar dosyas\u0131 kaydedilemedi. Tekrar dene.");
+        table.put("Couldn't start that. Try again in a moment.",
+                "Ba\u015flat\u0131lamad\u0131. Birazdan tekrar dene.");
         table.put("Couldn't start the report export. Try again shortly.",
                 "Rapor d\u0131\u015fa aktar\u0131m\u0131 ba\u015flat\u0131lamad\u0131. Birazdan tekrar dene.");
         table.put("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.",
@@ -1003,6 +1282,8 @@ public final class L10nTranslations {
                 "Hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc d\u0131\u015f\u0131ndaki her anahtar kapal\u0131ym\u0131\u015f gibi davran\u0131r, yamalad\u0131\u011f\u0131nda ayarlananlar ise devrede kal\u0131r. Ayarlar\u0131n oldu\u011fu gibi kal\u0131r.");
         table.put("Export diagnostic report",
                 "Tan\u0131lama raporunu d\u0131\u015fa aktar");
+        table.put("Export settings",
+                "Ayarlar\u0131 d\u0131\u015fa aktar");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook a\u00e7\u0131ld\u0131ktan sonraki bir dakika i\u00e7inde \u00fc\u00e7 kez kapand\u0131, bu y\u00fczden Hushfacebook kendini duraklatt\u0131.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
@@ -1031,6 +1312,9 @@ public final class L10nTranslations {
                 "Facebook %2$s \u00fczerinde Hushfacebook %1$s");
         table.put("Hushfacebook is on",
                 "Hushfacebook a\u00e7\u0131k");
+    }
+
+    private static void fillTr1(Map<String, String> table) {
         table.put("Hushfacebook is paused",
                 "Hushfacebook duraklat\u0131ld\u0131");
         table.put("Hushfacebook saves",
@@ -1041,6 +1325,12 @@ public final class L10nTranslations {
                 "Hushfacebook ayarlar\u0131 a\u00e7\u0131lamad\u0131");
         table.put("Hushfacebook turns back on when Facebook restarts.",
                 "Hushfacebook, Facebook yeniden ba\u015flad\u0131\u011f\u0131nda tekrar a\u00e7\u0131l\u0131r.");
+        table.put("Import",
+                "\u0130\u00e7e aktar");
+        table.put("Import settings",
+                "Ayarlar\u0131 i\u00e7e aktar");
+        table.put("Importing settings",
+                "Ayarlar i\u00e7e aktar\u0131l\u0131yor");
         table.put("Licenses",
                 "Lisanslar");
         table.put("Link expired. Reopen the item and try again",
@@ -1055,9 +1345,6 @@ public final class L10nTranslations {
                 "Reklamlarda ekran g\u00f6r\u00fcnt\u00fcs\u00fc takibi yok, hangi uygulamalar\u0131 y\u00fckledi\u011fine dair rapor da yok.");
         table.put("Not saved: that isn't a Facebook photo or video",
                 "Kaydedilmedi: Bu bir Facebook foto\u011fraf\u0131 veya videosu de\u011fil");
-    }
-
-    private static void fillTr1(Map<String, String> table) {
         table.put("Not saved: the file is over 512 MB",
                 "Kaydedilmedi: Dosya 512 MB'tan b\u00fcy\u00fck");
         table.put("Open links in your browser",
@@ -1072,6 +1359,8 @@ public final class L10nTranslations {
                 "Profiller ve baz\u0131 Ayarlar sayfalar\u0131 bu yeniden imzalanm\u0131\u015f s\u00fcr\u00fcmde tekrar a\u00e7\u0131l\u0131r.");
         table.put("Re-signed build fix",
                 "Yeniden imzalanm\u0131\u015f s\u00fcr\u00fcm d\u00fczeltmesi");
+        table.put("Reading the settings file",
+                "Ayar dosyas\u0131 okunuyor");
         table.put("Reels and Watch",
                 "Reels ve Watch");
         table.put("Retry",
@@ -1088,10 +1377,14 @@ public final class L10nTranslations {
                 "Galeriye kaydedildi");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Kaydedildi. Bu de\u011fi\u015fikli\u011fi uygulamak i\u00e7in Facebook'u yeniden ba\u015flat.");
+        table.put("Saves the switches from the sections above to a file you choose. Pause and Debug logging stay out of it.",
+                "Yukar\u0131daki b\u00f6l\u00fcmlerin anahtarlar\u0131n\u0131 se\u00e7ti\u011fin bir dosyaya kaydeder. Duraklatma ve Hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc dahil edilmez.");
         table.put("Saving a photo",
                 "Foto\u011fraf kaydediliyor");
         table.put("Saving a video",
                 "Video kaydediliyor");
+        table.put("Saving the settings file",
+                "Ayar dosyas\u0131 kaydediliyor");
         table.put("Saving...",
                 "Kaydediliyor...");
         table.put("Set when you patched",
@@ -1100,6 +1393,12 @@ public final class L10nTranslations {
                 "Ayarlar a\u00e7\u0131lamad\u0131");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "Ayarlar tamamen yenilenemedi. Ayarlar\u0131 yeniden a\u00e7\u0131p tekrar dene.");
+        table.put("Settings exported.",
+                "Ayarlar d\u0131\u015fa aktar\u0131ld\u0131.");
+        table.put("Settings imported. %1$d switch changed.",
+                "Ayarlar i\u00e7e aktar\u0131ld\u0131. %1$d anahtar de\u011fi\u015fti.");
+        table.put("Settings imported. %1$d switches changed.",
+                "Ayarlar i\u00e7e aktar\u0131ld\u0131. %1$d anahtar de\u011fi\u015fti.");
         table.put("Source code and issues",
                 "Kaynak kodu ve sorunlar");
         table.put("Stays in while paused",
@@ -1108,6 +1407,20 @@ public final class L10nTranslations {
                 "Hikayeler");
         table.put("Tap to turn it back on.",
                 "Yeniden a\u00e7mak i\u00e7in dokun.");
+        table.put("That file is too large to be a settings file. Nothing was changed.",
+                "Bu dosya bir ayar dosyas\u0131 olamayacak kadar b\u00fcy\u00fck. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
+                "Bu dosya okunabilir bir metin de\u011fil, aktar\u0131m s\u0131ras\u0131nda zarar g\u00f6rm\u00fc\u015f olabilir. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
+                "Bu dosyada bir ayar iki kez ge\u00e7iyor, bu y\u00fczden hangi de\u011ferin kullan\u0131laca\u011f\u0131 belli de\u011fil. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
+                "Bu bir Hushfacebook ayar dosyas\u0131 de\u011fil. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("That settings file holds a value Hushfacebook can't read. Nothing was changed.",
+                "Bu ayar dosyas\u0131nda Hushfacebook'un okuyamad\u0131\u011f\u0131 bir de\u011fer var. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
+                "Bu ayar dosyas\u0131 hasarl\u0131 ya da yaln\u0131zca bir k\u0131sm\u0131 indirilmi\u015f. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
+                "Bu ayar dosyas\u0131, bundan daha yeni bir Hushfacebook s\u00fcr\u00fcm\u00fcyle yaz\u0131lm\u0131\u015f. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Tan\u0131lama raporu hen\u00fcz kaydedilemedi. Birazdan tekrar dene.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -1122,6 +1435,11 @@ public final class L10nTranslations {
                 "Geri getirilecek tan\u0131lama verisi yok.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Bunlar yamalarken Morphe Manager'da se\u00e7ilir ve Duraklatma bunlar\u0131 kapatmaz. De\u011fi\u015ftirmek i\u00e7in yeniden yamala.");
+    }
+
+    private static void fillTr2(Map<String, String> table) {
+        table.put("This phone has no file picker, so there's no way to choose a file here.",
+                "Bu telefonda dosya se\u00e7ici yok, bu y\u00fczden burada dosya se\u00e7menin bir yolu yok.");
         table.put("Try again, or go back to Facebook.",
                 "Tekrar dene veya Facebook'a geri d\u00f6n.");
         table.put("Version",
@@ -1134,6 +1452,8 @@ public final class L10nTranslations {
                 "Her yaman\u0131n ne yapt\u0131\u011f\u0131n\u0131 Android g\u00fcnl\u00fc\u011f\u00fcne yazar. Bir sorun bildirmiyorsan kapal\u0131 b\u0131rak.");
         table.put("You paused Hushfacebook.",
                 "Hushfacebook'u duraklatt\u0131n.");
+        table.put("Your switches already match that file, so nothing will change.",
+                "Anahtarlar\u0131n zaten o dosyayla ayn\u0131, bu y\u00fczden hi\u00e7bir \u015fey de\u011fi\u015fmeyecek.");
         table.put("the AMOLED black theme",
                 "AMOLED siyah tema");
         table.put("the Audience Network block",
