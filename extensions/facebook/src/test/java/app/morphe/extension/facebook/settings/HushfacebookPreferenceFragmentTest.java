@@ -18,6 +18,7 @@ import android.preference.PreferenceGroup;
 import android.preference.SwitchPreference;
 
 import app.morphe.extension.shared.SettingsContextRule;
+import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.PauseForTests;
@@ -93,7 +94,24 @@ public class HushfacebookPreferenceFragmentTest {
             assertNotNull("nothing on the screen says what Pause can't reach", stays);
             assertEquals(PatchFamily.staysWhilePausedSummary(EnumSet.allOf(PatchFamily.class)),
                     String.valueOf(stays.getSummary()));
+
+            // The Pause row turns off "every switch above" and says Debug logging keeps working.
+            int pause = indexOfKey(rows, BaseSettings.PAUSED.key);
+            assertTrue("the Pause row is missing", pause >= 0);
+            for (String key : switchKeys) {
+                assertTrue(key + " is drawn below the Pause row", indexOfKey(rows, key) < pause);
+            }
+            assertTrue("Debug logging is drawn above the Pause row", indexOfKey(rows, BaseSettings.DEBUG.key) > pause);
+            assertTrue(String.valueOf(rows.get(pause).getSummary()),
+                    String.valueOf(rows.get(pause).getSummary()).contains("Debug logging keeps working"));
         }
+    }
+
+    private static int indexOfKey(List<Preference> rows, String key) {
+        for (int i = 0; i < rows.size(); i++) {
+            if (key.equals(rows.get(i).getKey())) return i;
+        }
+        return -1;
     }
 
     @Test
@@ -102,6 +120,8 @@ public class HushfacebookPreferenceFragmentTest {
             String summary = HushfacebookPreferenceFragment.pausedSummary(why);
             assertFalse(why + ": " + summary, UNPATCHED.matcher(summary).find());
             assertTrue(why + ": " + summary, summary.contains("what was set when you patched stays in"));
+            // Debug logging is kept as saved while paused, so the card can't say every switch is off.
+            assertTrue(why + ": " + summary, summary.contains("Every switch but Debug logging"));
         }
 
         PauseForTests.pause(HushfacebookPause.Reason.CRASH_LOOP);

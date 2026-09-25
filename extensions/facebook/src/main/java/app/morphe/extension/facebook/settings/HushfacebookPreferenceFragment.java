@@ -99,8 +99,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             PreferenceCategory reels = category(screen, "Reels and Watch");
             if (build.contains(PatchFamily.SPONSORED_REELS)) {
                 reels.addPreference(toggle(context, Settings.HIDE_SPONSORED_REELS, "Hide sponsored reels",
-                        "Ads that arrive inside a page of reels. Banners and mid-roll ads stay blocked "
-                                + "while the patch is in, whatever this switch or Pause says."));
+                        "Ads that arrive inside a page of reels. Banners, mid-rolls and ads the app adds on its "
+                                + "own stay blocked while the patch is in, whatever this switch or Pause says."));
             }
             if (build.contains(PatchFamily.REEL_DOWNLOAD)) {
                 reels.addPreference(info(context, "Download button on reels",
@@ -145,8 +145,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
 
         PreferenceCategory hushfacebook = category(screen, "Hushfacebook");
         hushfacebook.addPreference(toggle(context, BaseSettings.PAUSED, "Pause Hushfacebook",
-                "From the next start, every switch on this screen acts as if it were off, and Facebook's "
-                        + "own code runs in its place. Your settings stay as they are."));
+                "From the next start, every switch above acts as if it were off, and Facebook's own code "
+                        + "runs in its place. Debug logging keeps working, and your settings stay as they are."));
         String stays = PatchFamily.staysWhilePausedSummary(build);
         if (stays != null) hushfacebook.addPreference(info(context, STAYS_WHILE_PAUSED, stays));
         hushfacebook.addPreference(toggle(context, BaseSettings.DEBUG, "Debug logging",
@@ -238,8 +238,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                 why = "You paused Hushfacebook.";
                 break;
         }
-        return why + " Every switch acts as if it were off, and what was set when you patched stays in. "
-                + "Your settings stay as they are.";
+        return why + " Every switch but Debug logging acts as if it were off, and what was set when you "
+                + "patched stays in. Your settings stay as they are.";
     }
 
     /** The dark Material theme every row on this screen is built with, over Facebook's own. */

@@ -70,12 +70,12 @@ Neither path has been tried here on a certified phone in one of those four count
 
 Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
 
-- Switches for the feed, story and Reels filters, for opening links in your browser and for story saves. They take effect straight away, with no restart and no new patching.
-- **Pause Hushfacebook**. From the next start, every switch acts as if it were off and Facebook's own code runs in its place. Your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
+- Switches for the feed, story and Reels filters, for opening links in your browser and for story saves. They take effect straight away, with no restart and no new patching. While Hushfacebook is paused, a change waits until it's back on.
+- **Pause Hushfacebook**. From the next start, every one of those switches acts as if it were off and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
 - **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build, and for each patch it says whether a switch runs it, how often its hooks ran and what they couldn't find. Failed saves and links no browser opened are in it too.
 - **Licenses**, the notices of every project this is built on.
 
-Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in Facebook's folder under `Android/data` pauses it too. Safe mode is the same pause. If Facebook still keeps closing, the cause is Facebook itself or a patch that stays in while paused, so patch again without the one you suspect.
+Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in Facebook's folder under `Android/data` pauses it too. Safe mode is the same pause. It changes what the switches answer, but every patch's code stays in place, so if Facebook keeps closing in safe mode, the cause can be Facebook itself or any patch, whichever row of the table below it's in. To find it, patch again without the patch you suspect, or with fewer patches.
 
 ### What Pause turns off
 
@@ -84,7 +84,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 | Hide sponsored posts | Off. Sponsored and promoted posts come back. |
 | Hide suggested and promoted posts | Off. |
 | Hide sponsored stories | Off. |
-| Hide sponsored reels | Partly. Ads inside a page of reels come back, but banners over a reel and mid-roll ads stay blocked. |
+| Hide sponsored reels | Partly. Ads inside a page of reels come back, but banners over a reel, mid-roll ads and ads the app adds on its own stay blocked. |
 | Open links in external browser | Off. Links open in Facebook's own browser. |
 | Download any story | Partly. Save stays in every story's menu, and it runs Facebook's own save. |
 | Download any reel | Stays. The Download button keeps working. |

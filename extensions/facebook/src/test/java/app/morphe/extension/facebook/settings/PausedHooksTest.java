@@ -37,11 +37,13 @@ import java.util.Set;
 
 import app.morphe.extension.facebook.ads.ReelsAdFilter;
 import app.morphe.extension.facebook.download.MediaDownload;
+import app.morphe.extension.facebook.download.PlayerSourcesForTests;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
+import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.PauseForTests;
@@ -135,11 +137,14 @@ public class PausedHooksTest {
             assertEquals("the answer and what the browser did disagree", left, started);
             return left;
         }));
-        probes.put(PatchFamily.STORY_DOWNLOAD, Collections.singletonList(() -> {
-            StoryCard card = new StoryCard();
-            MediaDownload.saveStory(RuntimeEnvironment.getApplication(), card);
-            return card.asked;
-        }));
+        probes.put(PatchFamily.STORY_DOWNLOAD, Arrays.asList(
+                () -> {
+                    StoryCard card = new StoryCard();
+                    MediaDownload.saveStory(RuntimeEnvironment.getApplication(), card);
+                    return card.asked;
+                },
+                // The recorder runs in every player Facebook builds, not only in stories.
+                PlayerSourcesForTests::recordsAPlayer));
         return probes;
     }
 
@@ -215,6 +220,24 @@ public class PausedHooksTest {
         PauseForTests.resume();
         for (BooleanSetting setting : switches) {
             assertTrue(setting.key + " stayed off after the pause ended", setting.get());
+        }
+    }
+
+    /**
+     * The Pause row and the paused card say Debug logging keeps working, which is how a paused
+     * start gets logged for a report.
+     */
+    @Test
+    public void debugLoggingKeepsWorkingWhilePaused() {
+        BaseSettings.DEBUG.save(true);
+        try {
+            for (HushfacebookPause.Reason why : HushfacebookPause.Reason.values()) {
+                if (why == HushfacebookPause.Reason.NONE) continue;
+                PauseForTests.pause(why);
+                assertTrue("Debug logging answered off while paused by " + why, BaseSettings.DEBUG.get());
+            }
+        } finally {
+            BaseSettings.DEBUG.resetToDefault();
         }
     }
 }

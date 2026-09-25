@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import app.morphe.extension.facebook.settings.FamilyNames;
+import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
@@ -80,9 +81,14 @@ public final class PlayerSources {
      * <p>The patch calls this at the end of each constructor of the player params. So it runs
      * often and on any thread, and it must never throw. The three names are the real names of the
      * fields. The patch reads them from the app.
+     *
+     * <p>Only a story save reads what is kept here, so with its switch off or Hushfacebook paused
+     * the player is left as Facebook built it.
      */
     public static void remember(Object params, String idField, String hdField, String manifestField) {
         try {
+            if (!Settings.DOWNLOAD_STORIES.get()) return;
+
             String videoId = RenditionPicker.fieldValue(params, idField);
             if (videoId == null || videoId.isEmpty()) return;
 
