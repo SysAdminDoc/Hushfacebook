@@ -26,6 +26,7 @@ import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstructio
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction31i;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction31t;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction35c;
+import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction3rc;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutablePackedSwitchPayload;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableSparseSwitchPayload;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableSwitchElement;
@@ -609,6 +610,35 @@ public class BadDexFixture {
                 op(Opcode.RETURN_VOID),                                                            // 8
                 op(Opcode.NOP),                                                                    // 9, aligns the payload
                 oneInt()));                                                                        // 10
+        // The same conflict where each of the other readers takes it: the other test against
+        // zero, an equality test in either register, an ordering against zero, the second
+        // register of an ordering, a sparse switch, the unlock, and a range-built array.
+        dexes.put("bad-conflict-if-nez", conflictThen(
+                new ImmutableInstruction21t(Opcode.IF_NEZ, 0, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-if-eq", conflictThen(
+                new ImmutableInstruction22t(Opcode.IF_EQ, 0, 3, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-if-eq-second", conflictThen(
+                new ImmutableInstruction22t(Opcode.IF_EQ, 3, 0, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-if-gez", conflictThen(
+                new ImmutableInstruction21t(Opcode.IF_GEZ, 0, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-if-lt-second", conflictThen(new ImmutableInstruction11n(Opcode.CONST_4, 1, 0),
+                new ImmutableInstruction22t(Opcode.IF_LT, 1, 0, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-sparse-switch", conflictThen(
+                new ImmutableInstruction31t(Opcode.SPARSE_SWITCH, 0, 5),                           // 5 -> 10
+                op(Opcode.RETURN_VOID),                                                            // 8
+                op(Opcode.NOP),                                                                    // 9, aligns the payload
+                new ImmutableSparseSwitchPayload(Collections.singletonList(                        // 10
+                        new ImmutableSwitchElement(0, 3)))));
+        dexes.put("bad-conflict-monitor-exit", conflictThen(op(Opcode.MONITOR_EXIT, 0), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-filled-new-array-range", conflictThen(
+                new ImmutableInstruction3rc(Opcode.FILLED_NEW_ARRAY_RANGE, 0, 1, INT_ARRAY), op(Opcode.RETURN_VOID)));
+        // width: the upper half of a long whose lower half was overwritten, tested against zero.
+        dexes.put("bad-broken-high-if-eqz", withStaticHost(body(5,
+                new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 1),                                 // 3, v1 is left a lone upper half
+                ifEqz(1, 3),                                                                       // 4 -> 7
+                op(Opcode.RETURN_VOID),                                                            // 6
+                op(Opcode.RETURN_VOID))));                                                         // 7
         // width: a long tested against zero, which takes a narrow value or an object.
         dexes.put("bad-wide-if-eqz", withStaticHost(body(5,
                 new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
