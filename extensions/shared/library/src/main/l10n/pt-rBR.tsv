@@ -55,6 +55,7 @@ Export settings	Exportar configurações
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	O Facebook fechou três vezes no primeiro minuto depois de abrir, então o Hushfacebook entrou em pausa automaticamente.
 Facebook doesn't download ads or its ad model in the background.	O Facebook não baixa anúncios nem o modelo de anúncios dele em segundo plano.
 Facebook doesn't serve ads to other apps on this phone.	O Facebook não envia anúncios para outros apps deste celular.
+Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.	O modo escuro do Facebook usa as cores do seu plano de fundo, e esta tela também. O Android 11 não tem cores de plano de fundo, então usa uma paleta azul fixa. Ative o modo escuro no Facebook para ver.
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	A partir da próxima abertura, todas as opções acima funcionam como se estivessem desligadas, e o código do próprio Facebook roda no lugar. O Registro de depuração continua funcionando, e suas configurações ficam como estão.
 Full report saved to %1$s	Relatório completo salvo em %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia
@@ -81,6 +82,7 @@ Importing settings	Importando as configurações
 Licenses	Licenças
 Link expired. Reopen the item and try again	Link expirado. Reabra o item e tente de novo
 Links	Links
+Material You theme	Tema Material You
 News feed	Feed de notícias
 No matching diagnostics found.	Nenhum diagnóstico correspondente encontrado.
 No screenshot watching for ads, and no reports of which apps you install.	Sem monitoramento de capturas de tela de anúncios e sem relatórios sobre quais apps você instala.
@@ -139,6 +141,7 @@ the background ad prefetch block	o bloqueio do pré-carregamento de anúncios em
 The diagnostic report couldn't be saved yet. Try again in a moment.	O relatório de diagnóstico ainda não pôde ser salvo. Tente de novo em instantes.
 The diagnostic report couldn't be saved. Try again.	Não foi possível salvar o relatório de diagnóstico. Tente de novo.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	Não foi possível remover o arquivo %1$s. Exclua-o de %2$s para reativar o Hushfacebook.
+the Material You theme	o tema Material You
 the part of the Reels ad block patched into the app	a parte do bloqueio de anúncios do Reels aplicada no app
 the re-signed build fix	a correção para versão reassinada
 The row of friend suggestions between posts.	A fileira de sugestões de amizade entre as publicações.

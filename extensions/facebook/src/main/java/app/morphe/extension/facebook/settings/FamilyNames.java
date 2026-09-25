@@ -29,6 +29,7 @@ public final class FamilyNames {
     public static final String AD_TELEMETRY = "Block ad telemetry";
     public static final String AUDIENCE_NETWORK = "Disable Audience Network";
     public static final String AMOLED_THEME = "AMOLED black theme";
+    public static final String MATERIAL_YOU_THEME = "Material You theme";
     public static final String RESTORE_TRUST = "Restore screens on re-signed builds";
 
     private FamilyNames() {

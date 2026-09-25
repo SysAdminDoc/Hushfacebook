@@ -55,6 +55,7 @@ Export settings	Einstellungen exportieren
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook wurde dreimal innerhalb einer Minute nach dem Start beendet, deshalb hat sich Hushfacebook selbst pausiert.
 Facebook doesn't download ads or its ad model in the background.	Facebook lädt im Hintergrund weder Werbung noch sein Werbemodell herunter.
 Facebook doesn't serve ads to other apps on this phone.	Facebook liefert keine Werbung an andere Apps auf diesem Handy aus.
+Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.	Facebooks Dunkelmodus übernimmt die Farben deines Hintergrundbilds, und dieser Bildschirm ebenso. Android 11 hat keine Farben aus dem Hintergrundbild, daher gibt es dort eine feste blaue Palette. Schalte in Facebook den Dunkelmodus ein, um das zu sehen.
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Ab dem nächsten Start verhält sich jeder Schalter weiter oben, als wäre er aus, und stattdessen läuft Facebooks eigener Code. Die Debug-Protokollierung funktioniert weiter, und deine Einstellungen bleiben, wie sie sind.
 Full report saved to %1$s	Vollständiger Bericht gespeichert unter %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut
@@ -81,6 +82,7 @@ Importing settings	Einstellungen werden importiert
 Licenses	Lizenzen
 Link expired. Reopen the item and try again	Link abgelaufen. Öffne den Inhalt neu und versuche es noch einmal
 Links	Links
+Material You theme	Material-You-Design
 News feed	Newsfeed
 No matching diagnostics found.	Keine passenden Diagnosedaten gefunden.
 No screenshot watching for ads, and no reports of which apps you install.	Keine Screenshot-Erkennung bei Werbung und keine Meldungen darüber, welche Apps du installierst.
@@ -139,6 +141,7 @@ the background ad prefetch block	die Sperre für das Vorabladen von Werbung im H
 The diagnostic report couldn't be saved yet. Try again in a moment.	Der Diagnosebericht ließ sich noch nicht speichern. Versuche es gleich noch einmal.
 The diagnostic report couldn't be saved. Try again.	Der Diagnosebericht ließ sich nicht speichern. Versuche es noch einmal.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	Die Datei %1$s ließ sich nicht entfernen. Lösche sie aus %2$s, um Hushfacebook wieder einzuschalten.
+the Material You theme	das Material-You-Design
 the part of the Reels ad block patched into the app	der in die App gepatchte Teil der Reels-Werbesperre
 the re-signed build fix	der Fix für neu signierte Builds
 The row of friend suggestions between posts.	Die Reihe mit Freundschaftsvorschlägen zwischen den Beiträgen.

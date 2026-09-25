@@ -32,7 +32,7 @@ This project has no connection to Meta or to the Morphe project. Neither endorse
 3. Get Facebook 580.0.0.51.74 for arm64-v8a from [APKMirror](https://www.apkmirror.com/apk/facebook-2/facebook/). Take the Android 11+ bundle (.apkm). Facebook 577.0.0.50.72 works too.
 4. In Morphe Manager, pick that file, keep the default patch selection or change it, and patch.
 
-There are 17 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
+There are 18 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
 
 Facebook releases a new version about once a week, and each one renames most of its code. Every patch here finds what it changes by names Facebook keeps (its GraphQL model classes, log strings, enum names, manifest components) rather than by the names that change, which is why most of them carry over from one build to the next. When one doesn't, patching stops with a message naming what it couldn't find, instead of producing an app that quietly does nothing. Please report it.
 
@@ -75,11 +75,18 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Hide Stories tray` | Removes the row of stories at the top of the news feed, Create story included. |
 | `Hide suggested and promoted posts` | Removes what Facebook adds to the feed besides ads: "Suggested for you" posts, "People you may know", "Pages you may like" and its own upsells. In-feed surveys go too. Each kind has its own switch. |
 | `Hushfacebook settings` | Adds Hushfacebook settings to Facebook's launcher icon. Long-press the icon to turn features on or off, pause Hushfacebook, save your switches to a file or load them, and export diagnostics. The licenses are there too. |
+| `Material You theme` | Gives Facebook's dark mode the colours of your wallpaper on Android 12 and newer, and a fixed blue palette on Android 11. Light mode stays as it is. Turn on dark mode in Facebook first. |
 | `Open links in external browser` | Opens web links in your default browser instead of Facebook's in-app browser, without Facebook's click tracker or the fbclid tag it adds. Facebook pages still open in the app. |
 | `Restore screens on re-signed builds` | Makes profiles and some Settings pages open again on a re-signed build. A Root Mount install doesn't need this patch. |
 | `Sanitize sharing links` | Takes Facebook's tracking tags, such as mibextid, off the links you share or copy. The post or reel a link opens stays the same. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you. |
 
-`Download any reel`, `Download any video`, `AMOLED black theme` and `Hide Stories tray` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
+`Download any reel`, `Download any video`, `AMOLED black theme`, `Material You theme` and `Hide Stories tray` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
+
+### Dark mode themes
+
+`Material You theme` colours Facebook's dark mode with the palette Android 12 and newer take from your wallpaper. Each grey keeps how light it is and picks up the palette's tint, and Facebook's blue links and highlights take its accent colour, so text stays as easy to read as Facebook made it. Android 11 has no wallpaper palette, so there it uses a fixed one built from Facebook's own blue. Light mode keeps Facebook's colours, and a colour the patch doesn't recognise, like one a server sends for a single screen, is left as it came.
+
+The two themes work alone or together. With both, backgrounds stay true black and the palette colours the cards, text, icons and dividers on top. The Hushfacebook settings screen follows the palette as well, dark or light to match your phone. Without `Material You theme` it stays black.
 
 While a save runs, a notification shows how far it's got, with a Cancel button. Facebook has to be allowed to post notifications for it. You can also turn off its "Hushfacebook saves" channel in Facebook's notification settings, and a save then runs with just a message when it starts and one when it ends. A cancelled save leaves nothing behind. One that Android stops half way leaves nothing in the gallery either, and the next save clears what it left in Facebook's cache.
 
@@ -114,7 +121,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 | Download any story | Off. Only your own stories have Save, and it's Facebook's own. |
 | Download any reel | Off. Reels show only Facebook's own buttons. |
 | Download any video | Off. Post menus show only Facebook's own items. |
-| Block ad telemetry, Block background ad prefetch, Disable Audience Network, AMOLED black theme, Restore screens on re-signed builds | Stay. They were set when you patched, and changing one means patching again. |
+| Block ad telemetry, Block background ad prefetch, Disable Audience Network, AMOLED black theme, Material You theme, Restore screens on re-signed builds | Stay. They were set when you patched, and changing one means patching again. |
 
 ## Known limitations
 
@@ -131,7 +138,7 @@ Hushfacebook doesn't collect anything and has no server. The only time the patch
 
 | Source | What came from it |
 |---|---|
-| [andrewliang25/morphe-patches](https://github.com/andrewliang25/morphe-patches) at `5db2e57` | Every Facebook patch here but Sanitize sharing links, Hide Stories tray, Hide AI-detected posts and Download any video, from the ad filters to the story and reel downloads. They were rewritten rather than copied commit by commit, and the fixes are listed in the [changelog](CHANGELOG.md). |
+| [andrewliang25/morphe-patches](https://github.com/andrewliang25/morphe-patches) at `5db2e57` | Every Facebook patch here but Sanitize sharing links, Hide Stories tray, Hide AI-detected posts, Download any video and Material You theme, from the ad filters to the story and reel downloads. They were rewritten rather than copied commit by commit, and the fixes are listed in the [changelog](CHANGELOG.md). |
 | [SapitoSucio/FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) | The idea of dropping promoted posts beside sponsored ones, and of hiding posts Facebook detected as AI, which its 573 filter reads from the same flag. Andrew Liang credits it for some ideas and implementations too. |
 | [SysAdminDoc/hushfeed](https://github.com/SysAdminDoc/hushfeed) at `1f1f81a` | The Gradle build, the shared extension library with its settings screen and diagnostics, the pause, the bytecode helpers, and the checks that apply every patch to real Facebook builds before a release. The settings export and import came later, from `bcc57ee`. |
 | [Morphe](https://github.com/MorpheApp) and [ReVanced](https://gitlab.com/ReVanced/revanced-patches) | The patcher and the patch template. Both of the above grew from their code. |

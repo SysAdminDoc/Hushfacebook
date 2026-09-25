@@ -129,7 +129,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
 
         // Every row inflates with the theme of the context it was built with. Facebook's activity
         // theme is light, so its near-black primary text vanished on this screen's black background
-        // on a phone (2026-09-24). The rows get a dark Material theme instead.
+        // on a phone (2026-09-24). The rows get a dark Material theme instead, or with the Material
+        // You theme in the build, the phone's dark or light one in its wallpaper colours.
+        ScreenColors.shown = ScreenColors.forScreen(getContext());
         Context context = themed(getContext());
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
         setPreferenceScreen(screen);
@@ -227,7 +229,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
 
         if (build.contains(PatchFamily.AD_PREFETCH) || build.contains(PatchFamily.AD_TELEMETRY)
                 || build.contains(PatchFamily.AUDIENCE_NETWORK) || build.contains(PatchFamily.AMOLED_THEME)
-                || build.contains(PatchFamily.RESTORE_TRUST)) {
+                || build.contains(PatchFamily.MATERIAL_YOU_THEME) || build.contains(PatchFamily.RESTORE_TRUST)) {
             PreferenceCategory patched = category(screen, L10n.t("Set when you patched"));
             if (build.contains(PatchFamily.AD_PREFETCH)) {
                 patched.addPreference(info(context, L10n.t("Background ad prefetch blocked"),
@@ -244,6 +246,12 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             if (build.contains(PatchFamily.AMOLED_THEME)) {
                 patched.addPreference(info(context, L10n.t("AMOLED black theme"),
                         L10n.t("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.")));
+            }
+            if (build.contains(PatchFamily.MATERIAL_YOU_THEME)) {
+                patched.addPreference(info(context, L10n.t("Material You theme"),
+                        L10n.t("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. "
+                                + "Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark "
+                                + "mode in Facebook to see it.")));
             }
             if (build.contains(PatchFamily.RESTORE_TRUST)) {
                 patched.addPreference(info(context, L10n.t("Re-signed build fix"),
@@ -371,12 +379,15 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         return "Android/data/" + packageName + "/files";
     }
 
-    /** The dark Material theme every row on this screen is built with, over Facebook's own. */
+    /**
+     * The theme every row and dialog on this screen is built with, over Facebook's own: dark
+     * Material, or with the Material You theme in the build, the phone's dark or light setting.
+     */
     static Context themed(Context base) {
-        return new ContextThemeWrapper(base, android.R.style.Theme_Material_NoActionBar);
+        return new ContextThemeWrapper(base, ScreenColors.themeFor(base));
     }
 
-    /** The recovery page draws on the same black page, so it gets the same theme. */
+    /** The recovery page draws on the same page as the rows, so it gets the same theme. */
     @Override
     protected Context pageContext(Activity activity) {
         return themed(activity);
@@ -466,6 +477,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             super.onBindView(view);
             view.setAccessibilityHeading(true);
             showAllText(view);
+            ScreenColors.heading(view);
         }
     }
 
@@ -479,6 +491,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
+            ScreenColors.row(view);
             view.setAccessibilityDelegate(isSelectable() ? new RowSemantics(this, Button.class) : null);
         }
     }
@@ -493,6 +506,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
+            ScreenColors.row(view);
             view.setAccessibilityDelegate(new RowSemantics(this, Switch.class));
         }
     }
@@ -526,9 +540,15 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         }
 
         @Override
+        protected void onDialogShown(AlertDialog dialog) {
+            ScreenColors.dialog(dialog);
+        }
+
+        @Override
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
+            ScreenColors.row(view);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
     }
@@ -542,6 +562,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
+            ScreenColors.row(view);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
     }
@@ -556,6 +577,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
+            ScreenColors.row(view);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
     }
@@ -635,11 +657,13 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         text.setPadding(pad, pad, pad, pad);
         ScrollView scroll = new ScrollView(context);
         scroll.addView(text);
-        new AlertDialog.Builder(context)
+        ScreenColors colors = ScreenColors.shown;
+        if (colors != null) text.setTextColor(colors.summary);
+        ScreenColors.dialog(new AlertDialog.Builder(context)
                 .setTitle(L10n.t("Licenses"))
                 .setView(scroll)
                 .setPositiveButton(L10n.t("OK"), null)
-                .show();
+                .show());
     }
 
     @Override

@@ -690,6 +690,10 @@ dependencies {
     // Reads the signing certificate of every retained fixture. The patcher already brings this
     // exact version at run time; this puts it on the test compile classpath as well.
     testImplementation("com.android.tools.build:apksig:9.1.1")
+    // Reads the resource tables of the fixtures, for the Material You theme's colour table. The
+    // patcher already brings this exact version at run time; this puts it on the test compile
+    // classpath as well.
+    testImplementation("com.github.REAndroid:arsclib:a28c6fb2a7")
 }
 
 tasks {

@@ -18,18 +18,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 
 /**
  * The Hushfacebook screen: a full screen, black dialog with a title bar and the preference list.
- * It is a framework dialog fragment, so it needs no activity of its own and Back closes it.
+ * It is a framework dialog fragment, so it needs no activity of its own and Back closes it. With the
+ * Material You theme in the build, the page follows the phone's dark or light setting in its
+ * wallpaper colours instead ({@link ScreenColors}).
  */
 @SuppressWarnings("deprecation") // Framework fragments are what the shared preference code builds on.
 public final class SettingsDialog extends DialogFragment {
@@ -46,10 +51,15 @@ public final class SettingsDialog extends DialogFragment {
     static final String BACK_ARROW = String.valueOf((char) 0x2190);
     static final String BACK_ARROW_RIGHT_TO_LEFT = String.valueOf((char) 0x2192);
 
+    /** The page's colours, or null for the black page. Read when the dialog is created. */
+    @Nullable
+    private ScreenColors colors;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(STYLE_NO_TITLE, android.R.style.Theme_Material_NoActionBar);
+        colors = ScreenColors.forScreen(getContext());
+        setStyle(STYLE_NO_TITLE, colors == null ? android.R.style.Theme_Material_NoActionBar : colors.theme());
     }
 
     @Override
@@ -57,7 +67,7 @@ public final class SettingsDialog extends DialogFragment {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         Window window = dialog.getWindow();
         if (window != null) {
-            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
+            window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(background()));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             // With three-button navigation Android lays a grey scrim under the buttons; the
             // screen is black edge to edge, so the scrim only shows as a grey band.
@@ -70,7 +80,7 @@ public final class SettingsDialog extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         LinearLayout root = new LinearLayout(getContext());
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.BLACK);
+        root.setBackgroundColor(background());
 
         LinearLayout bar = new LinearLayout(getContext());
         bar.setOrientation(LinearLayout.HORIZONTAL);
@@ -81,7 +91,7 @@ public final class SettingsDialog extends DialogFragment {
 
         TextView back = new TextView(getContext());
         back.setText(rightToLeft() ? BACK_ARROW_RIGHT_TO_LEFT : BACK_ARROW);
-        back.setTextColor(Color.WHITE);
+        back.setTextColor(foreground());
         back.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
         back.setGravity(Gravity.CENTER);
         back.setMinWidth(dp(48));
@@ -103,7 +113,7 @@ public final class SettingsDialog extends DialogFragment {
 
         TextView title = new TextView(getContext());
         title.setText("Hushfacebook");
-        title.setTextColor(Color.WHITE);
+        title.setTextColor(foreground());
         title.setTypeface(Typeface.DEFAULT_BOLD);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
         title.setPaddingRelative(dp(8), 0, 0, 0);
@@ -124,6 +134,30 @@ public final class SettingsDialog extends DialogFragment {
             return insets;
         });
         return root;
+    }
+
+    /**
+     * On a light page, dark status and navigation bar icons, which the window only takes once it
+     * has its decor.
+     */
+    @Override
+    public void onStart() {
+        super.onStart();
+        Dialog dialog = getDialog();
+        Window window = dialog == null ? null : dialog.getWindow();
+        if (colors == null || !colors.light || window == null) return;
+        WindowInsetsController bars = window.getInsetsController();
+        if (bars == null) return;
+        int dark = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+        bars.setSystemBarsAppearance(dark, dark);
+    }
+
+    private int background() {
+        return colors == null ? Color.BLACK : colors.background;
+    }
+
+    private int foreground() {
+        return colors == null ? Color.WHITE : colors.title;
     }
 
     @Override

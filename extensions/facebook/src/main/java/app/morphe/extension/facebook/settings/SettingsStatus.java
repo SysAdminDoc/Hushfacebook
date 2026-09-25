@@ -70,6 +70,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean materialYouTheme() {
+        return false;
+    }
+
     public static boolean storyDownload() {
         return false;
     }

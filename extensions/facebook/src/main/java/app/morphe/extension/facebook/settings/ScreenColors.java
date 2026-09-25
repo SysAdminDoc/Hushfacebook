@@ -1,0 +1,167 @@
+/*
+ * Copyright 2026 Hushfacebook contributors
+ * https://github.com/SysAdminDoc/Hushfacebook
+ */
+package app.morphe.extension.facebook.settings;
+
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
+import android.view.View;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.Switch;
+import android.widget.TextView;
+
+import androidx.annotation.Nullable;
+
+import app.morphe.extension.facebook.theme.TonePalette;
+
+/**
+ * The colours of the Hushfacebook screen, its rows and its dialogs when the Material You theme is
+ * in this build. The screen then follows the phone's dark or light setting, in the tones of the
+ * wallpaper palette (Android 12 and newer) or of the fixed palette Android 11 gets.
+ *
+ * <p>A tone is a lightness, so the contrast of each pair below is the same for any wallpaper. The
+ * pairs are Material 3's: the page is the neutral at tone 10 in dark and 99 in light, text is the
+ * neutral at 90 or 10, secondary text the neutral variant at 80 or 30, and section titles, switches
+ * and dialog buttons the accent at 80 or 40. Every pair meets WCAG 2.2 AA with room to spare,
+ * which ScreenColorsTest works out.
+ *
+ * <p>Without the theme in the build, {@link #forScreen} answers null and the screen keeps the black
+ * page and dark Material rows it always had.
+ */
+final class ScreenColors {
+    final boolean light;
+    /** The page, behind the title bar and every row. */
+    final int background;
+    /** A dialog's surface. */
+    final int dialog;
+    /** Row and dialog titles, the title bar and its back arrow. */
+    final int title;
+    /** Row summaries and a dialog's message. */
+    final int summary;
+    /** Section titles. */
+    final int heading;
+    /** A switch that's on, and the buttons of a dialog. */
+    final int accent;
+    /** A switch that's off. */
+    final int switchOff;
+
+    /** The colours the screen on show was built with, or null for the black page. */
+    @Nullable
+    static volatile ScreenColors shown;
+
+    private ScreenColors(TonePalette palette, boolean light) {
+        this.light = light;
+        if (light) {
+            background = palette.tone(TonePalette.NEUTRAL, 99);
+            dialog = palette.tone(TonePalette.NEUTRAL, 95);
+            title = palette.tone(TonePalette.NEUTRAL, 10);
+            summary = palette.tone(TonePalette.NEUTRAL_VARIANT, 30);
+            heading = palette.tone(TonePalette.ACCENT, 40);
+            accent = palette.tone(TonePalette.ACCENT, 40);
+            switchOff = palette.tone(TonePalette.NEUTRAL_VARIANT, 50);
+        } else {
+            background = palette.tone(TonePalette.NEUTRAL, 10);
+            dialog = palette.tone(TonePalette.NEUTRAL, 20);
+            title = palette.tone(TonePalette.NEUTRAL, 90);
+            summary = palette.tone(TonePalette.NEUTRAL_VARIANT, 80);
+            heading = palette.tone(TonePalette.ACCENT, 80);
+            accent = palette.tone(TonePalette.ACCENT, 80);
+            switchOff = palette.tone(TonePalette.NEUTRAL_VARIANT, 60);
+        }
+    }
+
+    static ScreenColors of(TonePalette palette, boolean light) {
+        return new ScreenColors(palette, light);
+    }
+
+    /**
+     * The colours for a screen shown in this context: the phone's palette, dark or light as the
+     * context's configuration says. Null when the Material You theme isn't in this build.
+     */
+    @Nullable
+    static ScreenColors forScreen(Context context) {
+        if (!PatchFamily.MATERIAL_YOU_THEME.inBuild()) return null;
+        int night = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return new ScreenColors(TonePalette.of(context), night != Configuration.UI_MODE_NIGHT_YES);
+    }
+
+    /** The framework theme rows and dialogs are built with, so what this class doesn't paint still reads. */
+    int theme() {
+        return light ? android.R.style.Theme_Material_Light_NoActionBar : android.R.style.Theme_Material_NoActionBar;
+    }
+
+    /** {@link #theme()} of {@link #forScreen}, or the dark Material theme the black page has always had. */
+    static int themeFor(Context context) {
+        ScreenColors colors = forScreen(context);
+        return colors == null ? android.R.style.Theme_Material_NoActionBar : colors.theme();
+    }
+
+    /** A row's title and summary, and its switch if it has one. */
+    void paintRow(View row) {
+        TextView title = row.findViewById(android.R.id.title);
+        if (title != null) title.setTextColor(this.title);
+        TextView summary = row.findViewById(android.R.id.summary);
+        if (summary != null) summary.setTextColor(this.summary);
+        View widget = row.findViewById(android.R.id.switch_widget);
+        if (widget instanceof Switch) {
+            int[][] states = {{android.R.attr.state_checked}, {}};
+            Switch toggle = (Switch) widget;
+            toggle.setThumbTintList(new ColorStateList(states, new int[]{accent, switchOff}));
+            toggle.setTrackTintList(new ColorStateList(states, new int[]{half(accent), half(switchOff)}));
+        }
+    }
+
+    /** A section title. */
+    void paintHeading(View row) {
+        TextView title = row.findViewById(android.R.id.title);
+        if (title != null) title.setTextColor(heading);
+    }
+
+    /** A dialog on show: its surface, title, message and buttons. A list's rows keep the theme's colours. */
+    void paint(@Nullable AlertDialog dialog) {
+        if (dialog == null) return;
+        Window window = dialog.getWindow();
+        if (window != null) {
+            Drawable background = window.getDecorView().getBackground();
+            if (background != null) background.mutate().setTint(this.dialog);
+        }
+        @SuppressWarnings("DiscouragedApi")
+        int titleId = dialog.getContext().getResources().getIdentifier("alertTitle", "id", "android");
+        TextView title = titleId == 0 ? null : dialog.findViewById(titleId);
+        if (title != null) title.setTextColor(this.title);
+        TextView message = dialog.findViewById(android.R.id.message);
+        if (message != null) message.setTextColor(summary);
+        for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL}) {
+            Button button = dialog.getButton(which);
+            if (button != null) button.setTextColor(accent);
+        }
+    }
+
+    /** Paints a row with the colours on show, if there are any. */
+    static void row(View row) {
+        ScreenColors colors = shown;
+        if (colors != null) colors.paintRow(row);
+    }
+
+    /** Paints a section title with the colours on show, if there are any. */
+    static void heading(View row) {
+        ScreenColors colors = shown;
+        if (colors != null) colors.paintHeading(row);
+    }
+
+    /** Paints a dialog with the colours on show, if there are any. */
+    static void dialog(@Nullable AlertDialog dialog) {
+        ScreenColors colors = shown;
+        if (colors != null) colors.paint(dialog);
+    }
+
+    /** A switch's track: the thumb's colour at half strength, as Material's own switch draws it. */
+    private static int half(int color) {
+        return (color & 0x00FFFFFF) | 0x80000000;
+    }
+}

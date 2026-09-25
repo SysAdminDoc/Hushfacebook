@@ -55,6 +55,7 @@ Export settings	Ekspor pengaturan
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook tertutup tiga kali dalam satu menit setelah dibuka, jadi Hushfacebook menjeda dirinya sendiri.
 Facebook doesn't download ads or its ad model in the background.	Facebook tidak mengunduh iklan atau model iklannya di latar belakang.
 Facebook doesn't serve ads to other apps on this phone.	Facebook tidak menayangkan iklan ke aplikasi lain di ponsel ini.
+Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.	Mode gelap Facebook memakai warna dari wallpaper Anda, begitu juga layar ini. Android 11 tidak punya warna wallpaper, jadi memakai palet biru tetap. Aktifkan mode gelap di Facebook untuk melihatnya.
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Setelah Facebook dimulai ulang, semua sakelar di atas dianggap nonaktif, dan kode Facebook sendiri yang berjalan sebagai gantinya. Pencatatan debug tetap berfungsi, dan pengaturan Anda tetap seperti semula.
 Full report saved to %1$s	Laporan lengkap disimpan ke %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya
@@ -81,6 +82,7 @@ Importing settings	Mengimpor pengaturan
 Licenses	Lisensi
 Link expired. Reopen the item and try again	Tautan kedaluwarsa. Buka ulang kontennya lalu coba lagi
 Links	Tautan
+Material You theme	Tema Material You
 News feed	Kabar Beranda
 No matching diagnostics found.	Tidak ditemukan diagnostik yang cocok.
 No screenshot watching for ads, and no reports of which apps you install.	Tangkapan layar iklan tidak dipantau, dan aplikasi yang Anda pasang tidak dilaporkan.
@@ -139,6 +141,7 @@ the background ad prefetch block	pemblokir pramuat iklan di latar belakang
 The diagnostic report couldn't be saved yet. Try again in a moment.	Laporan diagnostik belum dapat disimpan. Coba lagi dalam beberapa saat.
 The diagnostic report couldn't be saved. Try again.	Laporan diagnostik tidak dapat disimpan. Coba lagi.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	File %1$s tidak dapat dihapus. Hapus file itu dari %2$s untuk mengaktifkan Hushfacebook lagi.
+the Material You theme	tema Material You
 the part of the Reels ad block patched into the app	bagian pemblokir iklan Reels yang ditambalkan ke aplikasi
 the re-signed build fix	perbaikan build yang ditandatangani ulang
 The row of friend suggestions between posts.	Deretan saran pertemanan di antara postingan.

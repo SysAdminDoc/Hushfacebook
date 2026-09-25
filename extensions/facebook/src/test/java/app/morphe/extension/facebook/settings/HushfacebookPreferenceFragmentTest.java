@@ -60,6 +60,7 @@ public class HushfacebookPreferenceFragmentTest {
     @After
     public void restore() {
         PatchFamily.inBuildForTests = null;
+        ScreenColors.shown = null;
         PauseForTests.resume();
         Settings.SAVE_FOLDER.resetToDefault();
     }
@@ -237,8 +238,18 @@ public class HushfacebookPreferenceFragmentTest {
             try {
                 ColorStateList primary = styled.getColorStateList(0);
                 assertTrue("no primary text color for " + title, primary != null);
-                assertTrue("\"" + title + "\" is drawn dark on the black page",
-                        Color.luminance(primary.getDefaultColor()) > 0.5f);
+                ScreenColors page = ScreenColors.shown;
+                if (page == null) {
+                    assertTrue("\"" + title + "\" is drawn dark on the black page",
+                            Color.luminance(primary.getDefaultColor()) > 0.5f);
+                } else {
+                    // The Material You theme's page is the palette's, dark or light as the phone
+                    // is. The theme's own text, before a row paints it, still has to read on it.
+                    int blended = blend(primary.getDefaultColor(), page.background);
+                    assertTrue("\"" + title + "\" is " + Integer.toHexString(blended) + " on the page's "
+                                    + Integer.toHexString(page.background),
+                            ScreenColorsTest.contrast(blended, page.background) >= ScreenColorsTest.TEXT);
+                }
             } finally {
                 styled.recycle();
             }
@@ -254,5 +265,17 @@ public class HushfacebookPreferenceFragmentTest {
                 rows.add(preference);
             }
         }
+    }
+
+    /** A translucent text colour as it lands on an opaque background. */
+    private static int blend(int color, int background) {
+        int alpha = color >>> 24;
+        int[] out = new int[3];
+        for (int shift = 16, i = 0; i < 3; shift -= 8, i++) {
+            int top = (color >> shift) & 0xFF;
+            int bottom = (background >> shift) & 0xFF;
+            out[i] = (top * alpha + bottom * (255 - alpha) + 127) / 255;
+        }
+        return 0xFF000000 | (out[0] << 16) | (out[1] << 8) | out[2];
     }
 }

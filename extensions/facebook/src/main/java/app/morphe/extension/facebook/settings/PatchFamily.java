@@ -63,6 +63,7 @@ public enum PatchFamily {
     AD_TELEMETRY(FamilyNames.AD_TELEMETRY, "adTelemetry", "the ad telemetry block"),
     AUDIENCE_NETWORK(FamilyNames.AUDIENCE_NETWORK, "audienceNetwork", "the Audience Network block"),
     AMOLED_THEME(FamilyNames.AMOLED_THEME, "amoledTheme", "the AMOLED black theme"),
+    MATERIAL_YOU_THEME(FamilyNames.MATERIAL_YOU_THEME, "materialYouTheme", "the Material You theme"),
     RESTORE_TRUST(FamilyNames.RESTORE_TRUST, "restoreTrust", "the re-signed build fix");
 
     /** The patch's name in Morphe Manager. */

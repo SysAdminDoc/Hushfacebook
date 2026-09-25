@@ -55,6 +55,7 @@ Export settings	Ayarları dışa aktar
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook açıldıktan sonraki bir dakika içinde üç kez kapandı, bu yüzden Hushfacebook kendini duraklattı.
 Facebook doesn't download ads or its ad model in the background.	Facebook reklamları veya reklam modelini arka planda indirmez.
 Facebook doesn't serve ads to other apps on this phone.	Facebook bu telefondaki diğer uygulamalara reklam sunmaz.
+Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.	Facebook'un karanlık modu renklerini duvar kağıdından alır, bu ekran da öyle. Android 11'de duvar kağıdı renkleri olmadığı için sabit bir mavi palet kullanılır. Görmek için Facebook'ta karanlık modu aç.
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Bir sonraki açılıştan itibaren yukarıdaki her anahtar kapalıymış gibi davranır ve yerine Facebook'un kendi kodu çalışır. Hata ayıklama günlüğü çalışmaya devam eder ve ayarların olduğu gibi kalır.
 Full report saved to %1$s	Tam rapor şuraya kaydedildi: %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, üzerine kurulduğu projelerin lisans bildirimleriyle
@@ -81,6 +82,7 @@ Importing settings	Ayarlar içe aktarılıyor
 Licenses	Lisanslar
 Link expired. Reopen the item and try again	Bağlantının süresi doldu. Öğeyi yeniden açıp tekrar dene
 Links	Bağlantılar
+Material You theme	Material You teması
 News feed	Akış
 No matching diagnostics found.	Eşleşen tanılama bulunamadı.
 No screenshot watching for ads, and no reports of which apps you install.	Reklamlarda ekran görüntüsü takibi yok, hangi uygulamaları yüklediğine dair rapor da yok.
@@ -139,6 +141,7 @@ the background ad prefetch block	arka planda reklam indirme engeli
 The diagnostic report couldn't be saved yet. Try again in a moment.	Tanılama raporu henüz kaydedilemedi. Birazdan tekrar dene.
 The diagnostic report couldn't be saved. Try again.	Tanılama raporu kaydedilemedi. Tekrar dene.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	%1$s dosyası kaldırılamadı. Hushfacebook'u yeniden açmak için onu %2$s içinden sil.
+the Material You theme	Material You teması
 the part of the Reels ad block patched into the app	Reels reklam engelinin uygulamaya yamalanan kısmı
 the re-signed build fix	yeniden imzalanmış sürüm düzeltmesi
 The row of friend suggestions between posts.	Gönderilerin arasındaki arkadaş önerileri satırı.

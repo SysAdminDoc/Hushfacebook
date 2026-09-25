@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(312);
+        Map<String, String> table = new HashMap<>(318);
         fillDe0(table);
         fillDe1(table);
         fillDe2(table);
@@ -162,6 +162,8 @@ public final class L10nTranslations {
                 "Facebook l\u00e4dt im Hintergrund weder Werbung noch sein Werbemodell herunter.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook liefert keine Werbung an andere Apps auf diesem Handy aus.");
+        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
+                "Facebooks Dunkelmodus \u00fcbernimmt die Farben deines Hintergrundbilds, und dieser Bildschirm ebenso. Android 11 hat keine Farben aus dem Hintergrundbild, daher gibt es dort eine feste blaue Palette. Schalte in Facebook den Dunkelmodus ein, um das zu sehen.");
         table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
                 "Ab dem n\u00e4chsten Start verh\u00e4lt sich jeder Schalter weiter oben, als w\u00e4re er aus, und stattdessen l\u00e4uft Facebooks eigener Code. Die Debug-Protokollierung funktioniert weiter, und deine Einstellungen bleiben, wie sie sind.");
         table.put("Full report saved to %1$s",
@@ -170,11 +172,11 @@ public final class L10nTranslations {
                 "GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut");
         table.put("Hide \"People you may know\"",
                 "\u201ePersonen, die du kennen k\u00f6nntest\u201c ausblenden");
-        table.put("Hide \"Suggested for you\" posts",
-                "\u201eVorschl\u00e4ge f\u00fcr dich\u201c ausblenden");
     }
 
     private static void fillDe1(Map<String, String> table) {
+        table.put("Hide \"Suggested for you\" posts",
+                "\u201eVorschl\u00e4ge f\u00fcr dich\u201c ausblenden");
         table.put("Hide AI-detected posts",
                 "Als KI erkannte Beitr\u00e4ge ausblenden");
         table.put("Hide promoted posts",
@@ -217,6 +219,8 @@ public final class L10nTranslations {
                 "Link abgelaufen. \u00d6ffne den Inhalt neu und versuche es noch einmal");
         table.put("Links",
                 "Links");
+        table.put("Material You theme",
+                "Material-You-Design");
         table.put("News feed",
                 "Newsfeed");
         table.put("No matching diagnostics found.",
@@ -291,13 +295,13 @@ public final class L10nTranslations {
                 "Einstellungen exportiert.");
         table.put("Settings imported. %1$d switch changed.",
                 "Einstellungen importiert. %1$d Schalter wurde ge\u00e4ndert.");
+    }
+
+    private static void fillDe2(Map<String, String> table) {
         table.put("Settings imported. %1$d switches changed.",
                 "Einstellungen importiert. %1$d Schalter wurden ge\u00e4ndert.");
         table.put("Settings imported. Saves will go to a folder named %1$s.",
                 "Einstellungen importiert. Was du speicherst, landet jetzt in einem Ordner namens %1$s.");
-    }
-
-    private static void fillDe2(Map<String, String> table) {
         table.put("Source code and issues",
                 "Quellcode und Issues");
         table.put("Stays in while paused",
@@ -362,6 +366,8 @@ public final class L10nTranslations {
                 "das schwarze AMOLED-Design");
         table.put("the Audience Network block",
                 "die Sperre f\u00fcr das Audience Network");
+        table.put("the Material You theme",
+                "das Material-You-Design");
         table.put("the ad telemetry block",
                 "die Sperre f\u00fcr Werbe-Telemetrie");
         table.put("the background ad prefetch block",
@@ -373,7 +379,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(312);
+        Map<String, String> table = new HashMap<>(318);
         fillEs0(table);
         fillEs1(table);
         fillEs2(table);
@@ -491,6 +497,8 @@ public final class L10nTranslations {
                 "Facebook no descarga anuncios ni su modelo de anuncios en segundo plano.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook no env\u00eda anuncios a otras apps de este tel\u00e9fono.");
+        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
+                "El modo oscuro de Facebook toma los colores de tu fondo de pantalla, y esta pantalla tambi\u00e9n. Android 11 no tiene colores de fondo de pantalla, as\u00ed que usa una paleta azul fija. Activa el modo oscuro en Facebook para verlo.");
         table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
                 "A partir del pr\u00f3ximo inicio, todos los interruptores de arriba funcionan como si estuvieran desactivados, y en su lugar se ejecuta el c\u00f3digo propio de Facebook. El Registro de depuraci\u00f3n sigue funcionando y tu configuraci\u00f3n no cambia.");
         table.put("Full report saved to %1$s",
@@ -499,11 +507,11 @@ public final class L10nTranslations {
                 "GPL-3.0, con los avisos de los proyectos en los que se basa");
         table.put("Hide \"People you may know\"",
                 "Ocultar \u201cPersonas que quiz\u00e1 conozcas\u201d");
-        table.put("Hide \"Suggested for you\" posts",
-                "Ocultar publicaciones \u201cSugerencias para ti\u201d");
     }
 
     private static void fillEs1(Map<String, String> table) {
+        table.put("Hide \"Suggested for you\" posts",
+                "Ocultar publicaciones \u201cSugerencias para ti\u201d");
         table.put("Hide AI-detected posts",
                 "Ocultar publicaciones detectadas como IA");
         table.put("Hide promoted posts",
@@ -546,6 +554,8 @@ public final class L10nTranslations {
                 "El enlace expir\u00f3. Vuelve a abrir el contenido e int\u00e9ntalo de nuevo");
         table.put("Links",
                 "Enlaces");
+        table.put("Material You theme",
+                "Tema Material You");
         table.put("News feed",
                 "Feed");
         table.put("No matching diagnostics found.",
@@ -620,13 +630,13 @@ public final class L10nTranslations {
                 "Configuraci\u00f3n exportada.");
         table.put("Settings imported. %1$d switch changed.",
                 "Configuraci\u00f3n importada. Cambi\u00f3 %1$d interruptor.");
+    }
+
+    private static void fillEs2(Map<String, String> table) {
         table.put("Settings imported. %1$d switches changed.",
                 "Configuraci\u00f3n importada. Cambiaron %1$d interruptores.");
         table.put("Settings imported. Saves will go to a folder named %1$s.",
                 "Configuraci\u00f3n importada. Lo que guardes ir\u00e1 a una carpeta llamada %1$s.");
-    }
-
-    private static void fillEs2(Map<String, String> table) {
         table.put("Source code and issues",
                 "C\u00f3digo fuente e incidencias");
         table.put("Stays in while paused",
@@ -691,6 +701,8 @@ public final class L10nTranslations {
                 "el tema negro AMOLED");
         table.put("the Audience Network block",
                 "el bloqueo de Audience Network");
+        table.put("the Material You theme",
+                "el tema Material You");
         table.put("the ad telemetry block",
                 "el bloqueo de telemetr\u00eda de anuncios");
         table.put("the background ad prefetch block",
@@ -702,7 +714,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(312);
+        Map<String, String> table = new HashMap<>(318);
         fillIn0(table);
         fillIn1(table);
         fillIn2(table);
@@ -820,6 +832,8 @@ public final class L10nTranslations {
                 "Facebook tidak mengunduh iklan atau model iklannya di latar belakang.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook tidak menayangkan iklan ke aplikasi lain di ponsel ini.");
+        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
+                "Mode gelap Facebook memakai warna dari wallpaper Anda, begitu juga layar ini. Android 11 tidak punya warna wallpaper, jadi memakai palet biru tetap. Aktifkan mode gelap di Facebook untuk melihatnya.");
         table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
                 "Setelah Facebook dimulai ulang, semua sakelar di atas dianggap nonaktif, dan kode Facebook sendiri yang berjalan sebagai gantinya. Pencatatan debug tetap berfungsi, dan pengaturan Anda tetap seperti semula.");
         table.put("Full report saved to %1$s",
@@ -828,11 +842,11 @@ public final class L10nTranslations {
                 "GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya");
         table.put("Hide \"People you may know\"",
                 "Sembunyikan \u201cOrang yang Mungkin Anda Kenal\u201d");
-        table.put("Hide \"Suggested for you\" posts",
-                "Sembunyikan postingan \u201cDisarankan untuk Anda\u201d");
     }
 
     private static void fillIn1(Map<String, String> table) {
+        table.put("Hide \"Suggested for you\" posts",
+                "Sembunyikan postingan \u201cDisarankan untuk Anda\u201d");
         table.put("Hide AI-detected posts",
                 "Sembunyikan postingan yang terdeteksi dibuat dengan AI");
         table.put("Hide promoted posts",
@@ -875,6 +889,8 @@ public final class L10nTranslations {
                 "Tautan kedaluwarsa. Buka ulang kontennya lalu coba lagi");
         table.put("Links",
                 "Tautan");
+        table.put("Material You theme",
+                "Tema Material You");
         table.put("News feed",
                 "Kabar Beranda");
         table.put("No matching diagnostics found.",
@@ -949,13 +965,13 @@ public final class L10nTranslations {
                 "Pengaturan diekspor.");
         table.put("Settings imported. %1$d switch changed.",
                 "Pengaturan diimpor. %1$d sakelar berubah.");
+    }
+
+    private static void fillIn2(Map<String, String> table) {
         table.put("Settings imported. %1$d switches changed.",
                 "Pengaturan diimpor. %1$d sakelar berubah.");
         table.put("Settings imported. Saves will go to a folder named %1$s.",
                 "Pengaturan diimpor. Semua yang Anda simpan akan masuk ke folder bernama %1$s.");
-    }
-
-    private static void fillIn2(Map<String, String> table) {
         table.put("Source code and issues",
                 "Kode sumber dan laporan masalah");
         table.put("Stays in while paused",
@@ -1020,6 +1036,8 @@ public final class L10nTranslations {
                 "tema hitam AMOLED");
         table.put("the Audience Network block",
                 "pemblokir Audience Network");
+        table.put("the Material You theme",
+                "tema Material You");
         table.put("the ad telemetry block",
                 "pemblokir telemetri iklan");
         table.put("the background ad prefetch block",
@@ -1031,7 +1049,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(312);
+        Map<String, String> table = new HashMap<>(318);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         fillPt_rBR2(table);
@@ -1149,6 +1167,8 @@ public final class L10nTranslations {
                 "O Facebook n\u00e3o baixa an\u00fancios nem o modelo de an\u00fancios dele em segundo plano.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "O Facebook n\u00e3o envia an\u00fancios para outros apps deste celular.");
+        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
+                "O modo escuro do Facebook usa as cores do seu plano de fundo, e esta tela tamb\u00e9m. O Android 11 n\u00e3o tem cores de plano de fundo, ent\u00e3o usa uma paleta azul fixa. Ative o modo escuro no Facebook para ver.");
         table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
                 "A partir da pr\u00f3xima abertura, todas as op\u00e7\u00f5es acima funcionam como se estivessem desligadas, e o c\u00f3digo do pr\u00f3prio Facebook roda no lugar. O Registro de depura\u00e7\u00e3o continua funcionando, e suas configura\u00e7\u00f5es ficam como est\u00e3o.");
         table.put("Full report saved to %1$s",
@@ -1157,11 +1177,11 @@ public final class L10nTranslations {
                 "GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia");
         table.put("Hide \"People you may know\"",
                 "Ocultar \u201cPessoas que voc\u00ea talvez conhe\u00e7a\u201d");
-        table.put("Hide \"Suggested for you\" posts",
-                "Ocultar publica\u00e7\u00f5es \u201cSugest\u00f5es para voc\u00ea\u201d");
     }
 
     private static void fillPt_rBR1(Map<String, String> table) {
+        table.put("Hide \"Suggested for you\" posts",
+                "Ocultar publica\u00e7\u00f5es \u201cSugest\u00f5es para voc\u00ea\u201d");
         table.put("Hide AI-detected posts",
                 "Ocultar posts detectados como IA");
         table.put("Hide promoted posts",
@@ -1204,6 +1224,8 @@ public final class L10nTranslations {
                 "Link expirado. Reabra o item e tente de novo");
         table.put("Links",
                 "Links");
+        table.put("Material You theme",
+                "Tema Material You");
         table.put("News feed",
                 "Feed de not\u00edcias");
         table.put("No matching diagnostics found.",
@@ -1278,13 +1300,13 @@ public final class L10nTranslations {
                 "Configura\u00e7\u00f5es exportadas.");
         table.put("Settings imported. %1$d switch changed.",
                 "Configura\u00e7\u00f5es importadas. %1$d op\u00e7\u00e3o mudou.");
+    }
+
+    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Settings imported. %1$d switches changed.",
                 "Configura\u00e7\u00f5es importadas. %1$d op\u00e7\u00f5es mudaram.");
         table.put("Settings imported. Saves will go to a folder named %1$s.",
                 "Configura\u00e7\u00f5es importadas. O que voc\u00ea salvar vai para uma pasta chamada %1$s.");
-    }
-
-    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Source code and issues",
                 "C\u00f3digo-fonte e relatos de problemas");
         table.put("Stays in while paused",
@@ -1349,6 +1371,8 @@ public final class L10nTranslations {
                 "o tema preto AMOLED");
         table.put("the Audience Network block",
                 "o bloqueio do Audience Network");
+        table.put("the Material You theme",
+                "o tema Material You");
         table.put("the ad telemetry block",
                 "o bloqueio da telemetria de an\u00fancios");
         table.put("the background ad prefetch block",
@@ -1360,7 +1384,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(312);
+        Map<String, String> table = new HashMap<>(318);
         fillTr0(table);
         fillTr1(table);
         fillTr2(table);
@@ -1478,6 +1502,8 @@ public final class L10nTranslations {
                 "Facebook reklamlar\u0131 veya reklam modelini arka planda indirmez.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook bu telefondaki di\u011fer uygulamalara reklam sunmaz.");
+        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
+                "Facebook'un karanl\u0131k modu renklerini duvar ka\u011f\u0131d\u0131ndan al\u0131r, bu ekran da \u00f6yle. Android 11'de duvar ka\u011f\u0131d\u0131 renkleri olmad\u0131\u011f\u0131 i\u00e7in sabit bir mavi palet kullan\u0131l\u0131r. G\u00f6rmek i\u00e7in Facebook'ta karanl\u0131k modu a\u00e7.");
         table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
                 "Bir sonraki a\u00e7\u0131l\u0131\u015ftan itibaren yukar\u0131daki her anahtar kapal\u0131ym\u0131\u015f gibi davran\u0131r ve yerine Facebook'un kendi kodu \u00e7al\u0131\u015f\u0131r. Hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc \u00e7al\u0131\u015fmaya devam eder ve ayarlar\u0131n oldu\u011fu gibi kal\u0131r.");
         table.put("Full report saved to %1$s",
@@ -1486,11 +1512,11 @@ public final class L10nTranslations {
                 "GPL-3.0, \u00fczerine kuruldu\u011fu projelerin lisans bildirimleriyle");
         table.put("Hide \"People you may know\"",
                 "\u201cTan\u0131yor olabilece\u011fin ki\u015filer\u201d b\u00f6l\u00fcm\u00fcn\u00fc gizle");
-        table.put("Hide \"Suggested for you\" posts",
-                "\u201cSenin i\u00e7in \u00f6nerilenler\u201d g\u00f6nderilerini gizle");
     }
 
     private static void fillTr1(Map<String, String> table) {
+        table.put("Hide \"Suggested for you\" posts",
+                "\u201cSenin i\u00e7in \u00f6nerilenler\u201d g\u00f6nderilerini gizle");
         table.put("Hide AI-detected posts",
                 "Yapay zek\u00e2 ile \u00fcretildi\u011fi tespit edilen g\u00f6nderileri gizle");
         table.put("Hide promoted posts",
@@ -1533,6 +1559,8 @@ public final class L10nTranslations {
                 "Ba\u011flant\u0131n\u0131n s\u00fcresi doldu. \u00d6\u011feyi yeniden a\u00e7\u0131p tekrar dene");
         table.put("Links",
                 "Ba\u011flant\u0131lar");
+        table.put("Material You theme",
+                "Material You temas\u0131");
         table.put("News feed",
                 "Ak\u0131\u015f");
         table.put("No matching diagnostics found.",
@@ -1607,13 +1635,13 @@ public final class L10nTranslations {
                 "Ayarlar d\u0131\u015fa aktar\u0131ld\u0131.");
         table.put("Settings imported. %1$d switch changed.",
                 "Ayarlar i\u00e7e aktar\u0131ld\u0131. %1$d anahtar de\u011fi\u015fti.");
+    }
+
+    private static void fillTr2(Map<String, String> table) {
         table.put("Settings imported. %1$d switches changed.",
                 "Ayarlar i\u00e7e aktar\u0131ld\u0131. %1$d anahtar de\u011fi\u015fti.");
         table.put("Settings imported. Saves will go to a folder named %1$s.",
                 "Ayarlar i\u00e7e aktar\u0131ld\u0131. Kaydettiklerin %1$s adl\u0131 bir klas\u00f6re gidecek.");
-    }
-
-    private static void fillTr2(Map<String, String> table) {
         table.put("Source code and issues",
                 "Kaynak kodu ve sorunlar");
         table.put("Stays in while paused",
@@ -1678,6 +1706,8 @@ public final class L10nTranslations {
                 "AMOLED siyah tema");
         table.put("the Audience Network block",
                 "Audience Network engeli");
+        table.put("the Material You theme",
+                "Material You temas\u0131");
         table.put("the ad telemetry block",
                 "reklam telemetrisi engeli");
         table.put("the background ad prefetch block",

@@ -310,6 +310,7 @@ public class SettingsBackupPreference extends Preference {
             builder.setNegativeButton(L10n.t("Cancel"), (dialog, which) -> answered(page));
         }
         page.importPreview = builder.show();
+        ScreenColors.dialog(page.importPreview);
     }
 
     /** The sentence that says where saves go after an import, for the folder name [folder]. */
