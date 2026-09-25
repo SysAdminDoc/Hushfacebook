@@ -146,7 +146,13 @@ public final class SettingsJson {
                     if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) return Integer.valueOf((int) value);
                     return Long.valueOf(value);
                 } catch (NumberFormatException decimal) {
-                    return new BigDecimal(token);
+                    try {
+                        return new BigDecimal(token);
+                    } catch (NumberFormatException overflow) {
+                        // An exponent BigDecimal can't hold, like 1e9999999999. Left to escape, it
+                        // skipped every refusal and the import ended with no word at all.
+                        throw new IOException("Invalid settings number");
+                    }
                 }
             }
             default: throw new IOException("Invalid settings value");

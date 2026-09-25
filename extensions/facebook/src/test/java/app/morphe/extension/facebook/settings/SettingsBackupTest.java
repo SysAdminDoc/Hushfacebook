@@ -315,7 +315,10 @@ public class SettingsBackupTest {
     public void aFileThatIsNotOneJsonObjectIsDamaged() throws Exception {
         String good = SettingsBackup.create();
         for (String bad : new String[]{good.substring(0, good.length() / 2), "[]", good + "{}", good + " x",
-                "just some text", good.replace("\"schema\"", "schema"), good + '\0', ""}) {
+                "just some text", good.replace("\"schema\"", "schema"), good + '\0', "",
+                // Numbers past what BigDecimal can hold: these used to escape every refusal.
+                "{\"format\":\"hushfacebook-settings\",\"schema\":1,\"settings\":{\"later\":1e9999999999}}",
+                "{\"format\":\"hushfacebook-settings\",\"schema\":1e9999999999,\"settings\":{}}"}) {
             assertEquals(printable(bad), SettingsBackup.Reason.DAMAGED, reasonFor(bad));
         }
         // An editor's byte order mark isn't damage.
