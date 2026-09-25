@@ -77,6 +77,8 @@ Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The scr
 - **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build and says, for every patch but the settings entry itself, whether a switch runs it. For each of those whose hooks have run, it gives how often they ran and the first thing they couldn't find. Failed saves and links no browser opened are in it too.
 - **Licenses**, the notices of every project this is built on.
 
+The screen, its messages and the save notification follow your phone's language in English, German, Spanish, Indonesian, Brazilian Portuguese and Turkish, and fall back to English in any other. Facebook's own language doesn't change. The diagnostic report stays in English, so whoever reads it can. With TalkBack on, section titles are headings you can jump between, and each switch says it's a switch and whether it's on. Every row's text wraps in full, even at the largest text size.
+
 Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in `Android/data/com.facebook.katana/files` pauses it too. It has to be in that `files` folder, not the one above it. Safe mode is the same pause. It changes what the switches answer, but every patch's code stays in place, so if Facebook keeps closing in safe mode, the cause can be Facebook itself or any patch, whichever row of the table below it's in. To find it, patch again without the patch you suspect, or with fewer patches.
 
 ### What Pause turns off

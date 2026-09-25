@@ -1,0 +1,107 @@
+# Brazilian Portuguese for Hushfacebook: the English key, a tab, the translation. One row per string.
+# After editing, run python scripts/gen-l10n.py from the repository root.
+"Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Páginas que você talvez curta” e os blocos de autopromoção do Facebook. As pesquisas no feed também somem.
+%1$s of %2$s	%1$s de %2$s
+%1$s so far	%1$s até agora
+%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Isso foi definido quando você aplicou os patches, então a pausa não consegue desligá-lo. Para descartar isso como causa, aplique os patches de novo sem o patch responsável.
+%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Tudo isso foi definido quando você aplicou os patches, então a pausa não consegue desligar nada disso. Para descartar um desses itens como causa, aplique os patches de novo sem o patch responsável por ele.
+A diagnostic report is already being saved.	Um relatório de diagnóstico já está sendo salvo.
+A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.	Um botão de download fica na barra lateral de cada reel. Ele continua lá mesmo com o Hushfacebook pausado.
+A file named %1$s in %2$s paused Hushfacebook.	Um arquivo chamado %1$s em %2$s pausou o Hushfacebook.
+About	Sobre
+Ad cards between the stories people posted.	Anúncios entre os stories que as pessoas postaram.
+Ad telemetry blocked	Telemetria de anúncios bloqueada
+Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Anúncios que chegam dentro de um lote de reels. Banners e anúncios no meio do vídeo continuam bloqueados enquanto o patch estiver aplicado, independentemente desta opção ou da pausa. O mesmo vale para os anúncios que o app adiciona por conta própria.
+AMOLED black theme	Tema preto AMOLED
+Audience Network off	Audience Network desativado
+Back	Voltar
+Background ad prefetch blocked	Pré-carregamento de anúncios em segundo plano bloqueado
+Changing these	Como mudar esses itens
+Clear diagnostic data	Limpar dados de diagnóstico
+Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Copie um relatório curto ou salve o completo em Download/Morphe. Links, IDs de conta e de post, cookies de sessão e nomes ficam de fora.
+Copy quick report	Copiar relatório rápido
+Couldn't put back the diagnostic data. Try again.	Não foi possível restaurar os dados de diagnóstico. Tente de novo.
+Couldn't start the report export. Try again shortly.	Não foi possível iniciar a exportação do relatório. Tente de novo daqui a pouco.
+Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	O modo escuro fica preto em vez de cinza-escuro. Ative o modo escuro no Facebook para ver.
+Debug logging	Registro de depuração
+Diagnostic data cleared. Tap again to put it back.	Dados de diagnóstico apagados. Toque de novo para restaurá-los.
+Diagnostic data put back.	Dados de diagnóstico restaurados.
+Diagnostic report copied to the clipboard.	Relatório de diagnóstico copiado para a área de transferência.
+Download button on reels	Botão de download nos reels
+Download failed	Falha no download
+Empties the log and the filter counts a report would include.	Apaga o registro e as contagens dos filtros que iriam para um relatório.
+Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Todas as opções, menos o Registro de depuração, funcionam como se estivessem desligadas, e o que foi definido ao aplicar os patches continua ativo. Suas configurações ficam como estão.
+Export diagnostic report	Exportar relatório de diagnóstico
+Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	O Facebook fechou três vezes no primeiro minuto depois de abrir, então o Hushfacebook entrou em pausa automaticamente.
+Facebook doesn't download ads or its ad model in the background.	O Facebook não baixa anúncios nem o modelo de anúncios dele em segundo plano.
+Facebook doesn't serve ads to other apps on this phone.	O Facebook não envia anúncios para outros apps deste celular.
+From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	A partir da próxima abertura, todas as opções acima funcionam como se estivessem desligadas, e o código do próprio Facebook roda no lugar. O Registro de depuração continua funcionando, e suas configurações ficam como estão.
+Full report saved to %1$s	Relatório completo salvo em %1$s
+GPL-3.0, with the notices of the projects this is built on	GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia
+Hide promoted posts	Ocultar posts promovidos
+Hide sponsored posts	Ocultar posts patrocinados
+Hide sponsored reels	Ocultar reels patrocinados
+Hide sponsored stories	Ocultar stories patrocinados
+Hide suggested and promoted units	Ocultar blocos de sugestões e promoções
+How far a photo or video you're saving has got, with a button to cancel it	O progresso da foto ou do vídeo que você está salvando, com um botão para cancelar
+Hushfacebook %1$s on Facebook %2$s	Hushfacebook %1$s no Facebook %2$s
+Hushfacebook is on	O Hushfacebook está ativo
+Hushfacebook is paused	O Hushfacebook está pausado
+Hushfacebook saves	Salvamentos do Hushfacebook
+Hushfacebook settings	Configurações do Hushfacebook
+Hushfacebook settings couldn't open	Não foi possível abrir as configurações do Hushfacebook
+Hushfacebook turns back on when Facebook restarts.	O Hushfacebook será reativado quando o Facebook reiniciar.
+Licenses	Licenças
+Link expired. Reopen the item and try again	Link expirado. Reabra o item e tente de novo
+Links	Links
+News feed	Feed de notícias
+No matching diagnostics found.	Nenhum diagnóstico correspondente encontrado.
+No screenshot watching for ads, and no reports of which apps you install.	Sem monitoramento de capturas de tela de anúncios e sem relatórios sobre quais apps você instala.
+Not saved: that isn't a Facebook photo or video	Não foi salvo: isso não é uma foto nem um vídeo do Facebook
+Not saved: the file is over 512 MB	Não foi salvo: o arquivo tem mais de 512 MB
+Open links in your browser	Abrir links no seu navegador
+Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Anúncios pagos no feed. São removidos antes de o Facebook adicioná-los, então não fica nenhum espaço vazio.
+Pause Hushfacebook	Pausar o Hushfacebook
+Posts Facebook files as promotions rather than as ads.	Posts que o Facebook classifica como promoções, e não como anúncios.
+Profiles and some Settings pages open again on this re-signed build.	Perfis e algumas páginas de Configurações voltam a abrir nesta versão reassinada.
+Re-signed build fix	Correção para versão reassinada
+Reels and Watch	Reels e Watch
+Retry	Tentar novamente
+Save any story	Salvar qualquer story
+Save cancelled	Salvamento cancelado
+Save full report	Salvar relatório completo
+Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.	O item Salvar no menu de um story baixa o story na melhor qualidade que o player reproduz. Com esta opção desligada ou durante a pausa, quem salva é o próprio Facebook, e Salvar continua no menu.
+Save in every story's menu	o item Salvar no menu de cada story
+Saved to %1$s	Salvo em %1$s
+Saved to the gallery	Salvo na galeria
+Saved. Restart Facebook to apply this change.	Salvo. Reinicie o Facebook para aplicar esta alteração.
+Saving a photo	Salvando uma foto
+Saving a video	Salvando um vídeo
+Saving...	Salvando...
+Set when you patched	Definido ao aplicar os patches
+Settings couldn't open	Não foi possível abrir as configurações
+Settings couldn't refresh completely. Reopen settings and try again.	Não foi possível atualizar as configurações por completo. Reabra as configurações e tente de novo.
+Source code and issues	Código-fonte e relatos de problemas
+Stays in while paused	O que continua ativo na pausa
+Stories	Stories
+Tap to turn it back on.	Toque para reativar.
+the ad telemetry block	o bloqueio da telemetria de anúncios
+the AMOLED black theme	o tema preto AMOLED
+the Audience Network block	o bloqueio do Audience Network
+the background ad prefetch block	o bloqueio do pré-carregamento de anúncios em segundo plano
+The diagnostic report couldn't be saved yet. Try again in a moment.	O relatório de diagnóstico ainda não pôde ser salvo. Tente de novo em instantes.
+The diagnostic report couldn't be saved. Try again.	Não foi possível salvar o relatório de diagnóstico. Tente de novo.
+the Download button on reels	o botão de download nos reels
+The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	Não foi possível remover o arquivo %1$s. Exclua-o de %2$s para reativar o Hushfacebook.
+the part of the Reels ad block patched into the app	a parte do bloqueio de anúncios do Reels aplicada no app
+the re-signed build fix	a correção para versão reassinada
+The setting couldn't finish updating. Its saved value is shown.	Não foi possível concluir a atualização da configuração. O valor salvo está sendo mostrado.
+There is no diagnostic data to clear.	Não há dados de diagnóstico para limpar.
+There is no diagnostic data to put back.	Não há dados de diagnóstico para restaurar.
+They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Eles são escolhidos no Morphe Manager quando você aplica os patches, e a pausa não os desliga. Aplique os patches de novo para mudá-los.
+Try again, or go back to Facebook.	Tente de novo ou volte para o Facebook.
+Version	Versão
+Version %1$s for Facebook %2$s	Versão %1$s para o Facebook %2$s
+Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Os links da web deixam de abrir no navegador interno do Facebook. As páginas do próprio Facebook continuam abrindo no app.
+Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Grava no registro do Android o que cada patch faz. Deixe desligado, a não ser que esteja relatando um problema.
+You paused Hushfacebook.	Você pausou o Hushfacebook.

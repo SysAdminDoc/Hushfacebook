@@ -5,12 +5,16 @@
  *
  * Imported carrying no notice of its own. Morphe hard forked ReVanced, so parts of
  * this file may originate there.
+ *
+ * Modified for Hushfacebook (Facebook), 2026.
  */
 package app.morphe.extension.shared.settings.preference;
 
 import android.content.Context;
 import android.preference.Preference;
 import android.util.AttributeSet;
+
+import app.morphe.extension.shared.L10n;
 
 /**
  * A custom preference that clears the Morphe debug log buffer when clicked.
@@ -21,7 +25,7 @@ public class ClearLogBufferPreference extends Preference implements ImmediateAct
     @Override public boolean actsOnTap() { return true; }
 
     private CharSequence clearSummary;
-    private CharSequence undoSummary = "Diagnostic data cleared. Tap again to put it back.";
+    private CharSequence undoSummary = L10n.t("Diagnostic data cleared. Tap again to put it back.");
 
     {
         // A key so the settings search can index this row. Nothing in the settings

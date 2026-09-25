@@ -19,6 +19,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -44,6 +45,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.ResourceType;
 import app.morphe.extension.shared.ResourceUtils;
@@ -70,6 +72,7 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
             super(context);
             this.primary = primary;
             this.styler = styler;
+            if (Build.VERSION.SDK_INT >= 26) setSingleLineTitle(false);
         }
 
         @Override public boolean actsOnTap() {
@@ -554,11 +557,11 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
     }
 
     /**
-     * What a saved setting says, so a bundle with a translation table can set its own.
+     * What a saved setting says, so a bundle can set its own.
      *
      * <p>Static because the caller is: this is reached from the settings framework rather than
-     * from an instance. Null means the English below, which is what a bundle that carries no
-     * table gets.
+     * from an instance. Null means the text below, read from {@link L10n} in the phone's
+     * language.
      */
     protected static CharSequence savedMessage;
 
@@ -574,33 +577,33 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
     }
 
     protected CharSequence initializationErrorTitle(@Nullable Context context) {
-        return "Settings couldn't open";
+        return L10n.t(context, "Settings couldn't open");
     }
 
     protected CharSequence initializationErrorSummary(@Nullable Context context) {
-        return "Try again, or go back to Facebook.";
+        return L10n.t(context, "Try again, or go back to Facebook.");
     }
 
     protected CharSequence initializationBackLabel(@Nullable Context context) {
-        return "Back";
+        return L10n.t(context, "Back");
     }
 
     protected CharSequence initializationRetryLabel(@Nullable Context context) {
-        return "Retry";
+        return L10n.t(context, "Retry");
     }
 
     protected CharSequence preferenceChangeRecoveredMessage(@Nullable Context context) {
-        return "The setting couldn't finish updating. Its saved value is shown.";
+        return L10n.t(context, "The setting couldn't finish updating. Its saved value is shown.");
     }
 
     protected CharSequence preferenceChangeRecoveryFailedMessage(@Nullable Context context) {
-        return "Settings couldn't refresh completely. Reopen settings and try again.";
+        return L10n.t(context, "Settings couldn't refresh completely. Reopen settings and try again.");
     }
 
     public static void showRestartDialog(Context context) {
         Utils.verifyOnMainThread();
         CharSequence message = savedMessage == null
-                ? "Saved. Restart Facebook to apply this change."
+                ? L10n.t(context, "Saved. Restart Facebook to apply this change.")
                 : savedMessage;
         RestartFeedbackPresenter presenter = restartFeedbackPresenter;
         if (presenter != null) {
@@ -657,6 +660,9 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
             message.setSummary(initializationErrorSummary(activity));
             message.setPersistent(false);
             message.setSelectable(false);
+            // A translated title, or any title at a large text size, would otherwise be cut to
+            // one line.
+            if (Build.VERSION.SDK_INT >= 26) message.setSingleLineTitle(false);
             screen.addPreference(message);
 
             ErrorActionStyler styler = errorActionStyler();

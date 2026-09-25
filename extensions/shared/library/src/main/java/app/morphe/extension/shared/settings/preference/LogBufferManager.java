@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.RejectedExecutionException;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.DiagnosticEvent;
@@ -53,8 +54,8 @@ import app.morphe.extension.shared.settings.HushfacebookPause;
 /** Bounded structured event storage and latest sanitized crash storage. */
 public final class LogBufferManager {
     /**
-     * What clearing says, so a bundle with a translation table can set its own. Null means the
-     * English below, which is what a bundle carrying no table gets.
+     * What clearing says, so a bundle can set its own. Null means the text below, read from
+     * {@link L10n} in the phone's language.
      */
     public static CharSequence clearedMessage;
     public static CharSequence nothingToClearMessage;
@@ -63,9 +64,9 @@ public final class LogBufferManager {
     public static CharSequence restoreFailedMessage;
 
     /**
-     * The other sentences the export path says. Each is null until a bundle with a translation
-     * table sets it, and then the English below is what a bundle with no table gets. The
-     * saved-file sentence carries the path as %1$s.
+     * The other sentences the export path says. Each is null until a bundle sets it, and until
+     * then the text below is read from {@link L10n}. The saved-file sentence carries the path as
+     * %1$s.
      */
     public static CharSequence nothingToExportMessage;
     public static CharSequence copiedMessage;
@@ -166,15 +167,15 @@ public final class LogBufferManager {
         try {
             String exportText = clipboardText(CLIPBOARD_MAX_CHARS);
             if (exportText.isEmpty()) {
-                Utils.showToastShort(say(nothingToExportMessage, "No matching diagnostics found."));
+                Utils.showToastShort(say(nothingToExportMessage, L10n.t("No matching diagnostics found.")));
                 return;
             }
             Utils.setClipboard(exportText);
-            Utils.showToastShort(say(copiedMessage, "Diagnostic report copied to the clipboard."));
+            Utils.showToastShort(say(copiedMessage, L10n.t("Diagnostic report copied to the clipboard.")));
         } catch (Exception ex) {
             // The exception's own text stays in the log. It can carry a path or a signed URL,
             // and a reader on a phone cannot act on it from a toast.
-            Utils.showToastLong(say(exportFailedMessage, "The diagnostic report couldn't be saved. Try again."));
+            Utils.showToastLong(say(exportFailedMessage, L10n.t("The diagnostic report couldn't be saved. Try again.")));
             Logger.printException(() -> "Failed to export diagnostics", ex);
         }
     }
@@ -182,13 +183,13 @@ public final class LogBufferManager {
     public static void exportToFile() {
         Context context = Utils.getContext();
         if (context == null) {
-            Utils.showToastLong(say(noContextMessage, "The diagnostic report couldn't be saved yet. Try again in a moment."));
+            Utils.showToastLong(say(noContextMessage, L10n.t("The diagnostic report couldn't be saved yet. Try again in a moment.")));
             return;
         }
         Context application = context.getApplicationContext();
         final Context app = application == null ? context : application;
         if (!FILE_EXPORT_RUNNING.compareAndSet(false, true)) {
-            Utils.showToastShort(say(alreadySavingMessage, "A diagnostic report is already being saved."));
+            Utils.showToastShort(say(alreadySavingMessage, L10n.t("A diagnostic report is already being saved.")));
             return;
         }
         try {
@@ -196,13 +197,13 @@ public final class LogBufferManager {
                 try {
                     String exportText = buildExportText();
                     if (exportText.isEmpty()) {
-                        Utils.showToastShort(say(nothingToExportMessage, "No matching diagnostics found."));
+                        Utils.showToastShort(say(nothingToExportMessage, L10n.t("No matching diagnostics found.")));
                     } else {
                         String saved = writeToFile(app, exportText);
-                        Utils.showToastLong(String.format(say(savedToMessage, "Full report saved to %1$s"), saved));
+                        Utils.showToastLong(String.format(say(savedToMessage, L10n.t("Full report saved to %1$s")), L10n.isolate(saved)));
                     }
                 } catch (Exception ex) {
-                    Utils.showToastLong(say(exportFailedMessage, "The diagnostic report couldn't be saved. Try again."));
+                    Utils.showToastLong(say(exportFailedMessage, L10n.t("The diagnostic report couldn't be saved. Try again.")));
                     Logger.printException(() -> "Failed to save diagnostics", ex);
                 } finally {
                     FILE_EXPORT_RUNNING.set(false);
@@ -212,7 +213,7 @@ public final class LogBufferManager {
         } catch (RejectedExecutionException error) {
             FILE_EXPORT_RUNNING.set(false);
             Logger.printException(() -> "Could not start diagnostic export", error);
-            Utils.showToastLong(say(couldNotStartMessage, "Couldn't start the report export. Try again shortly."));
+            Utils.showToastLong(say(couldNotStartMessage, L10n.t("Couldn't start the report export. Try again shortly.")));
         }
     }
 
@@ -756,8 +757,8 @@ public final class LogBufferManager {
             restorable = lastClear != null;
         }
         Utils.showToastShort(restorable
-                ? say(clearedMessage, "Diagnostic data cleared. Tap again to put it back.")
-                : say(nothingToClearMessage, "There is no diagnostic data to clear."));
+                ? say(clearedMessage, L10n.t("Diagnostic data cleared. Tap again to put it back."))
+                : say(nothingToClearMessage, L10n.t("There is no diagnostic data to clear.")));
     }
 
     /** True while the clear row's next tap can restore what its previous tap removed. */
@@ -792,13 +793,13 @@ public final class LogBufferManager {
         }
 
         if (result == UndoResult.RESTORED) {
-            Utils.showToastShort(say(restoredMessage, "Diagnostic data put back."));
+            Utils.showToastShort(say(restoredMessage, L10n.t("Diagnostic data put back.")));
         } else if (result == UndoResult.NOTHING_TO_RESTORE) {
             Utils.showToastShort(say(nothingToRestoreMessage,
-                    "There is no diagnostic data to put back."));
+                    L10n.t("There is no diagnostic data to put back.")));
         } else {
             Utils.showToastLong(say(restoreFailedMessage,
-                    "Couldn't put back the diagnostic data. Try again."));
+                    L10n.t("Couldn't put back the diagnostic data. Try again.")));
         }
         return result;
     }

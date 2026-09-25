@@ -1,6 +1,8 @@
 /*
  * Copyright 2026 icysymmetra/tiktok-patches-for-morphe contributors
  * https://github.com/icysymmetra/tiktok-patches-for-morphe
+ *
+ * Modified for Hushfacebook (Facebook), 2026.
  */
 package app.morphe.extension.shared.settings.preference;
 
@@ -8,6 +10,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.preference.Preference;
 import android.util.AttributeSet;
+
+import app.morphe.extension.shared.L10n;
 
 /** Offers a compact choice between a quick clipboard report and a full text file. */
 @SuppressWarnings({"deprecation", "unused"})
@@ -36,18 +40,20 @@ public class ExportDiagnosticReportPreference extends Preference {
     protected void onDialogShown(AlertDialog dialog) {
     }
 
-    /** The dialog's title. A bundle with a translation table overrides these three. */
+    /** The dialog's title, in the phone's language. A bundle may override these three. */
     protected CharSequence dialogTitle() {
-        return "Export diagnostic report";
+        return L10n.t(getContext(), "Export diagnostic report");
     }
 
     /** The two choices, quick copy first, full file second. */
     protected CharSequence[] labels() {
-        return new CharSequence[]{"Copy quick report", "Save full report"};
+        return new CharSequence[]{L10n.t(getContext(), "Copy quick report"),
+                L10n.t(getContext(), "Save full report")};
     }
 
+    /** Android's own Cancel, which the phone already has in every language. */
     protected CharSequence negativeText() {
-        return "Cancel";
+        return getContext().getString(android.R.string.cancel);
     }
 
     public ExportDiagnosticReportPreference(

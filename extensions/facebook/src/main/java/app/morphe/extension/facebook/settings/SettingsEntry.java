@@ -25,6 +25,7 @@ import android.os.SystemClock;
 
 import java.lang.ref.WeakReference;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 
@@ -86,8 +87,11 @@ public final class SettingsEntry {
             try {
                 ShortcutManager manager = app.getSystemService(ShortcutManager.class);
                 if (manager == null) return;
+                String longLabel = L10n.t(app, "Hushfacebook settings");
                 for (ShortcutInfo existing : manager.getDynamicShortcuts()) {
-                    if (SHORTCUT_ID.equals(existing.getId())) return;
+                    // One labelled in another language is pushed again below, which replaces it.
+                    if (SHORTCUT_ID.equals(existing.getId())
+                            && longLabel.contentEquals(existing.getLongLabel())) return;
                 }
                 Intent intent = new Intent(Intent.ACTION_VIEW)
                         .setComponent(new ComponentName(app.getPackageName(), LAUNCHER_ALIAS))
@@ -95,7 +99,7 @@ public final class SettingsEntry {
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 ShortcutInfo shortcut = new ShortcutInfo.Builder(app, SHORTCUT_ID)
                         .setShortLabel("Hushfacebook")
-                        .setLongLabel("Hushfacebook settings")
+                        .setLongLabel(longLabel)
                         .setIcon(Icon.createWithAdaptiveBitmap(shortcutIcon()))
                         .setIntent(intent)
                         .setRank(0)

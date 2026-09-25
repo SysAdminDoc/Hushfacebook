@@ -18,10 +18,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 
 /**
@@ -38,6 +41,10 @@ public final class SettingsDialog extends DialogFragment {
      * carries an id.
      */
     static final int CONTAINER_ID = 0x48464301;
+
+    /** The back arrows, left and right, built from their code points. */
+    static final String BACK_ARROW = String.valueOf((char) 0x2190);
+    static final String BACK_ARROW_RIGHT_TO_LEFT = String.valueOf((char) 0x2192);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,16 +76,25 @@ public final class SettingsDialog extends DialogFragment {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         int pad = dp(16);
-        bar.setPadding(dp(4), dp(8), pad, dp(8));
+        // Start and end, not left and right: in a right-to-left language the bar is mirrored.
+        bar.setPaddingRelative(dp(4), dp(8), pad, dp(8));
 
         TextView back = new TextView(getContext());
-        back.setText("←");
+        back.setText(rightToLeft() ? BACK_ARROW_RIGHT_TO_LEFT : BACK_ARROW);
         back.setTextColor(Color.WHITE);
         back.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
         back.setGravity(Gravity.CENTER);
         back.setMinWidth(dp(48));
         back.setMinHeight(dp(48));
-        back.setContentDescription("Back");
+        back.setContentDescription(L10n.t(getContext(), "Back"));
+        // A screen reader calls it a button, as it would the back arrow of any other screen.
+        back.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setClassName(Button.class.getName());
+            }
+        });
         back.setOnClickListener(v -> {
             SettingsEntry.onClosedByUser();
             dismissAllowingStateLoss();
@@ -90,7 +106,8 @@ public final class SettingsDialog extends DialogFragment {
         title.setTextColor(Color.WHITE);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        title.setPadding(dp(8), 0, 0, 0);
+        title.setPaddingRelative(dp(8), 0, 0, 0);
+        title.setAccessibilityHeading(true);
         bar.addView(title);
         root.addView(bar);
 
@@ -133,5 +150,10 @@ public final class SettingsDialog extends DialogFragment {
     private int dp(int value) {
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
                 getResources().getDisplayMetrics()));
+    }
+
+    /** Whether the phone's language reads right to left, so the way back points right. */
+    private boolean rightToLeft() {
+        return getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
     }
 }

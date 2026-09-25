@@ -21,11 +21,9 @@ import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
  * <p>A download takes seconds and happens away from the screen, so without a word from it a tap
  * looks like it did nothing and the user taps again.
  *
- * <p>The text is English and is written here rather than taken from the app. Facebook keeps the
- * words for its own menus in a pack that it downloads, not in the resources of the APK, so there
- * is nothing to borrow. A translation of a few languages by hand, with the rest left in English,
- * reads worse than one language used everywhere. Anyone who installed this patch has already read
- * its English name and description.
+ * <p>The text is Hushfacebook's own, read from {@link app.morphe.extension.shared.L10n} in the
+ * phone's language, rather than taken from the app: Facebook keeps the words for its own menus in
+ * a pack that it downloads, not in the resources of the APK, so there is nothing to borrow.
  */
 final class Feedback {
 

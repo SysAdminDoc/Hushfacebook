@@ -17,6 +17,7 @@ import android.preference.Preference;
 import android.preference.PreferenceGroup;
 import android.preference.SwitchPreference;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
@@ -126,10 +127,11 @@ public class HushfacebookPreferenceFragmentTest {
         }
 
         // The marker counts only in the app's own files folder, and the card names that folder,
-        // not the one above it a person finds first.
+        // not the one above it a person finds first. The folder is isolated, so a right-to-left
+        // sentence keeps the path in the order it was written.
         String pkg = RuntimeEnvironment.getApplication().getPackageName();
         assertTrue(HushfacebookPreferenceFragment.pausedSummary(HushfacebookPause.Reason.MARKER_FILE, pkg)
-                .contains("in Android/data/" + pkg + "/files paused Hushfacebook"));
+                .contains("in " + L10n.isolate("Android/data/" + pkg + "/files") + " paused Hushfacebook"));
 
         PauseForTests.pause(HushfacebookPause.Reason.CRASH_LOOP);
         try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {

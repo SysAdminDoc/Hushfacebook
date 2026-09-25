@@ -13,6 +13,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 import app.morphe.extension.shared.settings.BooleanSetting;
@@ -63,6 +64,8 @@ public enum PatchFamily {
     /**
      * What of this patch stays in while Hushfacebook is paused, or null when nothing does. One
      * thing, never a plural: alone on the screen it's followed by "It was set when you patched".
+     * The English is also a key of {@link L10n}: the screen shows it translated, and the report
+     * keeps it in English.
      */
     @Nullable
     public final String staysWhilePaused;
@@ -104,28 +107,23 @@ public enum PatchFamily {
     }
 
     /**
-     * What of these families stays in while Hushfacebook is paused, as a sentence, or null when
-     * a pause turns every one of them off.
+     * What of these families stays in while Hushfacebook is paused, as a sentence in the phone's
+     * language, or null when a pause turns every one of them off. The list leads the sentence, so
+     * its first letter is raised the way that language does it.
      */
     @Nullable
     static String staysWhilePausedSummary(Set<PatchFamily> inBuild) {
         List<String> parts = new ArrayList<>();
         for (PatchFamily family : values()) {
-            if (inBuild.contains(family) && family.staysWhilePaused != null) parts.add(family.staysWhilePaused);
+            if (inBuild.contains(family) && family.staysWhilePaused != null) parts.add(L10n.t(family.staysWhilePaused));
         }
         if (parts.isEmpty()) return null;
-        String list = joinAsSentence(parts);
-        return Character.toUpperCase(list.charAt(0)) + list.substring(1) + (parts.size() == 1
-                ? ". It was set when you patched, so Pause can't turn it off. To rule it out, patch again "
-                        + "without the patch it comes from."
-                : ". They were set when you patched, so Pause can't turn them off. To rule one out, patch "
-                        + "again without the patch it comes from.");
-    }
-
-    /** "a", "a and b", "a, b and c". */
-    private static String joinAsSentence(List<String> parts) {
-        if (parts.size() == 1) return parts.get(0);
-        return String.join(", ", parts.subList(0, parts.size() - 1)) + " and " + parts.get(parts.size() - 1);
+        return L10n.capitalize(L10n.quantity(parts.size(),
+                "%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again "
+                        + "without the patch it comes from.",
+                "%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch "
+                        + "again without the patch it comes from.",
+                L10n.join(parts)));
     }
 
     /**

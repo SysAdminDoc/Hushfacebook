@@ -1,0 +1,107 @@
+# Indonesian for Hushfacebook: the English key, a tab, the translation. One row per string.
+# After editing, run python scripts/gen-l10n.py from the repository root.
+"Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Halaman yang mungkin Anda sukai” dan kartu penawaran dari Facebook sendiri. Survei di Kabar Beranda ikut hilang.
+%1$s of %2$s	%1$s dari %2$s
+%1$s so far	%1$s terunduh
+%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
+%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
+A diagnostic report is already being saved.	Sudah ada laporan diagnostik yang sedang disimpan.
+A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.	Tombol Unduh ada di bilah samping setiap reel. Tombol ini tetap ada saat Hushfacebook dijeda.
+A file named %1$s in %2$s paused Hushfacebook.	File bernama %1$s di %2$s menjeda Hushfacebook.
+About	Tentang
+Ad cards between the stories people posted.	Kartu iklan di antara cerita yang diposting orang.
+Ad telemetry blocked	Telemetri iklan diblokir
+Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Iklan yang datang di dalam satu kumpulan reel. Banner dan iklan di tengah video tetap diblokir selama tambalan ini terpasang, apa pun status sakelar ini atau Jeda. Begitu juga iklan yang ditambahkan aplikasi dengan sendirinya.
+AMOLED black theme	Tema hitam AMOLED
+Audience Network off	Audience Network nonaktif
+Back	Kembali
+Background ad prefetch blocked	Pramuat iklan di latar belakang diblokir
+Changing these	Mengubah pilihan ini
+Clear diagnostic data	Hapus data diagnostik
+Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Salin laporan singkat, atau simpan laporan lengkap ke Download/Morphe. Tautan, ID akun dan postingan, cookie sesi, serta nama tidak disertakan.
+Copy quick report	Salin laporan singkat
+Couldn't put back the diagnostic data. Try again.	Data diagnostik tidak dapat dikembalikan. Coba lagi.
+Couldn't start the report export. Try again shortly.	Ekspor laporan tidak dapat dimulai. Coba lagi dalam beberapa saat.
+Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	Mode gelap memakai warna hitam, bukan abu-abu gelap. Aktifkan mode gelap di Facebook untuk melihatnya.
+Debug logging	Pencatatan debug
+Diagnostic data cleared. Tap again to put it back.	Data diagnostik dihapus. Ketuk lagi untuk mengembalikannya.
+Diagnostic data put back.	Data diagnostik dikembalikan.
+Diagnostic report copied to the clipboard.	Laporan diagnostik disalin ke papan klip.
+Download button on reels	Tombol Unduh di Reels
+Download failed	Unduhan gagal
+Empties the log and the filter counts a report would include.	Mengosongkan log dan hitungan filter yang akan dimasukkan ke laporan.
+Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Semua sakelar kecuali Pencatatan debug dianggap nonaktif, dan yang diatur saat Anda menambal tetap aktif. Pengaturan Anda tetap seperti semula.
+Export diagnostic report	Ekspor laporan diagnostik
+Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook tertutup tiga kali dalam satu menit setelah dibuka, jadi Hushfacebook menjeda dirinya sendiri.
+Facebook doesn't download ads or its ad model in the background.	Facebook tidak mengunduh iklan atau model iklannya di latar belakang.
+Facebook doesn't serve ads to other apps on this phone.	Facebook tidak menayangkan iklan ke aplikasi lain di ponsel ini.
+From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Setelah Facebook dimulai ulang, semua sakelar di atas dianggap nonaktif, dan kode Facebook sendiri yang berjalan sebagai gantinya. Pencatatan debug tetap berfungsi, dan pengaturan Anda tetap seperti semula.
+Full report saved to %1$s	Laporan lengkap disimpan ke %1$s
+GPL-3.0, with the notices of the projects this is built on	GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya
+Hide promoted posts	Sembunyikan postingan promosi
+Hide sponsored posts	Sembunyikan postingan bersponsor
+Hide sponsored reels	Sembunyikan Reels bersponsor
+Hide sponsored stories	Sembunyikan cerita bersponsor
+Hide suggested and promoted units	Sembunyikan kartu saran dan promosi
+How far a photo or video you're saving has got, with a button to cancel it	Progres foto atau video yang sedang Anda simpan, dengan tombol untuk membatalkannya
+Hushfacebook %1$s on Facebook %2$s	Hushfacebook %1$s di Facebook %2$s
+Hushfacebook is on	Hushfacebook aktif
+Hushfacebook is paused	Hushfacebook dijeda
+Hushfacebook saves	Penyimpanan Hushfacebook
+Hushfacebook settings	Pengaturan Hushfacebook
+Hushfacebook settings couldn't open	Pengaturan Hushfacebook tidak dapat dibuka
+Hushfacebook turns back on when Facebook restarts.	Hushfacebook aktif lagi saat Facebook dimulai ulang.
+Licenses	Lisensi
+Link expired. Reopen the item and try again	Tautan kedaluwarsa. Buka ulang kontennya lalu coba lagi
+Links	Tautan
+News feed	Kabar Beranda
+No matching diagnostics found.	Tidak ditemukan diagnostik yang cocok.
+No screenshot watching for ads, and no reports of which apps you install.	Tangkapan layar iklan tidak dipantau, dan aplikasi yang Anda pasang tidak dilaporkan.
+Not saved: that isn't a Facebook photo or video	Tidak disimpan: itu bukan foto atau video Facebook
+Not saved: the file is over 512 MB	Tidak disimpan: file lebih dari 512 MB
+Open links in your browser	Buka tautan di browser Anda
+Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Iklan berbayar di Kabar Beranda. Iklannya dibuang sebelum ditambahkan Facebook, jadi tidak meninggalkan ruang kosong.
+Pause Hushfacebook	Jeda Hushfacebook
+Posts Facebook files as promotions rather than as ads.	Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.
+Profiles and some Settings pages open again on this re-signed build.	Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.
+Re-signed build fix	Perbaikan build yang ditandatangani ulang
+Reels and Watch	Reels dan Watch
+Retry	Coba lagi
+Save any story	Simpan cerita apa pun
+Save cancelled	Penyimpanan dibatalkan
+Save full report	Simpan laporan lengkap
+Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.	Opsi Simpan di menu cerita mengunduhnya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, fitur simpan bawaan Facebook yang berjalan sebagai gantinya, dan opsi Simpan tetap ada di menu.
+Save in every story's menu	opsi Simpan di menu setiap cerita
+Saved to %1$s	Disimpan ke %1$s
+Saved to the gallery	Disimpan ke galeri
+Saved. Restart Facebook to apply this change.	Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.
+Saving a photo	Menyimpan foto
+Saving a video	Menyimpan video
+Saving...	Menyimpan...
+Set when you patched	Diatur saat Anda menambal
+Settings couldn't open	Pengaturan tidak dapat dibuka
+Settings couldn't refresh completely. Reopen settings and try again.	Pengaturan tidak dapat dimuat ulang sepenuhnya. Buka kembali pengaturan lalu coba lagi.
+Source code and issues	Kode sumber dan laporan masalah
+Stays in while paused	Tetap aktif saat dijeda
+Stories	Cerita
+Tap to turn it back on.	Ketuk untuk mengaktifkan Hushfacebook lagi.
+the ad telemetry block	pemblokir telemetri iklan
+the AMOLED black theme	tema hitam AMOLED
+the Audience Network block	pemblokir Audience Network
+the background ad prefetch block	pemblokir pramuat iklan di latar belakang
+The diagnostic report couldn't be saved yet. Try again in a moment.	Laporan diagnostik belum dapat disimpan. Coba lagi dalam beberapa saat.
+The diagnostic report couldn't be saved. Try again.	Laporan diagnostik tidak dapat disimpan. Coba lagi.
+the Download button on reels	tombol Unduh di Reels
+The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	File %1$s tidak dapat dihapus. Hapus file itu dari %2$s untuk mengaktifkan Hushfacebook lagi.
+the part of the Reels ad block patched into the app	bagian pemblokir iklan Reels yang ditambalkan ke aplikasi
+the re-signed build fix	perbaikan build yang ditandatangani ulang
+The setting couldn't finish updating. Its saved value is shown.	Pengaturan ini tidak dapat selesai diperbarui. Nilai yang tersimpan ditampilkan.
+There is no diagnostic data to clear.	Tidak ada data diagnostik yang dapat dihapus.
+There is no diagnostic data to put back.	Tidak ada data diagnostik yang dapat dikembalikan.
+They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Semua ini dipilih di Morphe Manager saat Anda menambal, dan Jeda tidak mematikannya. Tambal ulang untuk mengubahnya.
+Try again, or go back to Facebook.	Coba lagi, atau kembali ke Facebook.
+Version	Versi
+Version %1$s for Facebook %2$s	Versi %1$s untuk Facebook %2$s
+Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Tautan web tidak lagi dibuka di browser dalam aplikasi Facebook. Tautan ke Facebook sendiri tetap dibuka di aplikasi.
+Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Mencatat ke log Android apa yang dilakukan setiap tambalan. Biarkan nonaktif kecuali Anda sedang melaporkan masalah.
+You paused Hushfacebook.	Anda menjeda Hushfacebook.

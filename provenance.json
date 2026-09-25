@@ -18,7 +18,7 @@
         "https://gitlab.com/ReVanced/revanced-patches"
       ],
       "license": "GPL-3.0-only with the Morphe section 7 notices",
-      "changes": "Facebook host and id names in DiagnosticRedactor, Facebook wording in user-facing messages, HushfeedPause renamed HushfacebookPause with its keys and marker file, the extension name BundleVerifier expects. Changed files carry a 'Modified for Hushfacebook' line."
+      "changes": "Facebook host and id names in DiagnosticRedactor, Facebook wording in user-facing messages, HushfeedPause renamed HushfacebookPause with its keys and marker file, the extension name BundleVerifier expects. L10n moved from Hushfeed's TikTok extension into the shared library, with the en-XA and ar-XB pseudo-locales, lists joined and sentences capitalized in the text's own language, and every message of the shared settings code read through it. Changed files carry a 'Modified for Hushfacebook' line."
     },
     {
       "paths": [
@@ -65,6 +65,15 @@
       "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
       "license": "GPL-3.0-only",
       "changes": "Written for Hushfacebook: which addresses a save may fetch (HTTPS on 443, no user name, Meta's media CDNs only, and on a direct route a public or fake-IP answer)."
+    },
+    {
+      "paths": [
+        "extensions/shared/library/src/main/java/app/morphe/extension/shared/L10nTranslations.java"
+      ],
+      "origin": "original",
+      "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
+      "license": "GPL-3.0-only",
+      "changes": "Generated for Hushfacebook by scripts/gen-l10n.py from its own translation tables in extensions/shared/library/src/main/l10n."
     },
     {
       "paths": [

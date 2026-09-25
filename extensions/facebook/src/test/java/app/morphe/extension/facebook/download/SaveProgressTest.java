@@ -49,6 +49,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
@@ -222,7 +223,7 @@ public class SaveProgressTest {
 
         finish(save("/whole.mp4"));
 
-        assertEquals("Saved to Movies/Facebook", ShadowToast.getTextOfLatestToast());
+        assertEquals("Saved to " + L10n.isolate("Movies/Facebook"), ShadowToast.getTextOfLatestToast());
         assertNull("the notification outlived the save", saveNotification());
         assertEquals(size, published.count.get());
         assertEquals(Integer.valueOf(0), gallery.rows.get(1L).getAsInteger(MediaStore.MediaColumns.IS_PENDING));
@@ -240,7 +241,7 @@ public class SaveProgressTest {
         assertNull("a notification was posted with notifications off", saveNotification());
         finish(worker);
 
-        assertEquals("Saved to Movies/Facebook", ShadowToast.getTextOfLatestToast());
+        assertEquals("Saved to " + L10n.isolate("Movies/Facebook"), ShadowToast.getTextOfLatestToast());
         assertEquals(0, Shadows.shadowOf(notifications()).getAllNotifications().size());
     }
 

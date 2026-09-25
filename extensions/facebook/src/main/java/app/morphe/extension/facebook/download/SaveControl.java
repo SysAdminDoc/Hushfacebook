@@ -21,6 +21,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import app.morphe.extension.shared.L10n;
+
 /**
  * A running save as the person saving sees it: a notification that shows how far it has got and
  * has a Cancel button, for as long as the save runs.
@@ -92,14 +94,19 @@ final class SaveControl {
             if (manager == null || !manager.areNotificationsEnabled()) return null;
 
             NotificationChannel channel = manager.getNotificationChannel(CHANNEL);
-            if (channel == null) {
-                channel = new NotificationChannel(CHANNEL, "Hushfacebook saves", NotificationManager.IMPORTANCE_LOW);
-                channel.setDescription("How far a photo or video you're saving has got, with a button to cancel it");
-                channel.setShowBadge(false);
-                manager.createNotificationChannel(channel);
-            } else if (channel.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+            if (channel != null && channel.getImportance() == NotificationManager.IMPORTANCE_NONE) {
                 // The person switched this channel off in Facebook's notification settings.
                 return null;
+            }
+            String name = L10n.t(application, "Hushfacebook saves");
+            if (channel == null || !name.contentEquals(channel.getName())) {
+                // Creating it again renames it in the phone's current language and changes
+                // nothing the person set for it.
+                NotificationChannel named = new NotificationChannel(CHANNEL, name, NotificationManager.IMPORTANCE_LOW);
+                named.setDescription(L10n.t(application,
+                    "How far a photo or video you're saving has got, with a button to cancel it"));
+                named.setShowBadge(false);
+                manager.createNotificationChannel(named);
             }
             return manager;
         } catch (Throwable t) {
@@ -135,17 +142,23 @@ final class SaveControl {
         }
     }
 
-    /** "4.2 MB of 100 MB", "12 MB so far", or {@code null} before any byte. */
+    /**
+     * "4.2 MB of 100 MB", "12 MB so far", or {@code null} before any byte. The sentence is in
+     * the phone's language and the numbers are written its way.
+     */
     static String progressText(long done, long total) {
         if (done <= 0) return null;
-        return total > 0 ? megabytes(done) + " of " + megabytes(total) : megabytes(done) + " so far";
+        return total > 0
+            ? L10n.f("%1$s of %2$s", megabytes(done), megabytes(total))
+            : L10n.f("%1$s so far", megabytes(done));
     }
 
     private static String megabytes(long bytes) {
         double megabytes = bytes / (1024.0 * 1024.0);
+        Locale locale = L10n.locale();
         return megabytes < 10
-            ? String.format(Locale.US, "%.1f MB", megabytes)
-            : String.format(Locale.US, "%d MB", Math.round(megabytes));
+            ? String.format(locale, "%.1f MB", megabytes)
+            : String.format(locale, "%d MB", Math.round(megabytes));
     }
 
     /** One save: how far it has got, whether it was cancelled, and its notification. */
@@ -237,13 +250,17 @@ final class SaveControl {
             try {
                 Notification.Builder builder = new Notification.Builder(application, CHANNEL)
                     .setSmallIcon(android.R.drawable.stat_sys_download)
-                    .setContentTitle(video ? "Saving a video" : "Saving a photo")
+                    .setContentTitle(video
+                        ? L10n.t(application, "Saving a video")
+                        : L10n.t(application, "Saving a photo"))
                     .setOngoing(true)
                     .setOnlyAlertOnce(true)
                     .setShowWhen(false)
                     .setCategory(Notification.CATEGORY_PROGRESS)
                     .setProgress(100, Math.max(0, percent), percent < 0)
-                    .addAction(new Notification.Action.Builder((Icon) null, "Cancel", cancel).build());
+                    // Android's own Cancel, which the phone already has in every language.
+                    .addAction(new Notification.Action.Builder((Icon) null,
+                        application.getString(android.R.string.cancel), cancel).build());
                 String text = progressText(done, total);
                 if (text != null) builder.setContentText(text);
                 manager.notify(TAG, id, builder.build());

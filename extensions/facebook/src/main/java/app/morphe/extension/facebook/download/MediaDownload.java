@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
@@ -382,7 +383,7 @@ public final class MediaDownload {
      */
     static Thread start(Context application, boolean video, Job job) {
         IN_FLIGHT.incrementAndGet();
-        Feedback.show(application, "Saving...", false);
+        Feedback.show(application, L10n.t(application, "Saving..."), false);
         SaveControl.Save save = SaveControl.begin(application, video);
 
         Thread worker = new Thread(() -> {
@@ -397,12 +398,13 @@ public final class MediaDownload {
                 boolean cancelled = result.status == Downloader.Status.CANCELLED;
                 if (result.ok() || cancelled) info(() -> "save finished: " + result);
                 else failure(() -> "save finished: " + result, null);
-                Feedback.show(application, message(result.status, writer.savedLocation()), !result.ok() && !cancelled);
+                Feedback.show(application, message(application, result.status, writer.savedLocation()),
+                    !result.ok() && !cancelled);
             } catch (Throwable t) {
                 // Nothing can leave this thread. Facebook installs its own handler for uncaught
                 // exceptions and reports them as its own crashes.
                 failure(() -> "the save failed", t);
-                Feedback.show(application, "Download failed", true);
+                Feedback.show(application, L10n.t(application, "Download failed"), true);
             } finally {
                 save.end();
                 IN_FLIGHT.decrementAndGet();
@@ -417,20 +419,23 @@ public final class MediaDownload {
         return worker;
     }
 
-    private static String message(Downloader.Status status, String location) {
+    /** What the toast at the end of a save says, in the phone's language. */
+    static String message(Context application, Downloader.Status status, String location) {
         switch (status) {
             case OK:
-                return "Saved to " + (location == null ? "the gallery" : location);
+                return location == null
+                    ? L10n.t(application, "Saved to the gallery")
+                    : L10n.f(application, "Saved to %1$s", L10n.isolate(location));
             case EXPIRED:
-                return "Link expired. Reopen the item and try again";
+                return L10n.t(application, "Link expired. Reopen the item and try again");
             case REFUSED:
-                return "Not saved: that isn't a Facebook photo or video";
+                return L10n.t(application, "Not saved: that isn't a Facebook photo or video");
             case TOO_LARGE:
-                return "Not saved: the file is over 512 MB";
+                return L10n.t(application, "Not saved: the file is over 512 MB");
             case CANCELLED:
-                return "Save cancelled";
+                return L10n.t(application, "Save cancelled");
             default:
-                return "Download failed";
+                return L10n.t(application, "Download failed");
         }
     }
 
