@@ -15,6 +15,11 @@ param(
     [string]$Root,
     [switch]$VerifyPublishedAsset,
     [string]$ArtifactPath,
+    # The published asset checked on its own, for an index push from a checkout with no bundle
+    # built for the version the index publishes. The indexed asset is downloaded and read wherever
+    # a local build would be (the tag pin, the Patcher-Version stamp and the receipt), and only the
+    # byte-for-byte comparison is left out, with a line saying so. Only with -VerifyPublishedAsset.
+    [switch]$ArtifactIsHosted,
     # The Morphe desktop CLI, the only thing that can read a patch list back out of a bundle
     # this checkout did not build. Falls back to HUSHFACEBOOK_DESKTOP_JAR.
     [string]$DesktopJar,
@@ -90,6 +95,12 @@ $rootPath = (Resolve-Path -LiteralPath $Root).Path
 # The ZipFile reads below would take a relative -ArtifactPath from the process directory, which
 # Set-Location doesn't move, after Test-Path had found it in PowerShell's location.
 if ($ArtifactPath) { $ArtifactPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ArtifactPath) }
+if ($ArtifactIsHosted -and -not $VerifyPublishedAsset) {
+    throw '-ArtifactIsHosted checks the published asset on its own, so it needs -VerifyPublishedAsset.'
+}
+if ($ArtifactIsHosted -and $ArtifactPath) {
+    throw 'Pass -ArtifactPath for a bundle built here, or -ArtifactIsHosted to check the published asset on its own, not both.'
+}
 $patchListPath = Join-Path $rootPath 'patches-list.json'
 $bundlePath = Join-Path $rootPath 'patches-bundle.json'
 $propertiesPath = Join-Path $rootPath 'gradle.properties'
@@ -425,15 +436,24 @@ if (-not $SkipDescriptionTestCount) {
     $testFacts += ", $patchTestCount patch tests"
 }
 
+# A hosted asset checked in place of a local build outlives the published asset block, because the
+# stamp and receipt checks at the end read it as well. It's removed in the finally around the rest
+# of the run, pass or fail, and it's only ever written to the temporary folder.
+$hostedArtifact = $null
+try {
 if ($VerifyPublishedAsset) {
-    if ([string]::IsNullOrWhiteSpace($ArtifactPath)) {
-        $ArtifactPath = Get-ReleaseBundlePath -Root $rootPath -Version $releaseVersion
+    if (-not $ArtifactIsHosted) {
+        if ([string]::IsNullOrWhiteSpace($ArtifactPath)) {
+            $ArtifactPath = Get-ReleaseBundlePath -Root $rootPath -Version $releaseVersion
+        }
+        if (-not (Test-Path -LiteralPath $ArtifactPath -PathType Leaf)) {
+            throw "The local release artifact is missing: $ArtifactPath"
+        }
     }
-    if (-not (Test-Path -LiteralPath $ArtifactPath -PathType Leaf)) {
-        throw "The local release artifact is missing: $ArtifactPath"
-    }
+    $artifactKind = if ($ArtifactIsHosted) { 'hosted' } else { 'local' }
 
     $temporaryArtifact = Join-Path ([IO.Path]::GetTempPath()) ("hushfacebook-$([Guid]::NewGuid()).mpp")
+    if ($ArtifactIsHosted) { $hostedArtifact = $temporaryArtifact }
     try {
         try {
             $assetResponse = Invoke-WebRequest -Uri $assetUri -OutFile $temporaryArtifact -MaximumRedirection 5 -TimeoutSec 60 -PassThru
@@ -448,10 +468,19 @@ if ($VerifyPublishedAsset) {
         # checkout just built. That moves the moment a patch is added; the file people download
         # does not. The index once advertised 70 patches while the published asset carried 68 and
         # nothing complained, because nothing had read the published asset. This does.
-        $localHash = (Get-FileHash -LiteralPath $ArtifactPath -Algorithm SHA256).Hash.ToLowerInvariant()
         $publishedHash = (Get-FileHash -LiteralPath $temporaryArtifact -Algorithm SHA256).Hash.ToLowerInvariant()
-        if ($localHash -ne $publishedHash) {
-            throw "The hosted bundle hash $publishedHash does not match the local artifact hash $localHash."
+        if ($ArtifactIsHosted) {
+            # Nothing built here to compare with. The download stands in for a local build in every
+            # check from here on, and SHA256SUMS below and the receipt at the end hold its bytes.
+            $ArtifactPath = $temporaryArtifact
+            Write-Host ("[release] no bundle built here is compared with the hosted $assetName byte for byte; " +
+                'it is checked on its own')
+        } else {
+            $localHash = (Get-FileHash -LiteralPath $ArtifactPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($localHash -ne $publishedHash) {
+                throw "The hosted bundle hash $publishedHash does not match the local artifact hash $localHash."
+            }
+            Write-Host "[release] the hosted $assetName matches the bundle built here byte for byte: $ArtifactPath"
         }
 
         $checksumUri = [Uri]::new($assetUri, 'SHA256SUMS.txt')
@@ -485,7 +514,9 @@ if ($VerifyPublishedAsset) {
         # commit. HEAD is therefore the wrong comparison during that index push. Resolve the
         # published version's remote tag and hold the local artifact to that commit instead.
         # Held together with the hash comparison above, this gives the whole claim: the hosted
-        # bundle is byte-for-byte local and reproducible from the release tag.
+        # bundle is byte-for-byte local and reproducible from the release tag. A hosted bundle
+        # checked on its own gets the same pin, and the receipt at the end holds its bytes to the
+        # build the release was cut from.
         #
         # SOURCE_DATE_EPOCH is deliberately not consulted. It is the same variable the build
         # reads, so accepting it as the expected value would compare the builder's own input
@@ -523,15 +554,16 @@ if ($VerifyPublishedAsset) {
         $zip = [System.IO.Compression.ZipFile]::OpenRead($ArtifactPath)
         try {
             $manifestEntry = $zip.GetEntry('META-INF/MANIFEST.MF')
-            if ($null -eq $manifestEntry) { throw "The local $assetName has no META-INF/MANIFEST.MF." }
+            if ($null -eq $manifestEntry) { throw "The $artifactKind $assetName has no META-INF/MANIFEST.MF." }
             $reader = New-Object IO.StreamReader($manifestEntry.Open())
             try { $manifestText = $reader.ReadToEnd() } finally { $reader.Dispose() }
             $stampMatch = [regex]::Match($manifestText, '(?m)^Timestamp: (\d+)')
-            if (-not $stampMatch.Success) { throw "The local $assetName manifest has no Timestamp line." }
+            if (-not $stampMatch.Success) { throw "The $artifactKind $assetName manifest has no Timestamp line." }
             $localStamp = [long]$stampMatch.Groups[1].Value
         } finally { $zip.Dispose() }
         if ($localStamp -ne $expectedStamp) {
-            throw ("The bundle at $ArtifactPath is pinned to $localStamp but release tag " +
+            $pinned = if ($ArtifactIsHosted) { "The hosted $assetName" } else { "The bundle at $ArtifactPath" }
+            throw ("$pinned is pinned to $localStamp but release tag " +
                 "v$publishedVersion ($releaseCommit) is $expectedStamp. Build the bundle from " +
                 'the tagged commit so rebuilding from the tag reproduces the published hash.')
         }
@@ -609,7 +641,7 @@ if ($VerifyPublishedAsset) {
         }
 
     } finally {
-        Remove-Item -LiteralPath $temporaryArtifact -Force -ErrorAction SilentlyContinue
+        if (-not $ArtifactIsHosted) { Remove-Item -LiteralPath $temporaryArtifact -Force -ErrorAction SilentlyContinue }
     }
 }
 
@@ -844,9 +876,9 @@ $bundlePath = if ($ArtifactPath) { $ArtifactPath } else {
 }
 if (-not (Test-Path -LiteralPath $bundlePath -PathType Leaf)) {
     # The stamp is a fact about a built bundle, and only the hash comparison needs one built
-    # here. The pre-push hook reaches this after saying "no local bundle here, so the hosted
-    # artifact is not compared", so a clean checkout pushing a README edit must not die on the
-    # line after that. A release run passes -VerifyPublishedAsset and is held to it.
+    # here. The pre-push hook runs this with no bundle for any push that rewrites no index, so a
+    # clean checkout pushing a README edit must not die here. A release run passes
+    # -VerifyPublishedAsset and is held to a bundle, the hosted one when none was built here.
     if ($VerifyPublishedAsset) {
         throw ("The built bundle is missing, so its patcher version cannot be checked against " +
             "the $pinnedPatcher the catalog pins: $bundlePath. Run :patches:buildAndroid first.")
@@ -890,3 +922,6 @@ Write-Host ("[facts] " + $sourceVersion + ": " + $patchCount + " patches for " +
 # Callers check the exit code, and a script invoked with & leaves the previous native
 # command's code in $LASTEXITCODE, so a clean run has to say so itself.
 exit 0
+} finally {
+    if ($hostedArtifact) { Remove-Item -LiteralPath $hostedArtifact -Force -ErrorAction SilentlyContinue }
+}

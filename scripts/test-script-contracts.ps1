@@ -1387,8 +1387,9 @@ try {
     $contractsMarker = Join-Path $hookRoot 'contracts-ran.txt'
     Set-Content -LiteralPath (Join-Path $hookRoot 'scripts/validate-release-facts.ps1') -Encoding UTF8 -Value @(
         'param([string]$Root, [switch]$SkipDescriptionTestCount, [switch]$AllowPublishedIndexLag,',
-        '    [switch]$VerifyPublishedAsset, [string]$ArtifactPath)',
-        "Set-Content -LiteralPath '$factsMarker' -Value `"lag=`$AllowPublishedIndexLag verify=`$VerifyPublishedAsset artifact=`$ArtifactPath`"",
+        '    [switch]$VerifyPublishedAsset, [string]$ArtifactPath, [switch]$ArtifactIsHosted)',
+        ("Set-Content -LiteralPath '$factsMarker' -Value " +
+            "`"lag=`$AllowPublishedIndexLag verify=`$VerifyPublishedAsset artifact=`$ArtifactPath hosted=`$ArtifactIsHosted`""),
         'exit 0')
     Set-Content -LiteralPath (Join-Path $hookRoot 'scripts/test-script-contracts.ps1') -Encoding UTF8 -Value @(
         'param([string]$Root)',
@@ -1528,6 +1529,10 @@ try {
     Assert-True (Test-Path -LiteralPath $factsMarker) 'An index change ran no release check.'
     Assert-True ((Get-Content -LiteralPath $factsMarker -Raw) -like 'lag=False*') `
         'An index change was allowed to lag behind the published release.'
+    # With no bundle built here the hosted one is checked on its own, never skipped; the release
+    # root section below runs that against the real check.
+    Assert-True ((Get-Content -LiteralPath $factsMarker -Raw) -like '*verify=True artifact= hosted=True*') `
+        "An index push with no bundle built here did not have the hosted one checked: $(Get-Content -LiteralPath $factsMarker -Raw)"
 
     # The order that shipped a dexless bundle: buildAndroid, then any task that reruns
     # :patches:jar, which leaves the plain jar in build/libs under the bundle's own name. The
@@ -1544,7 +1549,7 @@ try {
     $routed = Get-Content -LiteralPath $factsMarker -Raw
     Assert-True ($routed -like '*verify=True*') `
         'An index push with a built release bundle did not compare it against the published asset.'
-    Assert-True ($routed -like "*artifact=$releaseCopy*") `
+    Assert-True ($routed -like "*artifact=$releaseCopy hosted=False*") `
         "The index push compared something other than the release copy: $routed"
     Remove-Item -LiteralPath (Join-Path $hookRoot 'patches') -Recurse -Force
 
@@ -2914,7 +2919,25 @@ try {
         ':list',
         'copy /y "%HERE%patch-names.txt" "%LISTING%" >nul || exit /b 3',
         'exit /b 0') -join "`r`n") + "`r`n"), [System.Text.Encoding]::ASCII)
+    # What GitHub answers: the served bundle, a checksum list naming it (or $servedSums, when a case
+    # wants a wrong one), and the repository description. Dot-sourced into each runner, so the check
+    # it starts finds them first.
     $servedBundle = $releaseBundle
+    $servedSums = $null
+    $publishedStandIns = {
+        function Invoke-WebRequest {
+            param($Uri, $Method, $OutFile, $MaximumRedirection, $TimeoutSec, [switch]$PassThru, [switch]$UseBasicParsing)
+            if ($OutFile) { Copy-Item -LiteralPath $servedBundle -Destination $OutFile -Force }
+            $sums = if ($servedSums) { $servedSums } else {
+                "$((Get-FileHash -LiteralPath $servedBundle -Algorithm SHA256).Hash.ToLowerInvariant())  patches-$indexVersionHere.mpp`n"
+            }
+            [pscustomobject]@{ StatusCode = 200; Content = [Text.Encoding]::UTF8.GetBytes($sums) }
+        }
+        function gh {
+            $global:LASTEXITCODE = 0
+            "Hushfacebook v${indexVersionHere}: $($releaseNames.Count) patches for Facebook $($releaseTarget.PackageVersion)."
+        }
+    }
     function Invoke-IndexPushCheck([hashtable]$Arguments) {
         $saved = @{}
         foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*' })) {
@@ -2924,16 +2947,7 @@ try {
         # The asset check asks git for the published tag from where it runs, not through -Root.
         Push-Location -LiteralPath $releaseRepo
         try {
-            function Invoke-WebRequest {
-                param($Uri, $Method, $OutFile, $MaximumRedirection, $TimeoutSec, [switch]$PassThru, [switch]$UseBasicParsing)
-                if ($OutFile) { Copy-Item -LiteralPath $servedBundle -Destination $OutFile -Force }
-                $sum = (Get-FileHash -LiteralPath $servedBundle -Algorithm SHA256).Hash.ToLowerInvariant()
-                [pscustomobject]@{ StatusCode = 200; Content = [Text.Encoding]::UTF8.GetBytes("$sum  patches-$indexVersionHere.mpp`n") }
-            }
-            function gh {
-                $global:LASTEXITCODE = 0
-                "Hushfacebook v${indexVersionHere}: $($releaseNames.Count) patches for Facebook $($releaseTarget.PackageVersion)."
-            }
+            . $publishedStandIns
             $global:LASTEXITCODE = 0
             $said = @(& $factsScript -Root $releaseRepo @Arguments 6>&1 | ForEach-Object { "$_" }) -join "`n"
             if ($LASTEXITCODE -ne 0) { throw "The release check exited $LASTEXITCODE on the index push: $said" }
@@ -2959,6 +2973,130 @@ try {
         Assert-Throws { Invoke-IndexPushCheck @{ SkipDescriptionTestCount = $true } } '*Morphe Manager 1.20.0 or newer*' `
             'An index push from a clone without the release tag named a Manager floor the tag does not pin, and went through.'
         Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value $releaseIndexText
+
+        # The index push through the hook, which decides what the hosted asset is held to. A bundle
+        # built here is compared with it byte for byte when there's one for the version the index
+        # publishes: the only bundle, whatever its name, or among several the one named for that
+        # version. With none of those the check downloads the asset and holds it to everything else
+        # a local build gets. The hook runs the check the pushed tree carries, strict, so the scripts
+        # are copied beside the release files and the test results the description quotes are
+        # written. The CLI, its JDK and GitHub are stand-ins, and the temporary folder is the
+        # fixture's own, so a download left behind shows.
+        $hookTemp = Join-Path $releaseRoot 'hook-temp'
+        $releaseBuilds = Split-Path -Parent $releaseBundle
+        $parkedBundle = Join-Path $releaseRoot "parked\patches-$releaseVersionHere.mpp"
+        $otherBuilds = @('patches-9.9.8.mpp', 'patches-9.9.9.mpp' | ForEach-Object { Join-Path $releaseBuilds $_ })
+        $releaseDescription = [string]($releaseIndexText | ConvertFrom-Json).description
+        function Invoke-IndexPushHook {
+            $saved = @{}
+            foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*' -or $_.Name -in @('TMP', 'TEMP',
+                    'HUSHFACEBOOK_DESKTOP_JAR', 'HUSHFACEBOOK_JAVA', 'HUSHFACEBOOK_SKIP_PRE_PUSH') })) {
+                $saved[$variable.Name] = $variable.Value
+                Remove-Item -LiteralPath ('Env:\' + $variable.Name) -ErrorAction SilentlyContinue
+            }
+            $env:TMP = $hookTemp
+            $env:TEMP = $hookTemp
+            $env:HUSHFACEBOOK_DESKTOP_JAR = $stubJar
+            $env:HUSHFACEBOOK_JAVA = $listJava
+            try {
+                . $publishedStandIns
+                $global:LASTEXITCODE = 0
+                $said = @(& $prePushScript -Root $releaseRepo -ChangedPaths @('patches-bundle.json') 6>&1 |
+                    ForEach-Object { "$_" }) -join "`n"
+                if ($LASTEXITCODE -ne 0) { throw "The index push exited $LASTEXITCODE`: $said" }
+                return $said
+            } finally {
+                foreach ($name in @('TMP', 'TEMP', 'HUSHFACEBOOK_DESKTOP_JAR', 'HUSHFACEBOOK_JAVA')) {
+                    Remove-Item -LiteralPath ('Env:\' + $name) -ErrorAction SilentlyContinue
+                }
+                foreach ($name in $saved.Keys) { Set-Item -LiteralPath ('Env:\' + $name) -Value $saved[$name] }
+            }
+        }
+        # Pass or fail, the download is gone afterwards and build/release holds what it held.
+        function Assert-LeftAlone([string]$Case, [string[]]$Builds) {
+            $left = @(Get-ChildItem -LiteralPath $hookTemp -File -Recurse -Filter '*.mpp' | ForEach-Object { $_.Name })
+            Assert-True ($left.Count -eq 0) "The $Case left its download behind: $($left -join ', ')"
+            $now = @(Get-ChildItem -LiteralPath $releaseBuilds -File | ForEach-Object { $_.Name } | Sort-Object) -join ', '
+            Assert-True ($now -eq (@($Builds | Sort-Object) -join ', ')) "The $Case changed patches/build/release: $now"
+        }
+        Copy-Item -LiteralPath $PSScriptRoot -Destination (Join-Path $releaseRepo 'scripts') -Recurse
+        foreach ($results in @(
+                @{ Folder = 'extensions/facebook/build/test-results/testDebugUnitTest'; Suite = 'RuntimeTest'; Quote = '\b(\d+) runtime tests passed\b' },
+                @{ Folder = 'patches/build/test-results/test'; Suite = 'PatchTest'; Quote = '\b(\d+) patch tests passed\b' })) {
+            $quoted = [regex]::Match($releaseDescription, $results.Quote).Groups[1].Value
+            Assert-True ($quoted -match '^[1-9]\d*$') "The copied description quotes no $($results.Suite) count: $releaseDescription"
+            $directory = Join-Path $releaseRepo $results.Folder
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            $cases = (1..[int]$quoted | ForEach-Object { "<testcase name=`"t$_`" classname=`"fixture.$($results.Suite)`"/>" }) -join ''
+            Set-Content -LiteralPath (Join-Path $directory "TEST-fixture.$($results.Suite).xml") -Encoding UTF8 -Value (
+                "<?xml version=`"1.0`" encoding=`"UTF-8`"?><testsuite name=`"fixture.$($results.Suite)`" tests=`"$quoted`" " +
+                "skipped=`"0`" failures=`"0`" errors=`"0`">$cases</testsuite>")
+        }
+        New-Item -ItemType Directory -Path $hookTemp, (Split-Path -Parent $parkedBundle) -Force | Out-Null
+        try {
+            # No bundle built here. The hosted one passes every check a local build gets, and the
+            # check says the byte-for-byte comparison had nothing to compare with.
+            Move-Item -LiteralPath $releaseBundle -Destination $parkedBundle
+            $servedBundle = $parkedBundle
+            $said = Invoke-IndexPushHook
+            foreach ($line in @('no local bundle here, so the hosted asset is downloaded and checked on its own',
+                    "no bundle built here is compared with the hosted patches-$indexVersionHere.mpp byte for byte",
+                    "published bundle is pinned to v$indexVersionHere ($releaseCommit)",
+                    'the published bundle carries classes.dex',
+                    "the published bundle carries $($releaseNames.Count) patches, as described",
+                    "the bundle stamps patcher $($releaseToolchain.PatcherVersion), as the catalog pins",
+                    "the receipt proves $($releaseNames.Count) patches on")) {
+                Assert-True ($said -like "*$line*") "An index push with no bundle built here left the hosted one unchecked ($line): $said"
+            }
+            Assert-LeftAlone 'hosted check' @()
+            # And a hosted file SHA256SUMS doesn't list, or one without the classes.dex Manager
+            # loads, is refused, with nothing left behind.
+            $servedSums = "$('0' * 64)  patches-$indexVersionHere.mpp`n"
+            Assert-Throws { Invoke-IndexPushHook } "*SHA256SUMS.txt lists $('0' * 64) for patches-$indexVersionHere.mpp*" `
+                'An index push went through with a hosted bundle SHA256SUMS does not list.'
+            Assert-LeftAlone 'refused hosted check' @()
+            $servedSums = $null
+            $servedBundle = Join-Path $releaseRoot "dexless\patches-$releaseVersionHere.mpp"
+            New-Item -ItemType Directory -Path (Split-Path -Parent $servedBundle) -Force | Out-Null
+            New-TestBundleArchive -Path $servedBundle -Entries ([ordered]@{
+                'META-INF/MANIFEST.MF' = ("Manifest-Version: 1.0`nVersion: $releaseVersionHere`nTimestamp: $($releaseSeconds * 1000)`n" +
+                    "Patcher-Version: $($releaseToolchain.PatcherVersion)`n`n")
+                'extensions/facebook.mpe' = "dex`n035" + ('payload' * 8) })
+            Assert-Throws { Invoke-IndexPushHook } '*The published bundle has no classes.dex*' `
+                'An index push went through with a hosted bundle Manager would load no patches from.'
+            Assert-LeftAlone 'refused hosted check' @()
+
+            # Several bundles. The one named for the index version is compared byte for byte, and
+            # the other is left alone; with neither named for it, the hosted one is checked on its own.
+            Move-Item -LiteralPath $parkedBundle -Destination $releaseBundle
+            $servedBundle = $releaseBundle
+            New-TestBundleArchive -Path $otherBuilds[0] -Entries ([ordered]@{ 'META-INF/MANIFEST.MF' = "Manifest-Version: 1.0`nVersion: 9.9.8`n`n" })
+            $said = Invoke-IndexPushHook
+            Assert-True ($said -like "*found 2 bundles, so the hosted asset is compared with patches-$indexVersionHere.mpp, built here*" -and
+                $said -like "*the hosted patches-$indexVersionHere.mpp matches the bundle built here byte for byte*" -and
+                $said -like "*the receipt proves $($releaseNames.Count) patches on*") `
+                "An index push with several bundles did not compare the hosted one with the bundle for its version: $said"
+            Assert-LeftAlone 'comparison with the bundle built here' @("patches-$releaseVersionHere.mpp", 'patches-9.9.8.mpp')
+            Move-Item -LiteralPath $releaseBundle -Destination $parkedBundle
+            $servedBundle = $parkedBundle
+            New-TestBundleArchive -Path $otherBuilds[1] -Entries ([ordered]@{ 'META-INF/MANIFEST.MF' = "Manifest-Version: 1.0`nVersion: 9.9.9`n`n" })
+            $said = Invoke-IndexPushHook
+            Assert-True ($said -like "*found 2 bundles and none is patches-$indexVersionHere.mpp, so the hosted asset is downloaded and checked on its own*" -and
+                $said -like "*no bundle built here is compared with the hosted patches-$indexVersionHere.mpp byte for byte*" -and
+                $said -like "*the receipt proves $($releaseNames.Count) patches on*") `
+                "An index push with several bundles, none for its version, left the hosted one unchecked: $said"
+            Assert-LeftAlone 'hosted check' @('patches-9.9.8.mpp', 'patches-9.9.9.mpp')
+        } finally {
+            $servedBundle = $releaseBundle
+            $servedSums = $null
+            Remove-Item -LiteralPath $otherBuilds -Force -ErrorAction SilentlyContinue
+            if (-not (Test-Path -LiteralPath $releaseBundle) -and (Test-Path -LiteralPath $parkedBundle)) {
+                Move-Item -LiteralPath $parkedBundle -Destination $releaseBundle
+            }
+            foreach ($folder in @('scripts', 'extensions', 'patches/build/test-results')) {
+                Remove-Item -LiteralPath (Join-Path $releaseRepo $folder) -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
 
         # A release re-cut on GitHub onto another commit, here one with no catalog, while the clone
         # keeps its tag on the first: the floor is read where the published tag points, and a

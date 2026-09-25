@@ -589,17 +589,35 @@ try {
             # name, and the sources and javadoc jars share the .mpp extension there as well.
             $artifacts = @(Get-ChildItem -LiteralPath (Join-Path $Root 'patches/build/release') `
                 -Filter '*.mpp' -File -ErrorAction SilentlyContinue)
-            if ($artifacts.Count -eq 1) {
-                # The bundle this checkout built, so the indexed URL, its hash and the hosted
-                # checksum entry can all be compared against something real.
-                & $validate -Root $Root -VerifyPublishedAsset -ArtifactPath $artifacts[0].FullName
-            } else {
-                if ($artifacts.Count -gt 1) {
-                    Write-Step "found $($artifacts.Count) bundles, so the hosted artifact is not compared"
-                } else {
-                    Write-Step 'no local bundle here, so the hosted artifact is not compared'
+            # The bundle this checkout built, so the indexed URL, its hash and the hosted checksum
+            # entry can all be compared against something real: the only one there, whatever its
+            # name, or among several the one named for the version the index publishes. With none
+            # of those the hosted asset is downloaded and held to every other check a local build
+            # gets. This push is the one that hands a release to Manager users, and it used to go
+            # out with the hosted bundle unread whenever build/release didn't hold exactly one.
+            $indexPath = Join-Path $Root 'patches-bundle.json'
+            $indexVersion = $null
+            if (Test-Path -LiteralPath $indexPath -PathType Leaf) {
+                try {
+                    $indexVersion = [string](Get-Content -LiteralPath $indexPath -Raw | ConvertFrom-Json).version
+                } catch {
+                    throw "patches-bundle.json is not JSON the release check can read: $($_.Exception.Message)"
                 }
-                & $validate -Root $Root
+            }
+            $forIndex = @($artifacts | Where-Object { $_.Name -eq "patches-$indexVersion.mpp" })
+            $builtHere = if ($artifacts.Count -eq 1) { $artifacts[0] } elseif ($forIndex.Count -eq 1) { $forIndex[0] }
+            if ($builtHere) {
+                $among = if ($artifacts.Count -gt 1) { "found $($artifacts.Count) bundles, so " } else { '' }
+                Write-Step "${among}the hosted asset is compared with $($builtHere.Name), built here"
+                & $validate -Root $Root -VerifyPublishedAsset -ArtifactPath $builtHere.FullName
+            } else {
+                $found = if ($artifacts.Count -gt 1) {
+                    "found $($artifacts.Count) bundles and none is patches-$indexVersion.mpp"
+                } else {
+                    'no local bundle here'
+                }
+                Write-Step "$found, so the hosted asset is downloaded and checked on its own"
+                & $validate -Root $Root -VerifyPublishedAsset -ArtifactIsHosted
             }
             if ($LASTEXITCODE -ne 0) { throw $factsFailed }
             } finally {
