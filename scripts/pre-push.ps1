@@ -11,7 +11,9 @@
     standard input the way git supplies them. Run scripts/install-hooks.ps1 once to wire it up.
 
     Only what changed is checked: runtime tests when extension or patch sources move, and the
-    release facts when a published file moves. Set HUSHFACEBOOK_SKIP_PRE_PUSH=1 to push anyway.
+    release facts when a published file moves. The one check every push gets is a scan of the
+    pushed commits for tracked files that name the maintainer's machine or a phone. Set
+    HUSHFACEBOOK_SKIP_PRE_PUSH=1 to push anyway.
 #>
 [CmdletBinding()]
 param(
@@ -33,6 +35,7 @@ $ErrorActionPreference = 'Stop'
 # wherever pwsh is off the PATH: a git hook runs with git's environment, so that is the ordinary
 # case rather than the rare one.
 if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
+. (Join-Path $PSScriptRoot 'common.ps1')
 
 # A hook runs with git's own environment. User environment variables set after the shell
 # launched, or set in the user scope only, may be absent. Import the four this script and
@@ -263,6 +266,28 @@ try {
         exit 0
     }
 
+    # Every push, whatever it moves: no tracked file may name the maintainer's working-notes folder
+    # or a phone's serial. The contract tests hold the working tree to that, but they run for
+    # script changes, and the files that once fell back to that folder were tests under patches/
+    # and extensions/, which route to the Gradle gates alone. Each pushed commit is read straight
+    # out of the object store, so this needs no worktree and takes a moment. A run by hand reads
+    # the tracked files of this working tree.
+    if ($PSBoundParameters.ContainsKey('ChangedPaths')) {
+        $scanned = @('')
+    } else {
+        $scanned = @($script:pushedCommits)
+        if ($scanned.Count -eq 0) { $scanned = @('HEAD') }
+    }
+    foreach ($scanCommit in $scanned) {
+        $named = @(Find-MachineNames -Root $Root -Commit $scanCommit)
+        if ($named.Count -gt 0) {
+            $where = if ($scanCommit) { $scanCommit } else { 'the working tree' }
+            throw ("Tracked files in $where name the maintainer's machine or phone, and a push would " +
+                'publish them: ' + (($named | Select-Object -First 5) -join '; '))
+        }
+    }
+    Write-Step 'no tracked file names a machine or phone'
+
     $touchesCode = @($paths | Where-Object {
         $_ -like 'extensions/*' -or $_ -like 'patches/*' -or
         # The pins and the reviewed checksums. Two Gradle tasks hold the Bouncy Castle graphs to
@@ -272,6 +297,13 @@ try {
         $_ -eq 'settings.gradle.kts' -or $_ -eq 'build.gradle.kts'
     }).Count -gt 0
     $touchesScripts = @($paths | Where-Object { $_ -like 'scripts/*' }).Count -gt 0
+    # The contract tests read two files outside scripts/ that nothing else checks: the catalog,
+    # held to the builds, signers and dependencies the release scripts expect, and the Gradle file
+    # that writes the release bundle where common.ps1 reads it. A push that moved only one of them
+    # never ran the tests, and the break surfaced on the next unrelated script push instead.
+    $touchesContracts = $touchesScripts -or @($paths | Where-Object {
+        $_ -eq 'patches-list.json' -or $_ -eq 'patches/build.gradle.kts'
+    }).Count -gt 0
     $injectedRegisterVerifierPaths = @(
         'scripts/BadDexFixture.java',
         'scripts/DexDiff.java',
@@ -363,12 +395,15 @@ try {
             'in a clean worktree of the commit instead.')
     }
 
-    # Script, notice, failure message. The contract tests run for every script change; the two
-    # injected-register suites and the resource table check's run only when their own files
-    # moved. Each one is the pushed commit's copy, run against that commit.
+    # Script, notice, failure message. The contract tests run for every script change and for the
+    # two files above; the two injected-register suites and the resource table check's run only
+    # when their own files moved. Each one is the pushed commit's copy, run against that commit.
     $suites = @()
-    if ($touchesScripts) {
-        $suites += , @('scripts/test-script-contracts.ps1', 'scripts changed, running their contract tests',
+    if ($touchesContracts) {
+        $contractsNotice = if ($touchesScripts) { 'scripts changed, running their contract tests' } else {
+            'the catalog or the release bundle''s Gradle file changed, running the script contract tests'
+        }
+        $suites += , @('scripts/test-script-contracts.ps1', $contractsNotice,
             'The script contract tests did not pass.')
     }
     if ($touchesInjectedRegisterVerifier) {

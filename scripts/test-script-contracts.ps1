@@ -5,7 +5,8 @@
 .DESCRIPTION
     Ported from Hushfeed's suite on 2026-09-25 and held to Facebook's facts: two declared builds,
     both of Meta's signers, and .apkm split bundles. The pre-push hook runs it for every change
-    under scripts/, and stops the push when it is missing.
+    under scripts/, to patches-list.json or to patches/build.gradle.kts, and stops the push when
+    it is missing.
 #>
 [CmdletBinding()]
 param([string]$Root)
@@ -1271,6 +1272,15 @@ foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*
 try {
     $env:HUSHFACEBOOK_SKIP_PRE_PUSH = $null
     New-Item -ItemType Directory -Path (Join-Path $hookRoot 'scripts') -Force | Out-Null
+    # A repository from the start, empty until the cases below commit to it: every push is scanned
+    # for machine names now, a run by hand included, and the scan reads the root through git.
+    & git -C $hookRoot init --quiet
+    $actualHookGitDir = (& git -C $hookRoot rev-parse --absolute-git-dir).Trim()
+    Assert-True ([IO.Path]::GetFullPath($actualHookGitDir).TrimEnd('\', '/') -ieq
+        [IO.Path]::GetFullPath((Join-Path $hookRoot '.git')).TrimEnd('\', '/')) `
+        'The hook fixture resolved outside its temporary repository; refusing to write.'
+    & git -C $hookRoot config user.name 'Hook Contract'
+    & git -C $hookRoot config user.email 'hook@example.invalid'
     $factsMarker = Join-Path $hookRoot 'facts-ran.txt'
     $contractsMarker = Join-Path $hookRoot 'contracts-ran.txt'
     Set-Content -LiteralPath (Join-Path $hookRoot 'scripts/validate-release-facts.ps1') -Encoding UTF8 -Value @(
@@ -1326,9 +1336,18 @@ try {
         Set-Content -LiteralPath $contractsStubPath -Value $contractsStubText -Encoding UTF8 -NoNewline
     }
 
+    # The catalog is held to Meta's two signers, the builds every patch declares and the internal
+    # dependencies the release scripts expect, and only the contract tests read it for those. A
+    # push of the catalog alone ran the release facts and never them.
+    Invoke-Hook -Paths @('patches-list.json')
+    Assert-True ((Test-Path -LiteralPath $factsMarker) -and (Test-Path -LiteralPath $contractsMarker)) `
+        'A push that changed only the catalog did not run both the release check and the script contract tests.'
+
     Invoke-Hook -Paths @('CHANGELOG.md')
     Assert-True (Test-Path -LiteralPath $factsMarker) `
         'A push that changed only the CHANGELOG ran no release check.'
+    Assert-True (-not (Test-Path -LiteralPath $contractsMarker)) `
+        'A push that changed only the CHANGELOG ran the script contract tests; the release check is what holds that file.'
 
     Invoke-Hook -Paths @('.github/ISSUE_TEMPLATE/bug_report.yml')
     Assert-True (Test-Path -LiteralPath $factsMarker) `
@@ -1364,13 +1383,6 @@ try {
     $newBranchSource = Join-Path $hookRoot 'extensions/facebook/src/main/java/FirstCommit.java'
     New-Item -ItemType Directory -Path (Split-Path -Parent $newBranchSource) -Force | Out-Null
     Set-Content -LiteralPath $newBranchSource -Encoding UTF8 -Value 'final class FirstCommit {}'
-    & git -C $hookRoot init --quiet
-    $actualHookGitDir = (& git -C $hookRoot rev-parse --absolute-git-dir).Trim()
-    Assert-True ([IO.Path]::GetFullPath($actualHookGitDir).TrimEnd('\', '/') -ieq
-        [IO.Path]::GetFullPath((Join-Path $hookRoot '.git')).TrimEnd('\', '/')) `
-        'The hook fixture resolved outside its temporary repository; refusing to write.'
-    & git -C $hookRoot config user.name 'Hook Contract'
-    & git -C $hookRoot config user.email 'hook@example.invalid'
     & git -C $hookRoot add extensions/facebook/src/main/java/FirstCommit.java
     & git -C $hookRoot commit --quiet -m 'code first'
     $firstCommit = (& git -C $hookRoot rev-parse HEAD).Trim()
@@ -1405,15 +1417,16 @@ try {
     & git -C $hookRoot tag -a release-same-tree -m 'release' $newBranchHead
     $tagObject = (& git -C $hookRoot rev-parse refs/tags/release-same-tree).Trim()
     $tagRefs = "refs/tags/release-same-tree $tagObject refs/tags/release-same-tree $('0' * 40)"
+    # Git hooks put git-core first. Keeping only that directory breaks Windows Git's local
+    # transport because its runtime DLLs live elsewhere. Hide gh, not Git's dependencies.
+    $pathWithoutGh = (@($savedNewBranchPath -split [IO.Path]::PathSeparator | Where-Object {
+        $directory = $_.Trim('"')
+        $directory -and -not (@('gh', 'gh.exe', 'gh.cmd', 'gh.bat') | Where-Object {
+            Test-Path -LiteralPath (Join-Path $directory $_) -PathType Leaf
+        })
+    }) -join [IO.Path]::PathSeparator)
     try {
-        # Git hooks put git-core first. Keeping only that directory breaks Windows Git's
-        # local transport because its runtime DLLs live elsewhere. Hide gh, not Git's dependencies.
-        $env:PATH = (@($savedNewBranchPath -split [IO.Path]::PathSeparator | Where-Object {
-            $directory = $_.Trim('"')
-            $directory -and -not (@('gh', 'gh.exe', 'gh.cmd', 'gh.bat') | Where-Object {
-                Test-Path -LiteralPath (Join-Path $directory $_) -PathType Leaf
-            })
-        }) -join [IO.Path]::PathSeparator)
+        $env:PATH = $pathWithoutGh
         Assert-True (-not (Get-Command gh -ErrorAction SilentlyContinue)) 'The tag fixture still exposes gh.'
         $env:GITHUB_ACTOR = $null
         $env:GITHUB_TOKEN = $null
@@ -1438,16 +1451,45 @@ try {
         $env:GITHUB_TOKEN = $savedNewBranchToken
     }
 
+    # The scan every push gets. A doc naming the maintainer's notes folder or a phone's serial
+    # routes to no gate at all, and a test under patches/ or extensions/ only to the Gradle
+    # gates, which never read for them, so neither reached the contract tests' scan. The hook
+    # reads the pushed commit, whatever the working tree holds, and .gitignore stays exempt.
+    $notesFolder = '.' + 'cla' + 'ude'
+    $phoneSerial = 'R5' + 'C' + 'ZZZZ9999'
+    $phoneDoc = Join-Path $hookRoot 'docs/phone.md'
+    New-Item -ItemType Directory -Path (Split-Path -Parent $phoneDoc) -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $hookRoot 'CONTRIBUTING.md') -Encoding UTF8 -Value "Fixtures live in ~/$notesFolder/fixtures."
+    Set-Content -LiteralPath $phoneDoc -Encoding UTF8 -Value "adb -s $phoneSerial install app.apk"
+    Set-Content -LiteralPath (Join-Path $hookRoot '.gitignore') -Encoding UTF8 -Value "$notesFolder/"
+    & git -C $hookRoot add CONTRIBUTING.md docs/phone.md .gitignore
+    & git -C $hookRoot commit --quiet -m 'names the machine'
+    $namingCommit = (& git -C $hookRoot rev-parse HEAD).Trim()
+    Assert-Throws { & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $namingCommit refs/heads/main $newBranchHead" 6> $null } `
+        "*$namingCommit*CONTRIBUTING.md*docs/phone.md*" 'A push of docs naming the machine and a phone went through.'
+    Assert-Throws { & $prePushScript -Root $hookRoot -ChangedPaths @('docs/phone.md') 6> $null } `
+        '*the working tree*CONTRIBUTING.md*docs/phone.md*' 'A run by hand passed a working tree whose docs name the machine.'
+    # The control: the same files naming nothing, .gitignore still naming the folder, go through.
+    Set-Content -LiteralPath (Join-Path $hookRoot 'CONTRIBUTING.md') -Encoding UTF8 -Value 'Fixtures live in HUSHFACEBOOK_FIXTURE_DIR.'
+    Set-Content -LiteralPath $phoneDoc -Encoding UTF8 -Value 'adb -s $env:HUSHFACEBOOK_DEVICE_SERIAL install app.apk'
+    & git -C $hookRoot add CONTRIBUTING.md docs/phone.md
+    & git -C $hookRoot commit --quiet -m 'names nothing'
+    $cleanCommit = (& git -C $hookRoot rev-parse HEAD).Trim()
+    $global:LASTEXITCODE = 0
+    & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $cleanCommit refs/heads/main $namingCommit" 6> $null
+    Assert-True ($LASTEXITCODE -eq 0) 'A push whose files name nothing, .gitignore aside, was stopped.'
+
     # The build branch, which runs the Gradle gates that hold the Bouncy Castle graphs to the
     # reviewed release. Starting a real build from a contract test would be absurd, so the case
     # reads the first thing that branch does instead: with no GitHub credentials and no gh on
     # the path, it refuses by name, and nothing else in the hook says that. A push that moved
-    # only a pin used to take the release path and never reach this.
+    # only a pin used to take the release path and never reach this. Git stays on the path for
+    # the scan every push makes; only gh goes.
     $savedPath = $env:PATH
     $savedActor = $env:GITHUB_ACTOR
     $savedToken = $env:GITHUB_TOKEN
     try {
-        $env:PATH = $hookRoot
+        $env:PATH = $pathWithoutGh
         $env:GITHUB_ACTOR = $null
         $env:GITHUB_TOKEN = $null
         foreach ($pin in @('gradle/libs.versions.toml', 'gradle/verification-metadata.xml',
@@ -1487,6 +1529,14 @@ try {
         $wrapped = Get-Content -LiteralPath $wrapperMarker -Raw
         Assert-True ($wrapped -like "dir=$hookRoot tasks=*:extensions:facebook:test*:patches:test*") `
             "The build wrapper was not handed the repository and the test tasks: $wrapped"
+
+        # The Gradle file that writes the release bundle. The contract tests hold it to the
+        # directory common.ps1 reads the bundle from, and a push that moved only it ran the build
+        # and never them; the bundle path then went unchecked until the next script push.
+        Remove-Item -LiteralPath $contractsMarker, $wrapperMarker -Force -ErrorAction SilentlyContinue
+        & $prePushScript -Root $hookRoot -ChangedPaths @('patches/build.gradle.kts') 6> $null
+        Assert-True ((Test-Path -LiteralPath $contractsMarker) -and (Test-Path -LiteralPath $wrapperMarker)) `
+            'A push that changed only patches/build.gradle.kts did not run both the script contract tests and the build.'
 
         $env:HUSHFACEBOOK_BUILD_WRAPPER = Join-Path $hookRoot 'no-such-wrapper.ps1'
         Assert-Throws { & $prePushScript -Root $hookRoot -ChangedPaths @('patches/build.gradle.kts') 6> $null } `
@@ -2532,23 +2582,16 @@ Write-Host '[scripts] release bundle path contracts passed'
 # maintainer's machine that share its name, or a phone's adb serial. Four fixture tests fell back
 # to one of those folders, which skipped quietly on every other machine and published this one's
 # layout, and five scripts carried the test phone's serial. .gitignore is the one exception: it
-# has to name what it keeps out. Both patterns are built from parts so this file cannot match
-# itself, and the serial is matched by its shape, a Samsung serial being R5C and eight more
-# letters or digits.
+# has to name what it keeps out. Find-MachineNames in common.ps1 holds both patterns, built from
+# parts so neither file can match itself, and the pre-push hook runs the same scan on every
+# pushed commit, whatever the push touches; the routing section above plants a hit for it.
 
-$assistantPattern = 'cla' + 'ude'
-$serialPattern = 'R5' + 'C[A-Z0-9]{8}'
-$machineNames = New-Object System.Collections.Generic.List[string]
-foreach ($scan in @(@('-i', $assistantPattern), @('-E', $serialPattern))) {
-    $hits = @(& git -C $Root grep -n -a $scan[0] -e $scan[1] -- '.' ':!.gitignore' 2>$null)
-    # 1 is git grep's "no match". Anything above it means the search did not run, which must not
-    # read as a clean tree.
-    if ($LASTEXITCODE -gt 1) { throw "git grep could not search the tracked files for $($scan[1])." }
-    foreach ($hit in $hits) { $machineNames.Add([string]$hit) }
-}
-$global:LASTEXITCODE = 0
+$machineNames = @(Find-MachineNames -Root $Root)
 Assert-True ($machineNames.Count -eq 0) `
     ("Tracked files name the maintainer's machine or phone: " + ($machineNames -join '; '))
+# A search that does not run must not read as a clean tree.
+Assert-Throws { Find-MachineNames -Root (Join-Path ([System.IO.Path]::GetTempPath()) ('hushfacebook-absent-' + [guid]::NewGuid().ToString('N'))) } `
+    '*could not search*' 'A machine-name scan that could not run read as a clean tree.'
 
 Write-Host '[scripts] tracked-file machine name contracts passed'
 
