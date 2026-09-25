@@ -261,6 +261,10 @@ try {
                 Text = & $beforeDeviceHalf "try { throw 'skip' } catch { }" }
             @{ Name = 'the device half after switch (1) { default { exit 0 } }'; Check = $talliesBothSides
                 Text = & $beforeDeviceHalf 'switch (1) { default { exit 0 } }' }
+            @{ Name = 'the device half after switch (1) { 1 { exit 0 } }'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'switch (1) { 1 { exit 0 } }' }
+            @{ Name = "the device half after switch (2) { 1 { 'one' } default { exit 0 } }"; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf "switch (2) { 1 { 'one' } default { exit 0 } }" }
             @{ Name = "the device half after switch (1) { 1 { 'one' } default { exit 0 } }"; Check = $talliesBothSides; Expect = $true
                 Text = & $beforeDeviceHalf "switch (1) { 1 { 'one' } default { exit 0 } }" }
             @{ Name = 'the device half after a switch with no default'; Check = $talliesBothSides; Expect = $true

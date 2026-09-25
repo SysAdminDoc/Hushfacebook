@@ -11,15 +11,18 @@
     Help text and comments never parse into commands, but that alone still let a wiring check pass
     on a Write-Host line naming the files, a call inside a function nothing calls, a dot-source
     inside `if ($false) { }`, and a suite line inside a block comment. A command counts here only
-    where the script can reach it: not in a function nothing reachable calls, not in a script
-    block nothing runs, not in an if arm a constant condition rules out, not in a while or for body
-    a constant false condition skips, and not after a statement that ends its block. That is an
-    exit, return, throw, break or continue, a call to a function that never returns, a script
-    block run with & or . that ends by anything but a return, an if that ends on every arm that
-    can run, a try whose finally ends or whose body ends where no catch can carry on past it, a
-    switch whose every clause ends, default included, a do loop whose body ends, or a loop a
-    constant true condition keeps going with no break to leave it. The checks built on that match
-    the call and its arguments, not a line that names them.
+    where the script can reach it: not in a function nothing reachable calls or one the script
+    defines twice, not in a script block nothing runs, not in an if arm a constant condition rules
+    out, not in a while or for body a constant false condition skips, not in a switch clause whose
+    constant label can't match a constant subject, not in a foreach over @() or $null, not in the
+    catch of a try that can't throw, not on the right of an -and or -or whose left side settles
+    it, and not after a statement that ends its block. That is an exit, return, throw, break or
+    continue, a call to a function that never returns, a script block run with & or . that ends by
+    anything but a return, an if that ends on every arm that can run, a try whose finally ends or
+    whose body ends where no catch can carry on past it, a switch where a clause that certainly
+    runs ends or every clause that can run ends, default included, a do loop whose body ends, or a
+    loop a constant true condition keeps going with no break to leave it. The checks built on that
+    match the call and its arguments, not a line that names them.
 #>
 
 function Get-ScriptAst {
@@ -45,8 +48,9 @@ function Get-ConstantValue {
     .SYNOPSIS
         What an expression comes to when the parser settles it on its own, as .Value on what comes
         back so that a $false or $null result isn't taken for not knowing, else $null. That is
-        $true, $false, $null, a number or a string, in parentheses or negated, or two of those
-        compared, as in (0 -eq 1).
+        $true, $false, $null, a number or a string, in parentheses or negated, two of those
+        compared, as in (0 -eq 1), or joined with -and, -or or -xor. One constant settles -and
+        when it's false and -or when it's true, whatever the other side is.
     #>
     param($Node)
 
@@ -82,11 +86,21 @@ function Get-ConstantValue {
     if ($Node -is [System.Management.Automation.Language.BinaryExpressionAst]) {
         $left = Get-ConstantValue $Node.Left
         $right = Get-ConstantValue $Node.Right
+        $operator = $Node.Operator.ToString()
+        if ($operator -eq 'And' -or $operator -eq 'Or') {
+            $settles = $operator -eq 'Or'
+            foreach ($side in $left, $right) {
+                if ($null -ne $side -and [bool]$side.Value -eq $settles) { return [pscustomobject]@{ Value = $settles } }
+            }
+        }
         if ($null -eq $left -or $null -eq $right) { return $null }
         # Compared here the way the script would compare them when it runs.
         $a = $left.Value
         $b = $right.Value
-        switch ($Node.Operator.ToString()) {
+        switch ($operator) {
+            'And' { return [pscustomobject]@{ Value = $a -and $b } }
+            'Or' { return [pscustomobject]@{ Value = $a -or $b } }
+            'Xor' { return [pscustomobject]@{ Value = $a -xor $b } }
             'Ieq' { return [pscustomobject]@{ Value = $a -eq $b } }
             'Ine' { return [pscustomobject]@{ Value = $a -ne $b } }
             'Igt' { return [pscustomobject]@{ Value = $a -gt $b } }
@@ -144,9 +158,10 @@ function Test-StatementEnds {
         or continue; a call to a function that never returns, or a script block run with & or .
         that leaves (Test-RunBlockEnds), on its own, in a pipeline or assigned; an if one of whose
         arms always runs, where every arm that can run ends; a try whose finally ends, or whose
-        body ends where no catch can run or every catch ends too; a switch with a default, every
-        clause of which ends; a do loop whose body ends; or a while or for loop that a constant
-        true condition keeps going, with no break in it.
+        body ends where no catch can run or every catch ends too; a switch where a clause that
+        certainly matches ends, or one with a default where every clause that can match ends; a do
+        loop whose body ends; or a while or for loop that a constant true condition keeps going,
+        with no break in it.
     .DESCRIPTION
         -Escapes names the jumps that leave the block the statement sits in: all five at the top
         of a block. A break or continue in a switch clause or a do body only leaves that switch or
@@ -195,16 +210,19 @@ function Test-StatementEnds {
     # What a switch clause or a loop body can use to leave the statement it's in.
     $inner = @($Escapes | Where-Object { $_ -ne 'break' -and $_ -ne 'continue' })
     if ($Statement -is [System.Management.Automation.Language.SwitchStatementAst]) {
-        # Whichever clause runs has to end, the default included, and a literal empty array runs
+        # A clause that certainly matches and ends ends the switch. Otherwise every clause that
+        # can match has to end, and the default has to be there and end too. A literal @() runs
         # none of them.
-        if ($null -eq $Statement.Default -or (Test-LeavesLoop $Statement)) { return $false }
-        $subject = Get-SinglePipelineExpression $Statement.Condition
-        if ($subject -is [System.Management.Automation.Language.ArrayExpressionAst] -and
-            $subject.SubExpression.Statements.Count -eq 0) { return $false }
+        if ((Test-LeavesLoop $Statement) -or (Test-EmptyArray $Statement.Condition)) { return $false }
+        $every = $true
         foreach ($clause in $Statement.Clauses) {
-            if (-not (Test-BlockEnds $clause.Item2 $Ending $inner)) { return $false }
+            $match = Test-SwitchClauseMatches $Statement $clause.Item1
+            if ($match -eq $false) { continue }
+            $ends = Test-BlockEnds $clause.Item2 $Ending $inner
+            if ($ends -and $match -eq $true) { return $true }
+            if (-not $ends) { $every = $false }
         }
-        return Test-BlockEnds $Statement.Default $Ending $inner
+        return $every -and $null -ne $Statement.Default -and (Test-BlockEnds $Statement.Default $Ending $inner)
     }
     if ($Statement -is [System.Management.Automation.Language.DoWhileStatementAst] -or
             $Statement -is [System.Management.Automation.Language.DoUntilStatementAst]) {
@@ -313,6 +331,61 @@ function Get-SinglePipelineExpression {
     return $Node
 }
 
+function Test-EmptyArray {
+    <#
+    .SYNOPSIS
+        Whether an expression is a literal @(), which holds no item, in parentheses or not.
+    #>
+    param($Node)
+
+    $expression = Get-SinglePipelineExpression $Node
+    while ($expression -is [System.Management.Automation.Language.ParenExpressionAst]) {
+        $expression = Get-SinglePipelineExpression $expression.Pipeline
+    }
+    return $expression -is [System.Management.Automation.Language.ArrayExpressionAst] -and
+        $expression.SubExpression.Statements.Count -eq 0
+}
+
+function Test-SwitchClauseMatches {
+    <#
+    .SYNOPSIS
+        $true when a switch clause's label certainly matches the switch's subject, $false when it
+        certainly doesn't, and $null when that isn't known: a label or subject that isn't a
+        constant (Get-ConstantValue), a script block label, a switch over a file's lines, or one
+        told both -Regex and -Wildcard.
+    .DESCRIPTION
+        The two constants go through a switch of the same kind here, so the answer is
+        PowerShell's own: a number label doesn't match the string '01', and case only counts
+        with -CaseSensitive.
+    #>
+    param([System.Management.Automation.Language.SwitchStatementAst]$Statement, $Label)
+
+    $flags = $Statement.Flags
+    $regex = ($flags -band [System.Management.Automation.Language.SwitchFlags]::Regex) -ne 0
+    $wildcard = ($flags -band [System.Management.Automation.Language.SwitchFlags]::Wildcard) -ne 0
+    $caseSensitive = ($flags -band [System.Management.Automation.Language.SwitchFlags]::CaseSensitive) -ne 0
+    if (($flags -band [System.Management.Automation.Language.SwitchFlags]::File) -ne 0 -or ($regex -and $wildcard) -or
+        $Label -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) { return $null }
+    $subject = Get-ConstantValue $Statement.Condition
+    $pattern = Get-ConstantValue $Label
+    if ($null -eq $subject -or $null -eq $pattern) { return $null }
+    $value = $subject.Value
+    $want = $pattern.Value
+    $matched = $false
+    try {
+        if ($regex -and $caseSensitive) { switch -Regex -CaseSensitive ($value) { $want { $matched = $true } } }
+        elseif ($regex) { switch -Regex ($value) { $want { $matched = $true } } }
+        elseif ($wildcard -and $caseSensitive) { switch -Wildcard -CaseSensitive ($value) { $want { $matched = $true } } }
+        elseif ($wildcard) { switch -Wildcard ($value) { $want { $matched = $true } } }
+        elseif ($caseSensitive) { switch -CaseSensitive ($value) { $want { $matched = $true } } }
+        else { switch ($value) { $want { $matched = $true } } }
+    } catch {
+        # A label that isn't a valid regex. Not knowing is the answer that never drops code.
+        return $null
+    }
+    return $matched
+}
+
 function Test-BlockEnds {
     <#
     .SYNOPSIS
@@ -343,16 +416,28 @@ function Get-EndingFunctions {
     do {
         $grew = $false
         foreach ($function in $functions) {
-            if ($ending.Contains($function.Name) -or $null -eq $function.Body.EndBlock -or
+            # Called by the name without its scope, as 'function script:Stop-Now' is.
+            $name = Get-FunctionName $function
+            if ($ending.Contains($name) -or $null -eq $function.Body.EndBlock -or
                 $null -ne $function.Body.Find({ param($node)
                     $node -is [System.Management.Automation.Language.ReturnStatementAst] }, $true)) { continue }
             if (Test-BlockEnds $function.Body.EndBlock $ending) {
-                [void]$ending.Add($function.Name)
+                [void]$ending.Add($name)
                 $grew = $true
             }
         }
     } while ($grew)
     return , $ending
+}
+
+function Get-FunctionName {
+    <#
+    .SYNOPSIS
+        The name a function definition is called by: its own, without a scope such as script:.
+    #>
+    param([System.Management.Automation.Language.FunctionDefinitionAst]$Function)
+
+    return ($Function.Name -split ':')[-1]
 }
 
 function Test-AstReachable {
@@ -368,7 +453,7 @@ function Test-AstReachable {
     $parent = $Node.Parent
     while ($null -ne $parent) {
         if ($parent -is [System.Management.Automation.Language.FunctionDefinitionAst]) {
-            if (-not $Called.Contains($parent.Name)) { return $false }
+            if (-not $Called.Contains((Get-FunctionName $parent))) { return $false }
         } elseif ($parent -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
             if (-not (Test-RunsScriptBlock $parent)) { return $false }
         } elseif ($parent -is [System.Management.Automation.Language.IfStatementAst]) {
@@ -389,6 +474,35 @@ function Test-AstReachable {
                 $parent -is [System.Management.Automation.Language.ForStatementAst]) {
             if ([object]::ReferenceEquals($parent.Body, $child) -and
                     (Get-ConstantTruth $parent.Condition) -eq $false) { return $false }
+        } elseif ($parent -is [System.Management.Automation.Language.ForEachStatementAst]) {
+            # PowerShell runs a foreach body for no item of a literal @() and none of $null.
+            if ([object]::ReferenceEquals($parent.Body, $child)) {
+                $collection = Get-ConstantValue $parent.Condition
+                if ((Test-EmptyArray $parent.Condition) -or ($null -ne $collection -and $null -eq $collection.Value)) { return $false }
+            }
+        } elseif ($parent -is [System.Management.Automation.Language.SwitchStatementAst]) {
+            # A literal @() runs nothing in the switch, a clause whose label can't match the
+            # subject never runs, and the default doesn't once a clause certainly does.
+            if (-not [object]::ReferenceEquals($parent.Condition, $child)) {
+                if (Test-EmptyArray $parent.Condition) { return $false }
+                foreach ($clause in $parent.Clauses) {
+                    $match = Test-SwitchClauseMatches $parent $clause.Item1
+                    if (([object]::ReferenceEquals($clause.Item2, $child) -and $match -eq $false) -or
+                        ([object]::ReferenceEquals($parent.Default, $child) -and $match -eq $true)) { return $false }
+                }
+            }
+        } elseif ($parent -is [System.Management.Automation.Language.TryStatementAst]) {
+            # A catch only runs once the body throws, which an empty body never does, nor one that
+            # jumps out before anything else in it runs.
+            if ($child -is [System.Management.Automation.Language.CatchClauseAst] -and
+                    ($parent.Body.Statements.Count -eq 0 -or (Test-PlainJump $parent.Body.Statements[0]))) { return $false }
+        } elseif ($parent -is [System.Management.Automation.Language.BinaryExpressionAst]) {
+            # -and never evaluates its right side after a false left one, and -or after a true one.
+            if ([object]::ReferenceEquals($parent.Right, $child)) {
+                $left = Get-ConstantTruth $parent.Left
+                if (($parent.Operator -eq [System.Management.Automation.Language.TokenKind]::And -and $left -eq $false) -or
+                    ($parent.Operator -eq [System.Management.Automation.Language.TokenKind]::Or -and $left -eq $true)) { return $false }
+            }
         } elseif ($parent -is [System.Management.Automation.Language.StatementBlockAst] -or
                 $parent -is [System.Management.Automation.Language.NamedBlockAst]) {
             foreach ($statement in $parent.Statements) {
@@ -410,10 +524,15 @@ function Get-CalledFunctions {
     #>
     param([System.Management.Automation.Language.Ast]$Ast, [System.Collections.Generic.HashSet[string]]$Ending)
 
-    $defined = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    # A name defined twice, with a scope or without, counts as never called: which body a call
+    # runs depends on which definition ran last before it.
+    $definitions = [System.Collections.Generic.Dictionary[string, int]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($function in $Ast.FindAll({ param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)) {
-        [void]$defined.Add($function.Name)
+        $name = Get-FunctionName $function
+        $count = 0
+        [void]$definitions.TryGetValue($name, [ref]$count)
+        $definitions[$name] = $count + 1
     }
     $commands = @($Ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.CommandAst] }, $true))
     $called = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -421,7 +540,9 @@ function Get-CalledFunctions {
         $grew = $false
         foreach ($command in $commands) {
             $name = $command.GetCommandName()
-            if (-not $name -or -not $defined.Contains($name) -or $called.Contains($name)) { continue }
+            $count = 0
+            if (-not $name -or -not $definitions.TryGetValue($name, [ref]$count) -or $count -ne 1 -or
+                $called.Contains($name)) { continue }
             if (Test-AstReachable $command $called $Ending) {
                 [void]$called.Add($name)
                 $grew = $true

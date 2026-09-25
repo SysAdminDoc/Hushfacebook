@@ -168,6 +168,16 @@ try {
         $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
         $Node.Left.Extent.Text -eq '$suites' -and
         $Node.Extent.Text -like "*'scripts/test-injected-registers.ps1'*" }
+    $dexDiffFunction = { param($Node)
+        $Node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $Node.Name -eq 'Invoke-DexDiff' }
+    $contractsArgument = "(Join-Path `$PSScriptRoot 'injected-mutation-contracts.txt')"
+    # The DexDiff call without the contracts, and the old call kept after it between -Open and
+    # -Close: code that can't run for the copies expected to fail, code that can for the rest.
+    $parkOldCall = { param([string]$Open, [string]$Close)
+        # A local copy, so GetNewClosure takes it along with the two parameters.
+        $contracts = $contractsArgument
+        Edit-ScriptNode $verifierText $dexDiffCall { param($Text)
+            $Text.Replace($contracts, '') + "`n    $Open`n    $Text`n    $Close" }.GetNewClosure() }
     $wiringCases = @(
         @{ Name = 'the untouched verifier'; Check = $runsDexDiff; Expect = $true; Text = $verifierText }
         @{ Name = 'the untouched verifier'; Check = $dotSourcesContracts; Expect = $true; Text = $verifierText }
@@ -273,6 +283,67 @@ try {
             Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "if (1 -gt 2) { $Text }" } }
         @{ Name = 'the suite line behind if (0 -eq 1)'; Check = $gateRunsSuite
             Text = Edit-ScriptNode $prePushSource $suiteLine { param($Text) "if (0 -eq 1) { $Text }" } }
+        # The old call kept where a constant settles that it can't run: an -and or -or one side
+        # settles, the right of an -and or -or the left side settles, a switch clause that can't
+        # match or a default a clause always takes, a foreach over nothing, a catch of a try that
+        # can't throw, and a function defined a second time, whose first body never runs.
+        @{ Name = 'the old DexDiff call kept behind if ($false -and $Serial)'; Check = $runsDexDiff
+            Text = & $parkOldCall 'if ($false -and $Serial) {' '}' }
+        @{ Name = 'the old DexDiff call kept behind if ($Serial -and $false)'; Check = $runsDexDiff
+            Text = & $parkOldCall 'if ($Serial -and $false) {' '}' }
+        @{ Name = 'the old DexDiff call kept behind if (-not ($Serial -or $true))'; Check = $runsDexDiff
+            Text = & $parkOldCall 'if (-not ($Serial -or $true)) {' '}' }
+        @{ Name = 'the old DexDiff call kept behind if ($true -xor $true)'; Check = $runsDexDiff
+            Text = & $parkOldCall 'if ($true -xor $true) {' '}' }
+        @{ Name = 'the old DexDiff call kept behind if (-not ($true -and $true))'; Check = $runsDexDiff
+            Text = & $parkOldCall 'if (-not ($true -and $true)) {' '}' }
+        @{ Name = 'the old DexDiff call kept behind if ($false -or $false)'; Check = $runsDexDiff
+            Text = & $parkOldCall 'if ($false -or $false) {' '}' }
+        @{ Name = 'the old DexDiff call kept on the right of $false -and'; Check = $runsDexDiff
+            Text = & $parkOldCall '$null = $false -and $(' ')' }
+        @{ Name = 'the old DexDiff call kept on the right of $true -or'; Check = $runsDexDiff
+            Text = & $parkOldCall '$null = $true -or $(' ')' }
+        @{ Name = "the old DexDiff call kept in switch ('current') { 'previous' { } }"; Check = $runsDexDiff
+            Text = & $parkOldCall "switch ('current') { 'previous' {" '} }' }
+        @{ Name = 'the old DexDiff call kept in the default of switch (1) { 1 { } }'; Check = $runsDexDiff
+            Text = & $parkOldCall 'switch (1) { 1 { } default {' '} }' }
+        @{ Name = 'the old DexDiff call kept in the default of a switch over @()'; Check = $runsDexDiff
+            Text = & $parkOldCall 'switch (@()) { default {' '} }' }
+        @{ Name = 'the old DexDiff call kept in a foreach over @()'; Check = $runsDexDiff
+            Text = & $parkOldCall 'foreach ($unused in @()) {' '}' }
+        @{ Name = 'the old DexDiff call kept in a foreach over $null'; Check = $runsDexDiff
+            Text = & $parkOldCall 'foreach ($unused in $null) {' '}' }
+        @{ Name = 'the old DexDiff call kept in the catch of an empty try'; Check = $runsDexDiff
+            Text = & $parkOldCall 'try { } catch {' '}' }
+        @{ Name = 'the old DexDiff call kept in the catch of try { return }'; Check = $runsDexDiff
+            Text = & $parkOldCall 'try { return } catch {' '}' }
+        @{ Name = 'Invoke-DexDiff defined again below it, without the contracts'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffFunction { param($Text) "$Text`n`n" + $Text.Replace($contractsArgument, '') } }
+        @{ Name = 'Invoke-DexDiff defined again below it as script:Invoke-DexDiff, without the contracts'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffFunction { param($Text)
+                "$Text`n`n" + $Text.Replace($contractsArgument, '').Replace('function Invoke-DexDiff', 'function script:Invoke-DexDiff') } }
+        @{ Name = 'the DexDiff call after a call to function script:Stop-Now { exit 0 }'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "function script:Stop-Now { exit 0 }`nStop-Now`n$Text" } }
+        # And where it still runs, so none of those rules reaches code that does.
+        @{ Name = 'the old DexDiff call kept behind if ($true -and $Serial)'; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall 'if ($true -and $Serial) {' '}' }
+        @{ Name = 'the old DexDiff call kept behind if ($false -or $Serial)'; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall 'if ($false -or $Serial) {' '}' }
+        @{ Name = 'the old DexDiff call kept on the right of $Serial -and'; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall '$null = $Serial -and $(' ')' }
+        @{ Name = "the old DexDiff call kept in switch ('current') { 'current' { } }"; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall "switch ('current') { 'current' {" '} }' }
+        @{ Name = 'the old DexDiff call kept in the default of switch (1) { 2 { } }'; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall 'switch (1) { 2 { } default {' '} }' }
+        @{ Name = "the old DexDiff call kept in switch (`$Serial) { 'previous' { } }"; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall "switch (`$Serial) { 'previous' {" '} }' }
+        @{ Name = 'the old DexDiff call kept in a foreach over @(1)'; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall 'foreach ($once in @(1)) {' '}' }
+        @{ Name = 'the old DexDiff call kept in the catch of a try that can throw'; Check = $runsDexDiff; Expect = $true
+            Text = & $parkOldCall 'try { Get-Item -LiteralPath $PatchedApk | Out-Null } catch {' '}' }
+        @{ Name = 'Invoke-DexDiff defined once, as script:Invoke-DexDiff'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffFunction { param($Text)
+                $Text.Replace('function Invoke-DexDiff', 'function script:Invoke-DexDiff') } }
     )
     $wiringFailures = @()
     $copy = Join-Path $wiringCopies 'copy.ps1'
