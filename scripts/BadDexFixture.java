@@ -231,6 +231,27 @@ public class BadDexFixture {
                         new ImmutableSwitchElement(7, 4)))), "I");
     }
 
+    /**
+     * switchHost with [switchOpcode] pointed at [payload], a table of the other kind whose cases
+     * both land where switchHost's do.
+     */
+    private static Method switchWithTable(Opcode switchOpcode, Instruction payload) {
+        return define(HOST, "switchHost", "I", true, body(2,
+                new ImmutableInstruction31t(switchOpcode, 1, 10),         // 0 -> 10
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),        // 3
+                op(Opcode.RETURN, 0),                                      // 4
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 1),        // 5
+                op(Opcode.RETURN, 0),                                      // 6
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 2),        // 7
+                op(Opcode.RETURN, 0),                                      // 8
+                op(Opcode.NOP),                                            // 9, aligns the payload
+                payload), "I");                                            // 10
+    }
+
+    private static List<ImmutableSwitchElement> twoCases() {
+        return Arrays.asList(new ImmutableSwitchElement(0, 5), new ImmutableSwitchElement(1, 7));
+    }
+
     /** tryHost filling an int array, with the handler at its fill-array-data payload at 10. */
     private static Method tryHandlerAtArrayPayload() {
         return define(HOST, "tryHost", "V", true, body(1, Collections.singletonList(tryBlock(0, 3, 10)),
@@ -555,6 +576,12 @@ public class BadDexFixture {
         // branch: a sparse switch's case sent to its own payload.
         dexes.put("bad-sparse-case-to-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 sparseSwitchToOwnPayload(), tryHost(CLEAN_TRY)));
+        // branch: a packed-switch pointed at a sparse-switch table, and a sparse-switch at a
+        // packed-switch table, with every case landing on an instruction.
+        dexes.put("bad-packed-switch-sparse-table", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchWithTable(Opcode.PACKED_SWITCH, new ImmutableSparseSwitchPayload(twoCases())), tryHost(CLEAN_TRY)));
+        dexes.put("bad-sparse-switch-packed-table", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchWithTable(Opcode.SPARSE_SWITCH, new ImmutablePackedSwitchPayload(twoCases())), tryHost(CLEAN_TRY)));
         // branch: case 1 sent to the nop that aligns the payload, which falls into the table.
         dexes.put("bad-fallthrough-into-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 switchHost(9), tryHost(CLEAN_TRY)));

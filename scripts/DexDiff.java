@@ -687,6 +687,14 @@ public class DexDiff {
                             + ", which is not a switch payload");
                     continue;
                 }
+                // Each switch reads its own kind of table, and ART checks the table's signature
+                // against the switch ("wrong signature for switch table").
+                Opcode wanted = opcode == Opcode.PACKED_SWITCH ? Opcode.PACKED_SWITCH_PAYLOAD : Opcode.SPARSE_SWITCH_PAYLOAD;
+                if (payload.getOpcode() != wanted) {
+                    findings.add("branch: " + opcode.name + " at " + at + " points at " + target + ", a "
+                            + payload.getOpcode().name + " rather than the " + wanted.name + " it reads");
+                    continue;
+                }
                 for (SwitchElement element : ((SwitchPayload) payload).getSwitchElements()) {
                     int caseTarget = at + element.getOffset();
                     if (!layout.isStart(caseTarget)) {
