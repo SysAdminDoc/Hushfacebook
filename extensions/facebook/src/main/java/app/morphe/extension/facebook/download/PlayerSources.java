@@ -55,6 +55,12 @@ public final class PlayerSources {
     private static final String VIDEO_DATA_SOURCE = "com.facebook.video.engine.api.VideoDataSource";
 
     /**
+     * The recorder's own line in Hook status. It runs for every player Facebook builds, so
+     * counting it under the story save would bury the Save taps that line is there to count.
+     */
+    static final String FAMILY = FamilyNames.STORY_DOWNLOAD + " (player sources)";
+
+    /**
      * How many sources to keep. A manifest is about 20 KB of text, so 48 sources use about 1 MB.
      * The app prepares far fewer players than this before the user gets to them.
      */
@@ -87,6 +93,7 @@ public final class PlayerSources {
      */
     public static void remember(Object params, String idField, String hdField, String manifestField) {
         try {
+            HookStatus.invoked(FAMILY);
             if (!Settings.DOWNLOAD_STORIES.get()) return;
 
             String videoId = RenditionPicker.fieldValue(params, idField);
@@ -97,7 +104,7 @@ public final class PlayerSources {
                 // A source not set yet is ordinary. A params class with no field of the type is a
                 // build that moved it, and every story save then falls back to 360p.
                 if (!hasFieldOfType(params, VIDEO_DATA_SOURCE)) {
-                    HookStatus.missingMember(FamilyNames.STORY_DOWNLOAD, "field", params.getClass().getName(),
+                    HookStatus.missingMember(FAMILY, "field", params.getClass().getName(),
                         VIDEO_DATA_SOURCE);
                 }
                 return;
@@ -110,11 +117,11 @@ public final class PlayerSources {
             synchronized (SOURCES) {
                 SOURCES.put(videoId, new Source(videoId, hd, manifest));
             }
-            HookStatus.bound(FamilyNames.STORY_DOWNLOAD, "player source");
+            HookStatus.bound(FAMILY, "player source");
         } catch (Throwable failure) {
             // This runs inside a constructor of the app. No error can go out of it.
             try {
-                HookStatus.threw(FamilyNames.STORY_DOWNLOAD, "player source", failure);
+                HookStatus.threw(FAMILY, "player source", failure);
             } catch (Throwable ignored) {
                 // Not even the report of one.
             }
