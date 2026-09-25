@@ -62,6 +62,8 @@ $zeroObject = '0' * 40
 $script:pushedCommits = New-Object System.Collections.Generic.List[string]
 # Every commit the push publishes, also filled in by Get-PushedPaths, for the machine-name scan.
 $script:publishedCommits = New-Object System.Collections.Generic.List[string]
+# What the remote advertises, read once by Get-RemoteHeld.
+$script:remoteHeld = $null
 
 function Write-Step {
     param([string]$Message)
@@ -124,10 +126,28 @@ function Get-PushedPaths {
             $script:pushedCommits.Add(([string]$commit).Trim())
         }
         # Every commit the ref publishes, not only its tip: a file one commit adds and the next
-        # deletes still goes out in the first. A new branch publishes what no remote-tracking ref
-        # already holds.
+        # deletes still goes out in the first. A new branch publishes what the remote doesn't
+        # hold, as the remote itself says: a remote-tracking ref can outlive its branch there,
+        # deleted and never pruned here, and a commit only it held went out unscanned. The
+        # remote's commits go on the command line two hundred at a time, a commit is published
+        # when no batch reaches it, and the ones this clone never fetched are skipped. Not on
+        # standard input: Windows PowerShell puts a byte order mark in front of the first line it
+        # pipes to a program, so that line named no commit and nothing it held was left out.
         $published = if ($remoteSha -eq $zeroObject) {
-            Invoke-GitQuietly @('rev-list', $localSha, '--not', '--remotes')
+            $held = @(Get-RemoteHeld)
+            $kept = $null
+            for ($i = 0; $i -eq 0 -or $i -lt $held.Count; $i += 200) {
+                $batch = @($held | Select-Object -Skip $i -First 200)
+                $reached = @(Invoke-GitQuietly (@('rev-list', '--ignore-missing', $localSha, '--not') + $batch))
+                if ($LASTEXITCODE -ne 0) { break }
+                if ($null -eq $kept) {
+                    $kept = $reached
+                } else {
+                    $inBatch = New-Object 'System.Collections.Generic.HashSet[string]' (, [string[]]$reached)
+                    $kept = @($kept | Where-Object { $inBatch.Contains($_) })
+                }
+            }
+            $kept
         } else {
             Invoke-GitQuietly @('rev-list', "$remoteSha..$localSha")
         }
@@ -158,6 +178,28 @@ function Invoke-GitQuietly {
     } finally {
         $ErrorActionPreference = $preference
     }
+}
+
+function Get-RemoteHeld {
+    <#
+        The commits the remote advertises, its branches' and its tags', read once per push. What
+        a new branch publishes is what none of them reaches. A run by hand that names no remote
+        gets none, so every commit the branch reaches is scanned. A remote that can't be read
+        stops the push, rather than letting a guess decide what goes out unscanned.
+    #>
+    if ($null -ne $script:remoteHeld) { return $script:remoteHeld }
+    $held = @()
+    if ($RemoteUrl) {
+        $advertised = @(Invoke-GitQuietly @('ls-remote', '--heads', '--tags', $RemoteUrl))
+        if ($LASTEXITCODE -ne 0) {
+            throw ("Could not read what $RemoteUrl holds, so the commits a new branch publishes can't " +
+                'be told from the ones already there. Check the connection and push again.')
+        }
+        $held = @($advertised | ForEach-Object { if ("$_" -match '^([0-9a-f]{40})\s') { $Matches[1] } } |
+            Select-Object -Unique)
+    }
+    $script:remoteHeld = $held
+    return $held
 }
 
 function Invoke-WithoutGitEnvironment {

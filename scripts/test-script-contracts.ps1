@@ -1677,8 +1677,8 @@ try {
 
     # Every commit the push publishes, not only each ref's tip: a serial one commit adds and the
     # next removes still goes out in the first, and the refusal names that commit by the prefix git
-    # grep gives a hit read out of it. Pushed as an update of a branch, and as a new branch beside a
-    # remote-tracking ref that already holds the clean commit.
+    # grep gives a hit read out of it. Pushed as an update of a branch, and as a new branch to a
+    # remote whose main already holds the clean commit, as its tracking ref here says too.
     Set-Content -LiteralPath $phoneDoc -Encoding UTF8 -Value "adb -s $phoneSerial install app.apk"
     & git -C $hookRoot add docs/phone.md
     & git -C $hookRoot commit --quiet -m 'names the phone again'
@@ -1688,7 +1688,18 @@ try {
     & git -C $hookRoot add CONTRIBUTING.md
     & git -C $hookRoot commit --quiet -m 'drops the doc'
     $droppedSerial = (& git -C $hookRoot rev-parse HEAD).Trim()
+    $scanRemote = Join-Path $hookRoot 'scan-remote.git'
+    & git init --bare --quiet $scanRemote
+    & git -C $hookRoot push --quiet $scanRemote "${cleanCommit}:refs/heads/main"
     & git -C $hookRoot update-ref refs/remotes/origin/main $cleanCommit
+    # And more branches than one rev-list call takes, none of them ever fetched here, sorted so
+    # main lands in the middle batch: what a new branch publishes has to hold for every batch.
+    foreach ($side in @(@{ Prefix = 'a'; From = 1 }, @{ Prefix = 'zz'; From = 1000 })) {
+        foreach ($n in 0..209) {
+            [IO.File]::WriteAllText((Join-Path $scanRemote ("refs/heads/$($side.Prefix){0:d3}" -f $n)),
+                ('{0:x40}' -f ($side.From + $n)) + "`n")
+        }
+    }
     # A new branch is checked from its whole tree, code included, so a scan that let it through
     # would reach the build gates. With no credentials and no gh they refuse by name instead.
     $savedScanPath = $env:PATH
@@ -1700,7 +1711,7 @@ try {
         $env:GITHUB_TOKEN = $null
         foreach ($refs in @("refs/heads/main $droppedSerial refs/heads/main $cleanCommit",
                 "refs/heads/topic $droppedSerial refs/heads/topic $('0' * 40)")) {
-            Assert-Throws { & $prePushScript -Root $hookRoot -PushedRefs $refs 6> $null } `
+            Assert-Throws { & $prePushScript -Root $hookRoot -RemoteUrl $scanRemote -PushedRefs $refs 6> $null } `
                 "*commit $servedSerial name*${servedSerial}:docs/phone.md:1:*" `
                 "A push went through with a phone serial in an earlier commit than its tip: $refs"
         }
@@ -1723,6 +1734,36 @@ try {
     Assert-Throws { & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $cancelledOut refs/heads/main $droppedSerial" 6> $null } `
         "*commit $namesAgain name*${namesAgain}:docs/phone.md:1:*" `
         'A push whose commits cancel each other out went through with them unscanned.'
+
+    # A remote-tracking ref can outlive its branch on the remote, deleted there and never pruned
+    # here, and a commit only it held is still published by a new branch that reaches it. What the
+    # remote holds is read off the remote. The whole tree of a new branch reaches the build gates,
+    # so they refuse by name again if the scan ever lets it through. The remote's main moves on by
+    # its ref file, since only what the remote advertises is read and git won't push to a remote
+    # whose other branches name commits it doesn't have.
+    [IO.File]::WriteAllText((Join-Path $scanRemote 'refs/heads/main'), "$cancelledOut`n")
+    New-Item -ItemType Directory -Path (Split-Path -Parent $phoneDoc) -Force | Out-Null
+    Set-Content -LiteralPath $phoneDoc -Encoding UTF8 -Value "adb -s $phoneSerial install app.apk"
+    & git -C $hookRoot add docs/phone.md
+    & git -C $hookRoot commit --quiet -m 'names the phone on a branch deleted since'
+    $staleNamed = (& git -C $hookRoot rev-parse HEAD).Trim()
+    & git -C $hookRoot update-ref refs/remotes/origin/old $staleNamed
+    & git -C $hookRoot rm --quiet docs/phone.md
+    & git -C $hookRoot commit --quiet -m 'takes it out on a new branch'
+    $staleDropped = (& git -C $hookRoot rev-parse HEAD).Trim()
+    try {
+        $env:PATH = $pathWithoutGh
+        $env:GITHUB_ACTOR = $null
+        $env:GITHUB_TOKEN = $null
+        Assert-Throws { & $prePushScript -Root $hookRoot -RemoteUrl $scanRemote `
+                -PushedRefs "refs/heads/topic2 $staleDropped refs/heads/topic2 $('0' * 40)" 6> $null } `
+            "*commit $staleNamed name*${staleNamed}:docs/phone.md:1:*" `
+            'A new branch went through with a commit only a stale remote-tracking ref held.'
+    } finally {
+        $env:PATH = $savedScanPath
+        $env:GITHUB_ACTOR = $savedScanActor
+        $env:GITHUB_TOKEN = $savedScanToken
+    }
 
     # The build branch, which runs the Gradle gates that hold the Bouncy Castle graphs to the
     # reviewed release. Starting a real build from a contract test would be absurd, so the case
