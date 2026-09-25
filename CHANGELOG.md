@@ -2,6 +2,11 @@
 
 Every Hushfacebook release, newest first.
 
+## 0.1.4 (2026-09-25)
+
+* **Facebook:** New patch, Hide Reels in the feed. It takes the rows of reels between posts out of the news feed, and the reels Facebook adds where your feed ends. A reel a friend posts stays. The patch starts off in Morphe Manager, and its switch starts on once you pick it.
+* **Facebook:** Both Facebook 580.0.0.51.74 and 577.0.0.50.72 take all 19 patches. It still needs Morphe Manager 1.32.0 or newer.
+
 ## 0.1.3 (2026-09-25)
 
 * **Facebook:** New patch, Hide Stories tray. It takes the row of stories at the top of the feed away, "Create story" included, the way Facebook builds the feed when its own tray is turned off. Stories still open from a profile, a notification or the Stories viewer.
