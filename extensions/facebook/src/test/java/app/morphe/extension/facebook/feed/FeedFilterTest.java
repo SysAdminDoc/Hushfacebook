@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.facebook.graphql.model.GraphQLPagesYouMayLikeFeedUnit;
 import com.facebook.graphql.model.GraphQLStory;
+import com.facebook.graphql.modelutil.BaseModelWithTree;
 
 import org.junit.After;
 import org.junit.Rule;
@@ -196,6 +197,24 @@ public class FeedFilterTest {
         assertNull(FeedFilter.typeName(null));
         assertEquals("StoriesTrayFeedUnit", FeedFilter.typeName(TypedFeedUnit.storiesTray()));
         assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit.Unreadable(), true, true));
+    }
+
+    /**
+     * A model whose native tree Facebook already released answers getTypeName() from native code
+     * that no try block catches, so the guard asks isValidGraphServicesJNIModel() first and keeps
+     * the unit without asking its name. The control, with the tree still there, reads the name and
+     * hides the row.
+     */
+    @Test
+    public void aReleasedTreeIsNeverAskedItsTypeName() {
+        BaseModelWithTree released = new BaseModelWithTree("PaginatedPeopleYouMayKnowFeedUnit") { }.released();
+        assertNull(FeedFilter.typeName(released));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, released, true, true));
+        assertFalse("the guard asked a released tree its type name", released.readAfterRelease);
+
+        BaseModelWithTree live = new BaseModelWithTree("PaginatedPeopleYouMayKnowFeedUnit") { };
+        assertEquals("PaginatedPeopleYouMayKnowFeedUnit", FeedFilter.typeName(live));
+        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, live, true, true));
     }
 
     /**

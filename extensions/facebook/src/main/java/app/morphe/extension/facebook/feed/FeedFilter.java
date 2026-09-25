@@ -36,7 +36,9 @@ public final class FeedFilter {
 
     /**
      * The GraphQL type the "People you may know" row answers {@code getTypeName()} with. Its class
-     * is renamed on every release, but the type name is a literal in the method, in 577 and 580.
+     * is renamed on every release and shared with GroupsYouShouldJoinFeedUnit and
+     * FriendRequestsFeedUnit, but {@code getTypeName()} answers by the model's type tag, and each
+     * type name is a literal in it, in 577 and 580. So the name picks this row and leaves the others.
      */
     static final String PEOPLE_YOU_MAY_KNOW_TYPE = "PaginatedPeopleYouMayKnowFeedUnit";
 
@@ -68,9 +70,9 @@ public final class FeedFilter {
      * Units Facebook injects into the feed that are not posts from anyone you follow. Every one
      * keeps its real name through Meta's obfuscator, so the check needs no obfuscated identifier.
      *
-     * <p>Left out on purpose: {@code GraphQLFriendsLocationsFeedUnit}, a real feature, and People
-     * You May Know, whose container unit has no kept name, so dropping the item types it holds
-     * would not remove the row.
+     * <p>Left out on purpose: {@code GraphQLFriendsLocationsFeedUnit}, a real feature. People You
+     * May Know isn't here either: its unit class is Redex-renamed and shared with other rows, so its
+     * own rule reads the GraphQL type name the unit answers ({@link #PEOPLE_YOU_MAY_KNOW_TYPE}).
      */
     private static final String[] SUGGESTED_UNITS = {
             // "Pages you may like" and its variants.
@@ -249,31 +251,54 @@ public final class FeedFilter {
         return null;
     }
 
-    /** Each feed unit class's public {@code getTypeName()}, or empty when it has none. */
-    private static final java.util.concurrent.ConcurrentHashMap<Class<?>, java.util.Optional<java.lang.reflect.Method>>
-            TYPE_NAME_METHODS = new java.util.concurrent.ConcurrentHashMap<>();
+    /**
+     * What a feed unit class offers for reading its type name: its public {@code getTypeName()},
+     * or null when it has none, and its public {@code isValidGraphServicesJNIModel()}, or null.
+     */
+    private static final class TypeNameReader {
+        final java.lang.reflect.Method typeName;
+        final java.lang.reflect.Method valid;
+
+        TypeNameReader(java.lang.reflect.Method typeName, java.lang.reflect.Method valid) {
+            this.typeName = typeName;
+            this.valid = valid;
+        }
+
+        static TypeNameReader of(Class<?> type) {
+            return new TypeNameReader(publicMethod(type, "getTypeName", String.class),
+                    publicMethod(type, "isValidGraphServicesJNIModel", boolean.class));
+        }
+
+        private static java.lang.reflect.Method publicMethod(Class<?> type, String name, Class<?> returns) {
+            try {
+                java.lang.reflect.Method found = type.getMethod(name);
+                return found.getReturnType() == returns ? found : null;
+            } catch (NoSuchMethodException none) {
+                return null;
+            }
+        }
+    }
+
+    private static final java.util.concurrent.ConcurrentHashMap<Class<?>, TypeNameReader> TYPE_NAME_READERS =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
-     * The GraphQL type name a feed unit answers, or null when it has no {@code getTypeName()} or
-     * the call fails. Facebook's generated models all keep that method's name, whatever their own
-     * class is renamed to, and it answers a literal. A unit this can't read is kept: the rules
-     * built on it fail open.
+     * The GraphQL type name a feed unit answers, or null when it has no {@code getTypeName()}, its
+     * native tree is gone, or the call fails. Facebook's generated models all keep that method's
+     * name, whatever their own class is renamed to, and it answers a literal. A unit this can't read
+     * is kept: the rules built on it fail open.
+     *
+     * <p>A model whose tree Facebook already released answers {@code getTypeName()} from native code
+     * with nothing behind it, and no try block catches what that does, so a unit that says its tree
+     * isn't valid is never asked.
      */
     static String typeName(Object feedUnit) {
         if (feedUnit == null) return null;
         try {
-            java.util.Optional<java.lang.reflect.Method> method = TYPE_NAME_METHODS.computeIfAbsent(
-                    feedUnit.getClass(), type -> {
-                        try {
-                            java.lang.reflect.Method found = type.getMethod("getTypeName");
-                            return found.getReturnType() == String.class
-                                    ? java.util.Optional.of(found) : java.util.Optional.empty();
-                        } catch (NoSuchMethodException none) {
-                            return java.util.Optional.empty();
-                        }
-                    });
-            if (!method.isPresent()) return null;
-            Object name = method.get().invoke(feedUnit);
+            TypeNameReader reader = TYPE_NAME_READERS.computeIfAbsent(feedUnit.getClass(), TypeNameReader::of);
+            if (reader.typeName == null) return null;
+            if (reader.valid != null && !Boolean.TRUE.equals(reader.valid.invoke(feedUnit))) return null;
+            Object name = reader.typeName.invoke(feedUnit);
             return name instanceof String ? (String) name : null;
         } catch (Throwable failure) {
             return null;
