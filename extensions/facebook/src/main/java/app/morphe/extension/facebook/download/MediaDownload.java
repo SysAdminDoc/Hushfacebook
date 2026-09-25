@@ -240,16 +240,16 @@ public final class MediaDownload {
             + " from " + candidates + " candidate(s): " + all);
 
         Downloader.Kind kind = isVideo ? Downloader.Kind.VIDEO : Downloader.Kind.IMAGE;
-        start(safe, isVideo, writer -> saveFile(safe, chosen, kind, writer));
+        start(safe, isVideo, (writer, progress) -> saveFile(safe, chosen, kind, writer, progress));
         return true;
     }
 
     /** One checked file, fetched into the cache and then published. */
     private static Downloader.Result saveFile(Context application, String url, Downloader.Kind kind,
-            MediaStoreWriter writer) {
+            MediaStoreWriter writer, Downloader.Progress progress) {
         java.io.File folder = DashSave.workFolder(application);
         if (folder == null) return Downloader.Result.fail(Downloader.Status.WRITE_ERROR, "no cache folder");
-        return Downloader.save(url, kind, folder, writer, policyFor(application), Downloader.MAX_BYTES);
+        return Downloader.save(url, kind, folder, writer, policyFor(application), Downloader.MAX_BYTES, progress);
     }
 
     /** The policy every save a test drives uses in place of the real one. Never set on a phone. */
@@ -330,14 +330,23 @@ public final class MediaDownload {
             + (audio == null ? ", no sound track" : " + " + audio)
             + ", instead of " + (fallback == null ? "nothing" : describe(fallback)));
 
-        start(safe, true, writer -> {
-            Downloader.Result result = DashSave.save(safe, video, audio, writer, policyFor(safe));
-            if (result.ok() || fallback == null) return result;
+        start(safe, true, dashJob(safe, video, audio, fallback));
+        return true;
+    }
+
+    /**
+     * The DASH save of [video] and [audio], then the single file [fallback] when that fails. Not
+     * when the person cancelled it, though: the fallback would start the save over.
+     */
+    static Job dashJob(Context application, DashManifest.Track video, DashManifest.Track audio, String fallback) {
+        return (writer, progress) -> {
+            Downloader.Result result = DashSave.save(application, video, audio, writer, policyFor(application),
+                Downloader.MAX_BYTES, progress);
+            if (result.ok() || fallback == null || result.status == Downloader.Status.CANCELLED) return result;
 
             failure(() -> "the DASH save ended with " + result + ", saving " + describe(fallback), null);
-            return saveFile(safe, fallback, Downloader.Kind.VIDEO, writer);
-        });
-        return true;
+            return saveFile(application, fallback, Downloader.Kind.VIDEO, writer, progress);
+        };
     }
 
     /**
@@ -358,30 +367,43 @@ public final class MediaDownload {
         return application != null ? application : context;
     }
 
-    /** One save on the worker thread. It writes through [writer] and returns the result. */
+    /**
+     * One save on the worker thread. It writes through [writer], tells [progress] how far it has
+     * got, stops when [progress] says it was cancelled, and returns the result.
+     */
     interface Job {
-        Downloader.Result run(MediaStoreWriter writer);
+        Downloader.Result run(MediaStoreWriter writer, Downloader.Progress progress);
     }
 
-    /** Runs [job] on its own worker thread, and hands the thread back so a test can wait for it. */
+    /**
+     * Runs [job] on its own worker thread, and hands the thread back so a test can wait for it.
+     * The save shows a notification with its progress and a Cancel button while it runs.
+     */
     static Thread start(Context application, boolean video, Job job) {
         IN_FLIGHT.incrementAndGet();
         Feedback.show(application, "Saving...", false);
+        SaveControl.Save save = SaveControl.begin(application, video);
 
         Thread worker = new Thread(() -> {
             MediaStoreWriter writer = new MediaStoreWriter(application, video);
 
             try {
-                Downloader.Result result = job.run(writer);
-                if (result.ok()) info(() -> "save finished: " + result);
+                // What a save in a process Android ended left behind goes before this one makes
+                // anything. It runs once per process.
+                SaveLeftovers.sweepOnce(application);
+
+                Downloader.Result result = job.run(writer, save);
+                boolean cancelled = result.status == Downloader.Status.CANCELLED;
+                if (result.ok() || cancelled) info(() -> "save finished: " + result);
                 else failure(() -> "save finished: " + result, null);
-                Feedback.show(application, message(result.status, writer.savedLocation()), !result.ok());
+                Feedback.show(application, message(result.status, writer.savedLocation()), !result.ok() && !cancelled);
             } catch (Throwable t) {
                 // Nothing can leave this thread. Facebook installs its own handler for uncaught
                 // exceptions and reports them as its own crashes.
                 failure(() -> "the save failed", t);
                 Feedback.show(application, "Download failed", true);
             } finally {
+                save.end();
                 IN_FLIGHT.decrementAndGet();
             }
         }, "hushfacebook-save");
@@ -404,6 +426,8 @@ public final class MediaDownload {
                 return "Not saved: that isn't a Facebook photo or video";
             case TOO_LARGE:
                 return "Not saved: the file is over 512 MB";
+            case CANCELLED:
+                return "Save cancelled";
             default:
                 return "Download failed";
         }

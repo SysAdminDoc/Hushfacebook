@@ -59,7 +59,52 @@ final class Downloader {
         /** The address, a redirect or the answer is not a media file from Meta. */
         REFUSED,
         /** The file is bigger than a save will hold. */
-        TOO_LARGE
+        TOO_LARGE,
+        /** The person saving stopped it. */
+        CANCELLED
+    }
+
+    /**
+     * How a running save says how far it has got, and learns that it was cancelled. Pure Java
+     * like the rest of this class: {@link SaveControl} turns it into a notification, and a test
+     * can drive it without one.
+     */
+    interface Progress {
+        /** Bytes of the file being fetched so far, and its announced length or -1. Called often. */
+        void transferred(long done, long total);
+
+        /**
+         * How to close the connection about to be read. A cancel closes it, which is what ends a
+         * read that's waiting on the network; a flag alone is only seen between reads. A closer
+         * rather than the connection, so only this class touches the network.
+         */
+        void reading(Runnable close);
+
+        /** Whether the person saving asked to stop. */
+        boolean cancelled();
+    }
+
+    /** No one is watching and nothing can cancel. */
+    static final Progress SILENT = new Progress() {
+        @Override
+        public void transferred(long done, long total) {
+        }
+
+        @Override
+        public void reading(Runnable close) {
+        }
+
+        @Override
+        public boolean cancelled() {
+            return false;
+        }
+    };
+
+    /** A cancel seen between two reads of a body. */
+    private static final class Cancelled extends IOException {
+        Cancelled() {
+            super("cancelled");
+        }
     }
 
     /** What a save expects to get. The answer has to say so and look it. */
@@ -113,6 +158,13 @@ final class Downloader {
 
     private static final int CONNECT_TIMEOUT_MS = 15_000;
     private static final int READ_TIMEOUT_MS = 20_000;
+
+    /**
+     * The read timeout. A test shortens it: the JDK's connection can't be closed under a read
+     * that's waiting, so there a cancelled read ends only at the timeout. Android's can, and a
+     * cancel ends it at once (see SaveControl.Save.cancel).
+     */
+    static volatile int readTimeoutMs = READ_TIMEOUT_MS;
     private static final int BUFFER = 64 * 1024;
     static final long MAX_BYTES = 512L * 1024L * 1024L;
     private static final int MAX_REDIRECTS = 5;
@@ -129,12 +181,17 @@ final class Downloader {
     }
 
     static Result save(String url, Kind kind, File folder, Sink sink, MediaUrlPolicy policy, long maxBytes) {
+        return save(url, kind, folder, sink, policy, maxBytes, SILENT);
+    }
+
+    static Result save(String url, Kind kind, File folder, Sink sink, MediaUrlPolicy policy, long maxBytes,
+            Progress progress) {
         File temp = null;
         try {
             temp = File.createTempFile(kind.name().toLowerCase(Locale.US), ".part", folder);
-            Result fetched = fetch(url, kind, temp, policy, maxBytes);
+            Result fetched = fetch(url, kind, temp, policy, maxBytes, progress);
             if (!fetched.ok()) return fetched;
-            return publish(temp, fetched.mime, sink);
+            return publish(temp, fetched.mime, sink, progress);
         } catch (Throwable t) {
             return Result.fail(Status.WRITE_ERROR, "the cache could not hold the file");
         } finally {
@@ -160,13 +217,19 @@ final class Downloader {
      * only make a refusal more likely.
      */
     static Result fetch(String url, Kind kind, File into, MediaUrlPolicy policy, long maxBytes) {
+        return fetch(url, kind, into, policy, maxBytes, SILENT);
+    }
+
+    /** As above, reporting to [progress] and stopping with CANCELLED when it says so. */
+    static Result fetch(String url, Kind kind, File into, MediaUrlPolicy policy, long maxBytes, Progress progress) {
         HttpURLConnection connection = null;
         boolean kept = false;
 
         try {
-            Object opened = connect(url, policy);
+            Object opened = connect(url, policy, progress);
             if (opened instanceof Result) return (Result) opened;
             connection = (HttpURLConnection) opened;
+            if (progress.cancelled()) return cancelled();
 
             int code = connection.getResponseCode();
             if (code == 401 || code == 403 || code == 410) {
@@ -202,7 +265,8 @@ final class Downloader {
             long total;
             try (OutputStream out = new FileOutputStream(into)) {
                 out.write(head, 0, headLength);
-                total = headLength + copy(in, out, maxBytes - headLength);
+                progress.transferred(headLength, expected);
+                total = headLength + copy(in, out, maxBytes - headLength, headLength, expected, progress);
             }
             if (total > maxBytes) return Result.fail(Status.TOO_LARGE, "the body ran past " + maxBytes + " bytes");
             // Without the length check a connection dropped near the end publishes a truncated
@@ -215,8 +279,12 @@ final class Downloader {
             kept = true;
             return Result.ok(isSpecific(declared) ? declared : sniffed);
         } catch (IOException e) {
+            // A cancel closes the connection under the read, which surfaces here as a socket
+            // error. It's still the person's cancel, not a network failure.
+            if (progress.cancelled()) return cancelled();
             return Result.fail(Status.NETWORK_ERROR, "the fetch failed: " + e.getClass().getSimpleName());
         } catch (Throwable t) {
+            if (progress.cancelled()) return cancelled();
             return Result.fail(Status.NETWORK_ERROR, "the fetch failed: " + t.getClass().getSimpleName());
         } finally {
             if (!kept) delete(into);
@@ -235,14 +303,23 @@ final class Downloader {
      * open, the entry is removed again.
      */
     static Result publish(File file, String mime, Sink sink) {
+        return publish(file, mime, sink, SILENT);
+    }
+
+    /** As above, and a cancel before the commit leaves no row. */
+    static Result publish(File file, String mime, Sink sink, Progress progress) {
         boolean committed = false;
 
         try (InputStream in = new FileInputStream(file)) {
+            if (progress.cancelled()) return cancelled();
             OutputStream out = sink.open(mime);
 
             byte[] buffer = new byte[BUFFER];
             int read;
-            while ((read = in.read(buffer)) > 0) out.write(buffer, 0, read);
+            while ((read = in.read(buffer)) > 0) {
+                out.write(buffer, 0, read);
+                if (progress.cancelled()) return cancelled();
+            }
             out.flush();
 
             sink.commit();
@@ -275,7 +352,7 @@ final class Downloader {
      * this to the default means an occasional unexplained failure, and it would also skip the
      * policy on the hop.
      */
-    private static Object connect(String url, MediaUrlPolicy policy) throws IOException {
+    private static Object connect(String url, MediaUrlPolicy policy, Progress progress) throws IOException {
         URL current;
         try {
             current = new URL(url);
@@ -285,6 +362,7 @@ final class Downloader {
         Set<String> visited = new HashSet<>();
 
         for (int hop = 0; hop <= MAX_REDIRECTS; hop++) {
+            if (progress.cancelled()) return cancelled();
             MediaUrlPolicy.Refusal refusal = policy.refusal(current);
             if (refusal != null) {
                 // A lookup that failed or lied is the network's doing; anything else means the
@@ -300,8 +378,9 @@ final class Downloader {
             connection.setRequestMethod("GET");
             connection.setInstanceFollowRedirects(false);
             connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-            connection.setReadTimeout(READ_TIMEOUT_MS);
+            connection.setReadTimeout(readTimeoutMs);
             connection.setUseCaches(false);
+            progress.reading(connection::disconnect);
 
             int code = connection.getResponseCode();
             if (code != 301 && code != 302 && code != 303 && code != 307 && code != 308) {
@@ -421,9 +500,11 @@ final class Downloader {
 
     /**
      * Copy the rest of the body across. Stops one byte past [allowed], so the caller can tell a
-     * body that ran over from one that fit exactly.
+     * body that ran over from one that fit exactly. [already] bytes came before this, out of
+     * [expected] (or -1), which is what [progress] is told.
      */
-    private static long copy(InputStream in, OutputStream out, long allowed) throws IOException {
+    private static long copy(InputStream in, OutputStream out, long allowed, long already, long expected,
+            Progress progress) throws IOException {
         byte[] buffer = new byte[BUFFER];
         long total = 0;
 
@@ -432,10 +513,16 @@ final class Downloader {
             out.write(buffer, 0, read);
             total += read;
             if (total > allowed) break;
+            progress.transferred(already + total, expected);
+            if (progress.cancelled()) throw new Cancelled();
         }
 
         out.flush();
         return total;
+    }
+
+    private static Result cancelled() {
+        return Result.fail(Status.CANCELLED, "the person saving cancelled it");
     }
 
     /** The type that the server gave, lowercased and without its parameters. */

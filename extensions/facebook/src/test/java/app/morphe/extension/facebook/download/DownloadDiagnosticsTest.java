@@ -109,18 +109,18 @@ public class DownloadDiagnosticsTest {
         File folder = DashSave.workFolder(context);
 
         // A progressive save whose address the server no longer has.
-        run(writer -> Downloader.save(origin + "/gone.mp4", Downloader.Kind.VIDEO, folder, writer, policy,
+        run((writer, progress) -> Downloader.save(origin + "/gone.mp4", Downloader.Kind.VIDEO, folder, writer, policy,
                 Downloader.MAX_BYTES));
 
         // A DASH save whose track downloads but can't be joined into a file.
         server.serve("/track.mp4", 200, "video/mp4", mp4(4096), 4096);
         DashManifest.Track track = new DashManifest.Track("video/mp4", "avc1.64001f", 1280, 720, 900_000,
                 origin + "/track.mp4");
-        run(writer -> DashSave.save(context, track, null, writer, policy));
+        run((writer, progress) -> DashSave.save(context, track, null, writer, policy));
 
         // A good file the gallery won't take.
         server.serve("/whole.mp4", 200, "video/mp4", mp4(4096), 4096);
-        run(writer -> Downloader.save(origin + "/whole.mp4", Downloader.Kind.VIDEO, folder, new RefusingGallery(),
+        run((writer, progress) -> Downloader.save(origin + "/whole.mp4", Downloader.Kind.VIDEO, folder, new RefusingGallery(),
                 policy, Downloader.MAX_BYTES));
 
         String report = LogBufferManager.buildExportText();

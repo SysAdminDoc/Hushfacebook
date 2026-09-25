@@ -34,8 +34,9 @@ import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
  *
  * <p>The entry is created with {@code IS_PENDING} set, and it is published only after the last
  * byte arrives. So a failed fetch never leaves a playable looking file of the wrong length in the
- * gallery. A fetch that the system stops half way leaves a pending row, which the platform clears
- * by itself after about a week.
+ * gallery. A save that the system stops half way through the copy leaves a pending row; the first
+ * save of the next process removes it ({@link SaveLeftovers}), and the platform would after about
+ * a week.
  */
 final class MediaStoreWriter implements Downloader.Sink {
 
@@ -82,6 +83,9 @@ final class MediaStoreWriter implements Downloader.Sink {
         ContentResolver resolver = context.getContentResolver();
         item = resolver.insert(collection, values);
         if (item == null) throw new IOException("the gallery refused a new entry");
+        // Written down before any byte, so a process ended during the copy leaves a row the next
+        // save can find and remove. See SaveLeftovers.
+        SaveLeftovers.pending(context, item);
 
         stream = resolver.openOutputStream(item, "w");
         if (stream == null) throw new IOException("the gallery gave no way to write");
@@ -96,6 +100,7 @@ final class MediaStoreWriter implements Downloader.Sink {
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.IS_PENDING, 0);
         context.getContentResolver().update(item, values, null, null);
+        SaveLeftovers.settled(context, item);
     }
 
     @Override
@@ -103,13 +108,15 @@ final class MediaStoreWriter implements Downloader.Sink {
         close();
 
         if (item == null) return;
+        Uri row = item;
+        item = null;
 
         try {
-            context.getContentResolver().delete(item, null, null);
+            context.getContentResolver().delete(row, null, null);
+            SaveLeftovers.settled(context, row);
         } catch (Throwable t) {
+            // Left on the list, so the first save of the next process tries again.
             Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "could not remove the unfinished entry", t);
-        } finally {
-            item = null;
         }
     }
 

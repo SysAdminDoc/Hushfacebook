@@ -66,6 +66,8 @@ Neither path can be tried against a real block until the check reaches sideloads
 
 `Download any reel` and `AMOLED black theme` are off by default. Everything else is on.
 
+While a story or reel saves, a notification shows how far it's got, with a Cancel button. Facebook has to be allowed to post notifications for it. You can also turn off its "Hushfacebook saves" channel in Facebook's notification settings, and a save then runs with just a message when it starts and one when it ends. A cancelled save leaves nothing behind. One that Android stops half way leaves nothing in the gallery either, and the next save clears what it left in Facebook's cache.
+
 ## Settings
 
 Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
