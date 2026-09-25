@@ -312,10 +312,22 @@ try {
     Assert-True ($ranks['amoled-fds-litho-resolver'] -eq 'fails-closed') `
         'The AMOLED resolver that split in two has two real candidates, and its case did not fail closed.'
     $reportText = [System.IO.File]::ReadAllText($calibrationReport)
+    # Each line is matched whole from its indent, because a bare 'references:' also sits inside the
+    # 'obfuscated references:' line every candidate has, so the check passed with the kept
+    # references gone from the report.
+    $reportLines = [ordered]@{
+        'prototype' = '(?m)^ {7}prototype: \S'
+        'strings' = '(?m)^ {7}strings: \d+ shared '
+        'literals' = '(?m)^ {7}literals: \d+ shared '
+        'opcode sketch' = '(?m)^ {7}opcodes: old \d+ .*\r?\n {16}new \d+ '
+        'references' = '(?m)^ {7}references: \d+ shared '
+        'call neighbourhood' = '(?m)^ {7}call neighbourhood: \d+ shared '
+        'known replacement' = '(?m)^ {3}#\d+ {2}[0-9.]+ {2}\S+ {3}<- the known replacement\r?$'
+    }
     foreach ($id in $caseIds) {
         $section = [regex]::Match($reportText, "(?s)== case $([regex]::Escape($id)) .*?(?=\r?\n== case |\r?\nCalibration: )").Value
-        foreach ($label in 'prototype:', 'strings:', 'literals:', 'opcodes: old', 'references:', 'call neighbourhood:', '<- the known replacement') {
-            Assert-True ($section.Contains($label)) "The report of case $id does not show '$label'."
+        foreach ($line in $reportLines.Keys) {
+            Assert-True ($section -match $reportLines[$line]) "The report of case $id does not show the $line line."
         }
     }
 
