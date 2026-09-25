@@ -198,6 +198,38 @@ public class MediaSaveTest {
     }
 
     /**
+     * The case above holds the share from above only: a sound given nothing, or a picture given
+     * half the cap, refused it just as well. So a pair that fits has to get through both fetches
+     * (Robolectric can't join them, and the save ends there), and a picture that takes the whole
+     * cap leaves the sound none.
+     */
+    @Test
+    public void aDashPairThatFitsTheCapIsFetchedWhole() {
+        byte[] picture = mp4(60_000);
+        serve("/v60.mp4", "video/mp4", picture, picture.length);
+        byte[] sound = mp4(40_000);
+        serve("/a40.mp4", "audio/mp4", sound, sound.length);
+        DashManifest.Track video = new DashManifest.Track("video/mp4", "avc1.64001f", 1280, 720, 2_000_000,
+                origin + "/v60.mp4");
+        DashManifest.Track audio = new DashManifest.Track("audio/mp4", "mp4a.40.2", 0, 0, 128_000, origin + "/a40.mp4");
+
+        Downloader.Result result = DashSave.save(context, video, audio, new MediaStoreWriter(context, true), policy, 100_000);
+
+        assertEquals("WRITE_ERROR (the tracks could not be joined)", result.toString());
+        assertEquals("the sound track wasn't fetched", 1, server.hits("/a40.mp4"));
+        assertNothingWasCreated("a pair that fits, which Robolectric can't join", result);
+
+        byte[] whole = mp4(100_000);
+        serve("/v100.mp4", "video/mp4", whole, whole.length);
+        DashManifest.Track wholeCap = new DashManifest.Track("video/mp4", "avc1.64001f", 1280, 720, 2_000_000,
+                origin + "/v100.mp4");
+        result = DashSave.save(context, wholeCap, audio, new MediaStoreWriter(context, true), policy, 100_000);
+        assertEquals(result.toString(), Downloader.Status.TOO_LARGE, result.status);
+        assertTrue(result.toString(), result.reason.endsWith("more than 0"));
+        assertNothingWasCreated("a picture that took the whole cap", result);
+    }
+
+    /**
      * Two saves that start together both find no work folder yet, and the one whose mkdirs()
      * comes second is told false because the other just made it. That save used to end "no cache
      * folder". Each round removes the folder and lets several saves ask for it at once.

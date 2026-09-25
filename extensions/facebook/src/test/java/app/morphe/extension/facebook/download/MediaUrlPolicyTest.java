@@ -123,6 +123,10 @@ public class MediaUrlPolicyTest {
                 { "::a00:1", "private" }, { "::7f00:1", "loopback" },
                 { "198.51.100.7", "reserved" }, { "192.88.99.1", "reserved" }, { "192.0.0.9", "reserved" },
                 { "fdfe:dcba:9876:1::1", "private" }, { "fdfe:dcba:9877::1", "private" },
+                // One neighbour of the Clash /64 for each byte the rule compares, and the low side.
+                { "fdff:dcba:9876::1", "private" }, { "fdfe:ddba:9876::1", "private" },
+                { "fdfe:dcbb:9876::1", "private" }, { "fdfe:dcba:9976::1", "private" },
+                { "fdfe:dcba:9876:100::1", "private" }, { "fdfe:dcba:9875:ffff::1", "private" },
         };
         List<String> accepted = new ArrayList<>();
         for (String[] c : cases) {
