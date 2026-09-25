@@ -251,7 +251,10 @@ function Save-GateLedger {
         $index.hushfacebook = if ($Pending) { [pscustomobject]@{ status = 'not-listed'; checked = $CheckedAt } } else {
             [pscustomobject]@{ status = 'listed'; url = 'https://example.com/listing'; checked = $CheckedAt } }
     }
+    # Every date the audit's clean run stamps is set here, or a ledger stamped after these fixed
+    # days would put a record after the gate's today and fail the case for the wrong reason.
     foreach ($entry in $copy.entries) { $entry.lastChecked = $CheckedAt }
+    foreach ($item in @($copy.outOfScope)) { $item.lastChecked = $CheckedAt }
     [IO.File]::WriteAllText((Get-SourceLedgerPath -Root $gateRoot), ($copy | ConvertTo-Json -Depth 20))
 }
 Save-GateLedger -CheckedAt '2026-09-25'
