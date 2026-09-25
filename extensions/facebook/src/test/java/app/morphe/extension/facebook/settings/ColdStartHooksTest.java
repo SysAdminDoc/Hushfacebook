@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.facebook.graphql.model.GraphQLPagesYouMayLikeFeedUnit;
+import com.facebook.graphql.model.GraphQLStory;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,6 +91,7 @@ public class ColdStartHooksTest {
         // public feed guard as the patch calls it. Each has to take Facebook's path.
         assertFalse(FeedGuardForTests.hides(Category.SPONSORED, new Object()));
         assertFalse(FeedGuardForTests.hides(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit()));
+        assertFalse(FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true)));
         assertFalse(FeedFilter.hideEdge(Category.SPONSORED, new Object()));
         assertFalse(FeedFilter.hideSponsoredStories());
         VideoAd reelAd = new VideoAd();

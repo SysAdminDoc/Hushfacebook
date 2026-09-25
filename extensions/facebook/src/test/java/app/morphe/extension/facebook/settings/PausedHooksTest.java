@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.facebook.graphql.model.GraphQLPagesYouMayLikeFeedUnit;
+import com.facebook.graphql.model.GraphQLStory;
 
 import org.junit.After;
 import org.junit.Rule;
@@ -119,6 +120,9 @@ public class PausedHooksTest {
                 () -> FeedGuardForTests.hides(Category.PROMOTION, new Object())));
         probes.put(PatchFamily.SUGGESTED_POSTS, Collections.singletonList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit())));
+        // A story Facebook's own detection marked as made with AI.
+        probes.put(PatchFamily.AI_DETECTED_POSTS, Collections.singletonList(
+                () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true))));
         probes.put(PatchFamily.SPONSORED_STORIES, Collections.singletonList(FeedFilter::hideSponsoredStories));
         probes.put(PatchFamily.SPONSORED_REELS, Arrays.asList(
                 () -> {

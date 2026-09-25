@@ -4,7 +4,8 @@
  *
  * The rules follow the feed guards of https://github.com/andrewliang25/morphe-patches (GPL-3.0,
  * Andrew Liang: the SPONSORED category and the suggested unit list) and of
- * https://github.com/SapitoSucio/FroggoMorphePatches (GPL-3.0: the PROMOTION category).
+ * https://github.com/SapitoSucio/FroggoMorphePatches (GPL-3.0: the PROMOTION category, and the
+ * AI filter the GenAI rule follows).
  */
 package app.morphe.extension.facebook.feed;
 
@@ -36,6 +37,11 @@ public final class FeedFilter {
     /** The diagnostic counter routes. Each news feed edge counts as a list of one post. */
     static final String FEED_ROUTE = "News feed posts";
     static final String STORY_ROUTE = "Story ad sources";
+    /**
+     * The edges the GenAI rule read, counted only while its switch is on. Its kinds say what each
+     * read found, so a report shows why the posts it kept were kept.
+     */
+    static final String AI_ROUTE = "GenAI flag";
 
     /**
      * Units Facebook injects into the feed that are not posts from anyone you follow. Every one
@@ -81,23 +87,38 @@ public final class FeedFilter {
      * @param feedUnit the edge's feed unit, inflated if the tree had not built it yet.
      */
     public static boolean hideEdge(Object category, Object feedUnit) {
-        return hideEdge(category, feedUnit, SettingsStatus.sponsoredPosts(), SettingsStatus.suggestedPosts());
+        return hideEdge(category, feedUnit, SettingsStatus.sponsoredPosts(), SettingsStatus.suggestedPosts(),
+                SettingsStatus.aiDetectedPosts(), GenAiLabel.PATCHED);
+    }
+
+    /** The guard with the sponsored and suggested patch-time flags passed in, and no GenAI rule. */
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, GenAiLabel.PATCHED);
     }
 
     /**
-     * The guard, with the two patch-time flags passed in so a test can stand in for the patches.
+     * The guard, with the three patch-time flags passed in so a test can stand in for the patches,
+     * and the GenAI accessor passed in so a test can stand in for the one the patch fills in.
      *
      * <p>Every edge is counted before any rule runs, and every hidden one records why, so a
      * diagnostic report shows the guard is alive and what it took out without anyone having to
      * turn debug logging on first. The category name is an enum constant and the reason is a
-     * kept class name; neither is content.
+     * kept class name or a GraphQL field name; none of them is content.
+     *
+     * <p>The GenAI rule runs last and only while its switch is on, so with the switch off or
+     * Hushfacebook paused it reads nothing of the post and Facebook's own path is all that runs.
      */
-    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
+                            boolean aiPatched, GenAiLabel.Accessor aiAccessor) {
         try {
             if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
             if (suggestedPatched) {
                 HookStatus.invoked(FamilyNames.SUGGESTED_POSTS);
                 reportSuggestedClasses();
+            }
+            if (aiPatched) {
+                HookStatus.invoked(FamilyNames.AI_DETECTED_POSTS);
+                GenAiLabel.reader();
             }
             FeedFilterCounters.sawList(FEED_ROUTE, 1);
             String categoryName = category instanceof Enum ? ((Enum<?>) category).name() : null;
@@ -111,6 +132,9 @@ public final class FeedFilter {
             } else if (suggestedPatched && Settings.HIDE_SUGGESTED_POSTS.get()) {
                 reason = suggestedUnitName(feedUnit);
             }
+            if (reason == null && aiPatched && Settings.HIDE_AI_DETECTED_POSTS.get()) {
+                reason = aiDetectedReason(feedUnit, aiAccessor);
+            }
             if (reason == null) return false;
 
             FeedFilterCounters.removed(FEED_ROUTE, 1, reason);
@@ -120,9 +144,24 @@ public final class FeedFilter {
         } catch (Throwable failure) {
             if (sponsoredPatched) HookStatus.threw(FamilyNames.SPONSORED_POSTS, "feed guard", failure);
             if (suggestedPatched) HookStatus.threw(FamilyNames.SUGGESTED_POSTS, "feed guard", failure);
+            if (aiPatched) HookStatus.threw(FamilyNames.AI_DETECTED_POSTS, "feed guard", failure);
             Logger.printException(() -> "Feed filter: could not judge an edge", failure);
             return false;
         }
+    }
+
+    /**
+     * The GenAI rule: the flag's name when Facebook's detection marked this unit as made with AI,
+     * otherwise null. Every unit it reads is counted on its own route under what the read found,
+     * so a kept post always has a reason in the report.
+     */
+    private static String aiDetectedReason(Object feedUnit, GenAiLabel.Accessor accessor) {
+        GenAiLabel.Outcome outcome = GenAiLabel.read(feedUnit, accessor);
+        FeedFilterCounters.sawList(AI_ROUTE, 1);
+        FeedFilterCounters.sawKind(AI_ROUTE, outcome.reason);
+        if (!outcome.hides) return null;
+        FeedFilterCounters.removed(AI_ROUTE, 1, outcome.reason);
+        return GenAiLabel.DETECTED_FLAG;
     }
 
     /** Which Hook status row the suggested unit classes were last reported into. */

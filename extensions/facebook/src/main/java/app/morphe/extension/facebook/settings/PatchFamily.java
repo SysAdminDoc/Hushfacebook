@@ -40,6 +40,8 @@ public enum PatchFamily {
             Settings.HIDE_SPONSORED_POSTS, Settings.HIDE_PROMOTED_POSTS),
     SUGGESTED_POSTS(FamilyNames.SUGGESTED_POSTS, "suggestedPosts", null,
             Settings.HIDE_SUGGESTED_POSTS),
+    AI_DETECTED_POSTS(FamilyNames.AI_DETECTED_POSTS, "aiDetectedPosts", null,
+            Settings.HIDE_AI_DETECTED_POSTS),
     SPONSORED_STORIES(FamilyNames.SPONSORED_STORIES, "sponsoredStories", null,
             Settings.HIDE_SPONSORED_STORIES),
     SPONSORED_REELS(FamilyNames.SPONSORED_REELS, "sponsoredReels",

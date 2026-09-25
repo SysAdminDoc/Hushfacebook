@@ -26,6 +26,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean aiDetectedPosts() {
+        return false;
+    }
+
     public static boolean sponsoredStories() {
         return false;
     }

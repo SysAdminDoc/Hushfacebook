@@ -158,6 +158,8 @@ public final class L10nTranslations {
                 "Vollst\u00e4ndiger Bericht gespeichert unter %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut");
+        table.put("Hide AI-detected posts",
+                "Als KI erkannte Beitr\u00e4ge ausblenden");
         table.put("Hide promoted posts",
                 "Beworbene Beitr\u00e4ge ausblenden");
         table.put("Hide sponsored posts",
@@ -219,6 +221,8 @@ public final class L10nTranslations {
                 "Hushfacebook pausieren");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Beitr\u00e4ge, die Facebook als beworben statt als Anzeige einstuft.");
+        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
+                "Beitr\u00e4ge, die Facebooks eigene Erkennung als mit KI erstellt markiert hat. Hat nur die Person, die einen Beitrag geteilt hat, ihn als KI gekennzeichnet, bleibt er sichtbar. Dieser Schalter ist anfangs aus, weil er noch nicht in einem echten Feed ausprobiert wurde.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Profile und einige Einstellungsseiten \u00f6ffnen sich in diesem neu signierten Build wieder.");
         table.put("Re-signed build fix",
@@ -451,6 +455,8 @@ public final class L10nTranslations {
                 "Informe completo guardado en %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, con los avisos de los proyectos en los que se basa");
+        table.put("Hide AI-detected posts",
+                "Ocultar publicaciones detectadas como IA");
         table.put("Hide promoted posts",
                 "Ocultar publicaciones promocionadas");
         table.put("Hide sponsored posts",
@@ -512,6 +518,8 @@ public final class L10nTranslations {
                 "Pausar Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Publicaciones que Facebook clasifica como promociones y no como anuncios.");
+        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
+                "Publicaciones que la propia detecci\u00f3n de Facebook marc\u00f3 como creadas con IA. Las que solo etiquet\u00f3 como IA quien las comparti\u00f3 se quedan. Este interruptor empieza desactivado porque todav\u00eda no se ha probado en un feed real.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Los perfiles y algunas p\u00e1ginas de Configuraci\u00f3n vuelven a abrirse en esta versi\u00f3n firmada de nuevo.");
         table.put("Re-signed build fix",
@@ -744,6 +752,8 @@ public final class L10nTranslations {
                 "Laporan lengkap disimpan ke %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya");
+        table.put("Hide AI-detected posts",
+                "Sembunyikan postingan yang terdeteksi dibuat dengan AI");
         table.put("Hide promoted posts",
                 "Sembunyikan postingan promosi");
         table.put("Hide sponsored posts",
@@ -805,6 +815,8 @@ public final class L10nTranslations {
                 "Jeda Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.");
+        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
+                "Postingan yang ditandai oleh deteksi Facebook sendiri sebagai buatan AI. Postingan yang diberi label AI hanya oleh orang yang membagikannya tetap ditampilkan. Sakelar ini awalnya nonaktif karena belum pernah dicoba di Kabar Beranda sungguhan.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.");
         table.put("Re-signed build fix",
@@ -1037,6 +1049,8 @@ public final class L10nTranslations {
                 "Relat\u00f3rio completo salvo em %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia");
+        table.put("Hide AI-detected posts",
+                "Ocultar posts detectados como IA");
         table.put("Hide promoted posts",
                 "Ocultar posts promovidos");
         table.put("Hide sponsored posts",
@@ -1098,6 +1112,8 @@ public final class L10nTranslations {
                 "Pausar o Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Posts que o Facebook classifica como promo\u00e7\u00f5es, e n\u00e3o como an\u00fancios.");
+        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
+                "Posts que a pr\u00f3pria detec\u00e7\u00e3o do Facebook marcou como feitos com IA. Um post que s\u00f3 quem compartilhou marcou como IA continua aparecendo. Esta op\u00e7\u00e3o come\u00e7a desligada porque ainda n\u00e3o foi testada em um feed de verdade.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Perfis e algumas p\u00e1ginas de Configura\u00e7\u00f5es voltam a abrir nesta vers\u00e3o reassinada.");
         table.put("Re-signed build fix",
@@ -1330,6 +1346,8 @@ public final class L10nTranslations {
                 "Tam rapor \u015furaya kaydedildi: %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, \u00fczerine kuruldu\u011fu projelerin lisans bildirimleriyle");
+        table.put("Hide AI-detected posts",
+                "Yapay zek\u00e2 ile \u00fcretildi\u011fi tespit edilen g\u00f6nderileri gizle");
         table.put("Hide promoted posts",
                 "Tan\u0131t\u0131lan g\u00f6nderileri gizle");
         table.put("Hide sponsored posts",
@@ -1391,6 +1409,8 @@ public final class L10nTranslations {
                 "Hushfacebook'u duraklat");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Facebook'un reklam yerine tan\u0131t\u0131m olarak sayd\u0131\u011f\u0131 g\u00f6nderiler.");
+        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
+                "Facebook'un kendi tespitinin yapay zek\u00e2 ile \u00fcretilmi\u015f diye i\u015faretledi\u011fi g\u00f6nderiler. Yapay zek\u00e2 etiketini yaln\u0131zca payla\u015fan ki\u015finin ekledi\u011fi g\u00f6nderiler kal\u0131r. Bu anahtar hen\u00fcz ger\u00e7ek bir ak\u0131\u015fta denenmedi\u011fi i\u00e7in kapal\u0131 ba\u015flar.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Profiller ve baz\u0131 Ayarlar sayfalar\u0131 bu yeniden imzalanm\u0131\u015f s\u00fcr\u00fcmde tekrar a\u00e7\u0131l\u0131r.");
         table.put("Re-signed build fix",

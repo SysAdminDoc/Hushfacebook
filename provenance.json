@@ -78,6 +78,19 @@
     },
     {
       "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/feed/GenAiLabel.java",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/feed/aidetected/**"
+      ],
+      "origin": "original",
+      "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
+      "via": [
+        "https://github.com/SapitoSucio/FroggoMorphePatches"
+      ],
+      "license": "GPL-3.0-only",
+      "changes": "Written for Hushfacebook: the rule that hides feed posts Facebook's own detection marked as made with AI. The idea follows the Facebook 573 AI filter of FroggoMorphePatches, which ArunTS96/FroggoMorphePatches and mben25/morphe-patches carry too. No code of it is here: that filter writes down 573's obfuscated names, while this finds GraphQLStory's accessor in 577 and 580 by the schema keys it loads, holds it to the flag Facebook's own GenAiTransparencyPlugin reads, and reads the flag through kept members."
+    },
+    {
+      "paths": [
         "extensions/shared/library/src/main/java/app/morphe/extension/shared/L10nTranslations.java"
       ],
       "origin": "original",

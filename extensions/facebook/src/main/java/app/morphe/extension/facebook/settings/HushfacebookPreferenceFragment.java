@@ -135,7 +135,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         PatchFamily.registerDiagnostics();
         Set<PatchFamily> build = PatchFamily.inThisBuild();
 
-        if (build.contains(PatchFamily.SPONSORED_POSTS) || build.contains(PatchFamily.SUGGESTED_POSTS)) {
+        if (build.contains(PatchFamily.SPONSORED_POSTS) || build.contains(PatchFamily.SUGGESTED_POSTS)
+                || build.contains(PatchFamily.AI_DETECTED_POSTS)) {
             PreferenceCategory feed = category(screen, L10n.t("News feed"));
             if (build.contains(PatchFamily.SPONSORED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_SPONSORED_POSTS, L10n.t("Hide sponsored posts"),
@@ -147,6 +148,12 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                 feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_POSTS,
                         L10n.t("Hide suggested and promoted units"),
                         L10n.t("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.")));
+            }
+            if (build.contains(PatchFamily.AI_DETECTED_POSTS)) {
+                feed.addPreference(toggle(context, Settings.HIDE_AI_DETECTED_POSTS, L10n.t("Hide AI-detected posts"),
+                        L10n.t("Posts that Facebook's own detection marked as made with AI. A post labeled only by "
+                                + "the person who shared it stays. This one starts off because it hasn't been tried "
+                                + "on a real feed yet.")));
             }
         }
 

@@ -36,7 +36,8 @@ private const val HIDE_EDGE =
  *
  * <p>Nothing here is named by the obfuscator. The method keeps its name, the edge and the enum are
  * kept model classes, and the two getters are picked by return type and by the `inflateFeedUnit`
- * literal.
+ * literal. A rule that needs more of the unit than this, such as the GenAI flag, reads it in the
+ * extension from the feed unit this guard already passes, so no rule adds code here.
  */
 internal val feedFilterHookPatch = bytecodePatch {
     dependsOn(facebookExtensionPatch)

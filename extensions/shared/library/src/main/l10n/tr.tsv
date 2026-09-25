@@ -53,6 +53,7 @@ Facebook doesn't serve ads to other apps on this phone.	Facebook bu telefondaki 
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Bir sonraki açılıştan itibaren yukarıdaki her anahtar kapalıymış gibi davranır ve yerine Facebook'un kendi kodu çalışır. Hata ayıklama günlüğü çalışmaya devam eder ve ayarların olduğu gibi kalır.
 Full report saved to %1$s	Tam rapor şuraya kaydedildi: %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, üzerine kurulduğu projelerin lisans bildirimleriyle
+Hide AI-detected posts	Yapay zekâ ile üretildiği tespit edilen gönderileri gizle
 Hide promoted posts	Tanıtılan gönderileri gizle
 Hide sponsored posts	Sponsorlu gönderileri gizle
 Hide sponsored reels	Sponsorlu Reels videolarını gizle
@@ -82,6 +83,7 @@ Open links in your browser	Bağlantıları tarayıcında aç
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Akıştaki ücretli reklamlar. Facebook eklemeden önce çıkarıldıkları için yerlerinde boşluk kalmaz.
 Pause Hushfacebook	Hushfacebook'u duraklat
 Posts Facebook files as promotions rather than as ads.	Facebook'un reklam yerine tanıtım olarak saydığı gönderiler.
+Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Facebook'un kendi tespitinin yapay zekâ ile üretilmiş diye işaretlediği gönderiler. Yapay zekâ etiketini yalnızca paylaşan kişinin eklediği gönderiler kalır. Bu anahtar henüz gerçek bir akışta denenmediği için kapalı başlar.
 Profiles and some Settings pages open again on this re-signed build.	Profiller ve bazı Ayarlar sayfaları bu yeniden imzalanmış sürümde tekrar açılır.
 Re-signed build fix	Yeniden imzalanmış sürüm düzeltmesi
 Reading the settings file	Ayar dosyası okunuyor

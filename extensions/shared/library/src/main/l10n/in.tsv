@@ -53,6 +53,7 @@ Facebook doesn't serve ads to other apps on this phone.	Facebook tidak menayangk
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Setelah Facebook dimulai ulang, semua sakelar di atas dianggap nonaktif, dan kode Facebook sendiri yang berjalan sebagai gantinya. Pencatatan debug tetap berfungsi, dan pengaturan Anda tetap seperti semula.
 Full report saved to %1$s	Laporan lengkap disimpan ke %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya
+Hide AI-detected posts	Sembunyikan postingan yang terdeteksi dibuat dengan AI
 Hide promoted posts	Sembunyikan postingan promosi
 Hide sponsored posts	Sembunyikan postingan bersponsor
 Hide sponsored reels	Sembunyikan Reels bersponsor
@@ -82,6 +83,7 @@ Open links in your browser	Buka tautan di browser Anda
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Iklan berbayar di Kabar Beranda. Iklannya dibuang sebelum ditambahkan Facebook, jadi tidak meninggalkan ruang kosong.
 Pause Hushfacebook	Jeda Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.
+Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Postingan yang ditandai oleh deteksi Facebook sendiri sebagai buatan AI. Postingan yang diberi label AI hanya oleh orang yang membagikannya tetap ditampilkan. Sakelar ini awalnya nonaktif karena belum pernah dicoba di Kabar Beranda sungguhan.
 Profiles and some Settings pages open again on this re-signed build.	Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.
 Re-signed build fix	Perbaikan build yang ditandatangani ulang
 Reading the settings file	Membaca file pengaturan

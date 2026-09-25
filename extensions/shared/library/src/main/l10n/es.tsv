@@ -53,6 +53,7 @@ Facebook doesn't serve ads to other apps on this phone.	Facebook no envía anunc
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	A partir del próximo inicio, todos los interruptores de arriba funcionan como si estuvieran desactivados, y en su lugar se ejecuta el código propio de Facebook. El Registro de depuración sigue funcionando y tu configuración no cambia.
 Full report saved to %1$s	Informe completo guardado en %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, con los avisos de los proyectos en los que se basa
+Hide AI-detected posts	Ocultar publicaciones detectadas como IA
 Hide promoted posts	Ocultar publicaciones promocionadas
 Hide sponsored posts	Ocultar publicaciones publicitarias
 Hide sponsored reels	Ocultar reels publicitarios
@@ -82,6 +83,7 @@ Open links in your browser	Abrir enlaces en tu navegador
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Anuncios pagados en el feed. Se eliminan antes de que Facebook los inserte, así que no queda ningún espacio vacío.
 Pause Hushfacebook	Pausar Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Publicaciones que Facebook clasifica como promociones y no como anuncios.
+Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Publicaciones que la propia detección de Facebook marcó como creadas con IA. Las que solo etiquetó como IA quien las compartió se quedan. Este interruptor empieza desactivado porque todavía no se ha probado en un feed real.
 Profiles and some Settings pages open again on this re-signed build.	Los perfiles y algunas páginas de Configuración vuelven a abrirse en esta versión firmada de nuevo.
 Re-signed build fix	Arreglo para la nueva firma
 Reading the settings file	Leyendo el archivo de configuración

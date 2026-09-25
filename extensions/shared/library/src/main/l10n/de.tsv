@@ -53,6 +53,7 @@ Facebook doesn't serve ads to other apps on this phone.	Facebook liefert keine W
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Ab dem nächsten Start verhält sich jeder Schalter weiter oben, als wäre er aus, und stattdessen läuft Facebooks eigener Code. Die Debug-Protokollierung funktioniert weiter, und deine Einstellungen bleiben, wie sie sind.
 Full report saved to %1$s	Vollständiger Bericht gespeichert unter %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut
+Hide AI-detected posts	Als KI erkannte Beiträge ausblenden
 Hide promoted posts	Beworbene Beiträge ausblenden
 Hide sponsored posts	Gesponserte Beiträge ausblenden
 Hide sponsored reels	Gesponserte Reels ausblenden
@@ -82,6 +83,7 @@ Open links in your browser	Links in deinem Browser öffnen
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Bezahlte Anzeigen im Feed. Diese werden aussortiert, bevor Facebook sie einfügt, sodass keine Lücke bleibt.
 Pause Hushfacebook	Hushfacebook pausieren
 Posts Facebook files as promotions rather than as ads.	Beiträge, die Facebook als beworben statt als Anzeige einstuft.
+Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Beiträge, die Facebooks eigene Erkennung als mit KI erstellt markiert hat. Hat nur die Person, die einen Beitrag geteilt hat, ihn als KI gekennzeichnet, bleibt er sichtbar. Dieser Schalter ist anfangs aus, weil er noch nicht in einem echten Feed ausprobiert wurde.
 Profiles and some Settings pages open again on this re-signed build.	Profile und einige Einstellungsseiten öffnen sich in diesem neu signierten Build wieder.
 Re-signed build fix	Fix für neu signierte Builds
 Reading the settings file	Einstellungsdatei wird gelesen

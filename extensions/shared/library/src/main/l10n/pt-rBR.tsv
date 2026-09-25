@@ -53,6 +53,7 @@ Facebook doesn't serve ads to other apps on this phone.	O Facebook não envia an
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	A partir da próxima abertura, todas as opções acima funcionam como se estivessem desligadas, e o código do próprio Facebook roda no lugar. O Registro de depuração continua funcionando, e suas configurações ficam como estão.
 Full report saved to %1$s	Relatório completo salvo em %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia
+Hide AI-detected posts	Ocultar posts detectados como IA
 Hide promoted posts	Ocultar posts promovidos
 Hide sponsored posts	Ocultar posts patrocinados
 Hide sponsored reels	Ocultar reels patrocinados
@@ -82,6 +83,7 @@ Open links in your browser	Abrir links no seu navegador
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Anúncios pagos no feed. São removidos antes de o Facebook adicioná-los, então não fica nenhum espaço vazio.
 Pause Hushfacebook	Pausar o Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Posts que o Facebook classifica como promoções, e não como anúncios.
+Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Posts que a própria detecção do Facebook marcou como feitos com IA. Um post que só quem compartilhou marcou como IA continua aparecendo. Esta opção começa desligada porque ainda não foi testada em um feed de verdade.
 Profiles and some Settings pages open again on this re-signed build.	Perfis e algumas páginas de Configurações voltam a abrir nesta versão reassinada.
 Re-signed build fix	Correção para versão reassinada
 Reading the settings file	Lendo o arquivo de configurações

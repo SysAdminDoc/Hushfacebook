@@ -71,6 +71,7 @@ public final class SettingsBackup {
             Settings.HIDE_SPONSORED_POSTS,
             Settings.HIDE_PROMOTED_POSTS,
             Settings.HIDE_SUGGESTED_POSTS,
+            Settings.HIDE_AI_DETECTED_POSTS,
             Settings.HIDE_SPONSORED_STORIES,
             Settings.HIDE_SPONSORED_REELS,
             Settings.OPEN_LINKS_EXTERNALLY,
