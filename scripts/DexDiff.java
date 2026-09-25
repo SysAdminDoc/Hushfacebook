@@ -23,6 +23,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.formats.ArrayPayload;
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference;
 import com.android.tools.smali.dexlib2.iface.reference.Reference;
+import com.android.tools.smali.dexlib2.iface.reference.TypeReference;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -487,7 +488,8 @@ public class DexDiff {
 
     /**
      * Whether a register of this kind can be read as that kind. T is never in doubt here; B, b, w
-     * and C can't be read as anything, and W only as the pair it starts.
+     * and C can't be read as anything, and W only as the pair it starts. E is what a test against
+     * zero or an equality test takes: a narrow value or an object.
      */
     private static boolean readableAs(char have, char want) {
         if (have == 'T') return true;
@@ -496,6 +498,7 @@ public class DexDiff {
             case 'W': return have == 'W';
             case 'I': return have == 'I' || have == 'Z';
             case 'L': return have == 'L' || have == 'Z';
+            case 'E': return have == 'I' || have == 'Z' || have == 'L';
             default: return true;
         }
     }
@@ -582,6 +585,42 @@ public class DexDiff {
                 ThreeRegisterInstruction t = (ThreeRegisterInstruction) i;
                 read(reads, t.getRegisterB(), 'L');
                 read(reads, t.getRegisterC(), 'I');
+                return reads;
+            }
+            // Each register as ART's verifier checks it. A test against zero or for equality takes
+            // a narrow value or an object, an ordering, a switch or a new array's size takes a
+            // narrow value, and a lock, a throw, a cast, a type test, or an array to measure or
+            // fill takes an object. An equality test of an int with an object is left alone.
+            case IF_EQZ: case IF_NEZ:
+                read(reads, ((OneRegisterInstruction) i).getRegisterA(), 'E');
+                return reads;
+            case IF_EQ: case IF_NE:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterA(), 'E');
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'E');
+                return reads;
+            case IF_LTZ: case IF_GEZ: case IF_GTZ: case IF_LEZ:
+            case PACKED_SWITCH: case SPARSE_SWITCH:
+                read(reads, ((OneRegisterInstruction) i).getRegisterA(), 'I');
+                return reads;
+            case IF_LT: case IF_GE: case IF_GT: case IF_LE:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterA(), 'I');
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'I');
+                return reads;
+            case MONITOR_ENTER: case MONITOR_EXIT: case THROW: case CHECK_CAST: case FILL_ARRAY_DATA:
+                read(reads, ((OneRegisterInstruction) i).getRegisterA(), 'L');
+                return reads;
+            case INSTANCE_OF: case ARRAY_LENGTH:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'L');
+                return reads;
+            case NEW_ARRAY:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'I');
+                return reads;
+            case FILLED_NEW_ARRAY: case FILLED_NEW_ARRAY_RANGE: {
+                // Each element as the array holds it: an object, or a narrow value.
+                Reference type = ((ReferenceInstruction) i).getReference();
+                if (!(type instanceof TypeReference)) return reads;
+                char element = kindOf(((TypeReference) type).getType().substring(1));
+                for (int register : invokeRegisters(i)) read(reads, register, element);
                 return reads;
             }
             default:
@@ -850,6 +889,7 @@ public class DexDiff {
             case 'b': return "the upper half of a wide value whose lower half was overwritten";
             case 'C': return "a different kind depending on the path taken";
             case 'Z': return "a zero constant";
+            case 'E': return "a narrow value or an object";
             default: return "a narrow value";
         }
     }

@@ -12,6 +12,7 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod;
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodImplementation;
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter;
 import com.android.tools.smali.dexlib2.immutable.ImmutableTryBlock;
+import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableArrayPayload;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction10t;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction10x;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction11n;
@@ -20,6 +21,8 @@ import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstructio
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction21c;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction21s;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction21t;
+import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction22c;
+import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction22t;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction31i;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction31t;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction35c;
@@ -28,6 +31,7 @@ import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableSwitchElem
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableFieldReference;
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference;
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableStringReference;
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableTypeReference;
 import com.android.tools.smali.dexlib2.writer.pool.DexPool;
 
 import java.io.File;
@@ -63,6 +67,10 @@ public class BadDexFixture {
     private static final ImmutableMethodReference WIDE = method(FILTER, "wide", "V", "J");
     private static final ImmutableMethodReference RISKY = method(HOST, "risky", "I");
 
+    private static final ImmutableTypeReference STRING_TYPE = new ImmutableTypeReference("Ljava/lang/String;");
+    private static final ImmutableTypeReference INT_ARRAY = new ImmutableTypeReference("[I");
+    private static final ImmutableTypeReference OBJECT_ARRAY = new ImmutableTypeReference("[Ljava/lang/Object;");
+
     private static ImmutableMethodReference method(String owner, String name, String returns, String... parameters) {
         return new ImmutableMethodReference(owner, name, Arrays.asList(parameters), returns);
     }
@@ -82,6 +90,16 @@ public class BadDexFixture {
 
     private static Instruction ifEqz(int register, int offset) {
         return new ImmutableInstruction21t(Opcode.IF_EQZ, register, offset);
+    }
+
+    private static Instruction filledNewArray(ImmutableTypeReference type, int... registers) {
+        int[] r = Arrays.copyOf(registers, 5);
+        return new ImmutableInstruction35c(Opcode.FILLED_NEW_ARRAY, registers.length, r[0], r[1], r[2], r[3], r[4], type);
+    }
+
+    /** A fill-array-data payload of one int. */
+    private static Instruction oneInt() {
+        return new ImmutableArrayPayload(4, Collections.<Number>singletonList(1));
     }
 
     private static ImmutableMethodImplementation body(int registers, Instruction... instructions) {
@@ -262,7 +280,8 @@ public class BadDexFixture {
      * passed as an object, a const-wide/32 passed as a long, a const passed as an int. joins and
      * caught are where paths meet the way ART allows: a zero that is an object on one arm and a
      * zero that is an int on the other, a conflict that is only copied, and a handler that reads
-     * what its register held before the instruction that threw.
+     * what its register held before the instruction that threw. reads gives each instruction the
+     * conflict builds fail a value of the kind ART takes there, so a read made stricter fails too.
      */
     private static ClassDef filter() {
         List<Method> methods = Arrays.asList(
@@ -310,7 +329,37 @@ public class BadDexFixture {
                         op(Opcode.RETURN_VOID),                                                  // 6
                         op(Opcode.MOVE_EXCEPTION, 1),                                            // 7
                         invoke(REUSE, 0),                                                        // 8
-                        op(Opcode.RETURN_VOID)), "I"));                                          // 11
+                        op(Opcode.RETURN_VOID)), "I"),                                           // 11
+                // v4 the object, v5 the int: objects and ints tested for equality, an int ordered,
+                // tested against zero and switched on, an object locked, cast and tested, an int
+                // as a new array's size, the array measured and filled, ints and an object as a
+                // new array's elements, and a null thrown.
+                define(FILTER, "reads", "V", true, body(6,
+                        new ImmutableInstruction22t(Opcode.IF_EQ, 4, 4, 3),                      // 0 -> 3
+                        op(Opcode.NOP),                                                          // 2
+                        new ImmutableInstruction22t(Opcode.IF_NE, 5, 5, 3),                      // 3 -> 6
+                        op(Opcode.NOP),                                                          // 5
+                        new ImmutableInstruction22t(Opcode.IF_LT, 5, 5, 3),                      // 6 -> 9
+                        op(Opcode.NOP),                                                          // 8
+                        new ImmutableInstruction21t(Opcode.IF_NEZ, 5, 3),                        // 9 -> 12
+                        op(Opcode.NOP),                                                          // 11
+                        new ImmutableInstruction21t(Opcode.IF_GEZ, 5, 3),                        // 12 -> 15
+                        op(Opcode.NOP),                                                          // 14
+                        op(Opcode.MONITOR_ENTER, 4),                                             // 15
+                        op(Opcode.MONITOR_EXIT, 4),                                              // 16
+                        new ImmutableInstruction21c(Opcode.CHECK_CAST, 4, STRING_TYPE),          // 17
+                        new ImmutableInstruction22c(Opcode.INSTANCE_OF, 0, 4, STRING_TYPE),      // 19
+                        new ImmutableInstruction22c(Opcode.NEW_ARRAY, 1, 5, INT_ARRAY),          // 21
+                        new ImmutableInstruction12x(Opcode.ARRAY_LENGTH, 2, 1),                  // 23
+                        new ImmutableInstruction31t(Opcode.FILL_ARRAY_DATA, 1, 14),              // 24 -> 38
+                        filledNewArray(INT_ARRAY, 5, 0),                                         // 27
+                        filledNewArray(OBJECT_ARRAY, 4),                                         // 30
+                        new ImmutableInstruction31t(Opcode.PACKED_SWITCH, 5, 11),                // 33 -> 44
+                        new ImmutableInstruction11n(Opcode.CONST_4, 3, 0),                       // 36
+                        op(Opcode.THROW, 3),                                                     // 37
+                        oneInt(),                                                                // 38
+                        new ImmutablePackedSwitchPayload(Collections.singletonList(              // 44
+                                new ImmutableSwitchElement(0, 3)))), OBJECT, "I"));
         return new ImmutableClassDef(FILTER, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(),
                 OBJECT, null, null, null, packedField(FILTER), methods);
     }
@@ -342,6 +391,20 @@ public class BadDexFixture {
 
     private static List<ClassDef> withTryHost(Method tryHost) {
         return patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST), switchHost(7), tryHost);
+    }
+
+    /**
+     * staticHost with v0 an object on one arm of a branch and an int on the other, which ART merges
+     * into a conflict where the arms meet at 5, and [then] from there. v1 and v2 are free, v3 is
+     * the object argument, and the long sits in v4 and v5.
+     */
+    private static List<ClassDef> conflictThen(Instruction... then) {
+        List<Instruction> instructions = new ArrayList<>(Arrays.asList(
+                new ImmutableInstruction21c(Opcode.CONST_STRING, 0, new ImmutableStringReference("edge")), // 0
+                ifEqz(3, 3),                                                                              // 2 -> 5
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 1)));                                      // 4
+        instructions.addAll(Arrays.asList(then));
+        return withStaticHost(new ImmutableMethodImplementation(6, instructions, null, null));
     }
 
     public static void main(String[] args) throws Exception {
@@ -451,6 +514,44 @@ public class BadDexFixture {
         // width: the reverse, a const-wide/32 passed where an int goes.
         dexes.put("bad-wide-for-narrow", withStaticHost(body(5,
                 new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK), invoke(REUSE, 0), op(Opcode.RETURN_VOID))));
+        // width: a conflict read by each instruction that takes a value, one build each: tested
+        // against zero, tested for equality, ordered, switched on, locked, thrown, cast, tested for
+        // a type, measured, used as a new array's size and as its element, and filled. ART's
+        // verifier fails every one of these reads of a conflict.
+        dexes.put("bad-conflict-if-eqz", conflictThen(
+                ifEqz(0, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));                    // 5 -> 8
+        dexes.put("bad-conflict-if-ne", conflictThen(
+                new ImmutableInstruction22t(Opcode.IF_NE, 0, 3, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-if-lt", conflictThen(new ImmutableInstruction11n(Opcode.CONST_4, 1, 0),
+                new ImmutableInstruction22t(Opcode.IF_LT, 0, 1, 3), op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-switch", conflictThen(
+                new ImmutableInstruction31t(Opcode.PACKED_SWITCH, 0, 5),                           // 5 -> 10
+                op(Opcode.RETURN_VOID),                                                            // 8
+                op(Opcode.NOP),                                                                    // 9, aligns the payload
+                new ImmutablePackedSwitchPayload(Collections.singletonList(                        // 10
+                        new ImmutableSwitchElement(0, 3)))));
+        dexes.put("bad-conflict-monitor-enter", conflictThen(op(Opcode.MONITOR_ENTER, 0), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-throw", conflictThen(op(Opcode.THROW, 0)));
+        dexes.put("bad-conflict-check-cast", conflictThen(
+                new ImmutableInstruction21c(Opcode.CHECK_CAST, 0, STRING_TYPE), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-instance-of", conflictThen(
+                new ImmutableInstruction22c(Opcode.INSTANCE_OF, 1, 0, STRING_TYPE), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-array-length", conflictThen(
+                new ImmutableInstruction12x(Opcode.ARRAY_LENGTH, 1, 0), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-new-array", conflictThen(
+                new ImmutableInstruction22c(Opcode.NEW_ARRAY, 1, 0, INT_ARRAY), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-filled-new-array", conflictThen(filledNewArray(INT_ARRAY, 0), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-fill-array-data", conflictThen(
+                new ImmutableInstruction31t(Opcode.FILL_ARRAY_DATA, 0, 5),                         // 5 -> 10
+                op(Opcode.RETURN_VOID),                                                            // 8
+                op(Opcode.NOP),                                                                    // 9, aligns the payload
+                oneInt()));                                                                        // 10
+        // width: a long tested against zero, which takes a narrow value or an object.
+        dexes.put("bad-wide-if-eqz", withStaticHost(body(5,
+                new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
+                ifEqz(0, 3),                                                                       // 3 -> 6
+                op(Opcode.RETURN_VOID),                                                            // 5
+                op(Opcode.RETURN_VOID))));                                                         // 6
         // result: a nop injected between the guard's invoke and its move-result.
         dexes.put("bad-move-result", withFeedEdge(body(4,
                 invoke(HIDE_EDGE, 2, 3), op(Opcode.NOP), op(Opcode.MOVE_RESULT, 0), ifEqz(0, 3),
