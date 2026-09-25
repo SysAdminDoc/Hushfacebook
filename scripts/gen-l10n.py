@@ -66,12 +66,24 @@ def plural_base(english):
     return match.group("base") if match else english
 
 
+# Characters that draw nothing without being control or format characters: Unicode's
+# Default_Ignorable fillers, joiners and selectors, and the blank braille cell.
+INVISIBLE_RANGES = [
+    (0x034F, 0x034F), (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180F), (0x2800, 0x2800),
+    (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3),
+    (0x1D173, 0x1D17A), (0xE0000, 0xE0FFF),
+]
+
+
 def invisible(text):
-    """The first control or formatting character in text, or None. Newlines are \\n by now."""
+    """The first control, formatting or other invisible character in text, or None. Newlines
+    are \\n by now."""
     for char in text:
         if char == "\n":
             continue
         if unicodedata.category(char) in ("Cc", "Cf", "Co", "Cn", "Zl", "Zp"):
+            return char
+        if any(low <= ord(char) <= high for low, high in INVISIBLE_RANGES):
             return char
     return None
 

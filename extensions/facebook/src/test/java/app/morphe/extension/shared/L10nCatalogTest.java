@@ -146,7 +146,15 @@ public class L10nCatalogTest {
         assertTrue(textProblem("a " + (char) 0x2013 + " b") != null);
         assertTrue(textProblem("a - b") != null);
         assertTrue(textProblem("a" + (char) 0x200B + "b") != null);
+        // Fillers and selectors that are neither control nor format characters, one from each
+        // range, those past the BMP included.
+        for (int invisible : new int[]{0x3164, 0x115F, 0x1160, 0xFFA0, 0x034F, 0xFE0F, 0x17B5, 0x2800,
+                0x180B, 0xFFF0, 0x1BCA0, 0x1D173, 0xE0100}) {
+            assertTrue(String.format("U+%04X passed", invisible),
+                    textProblem("a" + new String(Character.toChars(invisible)) + "b") != null);
+        }
         assertEquals(null, textProblem("Re-signed build fix"));
+        assertEquals("accented letters are words, not invisible", null, textProblem("Ausblenden f" + (char) 0x00FC + "r"));
     }
 
     /** No sentence goes to a view, a toast or a notification without going through the catalog. */
@@ -309,14 +317,27 @@ public class L10nCatalogTest {
         return wanted.equals(given) ? null : "placeholders " + wanted + " became " + given + " in " + english;
     }
 
+    /**
+     * Characters that draw nothing without being control or format characters: Unicode's
+     * Default_Ignorable fillers, joiners and selectors, and the blank braille cell. The same list
+     * scripts/gen-l10n.py refuses.
+     */
+    private static final int[][] INVISIBLE_RANGES = {
+            {0x034F, 0x034F}, {0x115F, 0x1160}, {0x17B4, 0x17B5}, {0x180B, 0x180F}, {0x2800, 0x2800},
+            {0x3164, 0x3164}, {0xFE00, 0xFE0F}, {0xFFA0, 0xFFA0}, {0xFFF0, 0xFFF8}, {0x1BCA0, 0x1BCA3},
+            {0x1D173, 0x1D17A}, {0xE0000, 0xE0FFF},
+    };
+
     static String textProblem(String text) {
-        for (int index = 0; index < text.length(); index++) {
-            char at = text.charAt(index);
+        for (int index = 0; index < text.length(); ) {
+            int at = text.codePointAt(index);
+            index += Character.charCount(at);
             if (at == 0x2013 || at == 0x2014) return "has a dash";
             int type = Character.getType(at);
-            if (at != '\n' && (type == Character.CONTROL || type == Character.FORMAT)) {
-                return String.format("has U+%04X", (int) at);
-            }
+            boolean invisible = type == Character.CONTROL || type == Character.FORMAT
+                    || type == Character.PRIVATE_USE || type == Character.UNASSIGNED;
+            for (int[] range : INVISIBLE_RANGES) invisible |= at >= range[0] && at <= range[1];
+            if (at != '\n' && invisible) return String.format("has U+%04X", at);
         }
         return text.contains(" - ") ? "has a hyphen standing in for a dash" : null;
     }
