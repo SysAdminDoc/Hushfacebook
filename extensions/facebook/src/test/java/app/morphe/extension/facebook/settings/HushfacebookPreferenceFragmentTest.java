@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
@@ -117,18 +118,24 @@ public class HushfacebookPreferenceFragmentTest {
     @Test
     public void thePausedCardSaysWhatStaysInForEveryReason() {
         for (HushfacebookPause.Reason why : HushfacebookPause.Reason.values()) {
-            String summary = HushfacebookPreferenceFragment.pausedSummary(why);
+            String summary = HushfacebookPreferenceFragment.pausedSummary(why, "com.facebook.katana");
             assertFalse(why + ": " + summary, UNPATCHED.matcher(summary).find());
             assertTrue(why + ": " + summary, summary.contains("what was set when you patched stays in"));
             // Debug logging is kept as saved while paused, so the card can't say every switch is off.
             assertTrue(why + ": " + summary, summary.contains("Every switch but Debug logging"));
         }
 
+        // The marker counts only in the app's own files folder, and the card names that folder,
+        // not the one above it a person finds first.
+        String pkg = RuntimeEnvironment.getApplication().getPackageName();
+        assertTrue(HushfacebookPreferenceFragment.pausedSummary(HushfacebookPause.Reason.MARKER_FILE, pkg)
+                .contains("in Android/data/" + pkg + "/files paused Hushfacebook"));
+
         PauseForTests.pause(HushfacebookPause.Reason.CRASH_LOOP);
         try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
             Preference card = rowsOf(controller).get(0);
             assertEquals("Hushfacebook is paused", String.valueOf(card.getTitle()));
-            assertEquals(HushfacebookPreferenceFragment.pausedSummary(HushfacebookPause.Reason.CRASH_LOOP)
+            assertEquals(HushfacebookPreferenceFragment.pausedSummary(HushfacebookPause.Reason.CRASH_LOOP, RuntimeEnvironment.getApplication().getPackageName())
                     + " Tap to turn it back on.", String.valueOf(card.getSummary()));
         }
     }

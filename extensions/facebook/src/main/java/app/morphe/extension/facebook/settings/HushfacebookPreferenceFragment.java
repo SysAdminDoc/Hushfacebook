@@ -206,7 +206,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             return card;
         }
         card.setTitle("Hushfacebook is paused");
-        card.setSummary(pausedSummary(HushfacebookPause.reason()) + " Tap to turn it back on.");
+        card.setSummary(pausedSummary(HushfacebookPause.reason(), context.getPackageName()) + " Tap to turn it back on.");
         card.setOnPreferenceClickListener(p -> {
             boolean markerGone = HushfacebookPause.turnBackOn(context);
             Preference pause = findPreference(BaseSettings.PAUSED.key);
@@ -214,7 +214,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             card.setSummary(markerGone
                     ? "Hushfacebook turns back on when Facebook restarts."
                     : "The file " + HushfacebookPause.MARKER_FILE_NAME + " couldn't be removed. Delete it "
-                            + "from Facebook's folder under Android/data to turn Hushfacebook back on.");
+                            + "from " + markerFolder(context.getPackageName()) + " to turn Hushfacebook back on.");
             return true;
         });
         return card;
@@ -224,15 +224,15 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
      * Why this start runs paused, what a pause does and doesn't reach, and that nothing the reader
      * saved has changed.
      */
-    static String pausedSummary(HushfacebookPause.Reason reason) {
+    static String pausedSummary(HushfacebookPause.Reason reason, String packageName) {
         String why;
         switch (reason) {
             case CRASH_LOOP:
                 why = "Facebook closed three times within a minute of starting, so Hushfacebook paused itself.";
                 break;
             case MARKER_FILE:
-                why = "A file named " + HushfacebookPause.MARKER_FILE_NAME + " in Facebook's folder under "
-                        + "Android/data paused Hushfacebook.";
+                why = "A file named " + HushfacebookPause.MARKER_FILE_NAME + " in " + markerFolder(packageName)
+                        + " paused Hushfacebook.";
                 break;
             default:
                 why = "You paused Hushfacebook.";
@@ -240,6 +240,14 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         }
         return why + " Every switch but Debug logging acts as if it were off, and what was set when you "
                 + "patched stays in. Your settings stay as they are.";
+    }
+
+    /**
+     * Where the marker file goes, the way a file manager shows it: the app's own files folder, not
+     * the folder above it, which is the one a person finds first.
+     */
+    static String markerFolder(String packageName) {
+        return "Android/data/" + packageName + "/files";
     }
 
     /** The dark Material theme every row on this screen is built with, over Facebook's own. */
