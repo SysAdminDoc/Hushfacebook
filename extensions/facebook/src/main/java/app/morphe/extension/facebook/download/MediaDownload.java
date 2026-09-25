@@ -11,6 +11,7 @@ import android.content.Context;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import app.morphe.extension.facebook.settings.FamilyNames;
@@ -41,7 +42,7 @@ import app.morphe.extension.shared.diagnostics.HookStatus;
  * still reports success.
  *
  * <p>Every step goes to the diagnostic report under Downloads, and to logcat as
- * {@code morphe: MediaDownload}. Addresses are logged as file name and quality only.
+ * {@code morphe: MediaDownload}. Addresses are logged as kind of file and quality only.
  */
 public final class MediaDownload {
 
@@ -244,11 +245,16 @@ public final class MediaDownload {
         return Downloader.save(url, kind, folder, writer, policyFor(application), Downloader.MAX_BYTES);
     }
 
+    /** The policy every save a test drives uses in place of the real one. Never set on a phone. */
+    static volatile MediaUrlPolicy policyForTests;
+
     /**
      * Meta's address rules, with the lookup fence up only while the socket goes straight to the
      * answer: no proxy for the address and no VPN on the network. See {@link MediaUrlPolicy}.
      */
-    private static MediaUrlPolicy policyFor(Context application) {
+    static MediaUrlPolicy policyFor(Context application) {
+        MediaUrlPolicy forced = policyForTests;
+        if (forced != null) return forced;
         return new MediaUrlPolicy(MediaUrlPolicy.DNS, url -> !MediaUrlPolicy.proxied(url) && !onVpn(application));
     }
 
@@ -397,18 +403,24 @@ public final class MediaDownload {
     }
 
     /**
-     * Enough of an address to recognise it in a log, and no more.
+     * Enough of an address to tell one candidate from another in a report: its kind of file and
+     * its quality, and no more.
      *
      * <p>A whole address is a signed, working handle to the content of the user, and the log can
-     * be read by anything else on the device.
+     * be read by anything else on the device. The file name isn't safe either: on Meta's CDN it
+     * carries the object's own id ({@code 475148478_1134540631592283_..._n.jpg}), and the report
+     * is pasted into public issues.
      */
-    private static String describe(String url) {
+    static String describe(String url) {
         int query = url.indexOf('?');
         String withoutQuery = query < 0 ? url : url.substring(0, query);
 
         int slash = withoutQuery.lastIndexOf('/');
         String file = slash < 0 ? withoutQuery : withoutQuery.substring(slash + 1);
+        int dot = file.lastIndexOf('.');
+        String extension = dot < 0 ? "" : file.substring(dot + 1).toLowerCase(Locale.US);
+        if (!extension.matches("[a-z0-9]{1,5}")) extension = "file";
 
-        return file + " (" + RenditionPicker.qualityOf(url) + "p)";
+        return extension + " (" + RenditionPicker.qualityOf(url) + "p)";
     }
 }

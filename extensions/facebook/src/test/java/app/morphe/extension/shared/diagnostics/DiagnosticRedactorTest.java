@@ -140,6 +140,17 @@ public class DiagnosticRedactorTest {
         assertEquals("Hidden [id omitted] at 1790000000000", line);
     }
 
+    /**
+     * A CDN file name joins its ids with underscores, and an underscore is a word character, so a
+     * rule bounded by word edges never saw them. The middle number is the photo's own id.
+     */
+    @Test public void idsJoinedByUnderscoresInAFileNameGo() {
+        String line = DiagnosticRedactor.redact(
+                "saving image 475148478_1134540631592283_1316146539584337463_n.jpg and id1234567890123456x");
+
+        assertEquals("saving image 475148478_[id omitted]_[id omitted]_n.jpg and id[id omitted]x", line);
+    }
+
     /** The mutation control: a line with no name, handle or id is returned as it came. */
     @Test public void aLineWithNothingToHideIsLeftAlone() {
         String line = "Removed 3 of 12 feed units (maxsize=40, boxes=2) for author 3f9a2c1b0e7d";

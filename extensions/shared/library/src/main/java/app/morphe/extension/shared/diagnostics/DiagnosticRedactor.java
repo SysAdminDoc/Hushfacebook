@@ -42,8 +42,12 @@ public final class DiagnosticRedactor {
      * account ids are fifteen digits (the newer ones seventeen) and its post and story ids run to
      * nineteen; nothing else these reports carry is a number that long. A millisecond timestamp
      * is thirteen digits, so it stays readable.
+     *
+     * <p>Bounded by digits rather than by word edges. A CDN file name joins its ids with
+     * underscores ({@code 475148478_1134540631592283_1316146539584337463_n.jpg}), an underscore is
+     * a word character, and a word-bounded rule found no edge there.
      */
-    private static final String BARE_CONTENT_ID = "\\b\\d{15,21}\\b";
+    private static final String BARE_CONTENT_ID = "(?<!\\d)\\d{15,21}(?!\\d)";
     /**
      * A creator's name, as the bundle writes it into a toast or a banner: between Unicode's
      * first-strong isolate U+2068 and its pop U+2069. Every toast is written to the buffer as it

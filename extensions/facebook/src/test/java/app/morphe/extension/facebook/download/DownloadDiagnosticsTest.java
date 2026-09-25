@@ -139,6 +139,63 @@ public class DownloadDiagnosticsTest {
         assertFalse(report, report.contains("/gone.mp4"));
     }
 
+    /** A photo on Meta's CDN: the middle number of the file name is the photo's own id. */
+    private static final String PHOTO = "https://scontent-iad3-1.xx.fbcdn.net/v/t39.30808-6/"
+            + "475148478_1134540631592283_1316146539584337463_n.jpg?_nc_cat=1&oh=00_AYA&oe=66F0A1B2";
+
+    /** A video file named the same way. */
+    private static final String CLIP = "https://video-iad3-1.xx.fbcdn.net/o1/v/t2/f2/m69/"
+            + "449237416_1234567890123456_1234567890123456789_n.mp4?efg=x&oh=1&oe=2";
+
+    /** A reel's player source, its fields named the way the patch passes them. */
+    static final class ReelSource {
+        final String hd;
+        final String sd;
+        final String manifest;
+
+        ReelSource(String hd, String sd, String manifest) {
+            this.hd = hd;
+            this.sd = sd;
+            this.manifest = manifest;
+        }
+    }
+
+    /** Waits for every save the feature started on its own worker. */
+    private static void waitForSaves() throws InterruptedException {
+        for (Thread thread : Thread.getAllStackTraces().keySet()) {
+            if ("hushfacebook-save".equals(thread.getName())) thread.join(20_000);
+        }
+    }
+
+    /**
+     * Save lines used to print the file name, and on Meta's CDN that carries the object's own id,
+     * so a report pasted into a public issue named what was saved. Both saves here start for real
+     * and are refused before any socket opens: this test's policy answers every Meta name with a
+     * private address.
+     */
+    @Test
+    public void aSaveLeavesNoFileNameAndNoIdInTheReport() throws Exception {
+        String manifest = "<MPD><Period><AdaptationSet mimeType=\"video/mp4\">"
+                + "<Representation codecs=\"avc1.64001f\" width=\"1280\" height=\"720\" bandwidth=\"900000\">"
+                + "<BaseURL>" + CLIP.replace("&", "&amp;") + "</BaseURL></Representation>"
+                + "</AdaptationSet></Period></MPD>";
+        MediaDownload.policyForTests = policy;
+        try {
+            assertTrue(MediaDownload.saveVideo(context, new ReelSource(PHOTO, null, null), "hd", "sd", "manifest"));
+            assertTrue(MediaDownload.saveVideo(context, new ReelSource(null, CLIP, manifest), "hd", "sd", "manifest"));
+            waitForSaves();
+        } finally {
+            MediaDownload.policyForTests = null;
+        }
+
+        String report = LogBufferManager.buildExportText();
+        assertTrue(report, report.contains("saving image jpg ("));
+        assertTrue(report, report.contains("from its DASH manifest"));
+        assertTrue(report, report.contains("the DASH save ended with NETWORK_ERROR"));
+        assertFalse(report, report.contains("_n.jpg") || report.contains("_n.mp4"));
+        assertFalse(report, java.util.regex.Pattern.compile("\\d{15}").matcher(report).find());
+    }
+
     /** One field of the player source type: the reel on the screen. */
     static final class OneSource {
         final VideoDataSource source = new VideoDataSource();
