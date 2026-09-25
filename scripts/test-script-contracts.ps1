@@ -1076,6 +1076,27 @@ try {
         }
     }
 
+    # The sync's version edit is bounded by digits and dots, because a version can sit inside the
+    # build number the index describes: 0.10.1 is in 583.0.0.10.10. Unbounded, syncing that index to
+    # 0.10.2 wrote 583.0.0.10.20, the build edit then found nothing to move, and the control would
+    # have refused the tree over a build nobody released.
+    Set-FactsFile 'patches-bundle.json' {
+        param($text) ($text -replace ('(?<![\d.])' + [regex]::Escape($catalogVersion) + '(?!\d)'), '0.10.1').Replace(
+            $newestBuild, '583.0.0.10.10')
+    }
+    Set-FactsFile 'gradle.properties' { param($text) $text -replace '(?m)^(\s*version\s*=\s*)\S+', '${1}0.10.2' }
+    try {
+        Sync-FixtureIndex
+        $syncedDescription = [string](Get-Content -LiteralPath (Join-Path $factsRoot 'patches-bundle.json') -Raw | ConvertFrom-Json).description
+        Assert-True ($syncedDescription -match "\bv0\.10\.2\b" -and
+            $syncedDescription -match "Facebook $([regex]::Escape($newestBuild))(?!\d)" -and
+            $syncedDescription -notmatch '583\.0\.0\.10\.') `
+            "Syncing an index at 0.10.1 that describes Facebook 583.0.0.10.10 to 0.10.2 did not move it to the catalog's build: $syncedDescription"
+    } finally {
+        Reset-FactsFile 'gradle.properties'
+        Reset-FactsFile 'patches-bundle.json'
+    }
+
     # Manager decodes created_at as kotlinx.datetime.LocalDateTime, not Instant.
     # A trailing Z produces its generic "remote metadata file is unavailable" error,
     # even when both the JSON and bundle download answer HTTP 200.
