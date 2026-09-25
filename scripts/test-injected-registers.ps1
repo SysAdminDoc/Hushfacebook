@@ -239,6 +239,39 @@ try {
                 $Node -is [System.Management.Automation.Language.IfStatementAst] -and
                 $Node.Clauses[0].Item1.Extent.Text -eq '$touchesInjectedRegisterVerifier' } { param($Text)
                 "if (`$true) { } else$Text" } }
+        # Code that never runs though no constant or return right before it says so: a script block
+        # nothing runs, an exit in a function that never returns or in an if or a loop that always
+        # reaches it, and a condition that compares two constants. The copies expected to pass keep
+        # those rules off code that does run: a block run by & or by ForEach-Object, a function
+        # that can return, and a loop a break leaves.
+        @{ Name = 'the DexDiff call without the contracts, and the old one kept in a script block nothing runs'
+            Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text)
+                $Text.Replace("(Join-Path `$PSScriptRoot 'injected-mutation-contracts.txt')", '') +
+                "`n    `$previous = { $Text }" } }
+        @{ Name = 'the DexDiff function run through & { }'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) '$diff = & { Invoke-DexDiff }' } }
+        @{ Name = 'the DexDiff function run through ForEach-Object'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) '$diff = @(1) | ForEach-Object { Invoke-DexDiff }' } }
+        @{ Name = 'the DexDiff call after a function that ends in one that exits'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text)
+                "function Stop-Early { Stop-Now }`nfunction Stop-Now { exit 0 }`n`$stopped = Stop-Early`n$Text" } }
+        @{ Name = 'the DexDiff call after a function that can return before its exit'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text)
+                "function Stop-Early { if (`$Serial) { return }`n    exit 0 }`nStop-Early`n$Text" } }
+        @{ Name = 'the DexDiff call after an exit behind if ($true)'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "if (`$true) { exit 0 }`n$Text" } }
+        @{ Name = 'the DexDiff call after an exit on every arm that can run'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text)
+                "if (`$false) { } elseif (`$Serial) { exit 1 } else { exit 0 }`n$Text" } }
+        @{ Name = 'the DexDiff call after while ($true) { exit 0 }'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "while (`$true) { exit 0 }`n$Text" } }
+        @{ Name = 'the DexDiff call after a while ($true) a break leaves'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "while (`$true) { break }`n$Text" } }
+        @{ Name = 'the contracts helper dot-sourced behind if (1 -gt 2)'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "if (1 -gt 2) { $Text }" } }
+        @{ Name = 'the suite line behind if (0 -eq 1)'; Check = $gateRunsSuite
+            Text = Edit-ScriptNode $prePushSource $suiteLine { param($Text) "if (0 -eq 1) { $Text }" } }
     )
     $wiringFailures = @()
     $copy = Join-Path $wiringCopies 'copy.ps1'

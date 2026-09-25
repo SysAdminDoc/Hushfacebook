@@ -202,6 +202,10 @@ try {
         $dotSourcesDevice = { param($Path) Test-DotSourcesFile $Path 'injected-register-device.ps1' }
         $talliesBothSides = { param($Path) Test-TalliesBothSides $Path }
         $gateRunsSuite = { param($Path) Test-PushGateRunsSuite $Path 'scripts/test-injected-register-device.ps1' }
+        $deviceDotSource = { param($Node)
+            $Node -is [System.Management.Automation.Language.CommandAst] -and
+            $Node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
+            $Node.Extent.Text -like '*injected-register-device.ps1*' }
         $wiringCases = @(
             @{ Name = 'the untouched verifier'; Check = $dotSourcesDevice; Expect = $true; Text = $verifierText }
             @{ Name = 'the untouched verifier'; Check = $talliesBothSides; Expect = $true; Text = $verifierText }
@@ -216,15 +220,24 @@ try {
                     $Node -is [System.Management.Automation.Language.IfStatementAst] -and
                     $Node.Clauses[0].Item1.Extent.Text -eq '$Serial' } { param($Text)
                     $Text.Replace('$cleanTally', '$tally').Replace('$patchedTally', '$tally') } }
+            @{ Name = 'the clean tally written over with the patched one before the compare'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                    $Node.Extent.Text -like '$comparison = Compare-VerifierTallies*' } { param($Text)
+                    "`$cleanTally = `$patchedTally`n    $Text" } }
+            @{ Name = 'Compare-VerifierTallies defined in the verifier itself'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText $deviceDotSource { param($Text)
+                    "$Text`nfunction Compare-VerifierTallies { param(`$Clean, `$Patched)`n" +
+                    "    [pscustomobject]@{ Valid = `$true; CleanTotal = 0; PatchedTotal = 0; Deltas = @() } }" } }
+            @{ Name = 'Invoke-AndroidVerifierTally defined in the verifier itself'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText $deviceDotSource { param($Text)
+                    "$Text`nfunction Invoke-AndroidVerifierTally { @{} }" } }
             @{ Name = 'the device half in a function nothing calls'; Check = $talliesBothSides
                 Text = Edit-ScriptNode $verifierText { param($Node)
                     $Node -is [System.Management.Automation.Language.IfStatementAst] -and
                     $Node.Clauses[0].Item1.Extent.Text -eq '$Serial' } { param($Text) "function Invoke-DeviceHalf {`n$Text`n}" } }
             @{ Name = 'the device helper dot-sourced in a dead branch'; Check = $dotSourcesDevice
-                Text = Edit-ScriptNode $verifierText { param($Node)
-                    $Node -is [System.Management.Automation.Language.CommandAst] -and
-                    $Node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
-                    $Node.Extent.Text -like '*injected-register-device.ps1*' } { param($Text) "if (`$false) { $Text }" } }
+                Text = Edit-ScriptNode $verifierText $deviceDotSource { param($Text) "if (`$false) { $Text }" } }
             @{ Name = 'the suite line in a block comment'; Check = $gateRunsSuite
                 Text = Edit-ScriptNode $prePushSource { param($Node)
                     $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
