@@ -21,7 +21,15 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowNetworkCapabilities;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The route the saves really use. Through a VPN, the phone's own lookup isn't where the socket
@@ -53,5 +61,35 @@ public class SaveRouteTest {
         shadowOf(capabilities).removeTransportType(NetworkCapabilities.TRANSPORT_VPN);
         shadowOf(manager).setNetworkCapabilities(active, capabilities);
         assertTrue("with the VPN gone the route is direct again", MediaDownload.policyFor(context).route.direct(cdn));
+    }
+
+    /**
+     * The other half of the same route: a Wi-Fi or global proxy resolves the name itself, so the
+     * phone's lookup isn't the gate there either. MediaUrlPolicyTest holds proxied() on its own;
+     * this holds the route a save gets.
+     */
+    @Test
+    public void aProxyForTheAddressMakesTheRouteIndirect() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        URL cdn = new URL("https://scontent.xx.fbcdn.net/v/t42.1790-2/461234_n.mp4");
+        ProxySelector saved = ProxySelector.getDefault();
+        try {
+            ProxySelector.setDefault(new ProxySelector() {
+                @Override
+                public List<Proxy> select(URI uri) {
+                    return Collections.singletonList(new Proxy(Proxy.Type.HTTP,
+                            InetSocketAddress.createUnresolved("proxy.example", 8080)));
+                }
+
+                @Override
+                public void connectFailed(URI uri, SocketAddress address, IOException failure) {
+                }
+            });
+            assertFalse("a proxy resolves the name, so the lookup isn't the gate",
+                    MediaDownload.policyFor(context).route.direct(cdn));
+        } finally {
+            ProxySelector.setDefault(saved);
+        }
+        assertTrue("with the proxy gone the route is direct again", MediaDownload.policyFor(context).route.direct(cdn));
     }
 }
