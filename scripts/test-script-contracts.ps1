@@ -1970,6 +1970,15 @@ try {
     Assert-True ((Test-Path -LiteralPath $factsMarker) -and (Test-Path -LiteralPath $contractsMarker)) `
         'A push that changed only the catalog did not run both the release check and the script contract tests.'
 
+    # These tests end with the marketing asset check, which holds the artwork and the README's hero
+    # and links. A push of only an icon ran no gate, and one of only the README ran the release
+    # check alone.
+    foreach ($artwork in 'assets/icons/icon-16.png', 'concepts/marketing/2026-09-25/selected/icon-master.png', 'README.md') {
+        Invoke-Hook -Paths @($artwork)
+        Assert-True (Test-Path -LiteralPath $contractsMarker) `
+            "A push that changed only $artwork did not run the script contract tests, which hold the marketing assets."
+    }
+
     Invoke-Hook -Paths @('CHANGELOG.md')
     Assert-True (Test-Path -LiteralPath $factsMarker) `
         'A push that changed only the CHANGELOG ran no release check.'
@@ -2491,10 +2500,14 @@ try {
             # The release facts half checks the files a push carries as well. A stub check, committed
             # the way the real one is, fails on a README that says broken and records where it ran
             # and whether it read test results. Its own commit is never in a pushed range, so no
-            # push below touches scripts/ and asks for contract tests this repository doesn't have.
+            # push below touches scripts/. A README push asks for the contract tests too, since they
+            # end with the marketing asset check, so a stub suite that passes is committed with it.
             $gateFacts = Join-Path $hookRoot 'gate-facts-ran.txt'
             & git -C $gateRepo checkout --quiet -- extensions/marker.txt
             New-Item -ItemType Directory -Path (Join-Path $gateRepo 'scripts') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $gateRepo 'scripts/test-script-contracts.ps1') -Encoding UTF8 -Value @(
+                'param([string]$Root)', 'exit 0')
+            & git -C $gateRepo add scripts/test-script-contracts.ps1
             Set-Content -LiteralPath (Join-Path $gateRepo 'scripts/validate-release-facts.ps1') -Encoding UTF8 -Value @(
                 'param([string]$Root, [switch]$SkipDescriptionTestCount, [switch]$AllowPublishedIndexLag,',
                 '    [switch]$VerifyPublishedAsset, [string]$ArtifactPath, [switch]$SkipTestResults)',

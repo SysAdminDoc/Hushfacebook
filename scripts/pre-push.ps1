@@ -384,8 +384,11 @@ try {
     # held to the builds, signers and dependencies the release scripts expect, and the Gradle file
     # that writes the release bundle where common.ps1 reads it. A push that moved only one of them
     # never ran the tests, and the break surfaced on the next unrelated script push instead.
+    # They also end with the marketing asset check, which holds the artwork's sizes and alpha and
+    # the README's hero and links. A push of only artwork or only the README ran no check of them.
     $touchesContracts = $touchesScripts -or @($paths | Where-Object {
-        $_ -eq 'patches-list.json' -or $_ -eq 'patches/build.gradle.kts'
+        $_ -eq 'patches-list.json' -or $_ -eq 'patches/build.gradle.kts' -or
+        $_ -like 'assets/*' -or $_ -like 'concepts/marketing/*' -or $_ -eq 'README.md'
     }).Count -gt 0
     $injectedRegisterVerifierPaths = @(
         'scripts/BadDexFixture.java',
@@ -461,7 +464,7 @@ try {
         $head = $null
         $dirty = @()
         $gateCommits = @($null)
-    } elseif ($touchesCode -or $touchesRelease -or $touchesScripts) {
+    } elseif ($touchesCode -or $touchesRelease -or $touchesScripts -or $touchesContracts) {
         $head = ([string](Invoke-HookGit @('-C', $Root, 'rev-parse', 'HEAD') | Select-Object -Last 1)).Trim()
         $dirty = @(Invoke-HookGit @('-C', $Root, 'status', '--porcelain', '--untracked-files=all'))
         $gateCommits = @($script:pushedCommits)
@@ -492,12 +495,12 @@ try {
     }
 
     # Script, notice, failure message. The contract tests run for every script change and for the
-    # two files above; the two injected-register suites and the resource table check's run only
+    # other files above; the two injected-register suites and the resource table check's run only
     # when their own files moved. Each one is the pushed commit's copy, run against that commit.
     $suites = @()
     if ($touchesContracts) {
         $contractsNotice = if ($touchesScripts) { 'scripts changed, running their contract tests' } else {
-            'the catalog or the release bundle''s Gradle file changed, running the script contract tests'
+            'the catalog, the release bundle''s Gradle file, the README or the artwork changed, running the script contract tests'
         }
         $suites += , @('scripts/test-script-contracts.ps1', $contractsNotice,
             'The script contract tests did not pass.')
@@ -736,7 +739,7 @@ try {
         }
     }
 
-    if (-not $touchesScripts -and -not $touchesCode -and -not $touchesRelease) {
+    if (-not $touchesScripts -and -not $touchesCode -and -not $touchesRelease -and -not $touchesContracts) {
         Write-Step 'no code or published file changed'
     }
     Write-Step 'ok'
