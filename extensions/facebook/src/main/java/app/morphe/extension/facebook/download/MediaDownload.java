@@ -226,8 +226,9 @@ public final class MediaDownload {
         if (safe == null) return false;
 
         // Every candidate, so a saved file that is smaller than expected can be told apart from
-        // a ranking that chose badly. Names and sizes only: a whole address is a signed, working
-        // handle to the user's content, and the log can be read by anything else on the device.
+        // a ranking that chose badly. Each as its kind of file and quality, never its name or
+        // address: a whole address is a signed, working handle to the user's content, a CDN file
+        // name carries the object's id, and the report is pasted into public issues.
         StringBuilder all = new StringBuilder();
         for (String url : urls) {
             if (all.length() > 0) all.append(", ");

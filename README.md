@@ -97,7 +97,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 - **Other Meta apps.** A patched Facebook is signed with your key, not Meta's. Meta's apps share permissions that Android only lets one signer own, so with a re-signed Facebook installed, the official Messenger, Facebook Lite, Instagram or Threads may refuse to install (`INSTALL_FAILED_DUPLICATE_PERMISSION`), and signing in to one of them through Facebook may fail. Installing through Morphe Manager's Root Mount keeps Meta's signature and avoids both.
 - **Links from other apps.** Android may stop sending facebook.com links to a re-signed Facebook, because the app's link verification is tied to Meta's signature.
 - **Two Facebook builds.** Patches are checked on Facebook 580.0.0.51.74 and 577.0.0.50.72. Another build will often work, and Morphe Manager can patch it if you allow other versions, but it hasn't been checked.
-- **Downloads.** Stories encoded only as VP9 save at 360p, because Android can't join VP9 video with AAC sound in an MP4.
+- **Downloads.** Stories encoded only as VP9 save at 360p, because Android can't join VP9 video with AAC sound in an MP4. Stories Facebook sends only as AV1 save at the lower single-file quality before Android 14, or on a phone that can't decode AV1. And a story that was already open when you turned Save any story on saves at 360p until you open it again.
 
 ## Privacy
 
