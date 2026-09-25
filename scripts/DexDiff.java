@@ -854,6 +854,18 @@ public class DexDiff {
                         + above.getOpcode().name + " at " + layout.addresses.get(k - 1));
             }
         }
+
+        // Flow may not run off the end of the code either. A method whose last return was removed
+        // or nopped leaves its last instruction able to continue into nothing, and ART refuses the
+        // class ("Execution can walk off end of code area").
+        if (!layout.instructions.isEmpty()) {
+            int last = layout.instructions.size() - 1;
+            Instruction end = layout.instructions.get(last);
+            if (kinds[last] != null && !isPayload(end) && end.getOpcode().canContinue()) {
+                findings.add("branch: " + end.getOpcode().name + " at " + layout.addresses.get(last)
+                        + " runs off the end of the code");
+            }
+        }
         return findings;
     }
 

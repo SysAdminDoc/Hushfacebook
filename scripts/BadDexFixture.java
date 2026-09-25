@@ -477,6 +477,10 @@ public class BadDexFixture {
         dexes.put("bad-branch-to-result", withFeedEdge(body(4,
                 invoke(HIDE_EDGE, 2, 3), op(Opcode.MOVE_RESULT, 0), ifEqz(0, -1),
                 op(Opcode.RETURN_VOID), op(Opcode.RETURN_VOID))));
+        // branch: the guard with its last return-void nopped, so the kept path runs off the end.
+        dexes.put("bad-walk-off-end", withFeedEdge(body(4,
+                invoke(HIDE_EDGE, 2, 3), op(Opcode.MOVE_RESULT, 0), ifEqz(0, 3),
+                op(Opcode.RETURN_VOID), op(Opcode.NOP))));
         // branch: the try path jumps onto the handler's move-exception.
         dexes.put("bad-goto-to-handler", withTryHost(tryHost(CLEAN_TRY, new ImmutableInstruction10t(Opcode.GOTO, 1))));
         // try: the try path falls straight into the handler's move-exception.
