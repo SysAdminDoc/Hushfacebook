@@ -41,6 +41,6 @@ The widest map of Facebook's ad and clutter code is in LSPosed modules, not patc
 
 ## What's next
 
-The gaps people ask about most, roughly in order: blocking the feed's auto-refresh, hiding posts from accounts you don't follow, turning off story auto-advance, hiding Reels entry points, the Stories tray and People You May Know, Marketplace, search and profile ads, and stripping tracking parameters from shared links. Every one of them exists in at least one of the sources above, which is where a new patch here starts.
+The gaps people ask about most, roughly in order: blocking the feed's auto-refresh, hiding posts from accounts you don't follow, turning off story auto-advance, hiding Reels entry points, the Stories tray and People You May Know, and Marketplace, search and profile ads. Every one of them exists in at least one of the sources above, which is where a new patch here starts. Stripping tracking parameters from shared links was on this list until Sanitize sharing links, which was written here from Facebook's own code.
 
 If you know of a Facebook patch source we missed, open an issue with a link.

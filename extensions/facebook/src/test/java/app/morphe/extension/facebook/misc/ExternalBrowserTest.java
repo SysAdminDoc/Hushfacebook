@@ -77,6 +77,19 @@ public class ExternalBrowserTest {
         assertTrue("the in-app browser closes behind the link", browser.isFinishing());
     }
 
+    /**
+     * The shim's u= is decoded once, as the browser would, and fbclid leaves the destination: an
+     * escaped percent inside it stays escaped, and every other key stays as Facebook passed it.
+     */
+    @Test
+    public void theDestinationLeavesWithoutFbclidAndIsDecodedOnce() {
+        Activity browser = browserWith("https://lm.facebook.com/l.php?u=https%3A%2F%2Fexample.org%2Fa%3Fb%3D1"
+                + "%26fbclid%3DIwAR0x%26c%3D%2525%23part&h=AT0x");
+
+        assertTrue(ExternalBrowser.redirect(browser, browser.getIntent()));
+        assertEquals("https://example.org/a?b=1&c=%25#part", shadowOf(browser).getNextStartedActivity().getDataString());
+    }
+
     @Test
     public void facebooksOwnPagesStayInTheApp() {
         Activity browser = browserWith("https://www.facebook.com/help/1234");

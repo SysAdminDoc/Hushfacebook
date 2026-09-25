@@ -47,6 +47,8 @@ public enum PatchFamily {
             Settings.HIDE_SPONSORED_REELS),
     EXTERNAL_BROWSER(FamilyNames.EXTERNAL_BROWSER, "externalBrowser", null,
             Settings.OPEN_LINKS_EXTERNALLY),
+    SANITIZE_SHARING_LINKS(FamilyNames.SANITIZE_SHARING_LINKS, "sanitizeSharingLinks", null,
+            Settings.SANITIZE_SHARING_LINKS),
     STORY_DOWNLOAD(FamilyNames.STORY_DOWNLOAD, "storyDownload", null,
             Settings.DOWNLOAD_STORIES),
     REEL_DOWNLOAD(FamilyNames.REEL_DOWNLOAD, "reelDownload", null,

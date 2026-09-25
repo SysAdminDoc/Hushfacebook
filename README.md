@@ -32,7 +32,7 @@ This project has no connection to Meta or to the Morphe project. Neither endorse
 3. Get Facebook 580.0.0.51.74 for arm64-v8a from [APKMirror](https://www.apkmirror.com/apk/facebook-2/facebook/). Take the Android 11+ bundle (.apkm). Facebook 577.0.0.50.72 works too.
 4. In Morphe Manager, pick that file, keep the default patch selection or change it, and patch.
 
-There are 13 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
+There are 14 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
 
 Facebook releases a new version about once a week, and each one renames most of its code. Every patch here finds what it changes by names Facebook keeps (its GraphQL model classes, log strings, enum names, manifest components) rather than by the names that change, which is why most of them carry over from one build to the next. When one doesn't, patching stops with a message naming what it couldn't find, instead of producing an app that quietly does nothing. Please report it.
 
@@ -72,8 +72,9 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Hide sponsored stories` | Removes ad cards from the story viewer, so swiping through stories only shows stories people posted. |
 | `Hide suggested and promoted posts` | Removes posts that Facebook adds to the feed, such as "Pages you may like" and its own upsells. In-feed surveys go too. |
 | `Hushfacebook settings` | Adds Hushfacebook settings to Facebook's launcher icon. Long-press the icon to turn features on or off, pause Hushfacebook, save your switches to a file or load them, and export diagnostics. The licenses are there too. |
-| `Open links in external browser` | Opens web links in your default browser instead of Facebook's in-app browser. Facebook pages still open in the app. |
+| `Open links in external browser` | Opens web links in your default browser instead of Facebook's in-app browser, without Facebook's click tracker or the fbclid tag it adds. Facebook pages still open in the app. |
 | `Restore screens on re-signed builds` | Makes profiles and some Settings pages open again on a re-signed build. A Root Mount install doesn't need this patch. |
+| `Sanitize sharing links` | Takes Facebook's tracking tags, such as mibextid, off the links you share or copy. The post or reel a link opens stays the same. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you. |
 
 `Download any reel` and `AMOLED black theme` are off by default. Everything else is on.
 
@@ -103,6 +104,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 | Hide sponsored stories | Off. |
 | Hide sponsored reels | Partly. Ads inside a page of reels come back. Banners over a reel and mid-roll ads stay blocked, and so do ads the app adds on its own. |
 | Open links in external browser | Off. Links open in Facebook's own browser. |
+| Sanitize sharing links | Off. Links you share keep Facebook's tracking tags. |
 | Download any story | Off. Only your own stories have Save, and it's Facebook's own. |
 | Download any reel | Off. Reels show only Facebook's own buttons. |
 | Block ad telemetry, Block background ad prefetch, Disable Audience Network, AMOLED black theme, Restore screens on re-signed builds | Stay. They were set when you patched, and changing one means patching again. |
@@ -122,7 +124,7 @@ Hushfacebook doesn't collect anything and has no server. The only time the patch
 
 | Source | What came from it |
 |---|---|
-| [andrewliang25/morphe-patches](https://github.com/andrewliang25/morphe-patches) at `5db2e57` | Every Facebook patch here, from the ad filters to both downloads. They were rewritten rather than copied commit by commit, and the fixes are listed in the [changelog](CHANGELOG.md). |
+| [andrewliang25/morphe-patches](https://github.com/andrewliang25/morphe-patches) at `5db2e57` | Every Facebook patch here but Sanitize sharing links, from the ad filters to both downloads. They were rewritten rather than copied commit by commit, and the fixes are listed in the [changelog](CHANGELOG.md). |
 | [SapitoSucio/FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) | The idea of dropping promoted posts beside sponsored ones. Andrew Liang credits it for some ideas and implementations too. |
 | [SysAdminDoc/hushfeed](https://github.com/SysAdminDoc/hushfeed) at `1f1f81a` | The Gradle build, the shared extension library with its settings screen and diagnostics, the pause, the bytecode helpers, and the checks that apply every patch to real Facebook builds before a release. The settings export and import came later, from `bcc57ee`. |
 | [Morphe](https://github.com/MorpheApp) and [ReVanced](https://gitlab.com/ReVanced/revanced-patches) | The patcher and the patch template. Both of the above grew from their code. |

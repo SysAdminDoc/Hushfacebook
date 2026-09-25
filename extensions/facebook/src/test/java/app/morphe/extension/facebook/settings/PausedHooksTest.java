@@ -42,6 +42,7 @@ import app.morphe.extension.facebook.download.ReelDownload;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
+import app.morphe.extension.facebook.misc.LinkCleaner;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 import app.morphe.extension.shared.settings.BaseSettings;
@@ -150,6 +151,11 @@ public class PausedHooksTest {
                 PlayerSourcesForTests::recordsAPlayer));
         // Every reel's sidebar gets the Download button.
         probes.put(PatchFamily.REEL_DOWNLOAD, Collections.singletonList(ReelDownload::showsButton));
+        // A shared link loses what the app added to it.
+        probes.put(PatchFamily.SANITIZE_SHARING_LINKS, Collections.singletonList(() -> {
+            String shared = "https://www.facebook.com/share/p/1AbCdEf/?mibextid=WC7FNe";
+            return !shared.equals(LinkCleaner.sanitizeShared(shared));
+        }));
         return probes;
     }
 

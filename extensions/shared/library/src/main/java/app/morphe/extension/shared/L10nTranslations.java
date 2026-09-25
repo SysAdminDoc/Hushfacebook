@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(268);
+        Map<String, String> table = new HashMap<>(272);
         fillDe0(table);
         fillDe1(table);
         fillDe2(table);
@@ -223,6 +223,8 @@ public final class L10nTranslations {
                 "Einstellungsdatei wird gelesen");
         table.put("Reels and Watch",
                 "Reels und Watch");
+        table.put("Remove tracking from shared links",
+                "Tracking aus geteilten Links entfernen");
         table.put("Retry",
                 "Erneut versuchen");
         table.put("Save any story",
@@ -265,6 +267,8 @@ public final class L10nTranslations {
                 "Bleibt w\u00e4hrend der Pause aktiv");
         table.put("Stories",
                 "Stories");
+        table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
+                "Entfernt Tracking-Tags wie mibextid aus den Links, die du teilst oder kopierst. Ein Link zu facebook.com/share/ wird f\u00fcr ein einzelnes Teilen erstellt, deshalb kann Facebook ihn trotzdem auf dich zur\u00fcckf\u00fchren.");
         table.put("Tap to turn it back on.",
                 "Zum Wiedereinschalten tippen.");
         table.put("That file is too large to be a settings file. Nothing was changed.",
@@ -291,13 +295,13 @@ public final class L10nTranslations {
                 "Die Einstellung lie\u00df sich nicht vollst\u00e4ndig aktualisieren. Der gespeicherte Wert wird angezeigt.");
         table.put("There is no diagnostic data to clear.",
                 "Es gibt keine Diagnosedaten zum L\u00f6schen.");
+    }
+
+    private static void fillDe2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "Es gibt keine Diagnosedaten zum Wiederherstellen.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Diese werden beim Patchen in Morphe Manager ausgew\u00e4hlt, und die Pause schaltet sie nicht aus. Patche erneut, um sie zu \u00e4ndern.");
-    }
-
-    private static void fillDe2(Map<String, String> table) {
         table.put("This phone has no file picker, so there's no way to choose a file here.",
                 "Dieses Handy hat keine Dateiauswahl, hier l\u00e4sst sich also keine Datei w\u00e4hlen.");
         table.put("Try again, or go back to Facebook.",
@@ -329,7 +333,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(268);
+        Map<String, String> table = new HashMap<>(272);
         fillEs0(table);
         fillEs1(table);
         fillEs2(table);
@@ -508,6 +512,8 @@ public final class L10nTranslations {
                 "Leyendo el archivo de configuraci\u00f3n");
         table.put("Reels and Watch",
                 "Reels y Watch");
+        table.put("Remove tracking from shared links",
+                "Quitar el seguimiento de los enlaces compartidos");
         table.put("Retry",
                 "Reintentar");
         table.put("Save any story",
@@ -550,6 +556,8 @@ public final class L10nTranslations {
                 "Se mantiene durante la pausa");
         table.put("Stories",
                 "Historias");
+        table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
+                "Quita las etiquetas de seguimiento, como mibextid, de los enlaces que compartes o copias. Un enlace de facebook.com/share/ se crea para una sola acci\u00f3n de compartir, as\u00ed que Facebook puede vincularlo contigo de todos modos.");
         table.put("Tap to turn it back on.",
                 "Toca para volver a activarlo.");
         table.put("That file is too large to be a settings file. Nothing was changed.",
@@ -576,13 +584,13 @@ public final class L10nTranslations {
                 "No se pudo terminar de actualizar el ajuste. Se muestra su valor guardado.");
         table.put("There is no diagnostic data to clear.",
                 "No hay datos de diagn\u00f3stico que borrar.");
+    }
+
+    private static void fillEs2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "No hay datos de diagn\u00f3stico que restaurar.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Se eligen en Morphe Manager al parchear, y Pausar no los desactiva. Vuelve a parchear para cambiarlos.");
-    }
-
-    private static void fillEs2(Map<String, String> table) {
         table.put("This phone has no file picker, so there's no way to choose a file here.",
                 "Este tel\u00e9fono no tiene selector de archivos, as\u00ed que aqu\u00ed no hay forma de elegir un archivo.");
         table.put("Try again, or go back to Facebook.",
@@ -614,7 +622,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(268);
+        Map<String, String> table = new HashMap<>(272);
         fillIn0(table);
         fillIn1(table);
         fillIn2(table);
@@ -793,6 +801,8 @@ public final class L10nTranslations {
                 "Membaca file pengaturan");
         table.put("Reels and Watch",
                 "Reels dan Watch");
+        table.put("Remove tracking from shared links",
+                "Hapus pelacakan dari tautan yang dibagikan");
         table.put("Retry",
                 "Coba lagi");
         table.put("Save any story",
@@ -835,6 +845,8 @@ public final class L10nTranslations {
                 "Tetap aktif saat dijeda");
         table.put("Stories",
                 "Cerita");
+        table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
+                "Menghapus tag pelacakan seperti mibextid dari tautan yang Anda bagikan atau salin. Tautan facebook.com/share/ dibuat khusus untuk satu kali berbagi, jadi Facebook tetap dapat mengaitkannya dengan Anda.");
         table.put("Tap to turn it back on.",
                 "Ketuk untuk mengaktifkan Hushfacebook lagi.");
         table.put("That file is too large to be a settings file. Nothing was changed.",
@@ -861,13 +873,13 @@ public final class L10nTranslations {
                 "Pengaturan ini tidak dapat selesai diperbarui. Nilai yang tersimpan ditampilkan.");
         table.put("There is no diagnostic data to clear.",
                 "Tidak ada data diagnostik yang dapat dihapus.");
+    }
+
+    private static void fillIn2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "Tidak ada data diagnostik yang dapat dikembalikan.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Semua ini dipilih di Morphe Manager saat Anda menambal, dan Jeda tidak mematikannya. Tambal ulang untuk mengubahnya.");
-    }
-
-    private static void fillIn2(Map<String, String> table) {
         table.put("This phone has no file picker, so there's no way to choose a file here.",
                 "Ponsel ini tidak memiliki pemilih file, jadi file tidak dapat dipilih di sini.");
         table.put("Try again, or go back to Facebook.",
@@ -899,7 +911,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(268);
+        Map<String, String> table = new HashMap<>(272);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         fillPt_rBR2(table);
@@ -1078,6 +1090,8 @@ public final class L10nTranslations {
                 "Lendo o arquivo de configura\u00e7\u00f5es");
         table.put("Reels and Watch",
                 "Reels e Watch");
+        table.put("Remove tracking from shared links",
+                "Remover o rastreamento dos links compartilhados");
         table.put("Retry",
                 "Tentar novamente");
         table.put("Save any story",
@@ -1120,6 +1134,8 @@ public final class L10nTranslations {
                 "O que continua ativo na pausa");
         table.put("Stories",
                 "Stories");
+        table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
+                "Remove as tags de rastreamento, como mibextid, dos links que voc\u00ea compartilha ou copia. Um link facebook.com/share/ \u00e9 criado para um \u00fanico compartilhamento, ent\u00e3o o Facebook ainda consegue associ\u00e1-lo a voc\u00ea.");
         table.put("Tap to turn it back on.",
                 "Toque para reativar.");
         table.put("That file is too large to be a settings file. Nothing was changed.",
@@ -1146,13 +1162,13 @@ public final class L10nTranslations {
                 "N\u00e3o foi poss\u00edvel concluir a atualiza\u00e7\u00e3o da configura\u00e7\u00e3o. O valor salvo est\u00e1 sendo mostrado.");
         table.put("There is no diagnostic data to clear.",
                 "N\u00e3o h\u00e1 dados de diagn\u00f3stico para limpar.");
+    }
+
+    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "N\u00e3o h\u00e1 dados de diagn\u00f3stico para restaurar.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Eles s\u00e3o escolhidos no Morphe Manager quando voc\u00ea aplica os patches, e a pausa n\u00e3o os desliga. Aplique os patches de novo para mud\u00e1-los.");
-    }
-
-    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("This phone has no file picker, so there's no way to choose a file here.",
                 "Este celular n\u00e3o tem seletor de arquivos, ent\u00e3o n\u00e3o d\u00e1 para escolher um arquivo aqui.");
         table.put("Try again, or go back to Facebook.",
@@ -1184,7 +1200,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(268);
+        Map<String, String> table = new HashMap<>(272);
         fillTr0(table);
         fillTr1(table);
         fillTr2(table);
@@ -1363,6 +1379,8 @@ public final class L10nTranslations {
                 "Ayar dosyas\u0131 okunuyor");
         table.put("Reels and Watch",
                 "Reels ve Watch");
+        table.put("Remove tracking from shared links",
+                "Payla\u015f\u0131lan ba\u011flant\u0131lardan izlemeyi kald\u0131r");
         table.put("Retry",
                 "Yeniden dene");
         table.put("Save any story",
@@ -1405,6 +1423,8 @@ public final class L10nTranslations {
                 "Duraklat\u0131lsa da devrede kal\u0131r");
         table.put("Stories",
                 "Hikayeler");
+        table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
+                "Payla\u015ft\u0131\u011f\u0131n veya kopyalad\u0131\u011f\u0131n ba\u011flant\u0131lardan mibextid gibi izleme etiketlerini kald\u0131r\u0131r. Bir facebook.com/share/ ba\u011flant\u0131s\u0131 tek bir payla\u015f\u0131m i\u00e7in olu\u015fturulur, bu y\u00fczden Facebook onu yine de seninle ili\u015fkilendirebilir.");
         table.put("Tap to turn it back on.",
                 "Yeniden a\u00e7mak i\u00e7in dokun.");
         table.put("That file is too large to be a settings file. Nothing was changed.",
@@ -1431,13 +1451,13 @@ public final class L10nTranslations {
                 "Ayar\u0131n g\u00fcncellenmesi tamamlanamad\u0131. Kay\u0131tl\u0131 de\u011feri g\u00f6steriliyor.");
         table.put("There is no diagnostic data to clear.",
                 "Temizlenecek tan\u0131lama verisi yok.");
+    }
+
+    private static void fillTr2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "Geri getirilecek tan\u0131lama verisi yok.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
                 "Bunlar yamalarken Morphe Manager'da se\u00e7ilir ve Duraklatma bunlar\u0131 kapatmaz. De\u011fi\u015ftirmek i\u00e7in yeniden yamala.");
-    }
-
-    private static void fillTr2(Map<String, String> table) {
         table.put("This phone has no file picker, so there's no way to choose a file here.",
                 "Bu telefonda dosya se\u00e7ici yok, bu y\u00fczden burada dosya se\u00e7menin bir yolu yok.");
         table.put("Try again, or go back to Facebook.",

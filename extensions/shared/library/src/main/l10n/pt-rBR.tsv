@@ -84,6 +84,7 @@ Profiles and some Settings pages open again on this re-signed build.	Perfis e al
 Re-signed build fix	Correção para versão reassinada
 Reading the settings file	Lendo o arquivo de configurações
 Reels and Watch	Reels e Watch
+Remove tracking from shared links	Remover o rastreamento dos links compartilhados
 Retry	Tentar novamente
 Save any story	Salvar qualquer story
 Save cancelled	Salvamento cancelado
@@ -105,6 +106,7 @@ Settings imported. %1$d switches changed.	Configurações importadas. %1$d opç�
 Source code and issues	Código-fonte e relatos de problemas
 Stays in while paused	O que continua ativo na pausa
 Stories	Stories
+Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.	Remove as tags de rastreamento, como mibextid, dos links que você compartilha ou copia. Um link facebook.com/share/ é criado para um único compartilhamento, então o Facebook ainda consegue associá-lo a você.
 Tap to turn it back on.	Toque para reativar.
 That file is too large to be a settings file. Nothing was changed.	Esse arquivo é grande demais para ser um arquivo de configurações. Nada foi alterado.
 That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Esse arquivo não é texto legível, então pode ter sido danificado no caminho. Nada foi alterado.

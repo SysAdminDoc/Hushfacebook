@@ -84,6 +84,7 @@ Profiles and some Settings pages open again on this re-signed build.	Profiller v
 Re-signed build fix	Yeniden imzalanmış sürüm düzeltmesi
 Reading the settings file	Ayar dosyası okunuyor
 Reels and Watch	Reels ve Watch
+Remove tracking from shared links	Paylaşılan bağlantılardan izlemeyi kaldır
 Retry	Yeniden dene
 Save any story	Herhangi bir hikayeyi kaydet
 Save cancelled	Kaydetme iptal edildi
@@ -105,6 +106,7 @@ Settings imported. %1$d switches changed.	Ayarlar içe aktarıldı. %1$d anahtar
 Source code and issues	Kaynak kodu ve sorunlar
 Stays in while paused	Duraklatılsa da devrede kalır
 Stories	Hikayeler
+Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.	Paylaştığın veya kopyaladığın bağlantılardan mibextid gibi izleme etiketlerini kaldırır. Bir facebook.com/share/ bağlantısı tek bir paylaşım için oluşturulur, bu yüzden Facebook onu yine de seninle ilişkilendirebilir.
 Tap to turn it back on.	Yeniden açmak için dokun.
 That file is too large to be a settings file. Nothing was changed.	Bu dosya bir ayar dosyası olamayacak kadar büyük. Hiçbir şey değiştirilmedi.
 That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Bu dosya okunabilir bir metin değil, aktarım sırasında hasar görmüş olabilir. Hiçbir şey değiştirilmedi.

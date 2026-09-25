@@ -4,6 +4,7 @@
  */
 package app.morphe.extension.facebook.settings;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -33,6 +34,7 @@ import app.morphe.extension.facebook.download.ReelDownload;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
+import app.morphe.extension.facebook.misc.LinkCleaner;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.settings.PauseForTests;
 
@@ -104,6 +106,8 @@ public class ColdStartHooksTest {
         assertTrue("Facebook's own yes has to stand", MediaDownload.offersSave(true));
         assertFalse(ReelDownload.showsButton());
         assertFalse(PlayerSourcesForTests.recordsAPlayer());
+        String shared = "https://www.facebook.com/share/p/1AbCdEf/?mibextid=WC7FNe";
+        assertEquals("a link shared before the context was cleaned", shared, LinkCleaner.sanitizeShared(shared));
 
         // A hook that touched the settings above left them unusable, and this is where a real
         // start would crash. While setContext decides the pause the context is already set, so a

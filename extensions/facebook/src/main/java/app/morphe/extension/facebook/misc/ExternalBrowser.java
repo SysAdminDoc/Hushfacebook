@@ -83,6 +83,9 @@ public final class ExternalBrowser {
 
         Uri target = unwrapLinkShim(uri);
         if (isInternalHost(target.getHost())) return false;
+        // Facebook adds fbclid to the destination inside the shim, so the site it opens can tell
+        // Facebook the link was followed. It goes, and nothing else in the link changes.
+        target = Uri.parse(LinkCleaner.clean(target.toString()));
 
         try {
             Intent view = new Intent(Intent.ACTION_VIEW, target);

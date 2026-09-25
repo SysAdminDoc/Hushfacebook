@@ -84,6 +84,7 @@ Profiles and some Settings pages open again on this re-signed build.	Profil dan 
 Re-signed build fix	Perbaikan build yang ditandatangani ulang
 Reading the settings file	Membaca file pengaturan
 Reels and Watch	Reels dan Watch
+Remove tracking from shared links	Hapus pelacakan dari tautan yang dibagikan
 Retry	Coba lagi
 Save any story	Simpan cerita apa pun
 Save cancelled	Penyimpanan dibatalkan
@@ -105,6 +106,7 @@ Settings imported. %1$d switches changed.	Pengaturan diimpor. %1$d sakelar berub
 Source code and issues	Kode sumber dan laporan masalah
 Stays in while paused	Tetap aktif saat dijeda
 Stories	Cerita
+Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.	Menghapus tag pelacakan seperti mibextid dari tautan yang Anda bagikan atau salin. Tautan facebook.com/share/ dibuat khusus untuk satu kali berbagi, jadi Facebook tetap dapat mengaitkannya dengan Anda.
 Tap to turn it back on.	Ketuk untuk mengaktifkan Hushfacebook lagi.
 That file is too large to be a settings file. Nothing was changed.	File itu terlalu besar untuk sebuah file pengaturan. Tidak ada yang diubah.
 That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	File itu bukan teks yang dapat dibaca, jadi mungkin rusak saat ditransfer. Tidak ada yang diubah.

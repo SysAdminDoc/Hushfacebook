@@ -48,7 +48,8 @@ private val IN_APP_BROWSERS = listOf(
 val openLinksExternallyPatch = bytecodePatch(
     name = "Open links in external browser",
     description = "Opens web links in your default browser instead of Facebook's in-app " +
-        "browser. Facebook pages still open in the app.",
+        "browser, without Facebook's click tracker or the fbclid tag it adds. Facebook pages still " +
+        "open in the app.",
     default = true,
 ) {
     category("Interface")

@@ -68,6 +68,16 @@
     },
     {
       "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/misc/LinkCleaner.java",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/misc/sharelinks/**"
+      ],
+      "origin": "original",
+      "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
+      "license": "GPL-3.0-only",
+      "changes": "Written for Hushfacebook: the tracking keys Facebook adds to shared and opened links, taken out offline with everything else in the link left as written, and the hooks on the methods of Facebook 577 and 580 that add them."
+    },
+    {
+      "paths": [
         "extensions/shared/library/src/main/java/app/morphe/extension/shared/L10nTranslations.java"
       ],
       "origin": "original",
@@ -96,7 +106,7 @@
         "https://github.com/icysymmetra/tiktok-patches-for-morphe"
       ],
       "license": "GPL-3.0-only",
-      "changes": "Ported from Hushfeed's settings backup and cut down to what Hushfacebook keeps: an exact list of its eight feature switches in place of every setting, with no Feature Gate Lab, reset, undo or journal. An import is read into a snapshot that a preview shows before anything is written, and applied in one preference commit. A file declaring a newer version, a name given twice, a switch that isn't true or false, or more than 64 KB changes nothing, each with its own reason, and names this build doesn't know are counted rather than applied."
+      "changes": "Ported from Hushfeed's settings backup and cut down to what Hushfacebook keeps: an exact list of its feature switches in place of every setting, with no Feature Gate Lab, reset, undo or journal. An import is read into a snapshot that a preview shows before anything is written, and applied in one preference commit. A file declaring a newer version, a name given twice, a switch that isn't true or false, or more than 64 KB changes nothing, each with its own reason, and names this build doesn't know are counted rather than applied."
     },
     {
       "paths": [

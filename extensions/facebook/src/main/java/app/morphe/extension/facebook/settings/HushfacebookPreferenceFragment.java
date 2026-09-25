@@ -178,10 +178,18 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
         }
 
-        if (build.contains(PatchFamily.EXTERNAL_BROWSER)) {
+        if (build.contains(PatchFamily.EXTERNAL_BROWSER) || build.contains(PatchFamily.SANITIZE_SHARING_LINKS)) {
             PreferenceCategory links = category(screen, L10n.t("Links"));
-            links.addPreference(toggle(context, Settings.OPEN_LINKS_EXTERNALLY, L10n.t("Open links in your browser"),
-                    L10n.t("Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.")));
+            if (build.contains(PatchFamily.EXTERNAL_BROWSER)) {
+                links.addPreference(toggle(context, Settings.OPEN_LINKS_EXTERNALLY, L10n.t("Open links in your browser"),
+                        L10n.t("Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.")));
+            }
+            if (build.contains(PatchFamily.SANITIZE_SHARING_LINKS)) {
+                links.addPreference(toggle(context, Settings.SANITIZE_SHARING_LINKS,
+                        L10n.t("Remove tracking from shared links"),
+                        L10n.t("Takes tracking tags such as mibextid off the links you share or copy. A "
+                                + "facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.")));
+            }
         }
 
         if (build.contains(PatchFamily.AD_PREFETCH) || build.contains(PatchFamily.AD_TELEMETRY)

@@ -74,6 +74,7 @@ public final class SettingsBackup {
             Settings.HIDE_SPONSORED_STORIES,
             Settings.HIDE_SPONSORED_REELS,
             Settings.OPEN_LINKS_EXTERNALLY,
+            Settings.SANITIZE_SHARING_LINKS,
             Settings.DOWNLOAD_STORIES,
             Settings.DOWNLOAD_REELS));
 

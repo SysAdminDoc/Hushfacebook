@@ -50,6 +50,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean sanitizeSharingLinks() {
+        return false;
+    }
+
     public static boolean restoreTrust() {
         return false;
     }

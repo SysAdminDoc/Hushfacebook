@@ -151,8 +151,9 @@ public class PatchFamilyTest {
                         + "the part of the Reels ad block patched into the app",
                 "Block background ad prefetch: no switch, stays in while paused: the background ad prefetch block",
                 "not in this build: Hide suggested and promoted posts, Hide sponsored stories, Open links in "
-                        + "external browser, Download any story, Download any reel, Block ad telemetry, "
-                        + "Disable Audience Network, AMOLED black theme, Restore screens on re-signed builds"),
+                        + "external browser, Sanitize sharing links, Download any story, Download any reel, "
+                        + "Block ad telemetry, Disable Audience Network, AMOLED black theme, Restore screens on "
+                        + "re-signed builds"),
                 running);
         // The reel button has a switch now, so the report says what it's set to.
         assertEquals("Download any reel: on (hushfacebook_download_reels=on)",

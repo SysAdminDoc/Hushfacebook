@@ -19,6 +19,7 @@ public final class FamilyNames {
     public static final String SPONSORED_STORIES = "Hide sponsored stories";
     public static final String SPONSORED_REELS = "Hide sponsored reels";
     public static final String EXTERNAL_BROWSER = "Open links in external browser";
+    public static final String SANITIZE_SHARING_LINKS = "Sanitize sharing links";
     public static final String STORY_DOWNLOAD = "Download any story";
     public static final String REEL_DOWNLOAD = "Download any reel";
     public static final String AD_PREFETCH = "Block background ad prefetch";
