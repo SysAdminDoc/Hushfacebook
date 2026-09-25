@@ -363,10 +363,14 @@ try {
             'in a clean worktree of the commit instead.')
     }
 
-    # Script, notice, failure message. The two injected-register suites and the resource table
-    # check's run only when their own files moved; each one is the pushed commit's copy, run
-    # against that commit.
+    # Script, notice, failure message. The contract tests run for every script change; the two
+    # injected-register suites and the resource table check's run only when their own files
+    # moved. Each one is the pushed commit's copy, run against that commit.
     $suites = @()
+    if ($touchesScripts) {
+        $suites += , @('scripts/test-script-contracts.ps1', 'scripts changed, running their contract tests',
+            'The script contract tests did not pass.')
+    }
     if ($touchesInjectedRegisterVerifier) {
         $suites += , @('scripts/test-injected-registers.ps1', 'injected-register verifier changed, running its fixture tests',
             'The injected-register verifier fixture tests did not pass.')
