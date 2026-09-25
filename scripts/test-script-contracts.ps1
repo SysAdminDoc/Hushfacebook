@@ -2109,12 +2109,9 @@ Write-Host '[scripts] shared helper contracts passed'
 # The morphe CLI merges an .apkm's splits into one APK before it patches and leaves the merge
 # beside its output. The patched manifest has to be compared with that merge, not with the base
 # APK: the merge itself moves the manifest, and a receipt compared with the base would record the
-# merge's changes as the patches' own, for somebody to allowlist. Every caller that reads an APK
-# out of a bundle goes through Get-BaseApk.
-$receiptBuilder = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'build-release-receipt.ps1') -Raw
-Assert-True ($receiptBuilder -match "-Filter '\*-merged\.apk'" -and
-    $receiptBuilder -match 'Get-ManifestDelta -Stock \$baseline') `
-    'build-release-receipt.ps1 no longer compares the patched manifest with the merged bundle.'
+# merge's changes as the patches' own, for somebody to allowlist. build-release-receipt.ps1 is run
+# against exactly that in the release root section below; a pattern over its text passed with the
+# merged APK ignored. Every caller that reads an APK out of a bundle goes through Get-BaseApk.
 foreach ($name in @('build-release-receipt.ps1', 'verify-all-patches.ps1', 'verify-injected-registers.ps1')) {
     Assert-True ((Get-Content -LiteralPath (Join-Path $PSScriptRoot $name) -Raw) -match 'Get-BaseApk -Apk') `
         "$name reads a bundle without taking its base APK out first."
@@ -2129,7 +2126,9 @@ Write-Host '[scripts] split bundle contracts passed'
 # so a copied tree that is not a repository never reaches the receipt, and the facts fixture above
 # holds none: every case there took the "no receipt" exit, and the receipt half was covered only
 # by a pattern over the script's text, which also matched a mutation that held the receipt to the
-# newest build alone.
+# newest build alone. The receipt builder runs here too, on stand-ins for the tools it starts,
+# since patterns over its text passed with the merged APK ignored and with forced runs decided
+# against the newest build.
 
 $releaseRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-release-" + [guid]::NewGuid().ToString('N'))
 try {
@@ -2225,6 +2224,176 @@ try {
     Assert-Throws { Invoke-ReleaseCheck } ("*No target in the receipt is the declared $($releaseTarget.PackageName) " +
             "$($unproved -join ', ') patched without -f*") `
         'The release check accepted a receipt with no run of an older declared build.'
+
+    # build-release-receipt.ps1 itself, on the same root. Stand-ins take the tools' places: a JDK
+    # that answers -version and does what the desktop CLI leaves behind for each input (the result
+    # report, the patched APK and the merged APK beside it), and an aapt2 that prints the manifest
+    # lines written for each APK. One .apkm per declared build, and a bundle stamped with the
+    # commit's time where buildAndroid leaves it. The CLI's merge carries a component the base
+    # APK's manifest lacks, so a delta taken against the base instead of the merge records it as
+    # the patches' own and the empty allowlist refuses the receipt.
+    $tools = Join-Path $releaseRoot 'tools'
+    $fixtures = Join-Path $releaseRoot 'fixtures'
+    New-Item -ItemType Directory -Path $tools, $fixtures -Force | Out-Null
+    $stubJava = Join-Path $tools 'java.cmd'
+    $stubAapt2 = Join-Path $tools 'aapt2.cmd'
+    $stubJar = Join-Path $tools 'morphe-desktop.jar'
+    $javaLog = Join-Path $tools 'java.log'
+    [System.IO.File]::WriteAllText($stubJava, ((@(
+        '@echo off',
+        'setlocal EnableExtensions EnableDelayedExpansion',
+        'if "%~1"=="-version" (',
+        '    echo openjdk version "21.0.5" 2024-10-15',
+        '    exit /b 0',
+        ')',
+        'set "OUT=" & set "RESULT=" & set "LAST=" & set "PREV=" & set "FORCED=0"',
+        'rem Its own folder, read before shift moves %0 along with the arguments.',
+        'set "HERE=%~dp0"',
+        'shift',
+        'shift',
+        ':next',
+        'if "%~1"=="" goto run',
+        'set "V=%~1"',
+        'if "!PREV!"=="-o" set "OUT=!V!"',
+        'if "!PREV!"=="-r" set "RESULT=!V!"',
+        'if "!V!"=="-f" set "FORCED=1"',
+        'set "PREV=!V!"',
+        'set "LAST=!V!"',
+        'shift',
+        'goto next',
+        ':run',
+        '>>"!HERE!java.log" echo patch !LAST! forced=!FORCED!',
+        'copy /y "!LAST!.result.json" "!RESULT!" >nul || exit /b 3',
+        'copy /y "!HERE!patched.apk" "!OUT!" >nul || exit /b 4',
+        'copy /y "!LAST!.patched.txt" "!OUT!.xmltree" >nul || exit /b 5',
+        'for %%F in ("!OUT!") do set "OUTDIR=%%~dpF"',
+        'for %%F in ("!LAST!") do set "STEM=%%~nF"',
+        'copy /y "!LAST!.merged.txt" "!OUTDIR!!STEM!-merged.apk" >nul || exit /b 6',
+        'exit /b 0') -join "`r`n") + "`r`n"), [System.Text.Encoding]::ASCII)
+    [System.IO.File]::WriteAllText($stubAapt2, ((@(
+        '@echo off',
+        'setlocal EnableExtensions DisableDelayedExpansion',
+        'set "APK="',
+        ':next',
+        'if "%~1"=="" goto run',
+        'set "APK=%~1"',
+        'shift',
+        'goto next',
+        ':run',
+        'if exist "%APK%.xmltree" (type "%APK%.xmltree") else (type "%APK%")',
+        'exit /b %errorlevel%') -join "`r`n") + "`r`n"), [System.Text.Encoding]::ASCII)
+    Set-Content -LiteralPath $stubJar -Value 'not a jar' -Encoding ASCII
+    New-TestBundleArchive -Path (Join-Path $tools 'patched.apk') -Entries ([ordered]@{
+        'AndroidManifest.xml' = 'binary manifest'; 'classes.dex' = "dex`n035" })
+
+    $androidName = 'http://schemas.android.com/apk/res/android:name(0x01010003)='
+    $androidExported = '          A: http://schemas.android.com/apk/res/android:exported(0x01010010)=true'
+    function Get-FixtureManifest([string]$Build, [string]$Code, [switch]$WithSplit) {
+        $lines = @(
+            'N: android=http://schemas.android.com/apk/res/android (line=1)',
+            '  E: manifest (line=1)',
+            "    A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=$Code",
+            "    A: http://schemas.android.com/apk/res/android:versionName(0x0101021c)=`"$Build`" (Raw: `"$Build`")",
+            "    A: package=`"$($releaseTarget.PackageName)`" (Raw: `"$($releaseTarget.PackageName)`")",
+            '      E: uses-permission (line=10)',
+            "        A: $androidName`"android.permission.INTERNET`" (Raw: `"android.permission.INTERNET`")",
+            '      E: application (line=20)',
+            '        E: activity (line=21)',
+            "          A: $androidName`"com.facebook.katana.LoginActivity`" (Raw: `"com.facebook.katana.LoginActivity`")",
+            $androidExported)
+        if ($WithSplit) {
+            $lines += @('        E: activity (line=40)',
+                "          A: $androidName`"com.facebook.split.FeatureActivity`" (Raw: `"com.facebook.split.FeatureActivity`")",
+                $androidExported)
+        }
+        return ($lines -join "`n") + "`n"
+    }
+    $dependencyNamesHere = @(Get-PatchDependencyNames -PatchList $releaseCatalog -RequestedNames $releaseNames)
+    $fixturePaths = @{}
+    $versionCode = 475019344
+    foreach ($build in $releaseTarget.PackageVersions) {
+        $apkm = Join-Path $fixtures "facebook-$build-arm64-v8a.apkm"
+        New-TestBundleArchive -Path $apkm -Entries ([ordered]@{
+            'info.json' = "{`"versioncode`":`"$versionCode`"}"
+            'base.apk' = Get-FixtureManifest -Build $build -Code "$versionCode"
+            'split_config.arm64_v8a.apk' = ('native code ' * 64) })
+        Set-Content -LiteralPath "$apkm.merged.txt" -Encoding ASCII -NoNewline `
+            -Value (Get-FixtureManifest -Build $build -Code "$versionCode" -WithSplit)
+        Set-Content -LiteralPath "$apkm.patched.txt" -Encoding ASCII -NoNewline `
+            -Value (Get-FixtureManifest -Build $build -Code "$versionCode" -WithSplit)
+        # The report the CLI writes: every patch and the internal dependencies applied, one step,
+        # and the input's own version, which is what the CLI reports.
+        Set-Content -LiteralPath "$apkm.result.json" -Encoding ASCII -Value ([ordered]@{
+            patchingSteps = @([ordered]@{ success = $true })
+            appliedPatches = @(@($releaseNames) + @($dependencyNamesHere) | ForEach-Object { [ordered]@{ name = $_ } })
+            failedPatches = @()
+            packageName = $releaseTarget.PackageName
+            packageVersion = $build } | ConvertTo-Json -Depth 6)
+        $fixturePaths[$build] = $apkm
+        $versionCode -= 100000
+    }
+    $releaseBundle = Get-ReleaseBundlePath -Root $releaseRepo
+    New-Item -ItemType Directory -Path (Split-Path -Parent $releaseBundle) -Force | Out-Null
+    New-TestBundleArchive -Path $releaseBundle -Entries ([ordered]@{
+        'META-INF/MANIFEST.MF' = ("Manifest-Version: 1.0`nVersion: $releaseVersionHere`nTimestamp: $($releaseSeconds * 1000)`n" +
+            "Patcher-Version: $($releaseToolchain.PatcherVersion)`n`n")
+        'extensions/facebook.mpe' = "dex`n035" + ('payload' * 8) })
+
+    # The builder reads git with a plain `git -C`, which a GIT_DIR inherited from a hook would
+    # override, so every GIT_* variable is cleared for the length of a run.
+    function Invoke-ReceiptBuilder([string[]]$Fixtures) {
+        Remove-Item -LiteralPath $javaLog -Force -ErrorAction SilentlyContinue
+        $saved = @{}
+        foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*' })) {
+            $saved[$variable.Name] = $variable.Value
+            Remove-Item -LiteralPath ('Env:\' + $variable.Name)
+        }
+        try {
+            $global:LASTEXITCODE = 0
+            & (Join-Path $PSScriptRoot 'build-release-receipt.ps1') -Root $releaseRepo -Fixture $Fixtures `
+                -WorkDir (Join-Path $releaseRoot 'work') -DesktopJar $stubJar -Java $stubJava -Aapt2 $stubAapt2 6> $null
+            if ($LASTEXITCODE -ne 0) { throw "build-release-receipt.ps1 exited $LASTEXITCODE." }
+        } finally {
+            foreach ($name in $saved.Keys) { Set-Item -LiteralPath ('Env:\' + $name) -Value $saved[$name] }
+        }
+    }
+
+    # A fixture for every declared build: one target each, none forced, every patch applied, and
+    # no manifest change, because the patched manifest is held to the merge and not to the base.
+    $allFixtures = @($releaseTarget.PackageVersions | ForEach-Object { $fixturePaths[$_] })
+    try {
+        Invoke-ReceiptBuilder -Fixtures $allFixtures
+    } catch {
+        throw "build-release-receipt.ps1 refused a run of every declared build: $($_.Exception.Message)"
+    }
+    $built = Get-Content -LiteralPath $releaseReceipt -Raw | ConvertFrom-Json
+    $builtTargets = @($built.targets)
+    Assert-True ((@($builtTargets | ForEach-Object { [string]$_.source.versionName }) -join ',') -eq
+        ($releaseTarget.PackageVersions -join ',')) `
+        "The receipt does not hold one run of each declared build: $(@($builtTargets | ForEach-Object { $_.source.versionName }) -join ', ')"
+    foreach ($builtTarget in $builtTargets) {
+        $label = [string]$builtTarget.source.versionName
+        Assert-True ($builtTarget.source.forced -eq $false) "The receipt says the declared build $label was forced."
+        Assert-True ($builtTarget.source.sha256 -eq (Get-Sha256Hex -Path $fixturePaths[$label])) `
+            "The receipt does not hash the $label fixture it was given."
+        Assert-True (@($builtTarget.patches | Where-Object { $_.applied }).Count -eq $releaseNames.Count) `
+            "The receipt does not record every patch applied to $label."
+        $changes = @(ConvertTo-ManifestDeltaEntries -Delta $builtTarget.manifestDelta)
+        Assert-True ($changes.Count -eq 0) "The receipt records the merge's own manifest change for $label as the patches': $($changes -join ', ')"
+    }
+    $patchRuns = @(Get-Content -LiteralPath $javaLog)
+    Assert-True ($patchRuns.Count -eq $allFixtures.Count -and
+        @($patchRuns | Where-Object { $_ -notlike '* forced=0' }).Count -eq 0) `
+        "The CLI was not run once per fixture without -f: $($patchRuns -join '; ')"
+    # And the receipt the builder writes is one the release check accepts.
+    $said = Invoke-ReleaseCheck
+    Assert-True ($said -like "*$proved*") "The release check did not accept the receipt the builder wrote: $said"
+
+    # One fixture, the newest build only, is not enough for a receipt: the older declared build
+    # has no run, so the builder refuses rather than writing a receipt the release check would.
+    Assert-Throws { Invoke-ReceiptBuilder -Fixtures @($fixturePaths[$releaseTarget.PackageVersion]) } `
+        "*No target in the receipt is the declared $($releaseTarget.PackageName) $($unproved -join ', ') patched without -f*" `
+        'build-release-receipt.ps1 wrote a receipt from the newest build alone.'
 } finally {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
