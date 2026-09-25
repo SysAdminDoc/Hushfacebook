@@ -33,9 +33,9 @@ import org.robolectric.RuntimeEnvironment;
  *
  * <pre>{@code @Rule public final SettingsContextRule settingsContext = new SettingsContextRule();}</pre>
  *
- * <p>An {@code @Before} method that calls {@code Utils.setContext} itself does the same job and
- * {@code SettingsContextGuardTest} accepts either. What neither of them is, is a call in
- * {@code @After}: by the time that runs the registry has already been touched.
+ * <p>An {@code @Before} method that calls {@code Utils.setContext} itself does the same job. What
+ * neither of them is, is a call in {@code @After}: by the time that runs the registry has already
+ * been touched. ColdStartHooksTest declares neither on purpose.
  */
 public final class SettingsContextRule extends ExternalResource {
     @Override
@@ -78,11 +78,28 @@ public final class SettingsContextRule extends ExternalResource {
      */
     public static void withoutContext(Runnable body) {
         Context saved = Utils.context;
+        boolean ready = Utils.settingsReady;
         Utils.context = null;
+        Utils.settingsReady = false;
         try {
             body.run();
         } finally {
             Utils.context = saved;
+            Utils.settingsReady = ready;
+        }
+    }
+
+    /**
+     * Runs [body] the way a hook runs inside setContext's window: the context is set, and whether
+     * this process runs paused isn't decided yet. The flag comes back afterwards.
+     */
+    public static void beforeThePauseIsDecided(Runnable body) {
+        boolean ready = Utils.settingsReady;
+        Utils.settingsReady = false;
+        try {
+            body.run();
+        } finally {
+            Utils.settingsReady = ready;
         }
     }
 

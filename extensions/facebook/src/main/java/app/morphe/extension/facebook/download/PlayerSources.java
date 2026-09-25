@@ -98,8 +98,9 @@ public final class PlayerSources {
     public static void remember(Object params, String idField, String hdField, String manifestField) {
         try {
             HookStatus.invoked(FAMILY);
-            // Facebook can build a player before the context is set, and no switch can be read then.
-            if (!Utils.hasContext() || !Settings.DOWNLOAD_STORIES.get()) return;
+            // Facebook can build a player before the settings are ready, and no switch can be
+            // read then.
+            if (!Utils.settingsReady() || !Settings.DOWNLOAD_STORIES.get()) return;
 
             String videoId = RenditionPicker.fieldValue(params, idField);
             if (videoId == null || videoId.isEmpty()) return;

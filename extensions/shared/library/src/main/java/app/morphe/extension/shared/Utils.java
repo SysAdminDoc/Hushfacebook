@@ -482,14 +482,24 @@ public class Utils {
     }
 
     /**
-     * Whether the context is set, without the error {@link #getContext()} logs when it isn't. A
-     * hook that can run before the application's onCreate asks this before it reads a setting.
-     * Setting's static initialiser needs the context, so a read before it fails that initialiser,
-     * the class stays unusable for the rest of the process, and the next read, the one
-     * {@link #setContext} makes to decide the pause, throws NoClassDefFoundError out of the start.
+     * Set by {@link #setContext} once the context is stored and the pause for this process is
+     * decided. Package-visible so a test can take it back.
      */
-    public static boolean hasContext() {
-        return context != null;
+    static volatile boolean settingsReady;
+
+    /**
+     * Whether a hook may read a setting yet. A hook that can run before the application's onCreate
+     * asks this first, and takes the host's own path until it's true.
+     *
+     * <p>Before the context is set, a read fails Setting's static initialiser, which needs the
+     * context. The class then stays unusable for the rest of the process, and the next read, the one
+     * {@link #setContext} makes to decide the pause, throws NoClassDefFoundError out of the start.
+     * After the context but before the pause is decided, a read answers the saved value, so a
+     * paused or safe-mode start would still run the hook's own path. Hence a flag, not a check
+     * of the context.
+     */
+    public static boolean settingsReady() {
+        return settingsReady;
     }
 
     /** Persistent preference writes are owned by the package's main process. */
@@ -529,6 +539,8 @@ public class Utils {
         // Before any hook reads a setting: whether this process runs with Hushfacebook paused, and
         // the record that lets three crashed starts in a row turn safe mode on.
         HushfacebookPause.onProcessStart(appContext);
+        // Only now may a hook read one. See settingsReady().
+        settingsReady = true;
 
         // Follow the activity rather than keeping the first one. The host recreates its main
         // activity on a configuration change it does not swallow, and this hook runs again for

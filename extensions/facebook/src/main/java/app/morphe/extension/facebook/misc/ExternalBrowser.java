@@ -131,12 +131,12 @@ public final class ExternalBrowser {
     }
 
     /**
-     * The Hushfacebook switch. Off, unreadable, or asked before the context is set, the link
+     * The Hushfacebook switch. Off, unreadable, or asked before the settings are ready, the link
      * stays in the app.
      */
     private static boolean switchedOn() {
         try {
-            return Utils.hasContext() && Settings.OPEN_LINKS_EXTERNALLY.get();
+            return Utils.settingsReady() && Settings.OPEN_LINKS_EXTERNALLY.get();
         } catch (Throwable t) {
             HookStatus.threw(FamilyNames.EXTERNAL_BROWSER, "switch read", t);
             Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,

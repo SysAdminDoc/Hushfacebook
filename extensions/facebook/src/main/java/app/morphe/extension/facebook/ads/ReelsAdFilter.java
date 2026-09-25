@@ -211,12 +211,12 @@ public final class ReelsAdFilter {
     }
 
     /**
-     * The Hushfacebook switch. Off, unreadable, or asked before the context is set, the page
+     * The Hushfacebook switch. Off, unreadable, or asked before the settings are ready, the page
      * passes as Facebook sent it.
      */
     private static boolean switchedOn() {
         try {
-            return Utils.hasContext() && Settings.HIDE_SPONSORED_REELS.get();
+            return Utils.settingsReady() && Settings.HIDE_SPONSORED_REELS.get();
         } catch (Throwable t) {
             HookStatus.threw(FamilyNames.SPONSORED_REELS, "switch read", t);
             Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,

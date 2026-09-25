@@ -68,6 +68,9 @@ public final class HushfacebookPause {
 
     static CrashState crashState = HushfacebookPause::inErrorState;
 
+    /** Runs while the pause is being decided, so a test can see what a hook sees then. */
+    @Nullable static volatile Runnable whileDecidingForTests;
+
     private HushfacebookPause() {
     }
 
@@ -84,6 +87,8 @@ public final class HushfacebookPause {
             // Never let the safety net be what stops Facebook from starting.
             Logger.printException(() -> "Hushfacebook pause: could not read the last start", failure);
         }
+        Runnable probe = whileDecidingForTests;
+        if (probe != null) probe.run();
         reason = decide(context);
         Setting.setPausedForProcess(reason != Reason.NONE);
         if (reason != Reason.NONE) {

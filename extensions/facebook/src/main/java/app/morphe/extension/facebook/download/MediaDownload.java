@@ -83,9 +83,9 @@ public final class MediaDownload {
     public static boolean saveStory(Context context, Object host) {
         HookStatus.invoked(FamilyNames.STORY_DOWNLOAD);
         try {
-            // Off, or with no context to read the switch with, Facebook's own save runs, as it
+            // Off, or before the settings are ready, Facebook's own save runs, as it
             // would unpatched.
-            if (!Utils.hasContext() || !Settings.DOWNLOAD_STORIES.get()) return false;
+            if (!Utils.settingsReady() || !Settings.DOWNLOAD_STORIES.get()) return false;
 
             List<String> urls = collectStoryUrls(host);
 

@@ -207,21 +207,29 @@ public class PausedHooksTest {
 
     /**
      * Facebook can call a hook before its application's onCreate hands Hushfacebook the context,
-     * from a thread it starts early. A switch read then leaves Setting's class unusable for the
-     * rest of the process, and the start crashes when setContext reads one (see
-     * Utils.hasContext). So until the context is set, every hook takes Facebook's own path
-     * whatever is saved. This JVM's Setting class loaded with a context, so a hook that reads its
-     * switch anyway answers on here and is named.
+     * from a thread it starts early, and again while setContext is still deciding whether this
+     * start runs paused. Until both are done, every hook takes Facebook's own path whatever is
+     * saved (see Utils.settingsReady). This JVM's Setting class loaded with a context, so a hook
+     * that reads its switch anyway answers on here and is named. Whether a hook reads a switch
+     * before its guard, which is what crashes a start, is ColdStartHooksTest's to see.
      */
     @Test
-    public void beforeTheContextIsSetEveryHookTakesFacebooksOwnPath() {
+    public void untilTheSettingsAreReadyEveryHookTakesFacebooksOwnPath() {
         for (BooleanSetting setting : settingsSwitches()) setting.save(true);
         Map<PatchFamily, List<Probe>> probes = probes();
         assertEquals("every family with a switch needs a probe here", switched(), probes.keySet());
 
         List<String> wrong = new ArrayList<>();
         SettingsContextRule.withoutContext(() -> everyProbe(probes, false, "before the context is set", wrong));
-        everyProbe(probes, true, "once it is set", wrong);
+        // Safe mode on, as after three crashed starts: the context is set and the pause undecided.
+        BaseSettings.SAFE_MODE.save(true);
+        try {
+            SettingsContextRule.beforeThePauseIsDecided(
+                    () -> everyProbe(probes, false, "before the pause is decided", wrong));
+        } finally {
+            BaseSettings.SAFE_MODE.resetToDefault();
+        }
+        everyProbe(probes, true, "once they're ready", wrong);
         assertEquals(Collections.emptyList(), wrong);
     }
 

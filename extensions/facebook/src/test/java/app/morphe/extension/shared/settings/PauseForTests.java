@@ -19,4 +19,9 @@ public final class PauseForTests {
     public static void resume() {
         HushfacebookPause.pauseForTests(HushfacebookPause.Reason.NONE);
     }
+
+    /** Runs [probe] inside the next first-of-process pause decision, or nothing when null. */
+    public static void whileDeciding(Runnable probe) {
+        HushfacebookPause.whileDecidingForTests = probe;
+    }
 }
