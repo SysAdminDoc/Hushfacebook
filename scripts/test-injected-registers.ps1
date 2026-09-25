@@ -15,13 +15,15 @@
     of a pair broken on one arm moved where the arms meet, a zero on one arm read as a long, a
     conflict (an object on one arm, an int on the other) read by each instruction and in each
     register that takes a value, or read through a copy, a wide move of a conflict, a long and a
-    lone upper half tested against zero, a move-result the patch separated from its invoke, bad
-    try ranges and handlers (a handler at a switch or array payload among them), a move-exception
-    the method's entry reaches, and the one feed guard doubled, moved or missing. The good build
-    carries the joins, copies and reads ART accepts, so a check made stricter still has to pass
-    them. Each bad build has to fail with findings of its own category only, so a check that fires
-    for the wrong reason fails here too. Removed methods and DEX entries, the removal allowlist,
-    and the device tally comparison are held to what they did before.
+    lone upper half tested against zero, an int and an object tested for equality in either
+    order, a move-result the patch separated from its invoke, bad try ranges and handlers (a
+    handler at a switch or array payload among them), a move-exception the method's entry
+    reaches, and the one feed guard doubled, moved or missing. The good build carries the joins,
+    copies and reads ART accepts, a zero tested against an object among them, so a check made
+    stricter still has to pass them. Each bad build has to fail with findings of its own category
+    only, so a check that fires for the wrong reason fails here too. Removed methods and DEX
+    entries, the removal allowlist, and the device tally comparison are held to what they did
+    before.
     verify-injected-registers.ps1 also runs end to end with stand-in tools, and its wiring is read
     through the parser (script-wiring.ps1), with the wiring checks themselves tried on copies that
     drop the calls but keep their text, at least one for each rule of what a script can't reach.
@@ -575,6 +577,8 @@ try {
         'bad-conflict-monitor-exit' = 'width'
         'bad-conflict-filled-new-array-range' = 'width'
         'bad-broken-high-if-eqz' = 'width'
+        'bad-if-eq-int-object' = 'width'
+        'bad-if-ne-object-int' = 'width'
         'bad-wide-if-eqz' = 'width'
         'bad-broken-low-move' = 'width'
         'bad-broken-high-move' = 'width'

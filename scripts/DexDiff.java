@@ -590,7 +590,8 @@ public class DexDiff {
             // Each register as ART's verifier checks it. A test against zero or for equality takes
             // a narrow value or an object, an ordering, a switch or a new array's size takes a
             // narrow value, and a lock, a throw, a cast, a type test, or an array to measure or
-            // fill takes an object. An equality test of an int with an object is left alone.
+            // fill takes an object. An equality test's two registers also have to agree, which
+            // structuralFindings checks as a pair.
             case IF_EQZ: case IF_NEZ:
                 read(reads, ((OneRegisterInstruction) i).getRegisterA(), 'E');
                 return reads;
@@ -804,6 +805,23 @@ public class DexDiff {
                 findings.add(origin(read[0], firstParameter, writes[k], have) + opcode.name + " at " + at
                         + " reads v" + read[0] + ", which holds " + describe(have)
                         + ", as " + describe((char) read[1]));
+            }
+
+            // An equality test compares two objects or two narrow values, and a zero may stand
+            // for either. Each register passes the read above on its own, so an int tested
+            // against an object is only caught as a pair; ART refuses it ("args to if-eq/if-ne
+            // must both be references or integral").
+            if (opcode == Opcode.IF_EQ || opcode == Opcode.IF_NE) {
+                int first = ((TwoRegisterInstruction) i).getRegisterA();
+                int second = ((TwoRegisterInstruction) i).getRegisterB();
+                if (first < kinds[k].length && second < kinds[k].length) {
+                    char a = kinds[k][first];
+                    char b = kinds[k][second];
+                    if ((a == 'I' && b == 'L') || (a == 'L' && b == 'I')) {
+                        findings.add("width: " + opcode.name + " at " + at + " compares v" + first + ", which holds "
+                                + describe(a) + ", with v" + second + ", which holds " + describe(b));
+                    }
+                }
             }
 
             if (!isPlainInvoke(opcode) || !(i instanceof ReferenceInstruction)

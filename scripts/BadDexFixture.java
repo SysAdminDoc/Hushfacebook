@@ -319,7 +319,8 @@ public class BadDexFixture {
      * caught are where paths meet the way ART allows: a zero that is an object on one arm and a
      * zero that is an int on the other, a conflict that is only copied, and a handler that reads
      * what its register held before the instruction that threw. reads gives each instruction the
-     * conflict builds fail a value of the kind ART takes there, so a read made stricter fails too.
+     * conflict builds fail a value of the kind ART takes there, so a read made stricter fails too,
+     * and zeros tests a zero for equality with an object and with an int, which ART allows.
      */
     private static ClassDef filter() {
         List<Method> methods = Arrays.asList(
@@ -400,7 +401,21 @@ public class BadDexFixture {
                         op(Opcode.THROW, 3),                                                     // 37
                         oneInt(),                                                                // 38
                         new ImmutablePackedSwitchPayload(Collections.singletonList(              // 44
-                                new ImmutableSwitchElement(0, 3)))), OBJECT, "I"));
+                                new ImmutableSwitchElement(0, 3)))), OBJECT, "I"),
+                // A zero tested for equality with the object v1 and with the int v2, each from
+                // either side. A zero stands for either, so none of these pairs is the mismatch
+                // an int and an object are.
+                define(FILTER, "zeros", "V", true, body(3,
+                        new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),                       // 0
+                        new ImmutableInstruction22t(Opcode.IF_EQ, 0, 1, 3),                      // 1 -> 4
+                        op(Opcode.NOP),                                                          // 3
+                        new ImmutableInstruction22t(Opcode.IF_NE, 1, 0, 3),                      // 4 -> 7
+                        op(Opcode.NOP),                                                          // 6
+                        new ImmutableInstruction22t(Opcode.IF_EQ, 0, 2, 3),                      // 7 -> 10
+                        op(Opcode.NOP),                                                          // 9
+                        new ImmutableInstruction22t(Opcode.IF_NE, 2, 0, 3),                      // 10 -> 13
+                        op(Opcode.NOP),                                                          // 12
+                        op(Opcode.RETURN_VOID)), OBJECT, "I"));                                  // 13
         return new ImmutableClassDef(FILTER, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(),
                 OBJECT, null, null, null, packedField(FILTER), methods);
     }
@@ -637,6 +652,21 @@ public class BadDexFixture {
                 new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
                 new ImmutableInstruction11n(Opcode.CONST_4, 0, 1),                                 // 3, v1 is left a lone upper half
                 ifEqz(1, 3),                                                                       // 4 -> 7
+                op(Opcode.RETURN_VOID),                                                            // 6
+                op(Opcode.RETURN_VOID))));                                                         // 7
+        // width: an int, risky()'s result, tested for equality with the object argument, and the
+        // same pair the other way round. Each register is something an equality test takes, but
+        // ART wants two objects or two narrow values.
+        dexes.put("bad-if-eq-int-object", withStaticHost(body(5,
+                invoke(RISKY),                                                                     // 0
+                op(Opcode.MOVE_RESULT, 0),                                                         // 3
+                new ImmutableInstruction22t(Opcode.IF_EQ, 0, 2, 3),                                // 4 -> 7
+                op(Opcode.RETURN_VOID),                                                            // 6
+                op(Opcode.RETURN_VOID))));                                                         // 7
+        dexes.put("bad-if-ne-object-int", withStaticHost(body(5,
+                invoke(RISKY),                                                                     // 0
+                op(Opcode.MOVE_RESULT, 0),                                                         // 3
+                new ImmutableInstruction22t(Opcode.IF_NE, 2, 0, 3),                                // 4 -> 7
                 op(Opcode.RETURN_VOID),                                                            // 6
                 op(Opcode.RETURN_VOID))));                                                         // 7
         // width: a long tested against zero, which takes a narrow value or an object.
