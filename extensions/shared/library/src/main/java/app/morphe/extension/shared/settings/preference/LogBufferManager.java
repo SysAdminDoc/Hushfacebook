@@ -221,48 +221,28 @@ public final class LogBufferManager {
         if (context == null) throw new IOException("Application context unavailable");
         String fileName = "morphe-diagnostics-" + fileTimestamp() + "-"
                 + Long.toHexString(System.nanoTime()) + ".txt";
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ContentResolver resolver = context.getContentResolver();
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-            values.put(MediaStore.MediaColumns.MIME_TYPE, "text/plain");
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH,
-                    Environment.DIRECTORY_DOWNLOADS + "/Morphe");
-            values.put(MediaStore.MediaColumns.IS_PENDING, 1);
-            Uri pendingUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-            if (pendingUri == null) throw new IOException("Could not create report file");
-            try {
-                try (OutputStream output = resolver.openOutputStream(pendingUri, "w")) {
-                    writeText(output, exportText);
-                }
-                String savedName = providerDisplayName(resolver, pendingUri);
-                values.clear();
-                values.put(MediaStore.MediaColumns.IS_PENDING, 0);
-                if (resolver.update(pendingUri, values, null, null) != 1) {
-                    throw new IOException("Could not publish report file");
-                }
-                return Environment.DIRECTORY_DOWNLOADS + "/Morphe/" + savedName;
-            } catch (Exception error) {
-                deleteIncomplete(resolver, pendingUri, error);
-                throw error;
-            }
-        }
-
-        File directory = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
-        if (directory == null) throw new IOException("Documents directory unavailable");
-        if (!directory.exists() && !directory.mkdirs()) {
-            throw new IOException("Could not create Documents directory");
-        }
-        File file = File.createTempFile("morphe-diagnostics-", ".txt", directory);
+        ContentResolver resolver = context.getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_DOWNLOADS + "/Morphe");
+        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+        Uri pendingUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        if (pendingUri == null) throw new IOException("Could not create report file");
         try {
-            try (FileOutputStream output = new FileOutputStream(file)) {
+            try (OutputStream output = resolver.openOutputStream(pendingUri, "w")) {
                 writeText(output, exportText);
             }
-            return file.getAbsolutePath();
-        } catch (Exception error) {
-            if (file.exists() && !file.delete()) {
-                error.addSuppressed(new IOException("Could not remove incomplete report"));
+            String savedName = providerDisplayName(resolver, pendingUri);
+            values.clear();
+            values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            if (resolver.update(pendingUri, values, null, null) != 1) {
+                throw new IOException("Could not publish report file");
             }
+            return Environment.DIRECTORY_DOWNLOADS + "/Morphe/" + savedName;
+        } catch (Exception error) {
+            deleteIncomplete(resolver, pendingUri, error);
             throw error;
         }
     }
@@ -558,11 +538,9 @@ public final class LogBufferManager {
      * a description like "MemoryLimiter:AnonSwap", and an ANR or a low-memory kill leaves nothing
      * behind either. One line turns an unexplained restart into something a maintainer can act on.
      *
-     * <p>Read only from API 30, where the history exists at all. It follows the same filter as
-     * the hook table, because it is the same kind of evidence.
+     * <p>It follows the same filter as the hook table, because it is the same kind of evidence.
      */
     private static String lastExitLine(boolean includeAll, Set<String> selected) {
-        if (Build.VERSION.SDK_INT < 30) return "";
         if (!includeAll && !selected.contains(
                 app.morphe.extension.shared.diagnostics.DiagnosticCategory.PATCH_ERRORS.value)) {
             return "";

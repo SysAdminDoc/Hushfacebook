@@ -10,9 +10,7 @@
 package app.morphe.extension.shared;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.os.Build;
 import android.os.LocaleList;
 
 import java.util.ArrayList;
@@ -179,14 +177,12 @@ public final class L10n {
      */
     static String pluralCategory(Context context, long count) {
         Locale locale = textLocale(context);
-        if (Build.VERSION.SDK_INT >= 24) {
-            try {
-                return android.icu.text.PluralRules.forLocale(locale).select(count);
-            } catch (Throwable ignored) {
-                // Fall through to the two-form rule below.
-            }
+        try {
+            return android.icu.text.PluralRules.forLocale(locale).select(count);
+        } catch (Throwable ignored) {
+            // ICU with no rules for the language: the two English forms.
+            return count == 1 ? "one" : "other";
         }
-        return count == 1 ? "one" : "other";
     }
 
     /**
@@ -227,12 +223,10 @@ public final class L10n {
     public static String join(Context context, List<? extends CharSequence> items) {
         if (items.isEmpty()) return "";
         if (items.size() == 1) return items.get(0).toString();
-        if (Build.VERSION.SDK_INT >= 26) {
-            try {
-                return android.icu.text.ListFormatter.getInstance(textLocale(context)).format(items);
-            } catch (Throwable ignored) {
-                // Fall through to the English join below.
-            }
+        try {
+            return android.icu.text.ListFormatter.getInstance(textLocale(context)).format(items);
+        } catch (Throwable ignored) {
+            // Fall through to the English join below.
         }
         StringBuilder joined = new StringBuilder();
         for (int index = 0; index < items.size(); index++) {
@@ -317,18 +311,13 @@ public final class L10n {
         try {
             Resources resources = context == null ? null : context.getResources();
             if (resources != null) {
-                Configuration configuration = resources.getConfiguration();
-                if (Build.VERSION.SDK_INT >= 24) {
-                    LocaleList list = configuration.getLocales();
-                    List<Locale> found = new ArrayList<>(list.size());
-                    for (int index = 0; index < list.size(); index++) {
-                        found.add(list.get(index));
-                    }
-                    if (!found.isEmpty()) {
-                        return found;
-                    }
-                } else if (configuration.locale != null) {
-                    return Collections.singletonList(configuration.locale);
+                LocaleList list = resources.getConfiguration().getLocales();
+                List<Locale> found = new ArrayList<>(list.size());
+                for (int index = 0; index < list.size(); index++) {
+                    found.add(list.get(index));
+                }
+                if (!found.isEmpty()) {
+                    return found;
                 }
             }
         } catch (Throwable ignored) {

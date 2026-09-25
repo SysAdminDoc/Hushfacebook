@@ -7,7 +7,8 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 23
+        // Facebook 577 and 580 declare minSdk 30, and this library only ever runs inside them.
+        minSdk = 30
     }
 
     compileOptions {
@@ -15,7 +16,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // The payload is injected into Facebook; the library keeps API 23 as its floor. javac compiles against a
+    // The payload is injected into Facebook, whose floor is API 30. javac compiles against a
     // modern JDK and Robolectric runs on one, so a library call or a type above that floor is
     // green all the way to a phone, where D8 has left it as a stub that throws. NewApi is the
     // only check here that reads the SDK_INT guards instead of flagging every guarded call.

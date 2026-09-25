@@ -166,7 +166,7 @@ public class Utils {
         if (code < 0) {
             try {
                 PackageInfo info = getPackageInfo();
-                code = Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+                code = info.getLongVersionCode();
                 versionCode = code;
             } catch (Exception ex) {
                 Logger.printException(() -> "Failed to get package info", ex);
@@ -573,13 +573,11 @@ public class Utils {
         ClipboardManager clipboard = (ClipboardManager) clipboardContext
                 .getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText(label, text);
-        if (Build.VERSION.SDK_INT >= 24) {
-            PersistableBundle extras = new PersistableBundle();
-            // Use the literal so API 24 through 32 can carry the flag before the constant
-            // was added to the SDK. Android 13 and newer recognize the same key.
-            extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
-            clip.getDescription().setExtras(extras);
-        }
+        PersistableBundle extras = new PersistableBundle();
+        // Use the literal so API 30 through 32 can carry the flag before the constant was added
+        // to the SDK. Android 13 and newer recognize the same key.
+        extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
+        clip.getDescription().setExtras(extras);
         clipboard.setPrimaryClip(clip);
     }
 
@@ -1252,10 +1250,6 @@ public class Utils {
      */
     @SuppressWarnings("deprecation")
     public static void setPreferenceTitlesToMultiLineIfNeeded(PreferenceGroup group) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return;
-        }
-
         String morpheLocale = Utils.getContext().getResources().getConfiguration().locale.getLanguage();
         if (morpheLocale.equals(Locale.ENGLISH.getLanguage())) {
             return;

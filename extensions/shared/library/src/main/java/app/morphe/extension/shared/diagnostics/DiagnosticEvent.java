@@ -15,18 +15,13 @@ public final class DiagnosticEvent {
      *
      * <p>{@link SimpleDateFormat} is not thread safe, so it cannot simply be a static, and
      * building one per call was costing a formatter, a time zone lookup and a pattern parse on
-     * every logged line. An anonymous subclass rather than {@code ThreadLocal.withInitial},
-     * which the payload's API 23 floor does not have.
+     * every logged line.
      */
-    private static final ThreadLocal<SimpleDateFormat> TIMESTAMP = new ThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            SimpleDateFormat format =
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-            format.setTimeZone(TimeZone.getTimeZone("UTC"));
-            return format;
-        }
-    };
+    private static final ThreadLocal<SimpleDateFormat> TIMESTAMP = ThreadLocal.withInitial(() -> {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format;
+    });
 
     public final DiagnosticCategory category;
     public final long timestamp;

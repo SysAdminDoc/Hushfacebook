@@ -56,12 +56,9 @@ public final class HookStatus {
     }
 
     private static final class Family {
-        // newKeySet() is API 24 and D8 cannot backport it, so on Android 6 it throws where the
-        // callers catch Throwable and the diagnostics silently record nothing. This shape is
-        // the same concurrent set and resolves at API 1.
         /** Raw names, so the hot path compares what the caller already holds. */
-        final Set<String> bound = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        final Set<String> missed = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        final Set<String> bound = ConcurrentHashMap.newKeySet();
+        final Set<String> missed = ConcurrentHashMap.newKeySet();
         /** Raw key and displayed detail together, in the order misses arrived. */
         final List<Miss> order = new CopyOnWriteArrayList<>();
         /** How many times a hook of this family ran, whatever it then found. */

@@ -19,7 +19,6 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -72,7 +71,7 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
             super(context);
             this.primary = primary;
             this.styler = styler;
-            if (Build.VERSION.SDK_INT >= 26) setSingleLineTitle(false);
+            setSingleLineTitle(false);
         }
 
         @Override public boolean actsOnTap() {
@@ -662,7 +661,7 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
             message.setSelectable(false);
             // A translated title, or any title at a large text size, would otherwise be cut to
             // one line.
-            if (Build.VERSION.SDK_INT >= 26) message.setSingleLineTitle(false);
+            message.setSingleLineTitle(false);
             screen.addPreference(message);
 
             ErrorActionStyler styler = errorActionStyler();

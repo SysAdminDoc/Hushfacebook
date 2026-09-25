@@ -8,7 +8,6 @@ package app.morphe.extension.shared.settings;
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
@@ -212,19 +211,17 @@ public final class HushfacebookPause {
             return false;
         }
         boolean markedByHandler = parts.length > 2 && CRASHED.equals(parts[2]);
-        if (Build.VERSION.SDK_INT >= 30) {
-            ApplicationExitInfo exit = firstExitSince(context, pid, started);
-            if (exit != null) {
-                int reason = exit.getReason();
-                boolean crash = reason == ApplicationExitInfo.REASON_CRASH
-                        || reason == ApplicationExitInfo.REASON_CRASH_NATIVE
-                        || reason == ApplicationExitInfo.REASON_ANR;
-                // Android writes a crash down when it is reported, before any "keeps stopping"
-                // dialog holds the process open, so the first record since the start says when
-                // the crash happened. A process that lived past the minute by the clock on the
-                // wall, the device asleep or not, did not die young.
-                return crash && exit.getTimestamp() - started <= START_WINDOW_MS;
-            }
+        ApplicationExitInfo exit = firstExitSince(context, pid, started);
+        if (exit != null) {
+            int reason = exit.getReason();
+            boolean crash = reason == ApplicationExitInfo.REASON_CRASH
+                    || reason == ApplicationExitInfo.REASON_CRASH_NATIVE
+                    || reason == ApplicationExitInfo.REASON_ANR;
+            // Android writes a crash down when it is reported, before any "keeps stopping"
+            // dialog holds the process open, so the first record since the start says when
+            // the crash happened. A process that lived past the minute by the clock on the
+            // wall, the device asleep or not, did not die young.
+            return crash && exit.getTimestamp() - started <= START_WINDOW_MS;
         }
         return markedByHandler;
     }
@@ -235,7 +232,6 @@ public final class HushfacebookPause {
      */
     @Nullable
     private static ApplicationExitInfo firstExitSince(Context context, int pid, long started) {
-        if (Build.VERSION.SDK_INT < 30) return null;
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager == null) return null;
         List<ApplicationExitInfo> exits = manager.getHistoricalProcessExitReasons(null, pid, 16);
