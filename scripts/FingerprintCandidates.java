@@ -60,7 +60,8 @@ import java.util.TreeSet;
  *
  * <p>It only reports. It never edits a patch and never picks a candidate for anybody: a run that
  * finds one candidate standing out still says to check it by hand, and a run where no candidate
- * stands out fails closed and suggests none.
+ * stands out fails closed and suggests none. Callers are compared for a shortlist of the closest
+ * methods only, so a candidate stands out only when no method left off it could come close either.
  *
  * <pre>
  *   java -cp &lt;cli jar&gt; FingerprintCandidates.java capture   &lt;apk&gt; &lt;method&gt; &lt;signature.json&gt;
@@ -79,8 +80,16 @@ public final class FingerprintCandidates {
     static final int SCHEMA_VERSION = 1;
     static final int DEFAULT_TOP = 5;
 
-    /** Candidates that go on to the call-neighbourhood comparison, per signature. */
+    /**
+     * Candidates that go on to the call-neighbourhood comparison, per signature, at first, with every
+     * method tied with the last of them ...
+     */
     static final int SHORTLIST = 200;
+    /**
+     * ... and at most, when a method left off could still score enough with its callers to change
+     * the answer. Each round takes four times as many.
+     */
+    static final int MAX_SHORTLIST = 51_200;
 
     /** A top candidate stands out only at or above this score ... */
     static final double MIN_SCORE = 0.45;
@@ -813,8 +822,10 @@ public final class FingerprintCandidates {
         final int[] params;
         final boolean isStatic;
         final boolean isConstructor;
-        int[] callers = new int[0];
-        double callerWeight;
+        final int[] callers;
+        final double callerWeight;
+        /** The best callers score any method can have: the part of callerWeight the new build holds. */
+        final double callerCeiling;
 
         Query(Features f, Dictionary dict) {
             this.f = f;
@@ -831,6 +842,17 @@ public final class FingerprintCandidates {
             for (int k = 0; k < params.length; k++) params[k] = dict.lookup("P:" + f.parameters.get(k));
             isStatic = f.isStatic();
             isConstructor = f.isConstructor();
+            Holder k = known(dict, f.callerTokens);
+            callers = k.ids;
+            callerWeight = k.weight;
+            // Shared weight over the union is at most shared over this side's weight, and only the
+            // tokens the new build has can be shared.
+            callerCeiling = callerWeight > 0 ? Math.min(1.0, weight(dict, callers) / callerWeight) : 0;
+        }
+
+        /** The weight of the parts that need no callers: every part but the class when this has none. */
+        double partialWeight() {
+            return W_TOKENS + W_OPCODES + W_PROTOTYPE + W_SIZE + W_STATIC + (contextWeight > 0 ? W_CONTEXT : 0);
         }
     }
 
@@ -946,15 +968,13 @@ public final class FingerprintCandidates {
         s.staticMatch = q.isStatic == ix.isStatic[c] && q.isConstructor == ix.isConstructor[c];
         double sum = W_TOKENS * s.tokens + W_OPCODES * s.opcodes + W_PROTOTYPE * s.prototype + W_SIZE * s.size
                 + W_STATIC * (s.staticMatch ? 1 : 0);
-        double weight = W_TOKENS + W_OPCODES + W_PROTOTYPE + W_SIZE + W_STATIC;
         if (q.contextWeight > 0) {
             s.context = weightedJaccard(ix.dict, q.context, q.contextWeight, ix.context[c], ix.contextWeight[c]);
             sum += W_CONTEXT * s.context;
-            weight += W_CONTEXT;
         }
         s.partial = sum;
-        s.partialWeight = weight;
-        s.total = sum / weight;
+        s.partialWeight = q.partialWeight();
+        s.total = sum / s.partialWeight;
         return s;
     }
 
@@ -964,73 +984,107 @@ public final class FingerprintCandidates {
         List<Score> ranked = new ArrayList<>();
         String verdict;
         boolean standsOut;
+        /** The best score before callers of a method left off the shortlist, or -1 when none was. */
+        double excluded = -1;
+        /** The most a method left off could score once its callers count, or -1 when none was left off. */
+        double bound = -1;
+        /** A method left off could still take first place, or come too close to one that stands out. */
+        boolean unsure;
+        /** In a calibration: a method left off could still rank above the known replacement. */
+        boolean knownUnsure;
     }
 
-    /** The best SHORTLIST methods of the new build for one query, by the parts that need no callers. */
-    static Ranking shortlist(Query q, Indexed ix) {
+    /**
+     * The best methods of the new build for one query, by the parts that need no callers: the first
+     * size of them and every method tied with the last one, so the order of the dex never decides
+     * which of a tie go on. A tie too big to compare stays out whole, and counts in the bound.
+     */
+    static Ranking shortlist(Query q, Indexed ix, int size) {
         int n = ix.build.methods.size();
         int[][] rows = {new int[64], new int[64]};
-        Score[] best = new Score[SHORTLIST];
-        int filled = 0;
-        for (int c = 0; c < n; c++) {
-            Score s = score(q, ix, c, rows);
-            if (filled < SHORTLIST) {
-                best[filled++] = s;
-                if (filled == SHORTLIST) Arrays.sort(best, FingerprintCandidates::byTotal);
-            } else if (byTotal(s, best[SHORTLIST - 1]) < 0) {
-                int k = SHORTLIST - 1;
-                while (k > 0 && byTotal(s, best[k - 1]) < 0) {
-                    best[k] = best[k - 1];
-                    k--;
-                }
-                best[k] = s;
+        double[] totals = new double[n];
+        for (int c = 0; c < n; c++) totals[c] = score(q, ix, c, rows).total;
+        double cut = Double.NEGATIVE_INFINITY;
+        if (n > size) {
+            double[] sorted = totals.clone();
+            Arrays.sort(sorted);
+            int last = n - size;
+            cut = sorted[last];
+            int first = last;
+            while (first > 0 && sorted[first - 1] == cut) first--;
+            if (n - first > MAX_SHORTLIST) {
+                while (last < n && sorted[last] == cut) last++;
+                cut = last < n ? sorted[last] : Double.POSITIVE_INFINITY;
             }
         }
-        Score[] kept = Arrays.copyOf(best, filled);
-        Arrays.sort(kept, FingerprintCandidates::byTotal);
         Ranking r = new Ranking();
         r.query = q;
-        r.ranked.addAll(Arrays.asList(kept));
+        for (int c = 0; c < n; c++) {
+            if (totals[c] >= cut) r.ranked.add(score(q, ix, c, rows));
+            else r.excluded = Math.max(r.excluded, totals[c]);
+        }
+        r.ranked.sort(FingerprintCandidates::byTotal);
         return r;
     }
 
     static List<Ranking> rankAll(Indexed ix, List<Features> signatures) {
+        return rankAll(ix, signatures, null);
+    }
+
+    /**
+     * Ranks each signature. Callers are compared for the shortlisted methods only, so once they
+     * count, each ranking works out the most a method left off could score: its score so far, with
+     * callers matching as well as the new build allows. While that could still change the answer, or
+     * in a calibration the known replacement's rank, the shortlist grows fourfold, up to MAX_SHORTLIST;
+     * past that the verdict says what could still overtake it.
+     */
+    static List<Ranking> rankAll(Indexed ix, List<Features> signatures, int[] known) {
         List<Query> queries = new ArrayList<>();
         for (Features f : signatures) queries.add(new Query(f, ix.dict));
         Ranking[] rankings = new Ranking[queries.size()];
-        java.util.stream.IntStream.range(0, queries.size()).parallel()
-                .forEach(k -> rankings[k] = shortlist(queries.get(k), ix));
-
-        // The call neighbourhood, for the shortlisted methods only: one pass over the call index.
-        Set<Integer> shortlisted = new TreeSet<>();
-        for (Ranking r : rankings) for (Score s : r.ranked) shortlisted.add(s.method);
-        Map<Integer, TreeSet<Integer>> callers = ix.build.callersOf(shortlisted);
-        Map<ClassDef, List<String>> contexts = new HashMap<>();
-        for (int method : shortlisted) ix.callers.put(method, ix.build.callerInfo(callers.get(method), contexts));
         Map<Integer, int[]> callerIds = new HashMap<>();
         Map<Integer, Double> callerWeights = new HashMap<>();
-        for (int method : shortlisted) {
-            Holder h = known(ix.dict, ix.callers.get(method).tokens);
-            callerIds.put(method, h.ids);
-            callerWeights.put(method, h.weight);
-        }
-        List<Ranking> out = new ArrayList<>();
-        for (Ranking r : rankings) {
-            Holder h = known(ix.dict, r.query.f.callerTokens);
-            r.query.callers = h.ids;
-            r.query.callerWeight = h.weight;
-            if (r.query.f.callerCount > 0) {
-                for (Score s : r.ranked) {
-                    s.callers = weightedJaccard(ix.dict, r.query.callers, r.query.callerWeight,
-                            callerIds.get(s.method), callerWeights.get(s.method));
-                    s.total = (s.partial + W_CALLERS * s.callers) / (s.partialWeight + W_CALLERS);
-                }
-                r.ranked.sort(FingerprintCandidates::byTotal);
+        Map<ClassDef, List<String>> contexts = new HashMap<>();
+        List<Integer> open = new ArrayList<>();
+        for (int k = 0; k < queries.size(); k++) open.add(k);
+        for (int size = SHORTLIST; !open.isEmpty(); size *= 4) {
+            int cutTo = size;
+            open.parallelStream().forEach(k -> rankings[k] = shortlist(queries.get(k), ix, cutTo));
+
+            // The call neighbourhood of the shortlisted methods not compared yet: one pass over the call index.
+            Set<Integer> fresh = new TreeSet<>();
+            for (int k : open) for (Score s : rankings[k].ranked) if (!ix.callers.containsKey(s.method)) fresh.add(s.method);
+            Map<Integer, TreeSet<Integer>> callers = ix.build.callersOf(fresh);
+            for (int method : fresh) {
+                CallerInfo info = ix.build.callerInfo(callers.get(method), contexts);
+                ix.callers.put(method, info);
+                Holder h = known(ix.dict, info.tokens);
+                callerIds.put(method, h.ids);
+                callerWeights.put(method, h.weight);
             }
-            decide(r);
-            out.add(r);
+
+            List<Integer> wider = new ArrayList<>();
+            for (int k : open) {
+                Ranking r = rankings[k];
+                Query q = r.query;
+                if (q.f.callerCount > 0) {
+                    for (Score s : r.ranked) {
+                        s.callers = weightedJaccard(ix.dict, q.callers, q.callerWeight,
+                                callerIds.get(s.method), callerWeights.get(s.method));
+                        s.total = (s.partial + W_CALLERS * s.callers) / (s.partialWeight + W_CALLERS);
+                    }
+                    r.ranked.sort(FingerprintCandidates::byTotal);
+                    r.bound = r.excluded < 0 ? -1
+                            : (r.excluded * q.partialWeight() + W_CALLERS * q.callerCeiling) / (q.partialWeight() + W_CALLERS);
+                } else {
+                    r.bound = r.excluded;
+                }
+                decide(r, known == null ? -1 : known[k]);
+                if ((r.unsure || r.knownUnsure) && size < MAX_SHORTLIST) wider.add(k);
+            }
+            open = wider;
         }
-        return out;
+        return Arrays.asList(rankings);
     }
 
     static int byTotal(Score a, Score b) {
@@ -1038,25 +1092,47 @@ public final class FingerprintCandidates {
         return c != 0 ? c : Integer.compare(a.method, b.method);
     }
 
-    /** Whether the top candidate stands out, or the run fails closed. */
-    static void decide(Ranking r) {
+    /**
+     * Whether the top candidate stands out, or the run fails closed. A method left off the shortlist
+     * could still score the bound, so a candidate stands out only when the bound is under it by the
+     * margin too, and the ranking is unsure while a method left off could take first place.
+     */
+    static void decide(Ranking r, int known) {
+        r.standsOut = false;
+        r.unsure = false;
+        r.knownUnsure = false;
+        if (known >= 0 && r.bound >= 0) {
+            Score k = null;
+            for (Score s : r.ranked) if (s.method == known) k = s;
+            r.knownUnsure = k == null || r.bound >= k.total;
+        }
         if (r.ranked.isEmpty()) {
-            r.standsOut = false;
-            r.verdict = "the new build has no method with code to compare";
+            r.verdict = r.excluded < 0 ? "the new build has no method with code to compare"
+                    : String.format(Locale.ROOT, "more than %d methods tie for the best score before callers count, "
+                            + "too many to compare their callers", MAX_SHORTLIST);
             return;
         }
         double best = r.ranked.get(0).total;
         double next = r.ranked.size() > 1 ? r.ranked.get(1).total : 0;
+        String leftOff = String.format(Locale.ROOT, "; callers were compared for the closest %d methods only, "
+                + "and one left off could score up to %.3f", r.ranked.size(), r.bound);
         if (best < MIN_SCORE) {
-            r.standsOut = false;
-            r.verdict = String.format(Locale.ROOT, "no candidate scores %.2f or more (the best scores %.3f)", MIN_SCORE, best);
+            r.unsure = r.bound > best;
+            r.verdict = String.format(Locale.ROOT, "no candidate scores %.2f or more (the best scores %.3f)", MIN_SCORE, best)
+                    + (r.unsure ? leftOff : "");
         } else if (best - next < MIN_MARGIN) {
-            r.standsOut = false;
+            r.unsure = r.bound > best;
             r.verdict = String.format(Locale.ROOT, "no candidate stands out: the best two score %.3f and %.3f, less than %.2f apart",
-                    best, next, MIN_MARGIN);
+                    best, next, MIN_MARGIN) + (r.unsure ? leftOff : "");
+        } else if (r.bound > best - MIN_MARGIN) {
+            r.unsure = true;
+            r.verdict = String.format(Locale.ROOT, "no candidate stands out for certain: the best scores %.3f and the next %.3f",
+                    best, next) + leftOff;
         } else {
             r.standsOut = true;
-            r.verdict = String.format(Locale.ROOT, "one candidate stands out: it scores %.3f, and the next %.3f", best, next);
+            r.verdict = r.bound > next
+                    ? String.format(Locale.ROOT, "one candidate stands out: it scores %.3f, and no other more than %.3f", best, r.bound)
+                    : String.format(Locale.ROOT, "one candidate stands out: it scores %.3f, and the next %.3f", best, next);
         }
     }
 
@@ -1157,8 +1233,12 @@ public final class FingerprintCandidates {
             }
         }
         List<Features> list = new ArrayList<>();
-        for (Case c : cases) list.add(signatures.get(c.oldMethod));
-        List<Ranking> rankings = rankAll(ix, list);
+        int[] knownIds = new int[cases.size()];
+        for (int k = 0; k < cases.size(); k++) {
+            list.add(signatures.get(cases.get(k).oldMethod));
+            knownIds[k] = ix.build.indexOf.get(cases.get(k).newMethod);
+        }
+        List<Ranking> rankings = rankAll(ix, list, knownIds);
 
         StringBuilder out = new StringBuilder();
         header(out, "Calibration: " + cases.size() + " cases from " + calibration.getName(), oldApk.getName(), newApk.getName());
@@ -1167,12 +1247,14 @@ public final class FingerprintCandidates {
         for (int k = 0; k < cases.size(); k++) {
             Case c = cases.get(k);
             Ranking r = rankings.get(k);
-            int known = ix.build.indexOf.get(c.newMethod);
+            int known = knownIds[k];
             int rank = -1;
             for (int j = 0; j < r.ranked.size(); j++) if (r.ranked.get(j).method == known) rank = j + 1;
-            boolean ok = rank >= 1 && rank <= top;
+            // A rank a method left off the shortlist could still push down proves nothing.
+            boolean sure = !r.knownUnsure;
+            boolean ok = rank >= 1 && rank <= top && sure;
             if (!ok) failures++;
-            String rankText = rank < 0 ? "below-" + SHORTLIST : String.valueOf(rank);
+            String rankText = rank < 0 ? "outside-" + r.ranked.size() : sure ? String.valueOf(rank) : rank + "-or-lower";
             double score = rank < 0 ? 0 : r.ranked.get(rank - 1).total;
             summary.add(String.format(Locale.ROOT, "[fingerprint] case %s rank %s score %.3f %s %s", c.id, rankText, score,
                     ok ? "ok" : "FAIL", r.standsOut ? "stands-out" : "fails-closed"));
@@ -1180,7 +1262,8 @@ public final class FingerprintCandidates {
             if (!c.role.isEmpty()) out.append("   ").append(c.role).append('\n');
             out.append("   old   ").append(c.oldMethod).append('\n');
             out.append("   known ").append(c.newMethod).append("   rank ").append(rankText)
-                    .append(ok ? "" : "   <<< NOT IN THE TOP " + top).append('\n');
+                    .append(ok ? "" : sure ? "   <<< NOT IN THE TOP " + top : "   <<< NOT SURE TO BE IN THE TOP " + top)
+                    .append('\n');
             for (String e : c.evidence) out.append("   evidence: ").append(e).append('\n');
             describe(out, r, ix, top, known);
         }
@@ -1193,7 +1276,7 @@ public final class FingerprintCandidates {
         System.out.println("[fingerprint] report written to " + report);
         if (failures != 0) {
             System.out.println("[fingerprint] FAIL: " + failures + " calibrated case" + (failures == 1 ? "" : "s")
-                    + " ranked the known replacement below " + top);
+                    + " did not rank the known replacement within the top " + top + " for certain");
             return 1;
         }
         return 0;
@@ -1219,7 +1302,9 @@ public final class FingerprintCandidates {
         out.append("     strings ").append(list(quoted(q.strings), 6)).append('\n');
         out.append("     literals ").append(list(q.literals, 6)).append('\n');
         out.append("     opcodes ").append(clip(q.sketch(), 80)).append('\n');
-        out.append("   verdict: ").append(r.verdict).append(r.standsOut ? ". Nothing is accepted." : ". This fails closed.").append("\n\n");
+        out.append("   verdict: ").append(r.verdict).append(r.standsOut ? ". Nothing is accepted." : ". This fails closed.").append('\n');
+        out.append("   callers compared for ").append(r.ranked.size()).append(r.bound < 0 ? " methods, every one with code"
+                : String.format(Locale.ROOT, " methods; no other could score over %.3f", r.bound)).append("\n\n");
         List<Integer> shown = new ArrayList<>();
         for (int k = 0; k < Math.min(top, r.ranked.size()); k++) shown.add(k);
         if (known != null) {

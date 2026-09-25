@@ -10,6 +10,12 @@
     and name no candidate on the console. A captured signature has to hold exactly the properties
     fingerprint-signature.schema.json declares, and one of another version has to be refused.
 
+    A getter that only its caller tells apart hides among 250 getters just like it. Callers are only
+    compared for a shortlist, so in "crowd" the real one, last of a tie at the shortlist's end, has
+    to rank first, and a getter whose caller shares one of the two markers keeps it from standing
+    out. In "crowd-behind" it scores just under the crowd until its callers count, and the shortlist
+    has to widen until it stands out.
+
     Then fingerprint-candidates.ps1 -Calibrate runs over Facebook 577 and 580 from
     HUSHFACEBOOK_FIXTURE_DIR, and every case of fingerprint-calibration.txt has to rank its known 580
     method in the top five. The report has to show each candidate's prototype, strings, literals,
@@ -183,6 +189,56 @@ try {
     $gone = Invoke-Tool @('rank', $signature, (New-DexApk 'gone'), (Join-Path $caseRoot 'gone.txt'))
     Assert-True ($gone.ExitCode -eq 1 -and $gone.Text -match 'no candidate scores' -and $gone.Text -match 'fails closed') `
         "A build without the target did not fail closed.`n$($gone.Text)"
+
+    # A getter only its caller tells apart, among 250 just like it. Callers are compared for a
+    # shortlist only, so the shortlist mustn't cut a tie by dex order, and a method it leaves off
+    # that its callers could still lift past the best has to widen it or fail the run closed.
+    $getterApk = New-DexApk 'getter'
+    $getterSignature = Join-Path $caseRoot 'getter.json'
+    $getterCaptured = Invoke-Tool @('capture', $getterApk, 'LX/Ab1;->A00()I', $getterSignature)
+    Assert-True ($getterCaptured.ExitCode -eq 0) "The getter capture failed.`n$($getterCaptured.Text)"
+    $crowdApk = New-DexApk 'crowd'
+    $crowdReport = Join-Path $caseRoot 'crowd.txt'
+    $crowd = Invoke-Tool @('rank', $getterSignature, $crowdApk, $crowdReport)
+    Assert-True ($crowd.ExitCode -eq 1 -and $crowd.Text -match 'no candidate stands out' -and $crowd.Text -match 'fails closed' -and
+        $crowd.Text -notmatch 'LX/(Da\d+|Zz9);') `
+        "The crowd's tie was cut by dex order, and a getter only one marker away stood out.`n$($crowd.Text)"
+    $crowdText = [System.IO.File]::ReadAllText($crowdReport)
+    Assert-True ($crowdText -match '(?m)^\s+#1\s+[0-9.]+\s+LX/Zz9;->A00\(\)I') `
+        "The report of the crowd did not rank the real getter first.`n$crowdText"
+    # All 251 that tie go on together, and nothing else needs to: the tie isn't cut, then widened.
+    Assert-True ($crowdText -match '(?m)^   callers compared for 251 methods; no other could score over 0\.[0-3]') `
+        "The shortlist of the crowd did not carry its whole tie, and only it.`n$crowdText"
+    $behind = Invoke-Tool @('rank', $getterSignature, (New-DexApk 'crowd-behind'), (Join-Path $caseRoot 'crowd-behind.txt'))
+    Assert-True ($behind.ExitCode -eq 0 -and
+        ($behind.Output | Where-Object { $_ -like '*#1 *' } | Select-Object -First 1) -like '*LX/Zz9;->A00()I*') `
+        "The real getter, just behind the shortlist until its callers count, was left off it.`n$($behind.Text)"
+    # A copy of the old getter stands out among the shortlisted, but a method left off could come
+    # within the margin of it, and does.
+    $rivalReport = Join-Path $caseRoot 'crowd-rival.txt'
+    $rival = Invoke-Tool @('rank', $getterSignature, (New-DexApk 'crowd-rival'), $rivalReport)
+    $rivalText = [System.IO.File]::ReadAllText($rivalReport)
+    Assert-True ($rival.ExitCode -eq 1 -and $rival.Text -match 'fails closed' -and $rival.Text -notmatch 'LX/(Da\d+|St1|Zz9);' -and
+        $rivalText -match '(?m)^\s+#1\s+[0-9.]+\s+LX/St1;->A00\(\)I' -and $rivalText -match '(?m)^\s+#2\s+[0-9.]+\s+LX/Zz9;->A00\(\)I') `
+        "A candidate stood out although a method left off the shortlist came within the margin of it.`n$($rival.Text)`n$rivalText"
+    # A calibration holds the known method's rank to the same bound.
+    $crowdCalibration = Join-Path $caseRoot 'crowd-calibration.txt'
+    [System.IO.File]::WriteAllLines($crowdCalibration, [string[]]@('case crowd', '  patch Fixture', '  old LX/Ab1;->A00()I',
+        '  new LX/Zz9;->A00()I', '  evidence Its caller is the only one holding both markers.'))
+    $crowdCalibrated = Invoke-Tool @('calibrate', $crowdCalibration, $getterApk, $crowdApk, (Join-Path $caseRoot 'crowd-calibration-report.txt'))
+    Assert-True ($crowdCalibrated.ExitCode -eq 0 -and
+        @($crowdCalibrated.Output | Where-Object { $_ -match '^\[fingerprint\] case crowd rank 1 score [0-9.]+ ok fails-closed$' }).Count -eq 1) `
+        "The calibration of the crowd did not rank the real getter first and fail closed.`n$($crowdCalibrated.Text)"
+    # The star stands out whatever the shortlist leaves off, but the getter named as known ranks
+    # second among the methods compared and seventh once five left off count their callers.
+    $starCalibration = Join-Path $caseRoot 'star-calibration.txt'
+    [System.IO.File]::WriteAllLines($starCalibration, [string[]]@('case star', '  patch Fixture', '  old LX/Ab1;->A00()I',
+        '  new LX/Da000;->A00()I', '  evidence None: five methods the first shortlist leaves off outrank it.'))
+    $starCalibrated = Invoke-Tool @('calibrate', $starCalibration, $getterApk, (New-DexApk 'crowd-star'),
+        (Join-Path $caseRoot 'star-calibration-report.txt'))
+    Assert-True ($starCalibrated.ExitCode -eq 1 -and
+        @($starCalibrated.Output | Where-Object { $_ -match '^\[fingerprint\] case star rank 7 score [0-9.]+ FAIL stands-out$' }).Count -eq 1) `
+        "A calibration ranked a known method second while methods left off the shortlist outranked it.`n$($starCalibrated.Text)"
 
     # A signature of another version is refused rather than read the new way.
     $future = Join-Path $caseRoot 'future.json'
