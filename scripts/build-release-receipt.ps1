@@ -22,6 +22,13 @@
 
     The patched APKs are working files and are deleted on the way out, including after a failure.
 
+    Before any of that, the SBOM :patches:buildAndroid wrote beside the bundle is held to it and
+    the libraries it lists are put to OSV (release-advisories.ps1). A high or critical advisory
+    that scripts/advisory-exceptions.txt doesn't accept stops the run before anything is patched,
+    and so does an OSV that can't be asked. -SkipAdvisoryCheck lets an offline run through with a
+    warning. The receipt records the SBOM's name, hash and component count either way, and the
+    pre-push hook asks OSV again on the index push.
+
 .EXAMPLE
     One -Fixture taking a comma separated list, not the switch repeated: PowerShell binds a
     parameter once and refuses the second.
@@ -39,7 +46,12 @@ param(
     [string]$DesktopJar,
     [string]$Java,
     [string]$Aapt2,
-    [string]$OutputPath
+    [string]$OutputPath,
+    # The SBOM :patches:buildAndroid writes beside the bundle, named for it. Defaults to that.
+    [string]$Sbom,
+    # For working with no network only: OSV isn't asked about the SBOM's libraries, and the run
+    # says so. The index push asks again, so a release can't go out on it.
+    [switch]$SkipAdvisoryCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,6 +61,7 @@ if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'patch-report.ps1')
 . (Join-Path $PSScriptRoot 'patch-target.ps1')
 . (Join-Path $PSScriptRoot 'release-receipt.ps1')
+. (Join-Path $PSScriptRoot 'release-advisories.ps1')
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 $Java = Resolve-Java -Explicit $Java
@@ -105,6 +118,20 @@ if ($dirty.Count -gt 0) {
     throw ("The working tree has uncommitted changes, so the commit this receipt would name is " +
         "not what was built: $shown")
 }
+
+# The SBOM, read with the bundle and for the same reason, and held to it: an SBOM left from another
+# build would put another bundle's libraries in front of OSV. Then the advisory gate, before any
+# fixture is patched, so a release OSV refuses doesn't cost the patch runs first.
+if (-not $Sbom) { $Sbom = [System.IO.Path]::ChangeExtension($Bundle, '.cdx.json') }
+if (-not (Test-Path -LiteralPath $Sbom -PathType Leaf)) {
+    throw "No SBOM for the bundle: $Sbom. :patches:buildAndroid writes it beside the bundle, so build again."
+}
+$Sbom = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Sbom)
+$sbomDocument = Read-ReleaseSbom -Path $Sbom
+$sbomBound = Test-ReleaseSbom -Sbom $sbomDocument -BundlePath $Bundle -BundleName (Split-Path -Leaf $Bundle)
+if (-not $sbomBound.Valid) { throw "The SBOM does not describe the bundle: $($sbomBound.Reason)" }
+Invoke-ReleaseAdvisoryGate -Sbom $sbomDocument -ExceptionsPath (Join-Path $PSScriptRoot 'advisory-exceptions.txt') `
+    -SkipAdvisoryCheck:$SkipAdvisoryCheck
 
 function Get-ExtensionPayloads {
     <#
@@ -315,6 +342,11 @@ $receipt = [ordered]@{
         sha256    = $bundleHash
         timestamp = $bundleManifest.timestamp
     }
+    sbom          = [ordered]@{
+        file       = Split-Path -Leaf $Sbom
+        sha256     = $sbomDocument.Sha256
+        components = @($sbomDocument.Components).Count
+    }
     toolchain     = [ordered]@{
         patcherVersion = $patcherMatch.Groups[1].Value
         managerFloor   = $floorMatch.Groups[1].Value
@@ -332,7 +364,7 @@ $check = Test-ReleaseReceipt -Receipt ($receipt | ConvertTo-Json -Depth 12 | Con
     -ExpectedManagerFloor $floorMatch.Groups[1].Value `
     -ExpectedPackageName $expectedTarget.PackageName `
     -ExpectedPackageVersions $expectedTarget.PackageVersions -BundlePath $Bundle `
-    -ApprovedManifestDelta $approved
+    -ApprovedManifestDelta $approved -SbomPath $Sbom
 if (-not $check.Valid) { throw "The receipt this run produced does not pass validation: $($check.Reason)" }
 
 $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $OutputPath -Encoding UTF8

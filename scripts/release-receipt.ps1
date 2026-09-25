@@ -18,6 +18,10 @@
     has to be written down in scripts/manifest-delta-allowlist.txt and stays until somebody takes
     it out. An entry nothing produces any more fails the run too: an allowlist that outlives its
     reason stops being a review.
+
+    The SBOM :patches:releaseSbom writes beside the bundle says what the bundle carries: every
+    library and the version it resolved to. The receipt records its hash, and the SBOM records the
+    bundle's, so neither can be swapped for another build's without the pair coming apart.
 #>
 
 function Get-ReleaseReceiptSchemaVersion {
@@ -28,9 +32,237 @@ function Get-ReleaseReceiptSchemaVersion {
         Validation refuses a receipt written to a different version rather than guessing which
         fields moved. A function rather than a variable because this file is dot-sourced into
         several scripts, and a script-scoped variable in a dot-sourced file belongs to whichever
-        one sourced it.
+        one sourced it. Resolve-ReceiptSchema reads the number out of this function's body at an
+        older commit, so it stays a bare return.
+
+        2 added sbom: the file name, SHA-256 and component count of the release SBOM.
     #>
-    return 1
+    return 2
+}
+
+function Resolve-ReceiptSchema {
+    <#
+    .SYNOPSIS
+        The schema a receipt should be held to: the one its own commit's builder wrote.
+    .DESCRIPTION
+        A receipt describes a release that has shipped, and one cut before schema 2 has no SBOM
+        to name. Holding it to schema 2 would refuse every later push from the checkout that cut
+        it, which is the trap Resolve-ReceiptToolchain describes for the patcher pin. So the
+        number is read out of scripts/release-receipt.ps1 at the receipt's commit. On a release
+        push the receipt's commit is the commit being released, whose builder writes this
+        checkout's schema, so nothing is relaxed for a new release.
+
+        A commit with no receipt script this can read is held to this checkout's schema, and one
+        whose script writes a newer schema than this checkout reads throws. Answers
+        @{ Version; Note }, where Note is a line worth printing or $null.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [string]$Commit
+    )
+
+    $current = Get-ReleaseReceiptSchemaVersion
+    if ($Commit -notmatch '^[0-9a-f]{40}$') { return [pscustomobject]@{ Version = $current; Note = $null } }
+    $script = (Invoke-RepoGit -Root $Root -Arguments @('show', "${Commit}:scripts/release-receipt.ps1")) -join "`n"
+    $written = [regex]::Match($script, '(?s)function\s+Get-ReleaseReceiptSchemaVersion\b.*?#>\s*return\s+(\d+)\s*\}')
+    if (-not $written.Success) { return [pscustomobject]@{ Version = $current; Note = $null } }
+    $version = [int]$written.Groups[1].Value
+    $short = $Commit.Substring(0, 8)
+    if ($version -gt $current) {
+        throw "Commit $short writes receipt schema $version, newer than the $current this checkout reads."
+    }
+    if ($version -eq $current) { return [pscustomobject]@{ Version = $version; Note = $null } }
+    return [pscustomobject]@{
+        Version = $version
+        Note = ("the receipt is held to schema $version, which its own commit $short wrote, so it names no " +
+            'SBOM and none is checked for its release')
+    }
+}
+
+function ConvertTo-UtcStamp {
+    <#
+    .SYNOPSIS
+        A date read out of JSON, as yyyy-MM-ddTHH:mm:ssZ in either shell.
+    .DESCRIPTION
+        PowerShell 7's ConvertFrom-Json turns an ISO 8601 string into a DateTime and Windows
+        PowerShell leaves it a string, so a date is compared in this one form.
+    #>
+    param($Value)
+    if ($Value -is [datetime]) {
+        return $Value.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", [Globalization.CultureInfo]::InvariantCulture)
+    }
+    return [string]$Value
+}
+
+function Get-SbomSha256 {
+    <#
+    .SYNOPSIS
+        The SHA-256 a CycloneDX component records for itself, in lower case, or $null.
+    #>
+    param($Component, [string]$Label)
+
+    $recorded = @(@($Component.hashes) | Where-Object { $null -ne $_ -and "$($_.alg)" -eq 'SHA-256' })
+    if ($recorded.Count -gt 1) { throw "$Label records two SHA-256 hashes." }
+    if ($recorded.Count -eq 0) { return $null }
+    $value = "$($recorded[0].content)".ToLowerInvariant()
+    if ($value -notmatch '^[0-9a-f]{64}$') { throw "$Label records a SHA-256 that isn't one: $($recorded[0].content)" }
+    return $value
+}
+
+function Read-ReleaseSbom {
+    <#
+    .SYNOPSIS
+        The CycloneDX SBOM :patches:releaseSbom writes beside the bundle, read into what the receipt
+        and the advisory gate need.
+    .DESCRIPTION
+        Answers @{ Path; Sha256; BundleName; BundleVersion; BundleSha256; Timestamp; Components;
+        Libraries; Payloads }. Libraries are the components with a package URL, the ones OSV is
+        asked about, and Payloads the extension payload files with their SHA-256.
+
+        Held to the shape the task writes, and refused where it differs rather than read around.
+        A library whose package URL isn't a Maven one naming its own group, name and version
+        would be asked about under a name OSV answers {} for, which reads as no advisories. So
+        would a library with no package URL at all, which only the modules built from this
+        repository may be, marked hushfacebook:first-party.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $Path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "There is no SBOM at $Path." }
+    $name = Split-Path -Leaf $Path
+    try {
+        $document = [System.IO.File]::ReadAllText($Path) | ConvertFrom-Json
+    } catch {
+        throw "$name is not JSON: $($_.Exception.Message)"
+    }
+    if ("$($document.bomFormat)" -ne 'CycloneDX' -or "$($document.specVersion)" -ne '1.6') {
+        throw "$name is not a CycloneDX 1.6 SBOM."
+    }
+    $subject = $document.metadata.component
+    $subjectHash = if ($subject) { Get-SbomSha256 -Component $subject -Label "$name's bundle" } else { $null }
+    if (-not $subject -or -not $subject.name -or -not $subject.version -or -not $subjectHash) {
+        throw "$name does not name the bundle it describes, its version and its SHA-256."
+    }
+
+    $components = New-Object System.Collections.Generic.List[object]
+    $refs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($component in @($document.components | Where-Object { $null -ne $_ })) {
+        $ref = [string]$component.'bom-ref'
+        if (-not $ref) { throw "$name lists a component with no bom-ref." }
+        if (-not $refs.Add($ref)) { throw "$name lists $ref twice." }
+        $entry = [pscustomobject]@{
+            Ref        = $ref
+            Type       = [string]$component.type
+            Group      = [string]$component.group
+            Name       = [string]$component.name
+            Version    = [string]$component.version
+            Purl       = [string]$component.purl
+            FirstParty = @(@($component.properties) | Where-Object { $null -ne $_ -and "$($_.name)" -eq 'hushfacebook:first-party' }).Count -gt 0
+            Sha256     = Get-SbomSha256 -Component $component -Label "$name's $ref"
+        }
+        switch ($entry.Type) {
+            'library' {
+                if ($entry.Purl) {
+                    $purl = [regex]::Match($entry.Purl, '^pkg:maven/([^/@?#]+)/([^/@?#]+)@([^/@?#]+)$')
+                    if (-not $purl.Success -or [Uri]::UnescapeDataString($purl.Groups[1].Value) -cne $entry.Group -or
+                            [Uri]::UnescapeDataString($purl.Groups[2].Value) -cne $entry.Name -or
+                            [Uri]::UnescapeDataString($purl.Groups[3].Value) -cne $entry.Version) {
+                        throw ("$name lists $ref with the package URL $($entry.Purl), which doesn't name its own " +
+                            'group, name and version, so OSV couldn''t be asked about it.')
+                    }
+                } elseif (-not $entry.FirstParty) {
+                    throw "$name lists the library $ref with no package URL, so OSV couldn't be asked about it."
+                }
+            }
+            'file' {
+                if (-not $entry.Sha256) { throw "$name lists the file $ref with no SHA-256." }
+            }
+            default { throw "$name lists $ref as a $($entry.Type), which a release SBOM doesn't hold." }
+        }
+        $components.Add($entry)
+    }
+    if ($components.Count -eq 0) { throw "$name lists no component." }
+
+    return [pscustomobject]@{
+        Path          = $Path
+        Sha256        = Get-Sha256Hex -Path $Path
+        BundleName    = [string]$subject.name
+        BundleVersion = [string]$subject.version
+        BundleSha256  = $subjectHash
+        Timestamp     = ConvertTo-UtcStamp $document.metadata.timestamp
+        Components    = $components.ToArray()
+        Libraries     = @($components | Where-Object { $_.Type -eq 'library' -and $_.Purl })
+        Payloads      = @($components | Where-Object { $_.Type -eq 'file' })
+    }
+}
+
+function Test-ReleaseSbom {
+    <#
+    .SYNOPSIS
+        Whether an SBOM describes this bundle: @{ Valid; Reason }.
+    .DESCRIPTION
+        The bundle it names and that bundle's SHA-256, the version and pinned timestamp in the
+        bundle's manifest, and every extension payload the bundle carries with the SHA-256 of its
+        bytes. An SBOM left beside a newer build fails on the hash, and one dated from the clock
+        rather than from the pinned stamp fails on the timestamp. -BundleName is the name the
+        bundle is published under, since a downloaded copy has a temporary one.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]$Sbom,
+        [Parameter(Mandatory = $true)][string]$BundlePath,
+        [Parameter(Mandatory = $true)][string]$BundleName
+    )
+
+    function Fail { param([string]$Reason) return [pscustomobject]@{ Valid = $false; Reason = $Reason } }
+
+    $sbomName = Split-Path -Leaf $Sbom.Path
+    if ($Sbom.BundleName -cne $BundleName) { return Fail "$sbomName describes $($Sbom.BundleName), not $BundleName." }
+    $BundlePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($BundlePath)
+    $bundleHash = (Get-Sha256Hex -Path $BundlePath).ToLowerInvariant()
+    if ($Sbom.BundleSha256 -ne $bundleHash) {
+        return Fail ("$sbomName describes a $BundleName that hashes to $($Sbom.BundleSha256), and the bundle " +
+            "hashes to $bundleHash. It was written for another build.")
+    }
+    $manifest = Get-BundleManifestFacts -BundlePath $BundlePath
+    if ($Sbom.BundleVersion -ne $manifest.version) {
+        return Fail "$sbomName says $BundleName is version $($Sbom.BundleVersion); its manifest says $($manifest.version)."
+    }
+    $stamp = [DateTimeOffset]::FromUnixTimeMilliseconds($manifest.timestamp).UtcDateTime.ToString(
+        "yyyy-MM-dd'T'HH:mm:ss'Z'", [Globalization.CultureInfo]::InvariantCulture)
+    if ($Sbom.Timestamp -ne $stamp) {
+        return Fail ("$sbomName is dated $($Sbom.Timestamp), and $BundleName is stamped $stamp. The build " +
+            'that pinned the bundle did not write it.')
+    }
+
+    $carried = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::Ordinal)
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($BundlePath)
+    try {
+        foreach ($entry in @($archive.Entries | Where-Object { $_.FullName -like 'extensions/*.mpe' })) {
+            $stream = $entry.Open()
+            $sha = [System.Security.Cryptography.SHA256]::Create()
+            try {
+                $carried[$entry.FullName] = ($sha.ComputeHash($stream) | ForEach-Object { '{0:x2}' -f $_ }) -join ''
+            } finally {
+                $sha.Dispose()
+                $stream.Dispose()
+            }
+        }
+    } finally {
+        $archive.Dispose()
+    }
+    $described = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::Ordinal)
+    foreach ($payload in @($Sbom.Payloads)) { $described[$payload.Ref] = $payload.Sha256 }
+    foreach ($payload in @($carried.Keys | Sort-Object)) {
+        if (-not $described.ContainsKey($payload)) { return Fail "$BundleName carries $payload, which $sbomName doesn't describe." }
+        if ($described[$payload] -ne $carried[$payload]) {
+            return Fail "$sbomName describes $payload hashing to $($described[$payload]); the one $BundleName carries hashes to $($carried[$payload])."
+        }
+    }
+    foreach ($payload in @($described.Keys | Sort-Object)) {
+        if (-not $carried.ContainsKey($payload)) { return Fail "$sbomName describes $payload, which $BundleName doesn't carry." }
+    }
+    return [pscustomobject]@{ Valid = $true; Reason = $null }
 }
 
 function Get-Sha256Hex {
@@ -752,15 +984,21 @@ function Test-ReleaseReceipt {
         [long]$ActualCommitTimestamp = 0,
         # The commit this run is about. Only a release is held to it: on an ordinary push the
         # receipt legitimately describes the commit it was generated at, not HEAD.
-        [string]$ExpectedCommit
+        [string]$ExpectedCommit,
+        # The schema the receipt's own commit writes (Resolve-ReceiptSchema). From 2 a receipt
+        # names the release SBOM.
+        [int]$ExpectedSchemaVersion = (Get-ReleaseReceiptSchemaVersion),
+        # The SBOM itself, when the caller has it: its hash and component count have to be what
+        # the receipt records, and with -BundlePath it has to describe that bundle.
+        [string]$SbomPath
     )
 
     function Fail { param([string]$Reason) return [pscustomobject]@{ Valid = $false; Reason = $Reason } }
 
     if ($null -eq $Receipt) { return Fail 'There is no receipt to check.' }
-    if ([int]$Receipt.schemaVersion -ne (Get-ReleaseReceiptSchemaVersion)) {
-        return Fail ("The receipt is schema version $($Receipt.schemaVersion); this checkout " +
-            "reads version $(Get-ReleaseReceiptSchemaVersion).")
+    if ([int]$Receipt.schemaVersion -ne $ExpectedSchemaVersion) {
+        return Fail ("The receipt is schema version $($Receipt.schemaVersion); its release is read at " +
+            "version $ExpectedSchemaVersion.")
     }
     if ($Receipt.release.version -ne $ExpectedVersion) {
         return Fail "The receipt is for $($Receipt.release.version), not $ExpectedVersion."
@@ -797,6 +1035,21 @@ function Test-ReleaseReceipt {
     if ($Receipt.toolchain.managerFloor -ne $ExpectedManagerFloor) {
         return Fail ("The receipt names Manager floor $($Receipt.toolchain.managerFloor); " +
             "the catalog pins $ExpectedManagerFloor.")
+    }
+    if ($ExpectedSchemaVersion -ge 2) {
+        $sbom = $Receipt.sbom
+        if ($null -eq $sbom) { return Fail 'The receipt names no SBOM, so nothing records what the bundle carries.' }
+        if ([string]$sbom.file -cne "patches-$ExpectedVersion.cdx.json") {
+            return Fail ("The receipt names the SBOM $($sbom.file); the one for $ExpectedVersion is " +
+                "patches-$ExpectedVersion.cdx.json.")
+        }
+        if ([string]$sbom.sha256 -cnotmatch '^[0-9A-F]{64}$') {
+            return Fail "The receipt records no SHA-256 for $($sbom.file)."
+        }
+        $sbomCount = 0L
+        if (-not [long]::TryParse("$($sbom.components)", [ref]$sbomCount) -or $sbomCount -le 0) {
+            return Fail "The receipt counts no component in $($sbom.file)."
+        }
     }
 
     if ($BundlePath) {
@@ -835,6 +1088,31 @@ function Test-ReleaseReceipt {
             return Fail ("The bundle is stamped $($manifest.timestamp) but the commit it is " +
                 "attributed to was made at $expectedStamp. It was built from a different " +
                 "commit, or from a tree that had uncommitted changes.")
+        }
+    }
+
+    if ($SbomPath) {
+        if ($ExpectedSchemaVersion -lt 2) { return Fail "A schema $ExpectedSchemaVersion receipt names no SBOM to hold $SbomPath to." }
+        if (-not (Test-Path -LiteralPath $SbomPath -PathType Leaf)) {
+            return Fail "The receipt cannot be checked against an SBOM that is not there: $SbomPath"
+        }
+        $actualSbomHash = Get-Sha256Hex -Path $SbomPath
+        if ([string]$Receipt.sbom.sha256 -ne $actualSbomHash) {
+            return Fail ("The receipt says $($Receipt.sbom.file) hashes to $($Receipt.sbom.sha256); " +
+                "$SbomPath hashes to $actualSbomHash.")
+        }
+        try {
+            $document = Read-ReleaseSbom -Path $SbomPath
+        } catch {
+            return Fail "The SBOM the receipt names can't be read: $($_.Exception.Message)"
+        }
+        if ($document.Components.Count -ne [long]$Receipt.sbom.components) {
+            return Fail ("The receipt counts $($Receipt.sbom.components) components in $($Receipt.sbom.file); " +
+                "it lists $($document.Components.Count).")
+        }
+        if ($BundlePath) {
+            $bound = Test-ReleaseSbom -Sbom $document -BundlePath $BundlePath -BundleName ([string]$Receipt.bundle.file)
+            if (-not $bound.Valid) { return Fail $bound.Reason }
         }
     }
 

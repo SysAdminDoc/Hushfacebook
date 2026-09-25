@@ -8,7 +8,9 @@
     and the recorded runtime and patch test counts agree before a release is published. It also checks
     the canonical Morphe add-source link in the README and verifies that its landing page is live. A guarded
     preparation mode lets the source commit reach GitHub while the public index still points
-    at the previous working bundle. Published-asset verification remains strict.
+    at the previous working bundle. Published-asset verification remains strict, and it also
+    fetches the release SBOM the receipt names, holds it to the bundle and puts the libraries it
+    lists to OSV (release-advisories.ps1).
 #>
 [CmdletBinding()]
 param(
@@ -52,7 +54,11 @@ param(
     [switch]$AllowPublishedIndexLag,
     # The release provenance receipt. Defaults to release-receipt-<version>.json in the repo
     # root; checked when it is there, and required for a release.
-    [string]$Receipt
+    [string]$Receipt,
+    # Only for running a published asset check with no way to reach OSV: the release SBOM is still
+    # held to the receipt and the bundle, but its libraries aren't put to OSV, and the run says so.
+    # Nothing in the repo passes it, the pre-push hook included.
+    [switch]$SkipAdvisoryCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,6 +72,7 @@ if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'Resolve-Java.ps1')
 . (Join-Path $PSScriptRoot 'patch-target.ps1')
 . (Join-Path $PSScriptRoot 'release-receipt.ps1')
+. (Join-Path $PSScriptRoot 'release-advisories.ps1')
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 function Read-JsonFile {
@@ -438,8 +445,10 @@ if (-not $SkipDescriptionTestCount) {
 
 # A hosted asset checked in place of a local build outlives the published asset block, because the
 # stamp and receipt checks at the end read it as well. It's removed in the finally around the rest
-# of the run, pass or fail, and it's only ever written to the temporary folder.
+# of the run, pass or fail, and it's only ever written to the temporary folder. The hosted SBOM the
+# receipt check downloads goes the same way.
 $hostedArtifact = $null
+$hostedSbom = $null
 try {
 if ($VerifyPublishedAsset) {
     if (-not $ArtifactIsHosted) {
@@ -853,6 +862,41 @@ function Test-ReleaseReceiptHere {
     $resolvedList = Resolve-ReceiptCatalog -Root $rootPath -Commit $receiptCommit -WorkingPatchList $patchList
     if ($resolvedList.Note) { Write-Host "[release] $($resolvedList.Note)" }
     $receiptTarget = Get-PatchTarget -PatchList $resolvedList.PatchList
+    # From schema 2 a receipt names the release SBOM, and which schema is read at the receipt's own
+    # commit, so a release cut before there was an SBOM is read as it was written.
+    $schema = Resolve-ReceiptSchema -Root $rootPath -Commit $receiptCommit
+    if ($schema.Note) { Write-Host "[release] $($schema.Note)" }
+
+    # On a release the SBOM is fetched from beside the published bundle, the copy people can
+    # download, under the one name a receipt for this version may give it: SHA256SUMS.txt has to
+    # list it, the receipt has to record its hash, and it has to describe the bundle checked above,
+    # payloads and all. Its libraries are then put to OSV. Any other run has only the receipt's word
+    # for the SBOM, which is held to its shape.
+    $sbomName = "patches-$releaseVersion.cdx.json"
+    $sbomForComparison = $null
+    if ($VerifyPublishedAsset -and $schema.Version -ge 2) {
+        # A folder of its own, so the download keeps the name the gate reports it by.
+        $script:hostedSbom = Join-Path ([IO.Path]::GetTempPath()) ("hushfacebook-$([Guid]::NewGuid())")
+        New-Item -ItemType Directory -Path $script:hostedSbom -Force | Out-Null
+        $sbomForComparison = Join-Path $script:hostedSbom $sbomName
+        try {
+            $sbomResponse = Invoke-WebRequest -Uri ([Uri]::new($assetUri, $sbomName)) -OutFile $sbomForComparison `
+                -MaximumRedirection 5 -TimeoutSec 60 -PassThru
+        } catch {
+            throw "Could not download the hosted $sbomName, which the receipt names: $($_.Exception.Message)"
+        }
+        if ($sbomResponse.StatusCode -ne 200) {
+            throw "The hosted $sbomName returned HTTP $($sbomResponse.StatusCode)."
+        }
+        $hostedSbomHash = (Get-FileHash -LiteralPath $sbomForComparison -Algorithm SHA256).Hash.ToLowerInvariant()
+        $listedSbom = [regex]::Match($checksumText, "(?im)^\s*([0-9a-f]{64})\s+\*?$([regex]::Escape($sbomName))\s*$")
+        if (-not $listedSbom.Success) {
+            throw "SHA256SUMS.txt has no entry for $sbomName, the SBOM the receipt names."
+        }
+        if ($listedSbom.Groups[1].Value.ToLowerInvariant() -ne $hostedSbomHash) {
+            throw "SHA256SUMS.txt lists $($listedSbom.Groups[1].Value) for $sbomName, but the hosted SBOM is $hostedSbomHash."
+        }
+    }
 
     $receiptCheck = Test-ReleaseReceipt -Receipt $receiptDocument -ExpectedVersion $releaseVersion `
         -ExpectedPatchNames @($resolvedList.PatchList.patches | ForEach-Object { [string]$_.name }) `
@@ -860,7 +904,8 @@ function Test-ReleaseReceiptHere {
         -ExpectedManagerFloor $expectedToolchain.ManagerFloor `
         -ExpectedPackageName $receiptTarget.PackageName -ExpectedPackageVersions $receiptTarget.PackageVersions `
         -BundlePath $BundleForComparison -ApprovedManifestDelta $approvedDelta `
-        -ActualCommitTimestamp $actualEpoch -ExpectedCommit $expectedCommit
+        -ActualCommitTimestamp $actualEpoch -ExpectedCommit $expectedCommit `
+        -ExpectedSchemaVersion $schema.Version -SbomPath $sbomForComparison
     if (-not $receiptCheck.Valid) {
         throw "The release provenance receipt does not describe this release: $($receiptCheck.Reason)"
     }
@@ -868,6 +913,15 @@ function Test-ReleaseReceiptHere {
     Write-Host ("[release] the receipt proves $($receiptDocument.release.patchCount) patches on " +
         ($proved -join ', ') + " from commit " + $receiptCommit.Substring(0, 8) +
         ", with no unreviewed manifest change")
+    if ($sbomForComparison) {
+        $sbomDocument = Read-ReleaseSbom -Path $sbomForComparison
+        Write-Host ("[release] the hosted $sbomName is the SBOM the receipt names and SHA256SUMS.txt lists, " +
+            "and it describes $assetName, payloads and all")
+        Invoke-ReleaseAdvisoryGate -Sbom $sbomDocument -ExceptionsPath (Join-Path $PSScriptRoot 'advisory-exceptions.txt') `
+            -SkipAdvisoryCheck:$SkipAdvisoryCheck
+    } elseif ($VerifyPublishedAsset) {
+        Write-Host "[release] v$releaseVersion was released before its receipt named an SBOM, so no SBOM or advisory check covers it"
+    }
 }
 
 
@@ -924,4 +978,5 @@ Write-Host ("[facts] " + $sourceVersion + ": " + $patchCount + " patches for " +
 exit 0
 } finally {
     if ($hostedArtifact) { Remove-Item -LiteralPath $hostedArtifact -Force -ErrorAction SilentlyContinue }
+    if ($hostedSbom) { Remove-Item -LiteralPath $hostedSbom -Recurse -Force -ErrorAction SilentlyContinue }
 }
