@@ -481,6 +481,17 @@ public class Utils {
         return context;
     }
 
+    /**
+     * Whether the context is set, without the error {@link #getContext()} logs when it isn't. A
+     * hook that can run before the application's onCreate asks this before it reads a setting.
+     * Setting's static initialiser needs the context, so a read before it fails that initialiser,
+     * the class stays unusable for the rest of the process, and the next read, the one
+     * {@link #setContext} makes to decide the pause, throws NoClassDefFoundError out of the start.
+     */
+    public static boolean hasContext() {
+        return context != null;
+    }
+
     /** Persistent preference writes are owned by the package's main process. */
     public static boolean isMainProcess() {
         Context appContext = context;

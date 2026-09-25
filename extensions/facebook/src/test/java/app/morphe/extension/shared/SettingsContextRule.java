@@ -72,6 +72,20 @@ public final class SettingsContextRule extends ExternalResource {
         }
     }
 
+    /**
+     * Runs [body] the way a hook runs when Facebook calls it before its application's onCreate:
+     * with no context set. The context comes back afterwards, whatever [body] does.
+     */
+    public static void withoutContext(Runnable body) {
+        Context saved = Utils.context;
+        Utils.context = null;
+        try {
+            body.run();
+        } finally {
+            Utils.context = saved;
+        }
+    }
+
     @Override
     protected void after() {
         // The sandbox is shared with whatever runs next, and a test is free to swap the context

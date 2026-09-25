@@ -14,6 +14,7 @@ import android.net.Uri;
 import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 
@@ -129,10 +130,13 @@ public final class ExternalBrowser {
         return isWebUrl(target) ? target : uri;
     }
 
-    /** The Hushfacebook switch. Off, or unreadable, the link stays in the app. */
+    /**
+     * The Hushfacebook switch. Off, unreadable, or asked before the context is set, the link
+     * stays in the app.
+     */
     private static boolean switchedOn() {
         try {
-            return Settings.OPEN_LINKS_EXTERNALLY.get();
+            return Utils.hasContext() && Settings.OPEN_LINKS_EXTERNALLY.get();
         } catch (Throwable t) {
             HookStatus.threw(FamilyNames.EXTERNAL_BROWSER, "switch read", t);
             Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,

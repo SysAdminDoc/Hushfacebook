@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
+import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
@@ -94,7 +95,8 @@ public final class PlayerSources {
     public static void remember(Object params, String idField, String hdField, String manifestField) {
         try {
             HookStatus.invoked(FAMILY);
-            if (!Settings.DOWNLOAD_STORIES.get()) return;
+            // Facebook can build a player before the context is set, and no switch can be read then.
+            if (!Utils.hasContext() || !Settings.DOWNLOAD_STORIES.get()) return;
 
             String videoId = RenditionPicker.fieldValue(params, idField);
             if (videoId == null || videoId.isEmpty()) return;

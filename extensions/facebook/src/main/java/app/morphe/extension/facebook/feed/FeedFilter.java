@@ -12,6 +12,7 @@ import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.facebook.settings.SettingsStatus;
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 
@@ -101,6 +102,8 @@ public final class FeedFilter {
             FeedFilterCounters.sawList(FEED_ROUTE, 1);
             String categoryName = category instanceof Enum ? ((Enum<?>) category).name() : null;
             FeedFilterCounters.sawKind(FEED_ROUTE, categoryName);
+            // An edge a prefetch adds before the context is set stays: no switch can be read yet.
+            if (!Utils.hasContext()) return false;
 
             String reason = null;
             if (sponsoredPatched && hiddenCategory(category)) {
@@ -195,7 +198,7 @@ public final class FeedFilter {
         try {
             HookStatus.invoked(FamilyNames.SPONSORED_STORIES);
             FeedFilterCounters.sawList(STORY_ROUTE, 1);
-            boolean hide = Settings.HIDE_SPONSORED_STORIES.get();
+            boolean hide = Utils.hasContext() && Settings.HIDE_SPONSORED_STORIES.get();
             if (hide) FeedFilterCounters.removed(STORY_ROUTE, 1, "ad buckets skipped");
             return hide;
         } catch (Throwable failure) {

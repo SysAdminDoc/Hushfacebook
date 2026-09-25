@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 
@@ -82,8 +83,9 @@ public final class MediaDownload {
     public static boolean saveStory(Context context, Object host) {
         HookStatus.invoked(FamilyNames.STORY_DOWNLOAD);
         try {
-            // Off, Facebook's own save runs, as it would unpatched.
-            if (!Settings.DOWNLOAD_STORIES.get()) return false;
+            // Off, or with no context to read the switch with, Facebook's own save runs, as it
+            // would unpatched.
+            if (!Utils.hasContext() || !Settings.DOWNLOAD_STORIES.get()) return false;
 
             List<String> urls = collectStoryUrls(host);
 

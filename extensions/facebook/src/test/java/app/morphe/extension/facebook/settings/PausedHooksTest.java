@@ -205,6 +205,26 @@ public class PausedHooksTest {
         assertEquals(Collections.emptyList(), wrong);
     }
 
+    /**
+     * Facebook can call a hook before its application's onCreate hands Hushfacebook the context,
+     * from a thread it starts early. A switch read then leaves Setting's class unusable for the
+     * rest of the process, and the start crashes when setContext reads one (see
+     * Utils.hasContext). So until the context is set, every hook takes Facebook's own path
+     * whatever is saved. This JVM's Setting class loaded with a context, so a hook that reads its
+     * switch anyway answers on here and is named.
+     */
+    @Test
+    public void beforeTheContextIsSetEveryHookTakesFacebooksOwnPath() {
+        for (BooleanSetting setting : settingsSwitches()) setting.save(true);
+        Map<PatchFamily, List<Probe>> probes = probes();
+        assertEquals("every family with a switch needs a probe here", switched(), probes.keySet());
+
+        List<String> wrong = new ArrayList<>();
+        SettingsContextRule.withoutContext(() -> everyProbe(probes, false, "before the context is set", wrong));
+        everyProbe(probes, true, "once it is set", wrong);
+        assertEquals(Collections.emptyList(), wrong);
+    }
+
     @Test
     public void pausedEverySwitchAnswersOffAndKeepsWhatWasSaved() {
         List<BooleanSetting> switches = settingsSwitches();

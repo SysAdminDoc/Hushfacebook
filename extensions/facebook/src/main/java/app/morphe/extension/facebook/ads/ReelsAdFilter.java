@@ -15,6 +15,7 @@ import java.util.List;
 import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 import app.morphe.extension.shared.diagnostics.HookStatus;
@@ -209,10 +210,13 @@ public final class ReelsAdFilter {
         return kept;
     }
 
-    /** The Hushfacebook switch. Off, or unreadable, the page passes as Facebook sent it. */
+    /**
+     * The Hushfacebook switch. Off, unreadable, or asked before the context is set, the page
+     * passes as Facebook sent it.
+     */
     private static boolean switchedOn() {
         try {
-            return Settings.HIDE_SPONSORED_REELS.get();
+            return Utils.hasContext() && Settings.HIDE_SPONSORED_REELS.get();
         } catch (Throwable t) {
             HookStatus.threw(FamilyNames.SPONSORED_REELS, "switch read", t);
             Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,
