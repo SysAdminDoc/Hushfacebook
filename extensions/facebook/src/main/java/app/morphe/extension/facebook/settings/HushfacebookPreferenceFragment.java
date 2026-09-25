@@ -530,7 +530,15 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
+            ScreenColors.row(view);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
+        }
+
+        /** Its edit dialog takes the screen's colours, as the other rows' dialogs do. */
+        @Override
+        protected void showDialog(Bundle state) {
+            super.showDialog(state);
+            if (getDialog() instanceof AlertDialog) ScreenColors.dialog((AlertDialog) getDialog());
         }
     }
 
