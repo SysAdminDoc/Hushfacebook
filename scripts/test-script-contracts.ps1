@@ -1926,9 +1926,13 @@ try {
             }
         } finally { $archive.Dispose() }
     }
+    function Test-SamePath([string]$A, [string]$B) {
+        return [System.IO.Path]::GetFullPath($A).Equals([System.IO.Path]::GetFullPath($B),
+            [System.StringComparison]::OrdinalIgnoreCase)
+    }
     $plainApk = Join-Path $commonRoot 'plain.apk'
     Set-Content -LiteralPath $plainApk -Value 'one apk' -Encoding ASCII
-    Assert-True ((Get-BaseApk -Apk $plainApk -Destination (Join-Path $commonRoot 'never.apk')) -eq $plainApk) `
+    Assert-True (Test-SamePath (Get-BaseApk -Apk $plainApk -Destination (Join-Path $commonRoot 'never.apk')) $plainApk) `
         'A plain APK was copied or replaced instead of being read as it is.'
 
     $apkm = Join-Path $commonRoot 'facebook.apkm'
@@ -1939,9 +1943,25 @@ try {
     }
     New-TestBundleArchive -Path $apkm -Entries $apkmEntries
     $baseOut = Join-Path $commonRoot 'out/base.apk'
-    Assert-True ((Get-BaseApk -Apk $apkm -Destination $baseOut) -eq $baseOut -and
+    Assert-True ((Test-SamePath (Get-BaseApk -Apk $apkm -Destination $baseOut) $baseOut) -and
         (Get-Content -LiteralPath $baseOut -Raw) -eq 'base') `
         'The base APK was not the one taken out of an .apkm with a larger split beside it.'
+
+    # Relative paths, the way the recipe in the notes passes a fixture, from a session whose
+    # process directory is somewhere else. PowerShell reads them against its own location and
+    # .NET against the process's, so an unresolved path named a file in the wrong folder.
+    $savedProcessDirectory = [Environment]::CurrentDirectory
+    Push-Location -LiteralPath $commonRoot
+    try {
+        [Environment]::CurrentDirectory = [System.IO.Path]::GetTempPath()
+        $relativeOut = Get-BaseApk -Apk 'facebook.apkm' -Destination 'out\relative-base.apk'
+        Assert-True ((Test-SamePath $relativeOut (Join-Path $commonRoot 'out\relative-base.apk')) -and
+            (Get-Content -LiteralPath (Join-Path $commonRoot 'out\relative-base.apk') -Raw) -eq 'base') `
+            'A relative bundle path was read against the process directory instead of the current location.'
+    } finally {
+        [Environment]::CurrentDirectory = $savedProcessDirectory
+        Pop-Location
+    }
 
     $xapk = Join-Path $commonRoot 'facebook.xapk'
     $xapkEntries = [ordered]@{
@@ -1950,7 +1970,7 @@ try {
     }
     New-TestBundleArchive -Path $xapk -Entries $xapkEntries
     $xapkOut = Join-Path $commonRoot 'out/xapk-base.apk'
-    Assert-True ((Get-BaseApk -Apk $xapk -Destination $xapkOut) -eq $xapkOut -and
+    Assert-True ((Test-SamePath (Get-BaseApk -Apk $xapk -Destination $xapkOut) $xapkOut) -and
         (Get-Content -LiteralPath $xapkOut -Raw).StartsWith('app ')) `
         'A bundle with no base.apk did not fall back to its largest APK.'
 

@@ -216,12 +216,19 @@ function Get-BaseApk {
         read an APK. The base APK holds the manifest and the app's own resource table; the splits
         hold densities, languages and feature modules. An .apks or .apkm names it base.apk, an
         .xapk names it after the package, so the largest APK is the fallback.
+
+        Both paths are resolved against PowerShell's location before .NET sees them, and the
+        answer is a full path. .NET reads a relative path against the process's own directory,
+        which a hook, a scheduled task or a session that moved with Set-Location leaves somewhere
+        else: `-Apk fixtures\facebook.apkm` then named a file that wasn't there.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Apk,
         [Parameter(Mandatory = $true)][string]$Destination
     )
 
+    $Apk = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Apk)
+    $Destination = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Destination)
     if ([System.IO.Path]::GetExtension($Apk).ToLowerInvariant() -eq '.apk') { return $Apk }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [System.IO.Compression.ZipFile]::OpenRead($Apk)
