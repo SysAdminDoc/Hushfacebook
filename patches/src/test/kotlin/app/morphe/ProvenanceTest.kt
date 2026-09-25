@@ -30,12 +30,34 @@ class ProvenanceTest {
         }
     }
 
-    private fun matches(pattern: String, path: String): Boolean {
-        require(pattern.endsWith("/**")) { "Only directory rules ending in /** are supported: $pattern" }
-        return path.startsWith(pattern.removeSuffix("**"))
+    private fun matchesDirectory(pattern: String, path: String) =
+        pattern.endsWith("/**") && path.startsWith(pattern.removeSuffix("**"))
+
+    /**
+     * The rules a file falls under. A rule naming the file itself wins over the directory rule
+     * around it, so a file written here can sit in a folder of ported code and still say so.
+     */
+    private fun rulesFor(path: String): List<Rule> {
+        val named = rules.filter { rule -> path in rule.paths }
+        if (named.isNotEmpty()) return named
+        return rules.filter { rule -> rule.paths.any { matchesDirectory(it, path) } }
     }
 
-    private fun rulesFor(path: String) = rules.filter { rule -> rule.paths.any { matches(it, path) } }
+    /**
+     * Whether a file's header agrees with its rule: a ported rule's file names one of that rule's
+     * upstreams or says where it was forked from, and an original rule's file doesn't claim a fork.
+     */
+    private fun headerProblem(path: String, header: String, rule: Rule): String? {
+        val forked = header.contains("Forked from")
+        return when (rule.origin) {
+            "ported" -> if (forked || rule.upstreams.any { header.contains(repositoryOf(it)) }) null
+                else "$path falls under a rule ported from ${rule.upstreams.first()}, but its header names none of ${rule.upstreams}"
+            "original" -> if (forked) "$path falls under a rule for code written here, but its header says it was forked" else null
+            else -> "$path falls under a rule of unknown origin ${rule.origin}"
+        }
+    }
+
+    private fun repositoryOf(url: String) = url.removePrefix("https://github.com/").removePrefix("https://gitlab.com/")
 
     @Test
     fun everyShippedSourceMatchesExactlyOneRule() {
@@ -56,6 +78,40 @@ class ProvenanceTest {
         // Positive control: the matcher must be able to say no, or the check above passes on anything.
         assertEquals(0, rulesFor("extensions/somewhere-new/src/main/java/X.java").size)
         assertEquals(0, rulesFor("patches/src/main/kotlin/app/morphe/patches/other/X.kt").size)
+    }
+
+    /**
+     * The ledger filed MediaUrlPolicy.java, written here, under the rule for code copied from
+     * andrewliang25/morphe-patches, and nothing compared the rule with the file. Now every file's
+     * header has to agree with the rule it falls under.
+     */
+    @Test
+    fun everyFileHeaderAgreesWithItsRule() {
+        val problems = RepoFiles.shippedSources().mapNotNull { file ->
+            val path = RepoFiles.relative(file)
+            // A file under no rule, or two, is the first test's to report.
+            val rule = rulesFor(path).singleOrNull() ?: return@mapNotNull null
+            headerProblem(path, file.readText().substringBefore("\npackage "), rule)
+        }
+        if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
+    }
+
+    /** Positive control for the check above: each kind of disagreement is reported. */
+    @Test
+    fun aHeaderThatDisagreesWithItsRuleIsReported() {
+        val ported = Rule(listOf("x/**"), "ported", listOf("https://github.com/andrewliang25/morphe-patches"))
+        val original = Rule(listOf("y/**"), "original", listOf("https://github.com/SysAdminDoc/Hushfacebook"))
+        val ours = "/*\n * Copyright 2026 Hushfacebook contributors\n * https://github.com/SysAdminDoc/Hushfacebook\n */"
+        val forked = "/*\n * Forked from:\n * https://github.com/andrewliang25/morphe-patches/blob/5db2e57/X.java\n */"
+
+        assertTrue(headerProblem("x/A.java", ours, ported) != null)
+        assertTrue(headerProblem("x/A.java", "", ported) != null)
+        assertEquals(null, headerProblem("x/A.java", forked, ported))
+        assertTrue(headerProblem("y/A.java", forked, original) != null)
+        assertEquals(null, headerProblem("y/A.java", ours, original))
+        assertEquals("a rule naming the file wins over its folder's", "original",
+            rulesFor("extensions/facebook/src/main/java/app/morphe/extension/facebook/download/MediaUrlPolicy.java")
+                .single().origin)
     }
 
     @Test

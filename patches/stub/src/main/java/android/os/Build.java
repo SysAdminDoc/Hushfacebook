@@ -1,3 +1,8 @@
+/*
+ * From SysAdminDoc/hushfeed, unchanged: https://github.com/SysAdminDoc/hushfeed
+ *
+ * Built on icysymmetra/tiktok-patches-for-morphe (GPL-3.0).
+ */
 package android.os;
 
 public class Build {

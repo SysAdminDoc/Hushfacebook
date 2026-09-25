@@ -246,6 +246,22 @@ tasks {
         inputs.file(rootProject.file("provenance.json"))
             .withPropertyName("provenance")
             .withPathSensitivity(PathSensitivity.RELATIVE)
+        // ProvenanceTest also reads NOTICE and every shipped source's header. A header-only edit
+        // compiles to the same classes, so without these the task came back up to date and the
+        // check never saw the change.
+        inputs.file(rootProject.file("NOTICE"))
+            .withPropertyName("notice")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(
+            rootProject.fileTree("patches/src/main"),
+            rootProject.fileTree("patches/stub/src/main"),
+            rootProject.fileTree("extensions") {
+                include("**/src/main/**")
+                exclude("**/build/**")
+            },
+        )
+            .withPropertyName("shippedSources")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
         // The fixture tests skip when this is unset and read the folder when it is set. What the
         // folder holds is the input, not its name: a run whose APK was swapped, re-signed or
         // deleted under the same path has to run again, not come back up to date or out of the
