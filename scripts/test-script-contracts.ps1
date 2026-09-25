@@ -1918,14 +1918,15 @@ try {
         Set-Content -LiteralPath $contractsStubPath -Value $contractsStubText -Encoding UTF8 -NoNewline
     }
 
-    # The four verifier suites run only when their own files move, and pre-push.ps1 decides which
+    # The five verifier suites run only when their own files move, and pre-push.ps1 decides which
     # files those are. A push of pre-push.ps1 runs this suite and no other, so an edit that put a
     # suite line behind a dead branch, or dropped a file from a suite's list, went out through the
-    # gate it switched off. This suite is the one place that holds the routing, then: all five
+    # gate it switched off. This suite is the one place that holds the routing, then: all six
     # suite lines read through the parser (script-wiring.ps1), each also tried behind a dead
     # branch so the check can't pass by passing everything, and every file a verifier suite guards
     # pushed through the hook against stub suites that record they ran. A file starts exactly the
-    # suites whose lists hold it.
+    # suites whose lists hold it. The source ledger's suite also guards files outside scripts/,
+    # which are pushed after.
     $prePushSource = [System.IO.File]::ReadAllText($prePushScript)
     $deadSuiteCopy = Join-Path $hookRoot 'pre-push-dead-suite.ps1'
     $verifierRoutes = [ordered]@{
@@ -1939,6 +1940,8 @@ try {
         'scripts/test-fingerprint-candidates.ps1' = @('FingerprintCandidates.java', 'FingerprintFixture.java',
             'fingerprint-calibration.txt', 'fingerprint-candidates.ps1', 'fingerprint-signature.schema.json',
             'test-fingerprint-candidates.ps1')
+        'scripts/test-facebook-sources.ps1' = @('audit-facebook-sources.ps1', 'facebook-sources.ps1', 'patch-target.ps1',
+            'test-facebook-sources.ps1')
     }
     foreach ($suite in @('scripts/test-script-contracts.ps1') + @($verifierRoutes.Keys)) {
         Assert-True (Test-PushGateRunsSuite $prePushScript $suite) "The push gate does not run $suite."
@@ -1961,6 +1964,19 @@ try {
         $ran = @($verifierRoutes.Keys | Where-Object { Test-Path -LiteralPath (& $verifierMarker $_) }) -join ', '
         $expected = @($verifierRoutes.Keys | Where-Object { $verifierRoutes[$_] -contains $file }) -join ', '
         Assert-True ($ran -eq $expected) "A push of scripts/$file ran [$ran], not [$expected]."
+    }
+    # The ledger's rules read NOTICE, provenance.json and the catalog, and hold docs/sources.md to
+    # the ledger. A push of any of those, or of the ledger alone, runs its suite and no other
+    # verifier; the catalog also runs the release facts and the contract tests, held below.
+    foreach ($file in @('sources/facebook-sources.json', 'NOTICE', 'provenance.json', 'docs/sources.md', 'patches-list.json')) {
+        foreach ($suite in $verifierRoutes.Keys) { Remove-Item -LiteralPath (& $verifierMarker $suite) -Force -ErrorAction SilentlyContinue }
+        Invoke-Hook -Paths @($file)
+        $ran = @($verifierRoutes.Keys | Where-Object { Test-Path -LiteralPath (& $verifierMarker $_) }) -join ', '
+        Assert-True ($ran -eq 'scripts/test-facebook-sources.ps1') "A push of $file ran [$ran], not the source ledger's suite alone."
+        if ($file -ne 'patches-list.json') {
+            Assert-True (-not (Test-Path -LiteralPath $contractsMarker) -and -not (Test-Path -LiteralPath $factsMarker)) `
+                "A push of $file ran the contract tests or the release facts, which read nothing it changes."
+        }
     }
 
     # The catalog is held to Meta's two signers, the builds every patch declares and the internal
