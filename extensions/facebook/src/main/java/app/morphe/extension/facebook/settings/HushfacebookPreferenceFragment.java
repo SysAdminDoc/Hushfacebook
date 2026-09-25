@@ -78,7 +78,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.SUGGESTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_POSTS, "Hide suggested and promoted units",
-                        "\"Pages you may like\", Facebook's own upsell cards and the in-feed surveys."));
+                        "\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too."));
             }
         }
 

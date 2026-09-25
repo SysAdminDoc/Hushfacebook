@@ -97,7 +97,7 @@
     },
     {
       "name": "Block background ad prefetch",
-      "description": "Stops Facebook downloading ads and its ad model in the background, which saves data, battery and storage.",
+      "description": "Stops Facebook downloading ads and its ad model in the background. That saves data and battery, and the space they'd take.",
       "category": "Ads",
       "use": true,
       "dependencies": [
@@ -413,7 +413,7 @@
     },
     {
       "name": "Hide suggested and promoted posts",
-      "description": "Removes posts that Facebook adds to the feed, such as \"Pages you may like\", upsells and surveys.",
+      "description": "Removes posts that Facebook adds to the feed, such as \"Pages you may like\" and its own upsells. In-feed surveys go too.",
       "category": "Feed",
       "use": true,
       "dependencies": [

@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/for-Morphe%20Manager%201.32.0%2B-8A2BE2" alt="For Morphe Manager 1.32.0 or newer">
 </p>
 
-Patches for the Facebook app on Android, for use with Morphe. They take sponsored posts, sponsored stories and Reels ads out of Facebook, stop its background ad downloads and ad tracking, add story and reel downloads, open links in your own browser, and fix the screens a re-signed build breaks.
+Patches for the Facebook app on Android, for use with Morphe. They take sponsored posts and stories out of Facebook along with the ads in Reels, stop its background ad downloads and ad tracking, add story and reel downloads, open links in your own browser, and fix the screens a re-signed build breaks.
 
 Hushfacebook brings the Facebook patches from the Morphe patch sources that have them into one place, so they can be kept working as Facebook updates. Most of them come from [Andrew Liang's patches](https://github.com/andrewliang25/morphe-patches), rewritten here with fixes, and the feed filter also drops promoted posts the way [FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) does. The build, the settings screen and the checks behind every release come from [Hushfeed](https://github.com/SysAdminDoc/hushfeed). See [Where the patches come from](#where-the-patches-come-from).
 
@@ -41,7 +41,7 @@ Google is starting to require that Android apps come from registered developers.
 
 Once it does reach sideloads, a patched Facebook won't count as registered. It keeps Meta's package name but carries your key, and for a package name someone else already holds, Google's answer is to use a different name or to file a request that goes through extra review, with no promised outcome. Two ways in stay open:
 
-- **The advanced flow.** For people who accept the risk, Google added a setting to allow apps from unverified developers, under Settings → System → Developer options → Allow apps from unverified developers ([Google's help page](https://support.google.com/android/answer/17588095)). Turning it on takes a one-time 24-hour wait, and each install afterwards still shows a warning with an Install anyway button. Google's pages describe the steps a little differently, so follow what your phone shows. Updates to an unregistered app need this setting on too.
+- **The advanced flow.** For people who accept the risk, Google added a setting to allow apps from unverified developers, under Settings → System → Developer options → Allow apps from unverified developers ([Google's help page](https://support.google.com/android/answer/17588095)). Turning it on takes a one-time 24-hour wait, and each install afterwards still shows a warning with an Install anyway button. When the wait is over, your phone asks whether to keep the setting on for seven days or indefinitely. Pick indefinitely, because once it lapses, updates to the patched Facebook fail. Google's pages describe the steps a little differently, so follow what your phone shows.
 - **ADB from a computer.** Google says apps installed with `adb install` don't need verification and the 24-hour wait doesn't apply to them. In Morphe Manager, turn on Keep patched APKs under Settings → System, export the patched copy, and install it with `adb install -r <file>.apk`. The same-key rule above still applies.
 
 Neither path can be tried against a real block until the check reaches sideloads, so neither has been tested here. If you get to try one, please open an issue saying what happened.
@@ -52,14 +52,14 @@ Neither path can be tried against a real block until the check reaches sideloads
 |---|---|
 | `AMOLED black theme` | Makes Facebook's dark mode black instead of dark grey. Turn on dark mode in Facebook first. |
 | `Block ad telemetry` | Stops Facebook watching for screenshots of ads and reporting which apps you install for ad attribution. |
-| `Block background ad prefetch` | Stops Facebook downloading ads and its ad model in the background, which saves data, battery and storage. |
+| `Block background ad prefetch` | Stops Facebook downloading ads and its ad model in the background. That saves data and battery, and the space they'd take. |
 | `Disable Audience Network` | Stops Facebook serving ads to other apps. Those apps then show their own ads or none, and rewarded ads can fail. |
 | `Download any reel` | Adds a Download button beside every reel. Videos save at the best quality the player streams. |
 | `Download any story` | Adds Save to the menu of any story, including stories with music. Videos save at the best quality the player streams. |
 | `Hide sponsored posts` | Removes sponsored and promoted posts from the news feed, with no gap left behind. |
 | `Hide sponsored reels` | Removes ads from Reels and Watch, including product banners over a reel and ads inside a video. |
 | `Hide sponsored stories` | Removes ad cards from the story viewer, so swiping through stories only shows stories people posted. |
-| `Hide suggested and promoted posts` | Removes posts that Facebook adds to the feed, such as "Pages you may like", upsells and surveys. |
+| `Hide suggested and promoted posts` | Removes posts that Facebook adds to the feed, such as "Pages you may like" and its own upsells. In-feed surveys go too. |
 | `Hushfacebook settings` | Adds Hushfacebook settings to Facebook's launcher icon. Long-press the icon to turn features on or off, pause Hushfacebook, export diagnostics and read the licenses. |
 | `Open links in external browser` | Opens web links in your default browser instead of Facebook's in-app browser. Facebook pages still open in the app. |
 | `Restore screens on re-signed builds` | Makes profiles and some Settings pages open again on a re-signed build. A Root Mount install doesn't need this patch. |
@@ -70,9 +70,9 @@ Neither path can be tried against a real block until the check reaches sideloads
 
 Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
 
-- Switches for the feed, story and Reels filters, for opening links in your browser and for story saves. They take effect straight away, with no restart and no new patching. While Hushfacebook is paused, a change waits until it's back on.
+- A switch for each filter, and switches for opening links in your browser and for story saves. They take effect straight away, with no restart and no new patching. While Hushfacebook is paused, a change waits until it's back on.
 - **Pause Hushfacebook**. From the next start, every one of those switches acts as if it were off and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
-- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build, and for each patch it says whether a switch runs it, how often its hooks ran and what they couldn't find. Failed saves and links no browser opened are in it too.
+- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build and says whether a switch runs each patch. For each patch whose hooks have run, it gives how often they ran and the first thing they couldn't find. Failed saves and links no browser opened are in it too.
 - **Licenses**, the notices of every project this is built on.
 
 Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in Facebook's folder under `Android/data` pauses it too. Safe mode is the same pause. It changes what the switches answer, but every patch's code stays in place, so if Facebook keeps closing in safe mode, the cause can be Facebook itself or any patch, whichever row of the table below it's in. To find it, patch again without the patch you suspect, or with fewer patches.
