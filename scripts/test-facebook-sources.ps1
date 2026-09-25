@@ -395,7 +395,10 @@ function New-FakeAnswers {
             @{ repository = @{ full_name = 'rushiforai/morphe-archive' }; path = 'examplepatches/Jman-Github/ReVanced-Patch-Bundles/patch-bundles/x/y-patches-list.json'; sha = ('4b' * 20) }
             @{ repository = @{ full_name = 'noise/mentions-facebook' }; path = 'list.txt'; sha = ('5b' * 20) }
             @{ repository = @{ full_name = 'SysAdminDoc/Hushfacebook' }; path = 'patches-list.json'; sha = ('6b' * 20) }
+            # The archive keeps a recorded fork's patch list for its entry's own package, which is no bundle of its own.
+            @{ repository = @{ full_name = 'rushiforai/morphe-archive' }; path = 'examplepatches/someone/alpha-patches/patches-list.json'; sha = ('7b' * 20) }
         )
+        orcaListHits = @()
         alphaRepo = @{ Status = 200; Content = '{"full_name":"fixture-owner/alpha-patches","archived":false,"default_branch":"main"}' }
         alphaLicense = @{ Status = 200; Content = (@{ path = 'LICENSE'; content = $licenseBase64; license = @{ spdx_id = 'GPL-3.0' } } | ConvertTo-Json) }
         alphaBranches = @{ Status = 200; Content = "[{`"name`":`"main`",`"commit`":{`"sha`":`"$commitA1`"}}]" }
@@ -440,7 +443,8 @@ $fakeForge = @{ Answers = (New-FakeAnswers); Requests = (New-Object System.Colle
             '^https://api\.github\.com/repos/rushiforai/morphe-archive/contents/examplepatches/SysAdminDoc/Hushfacebook/patches-list\.json$' { $answer = $a.archive; break }
             '^https://api\.github\.com/search/code\?q=([^&]+)&per_page=100&page=1$' {
                 $query = [Uri]::UnescapeDataString($Matches[1])
-                $items = if ($query -eq '"com.facebook.katana" bytecodePatch') { @($a.searchHits) } else { @() }
+                $items = if ($query -eq '"com.facebook.katana" bytecodePatch') { @($a.searchHits) }
+                    elseif ($query -eq '"com.facebook.orca" filename:patches-list.json') { @($a.orcaListHits) } else { @() }
                 $answer = @{ Status = 200; Content = (@{ total_count = $items.Count; incomplete_results = $false; items = $items } | ConvertTo-Json -Depth 8) }
                 break
             }
@@ -629,6 +633,21 @@ $fakeForge = @{ Answers = (New-FakeAnswers); Requests = (New-Object System.Colle
     $fakeForge.Answers.directory.Content = $fakeForge.Answers.directory.Content -replace '"com\.facebook\.katana"(\s*)\]', '"com.facebook.katana", "com.facebook.orca"$1]'
     Assert-True ($fakeForge.Answers.directory.Content -like '*com.facebook.orca*') 'The directory answer was not edited, so the packages case would prove nothing.'
     Assert-Drift 'packages-changed' '*alpha-patches*now targets com.facebook.orca*' 'A source an index says now targets Messenger'
+    $fakeForge.Answers = New-FakeAnswers
+
+    # A recorded fork or an out-of-scope repository that an index lists as a bundle of its own. The
+    # control's archived copy of the fork's list, for alpha's own package, stayed quiet.
+    foreach ($listed in @('someone/alpha-patches', 'noise/mentions-facebook')) {
+        $fakeForge.Answers.directory.Content = $fakeForge.Answers.directory.Content.Replace('"repo":  "fixture-owner/alpha-patches"', "`"repo`":  `"$listed`"").Replace(
+            '"repo": "fixture-owner/alpha-patches"', "`"repo`": `"$listed`"")
+        Assert-True ($fakeForge.Answers.directory.Content -like "*$listed*") "The directory answer was not edited, so the $listed case would prove nothing."
+        $expected = if ($listed -like 'someone/*') { "*github.com/$listed*recorded fork of alpha*Morphe directory*" } else { "*$listed*out of scope*Morphe directory*" }
+        Assert-Drift 'listed-as-bundle' $expected "The directory listing $listed as a bundle"
+        $fakeForge.Answers = New-FakeAnswers
+    }
+    $fakeForge.Answers.orcaListHits = @(@{ repository = @{ full_name = 'rushiforai/morphe-archive' }
+        path = 'examplepatches/someone/alpha-patches/patches-list.json'; sha = ('7c' * 20) })
+    Assert-Drift 'listed-as-bundle' '*someone/alpha-patches*com.facebook.orca*' 'A recorded fork whose archived patch list takes on Messenger'
     $fakeForge.Answers = New-FakeAnswers
 
     $fakeForge.Answers.searchHits[1].sha = ('8b' * 20)

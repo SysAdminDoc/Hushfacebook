@@ -23,11 +23,11 @@
     is byte for byte a file the ledger already holds (the same git blob id), which makes it a copy
     of that lineage: it's reported under that lineage and not counted again. A removed or changed
     licence, a branch head that moved or a new branch with Facebook-family work, a fork the ledger
-    hasn't seen, a repository that's gone, renamed or archived, and a listing that changed are the
-    other findings. Any finding, or a source that couldn't be read, writes the report and exits 1
-    with the ledger untouched. A clean run stamps today's date on the census and on every record
-    it checked, and exits 0. Commit that change: a local release refuses a census more than
-    14 days old.
+    hasn't seen, a recorded fork or out-of-scope repository an index lists as a bundle of its own, a
+    repository that's gone, renamed or archived, and a listing that changed are the other findings.
+    Any finding, or a source that couldn't be read, writes the report and exits 1 with the ledger
+    untouched. A clean run stamps today's date on the census and on every record it checked, and
+    exits 0. Commit that change: a local release refuses a census more than 14 days old.
 
     The audit never imports code. It reads metadata through the forges' APIs; a licence is hashed
     in memory and a patch list is read for its names. Nothing is cloned, downloaded to disk or
@@ -608,6 +608,26 @@ foreach ($candidate in @($candidates.Values | Sort-Object Key)) {
                 Add-Finding -Kind 'mirror-changed' -Repository ([string]$record.Record.repository) `
                     -Detail "a copy of $($record.Lineage) now holds Facebook-family files the lineage doesn't" `
                     -Evidence ([ordered]@{ hits = @($candidate.Hits | Where-Object { $diverged -contains $_.blob }) })
+            }
+        } elseif ($candidate.Packages.Count -gt 0) {
+            # An index listing a recorded fork or an out-of-scope repository for a Facebook-family
+            # package means it publishes a bundle of its own. The Morphe Archive keeps every fork's
+            # patch list, so a fork only it lists counts for packages its entry doesn't target.
+            $listers = @($candidate.Sources | Where-Object { $_ -notlike '*code search' }) -join ', '
+            $evidence = [ordered]@{ sources = @($candidate.Sources); packages = @($candidate.Packages); features = @($candidate.Features) }
+            if ($record.Kind -eq 'fork') {
+                $recordedPackages = @($record.Entry.packages | ForEach-Object { "$_" })
+                $newPackages = @($candidate.Packages | Where-Object { $recordedPackages -notcontains $_ })
+                $curated = @($candidate.Sources | Where-Object { $_ -ne 'Morphe Archive' -and $_ -notlike '*code search' })
+                if ($curated.Count -gt 0 -or $newPackages.Count -gt 0) {
+                    Add-Finding -Kind 'listed-as-bundle' -Repository "https://$key" `
+                        -Detail ("a recorded fork of $($record.Lineage) that $listers lists as a bundle of its own for " +
+                            (@($candidate.Packages) -join ', ') + '; give it an entry of its own') -Evidence $evidence
+                }
+            } else {
+                Add-Finding -Kind 'listed-as-bundle' -Repository ([string]$record.Record.repository) `
+                    -Detail ("out of scope in the ledger, but $listers lists it as a bundle for " + (@($candidate.Packages) -join ', ') +
+                        '; record it as an entry') -Evidence $evidence
             }
         }
         continue
