@@ -18,6 +18,7 @@ if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'device-install.ps1')
 . (Join-Path $PSScriptRoot 'Resolve-Java.ps1')
 . (Join-Path $PSScriptRoot 'common.ps1')
+. (Join-Path $PSScriptRoot 'script-wiring.ps1')
 
 function Assert-True {
     param([bool]$Condition, [string]$Message)
@@ -1396,6 +1397,48 @@ try {
             'A push that deleted the contract tests went through.'
     } finally {
         Set-Content -LiteralPath $contractsStubPath -Value $contractsStubText -Encoding UTF8 -NoNewline
+    }
+
+    # The three verifier suites run only when their own files move, and pre-push.ps1 decides which
+    # files those are. A push of pre-push.ps1 runs this suite and no other, so an edit that put a
+    # suite line behind a dead branch, or dropped a file from a suite's list, went out through the
+    # gate it switched off. This suite is the one place that holds the routing, then: all four
+    # suite lines read through the parser (script-wiring.ps1), each also tried behind a dead
+    # branch so the check can't pass by passing everything, and every file a verifier suite guards
+    # pushed through the hook against stub suites that record they ran. A file starts exactly the
+    # suites whose lists hold it.
+    $prePushSource = [System.IO.File]::ReadAllText($prePushScript)
+    $deadSuiteCopy = Join-Path $hookRoot 'pre-push-dead-suite.ps1'
+    $verifierRoutes = [ordered]@{
+        'scripts/test-injected-registers.ps1' = @('BadDexFixture.java', 'DexDiff.java', 'injected-mutation-contracts.txt',
+            'injected-register-contracts.ps1', 'injected-register-removal-allowlist.txt', 'script-wiring.ps1',
+            'test-injected-registers.ps1', 'verify-all-patches.ps1', 'verify-injected-registers.ps1')
+        'scripts/test-resource-table-check.ps1' = @('ResourceTableCheck.java', 'test-resource-table-check.ps1',
+            'verify-all-patches.ps1')
+        'scripts/test-injected-register-device.ps1' = @('injected-register-device.ps1', 'script-wiring.ps1',
+            'test-injected-register-device.ps1', 'verify-injected-registers.ps1')
+    }
+    foreach ($suite in @('scripts/test-script-contracts.ps1') + @($verifierRoutes.Keys)) {
+        Assert-True (Test-PushGateRunsSuite $prePushScript $suite) "The push gate does not run $suite."
+        $suiteLine = { param($Node)
+            $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+            $Node.Left.Extent.Text -eq '$suites' -and $Node.Extent.Text -like "*'$suite'*" }.GetNewClosure()
+        [System.IO.File]::WriteAllText($deadSuiteCopy,
+            (Edit-ScriptNode $prePushSource $suiteLine { param($Text) "if (`$false) { $Text }" }))
+        Assert-True (-not (Test-PushGateRunsSuite $deadSuiteCopy $suite)) `
+            "The wiring check read $suite as running from behind a dead branch."
+    }
+    $verifierMarker = { param([string]$Suite) Join-Path $hookRoot ([IO.Path]::GetFileNameWithoutExtension($Suite) + '-ran.txt') }
+    foreach ($suite in $verifierRoutes.Keys) {
+        Set-Content -LiteralPath (Join-Path $hookRoot $suite) -Encoding UTF8 -Value @(
+            'param([string]$Root)', "Set-Content -LiteralPath '$(& $verifierMarker $suite)' -Value 'ran'", 'exit 0')
+    }
+    foreach ($file in @(@($verifierRoutes.Values | ForEach-Object { $_ }) + @('patch-report.ps1') | Select-Object -Unique)) {
+        foreach ($suite in $verifierRoutes.Keys) { Remove-Item -LiteralPath (& $verifierMarker $suite) -Force -ErrorAction SilentlyContinue }
+        Invoke-Hook -Paths @("scripts/$file")
+        $ran = @($verifierRoutes.Keys | Where-Object { Test-Path -LiteralPath (& $verifierMarker $_) }) -join ', '
+        $expected = @($verifierRoutes.Keys | Where-Object { $verifierRoutes[$_] -contains $file }) -join ', '
+        Assert-True ($ran -eq $expected) "A push of scripts/$file ran [$ran], not [$expected]."
     }
 
     # The catalog is held to Meta's two signers, the builds every patch declares and the internal
