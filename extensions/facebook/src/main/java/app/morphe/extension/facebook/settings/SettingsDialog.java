@@ -30,7 +30,14 @@ import app.morphe.extension.shared.Logger;
  */
 @SuppressWarnings("deprecation") // Framework fragments are what the shared preference code builds on.
 public final class SettingsDialog extends DialogFragment {
-    private int containerId;
+    /**
+     * The preference list's container. Fixed, because the child manager saves the page with this
+     * id and puts it back into a view with the same id after rotation or process recreation. A
+     * fresh View.generateViewId() on each onCreateView left the restored page no container.
+     * Outside both the generated-id range and aapt's 0x7f ids, and nothing else in this dialog
+     * carries an id.
+     */
+    static final int CONTAINER_ID = 0x48464301;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -88,8 +95,7 @@ public final class SettingsDialog extends DialogFragment {
         root.addView(bar);
 
         FrameLayout container = new FrameLayout(getContext());
-        containerId = View.generateViewId();
-        container.setId(containerId);
+        container.setId(CONTAINER_ID);
         root.addView(container, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
@@ -114,9 +120,9 @@ public final class SettingsDialog extends DialogFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         try {
-            if (getChildFragmentManager().findFragmentById(containerId) == null) {
+            if (getChildFragmentManager().findFragmentById(CONTAINER_ID) == null) {
                 getChildFragmentManager().beginTransaction()
-                        .replace(containerId, new HushfacebookPreferenceFragment())
+                        .replace(CONTAINER_ID, new HushfacebookPreferenceFragment())
                         .commitNow();
             }
         } catch (Exception ex) {

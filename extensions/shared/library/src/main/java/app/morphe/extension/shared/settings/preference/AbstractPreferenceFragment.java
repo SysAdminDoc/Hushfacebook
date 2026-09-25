@@ -14,7 +14,9 @@ import static app.morphe.extension.shared.StringRef.str;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -113,6 +115,15 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
     /** Overridden by an app that wants its accent on the recovery action. Plain by default. */
     protected ErrorActionStyler errorActionStyler() {
         return null;
+    }
+
+    /**
+     * The context the recovery page's rows are built with, and so the theme they're drawn in.
+     * The host activity's by default; an app that draws its settings on a background of its own
+     * returns a themed wrapper, or the recovery page comes out in the host's text colors.
+     */
+    protected Context pageContext(Activity activity) {
+        return activity;
     }
 
     /**
@@ -636,10 +647,11 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
         }
 
         try {
-            PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(activity);
+            Context context = pageContext(activity);
+            PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
             setPreferenceScreen(screen);
 
-            Preference message = new Preference(activity);
+            Preference message = new Preference(context);
             message.setKey(INITIALIZATION_ERROR_KEY);
             message.setTitle(initializationErrorTitle(activity));
             message.setSummary(initializationErrorSummary(activity));
@@ -652,7 +664,7 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
             // Try again leads. It is the one that can actually fix this, and it used to sit
             // underneath Go back, so the first thing offered to a reader whose settings would
             // not open was the way out rather than the way through.
-            Preference retry = new ErrorActionPreference(activity, true, styler);
+            Preference retry = new ErrorActionPreference(context, true, styler);
             retry.setKey(INITIALIZATION_RETRY_KEY);
             retry.setTitle(initializationRetryLabel(activity));
             retry.setPersistent(false);
@@ -662,7 +674,7 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
             });
             screen.addPreference(retry);
 
-            Preference back = new ErrorActionPreference(activity, false, styler);
+            Preference back = new ErrorActionPreference(context, false, styler);
             back.setKey(INITIALIZATION_BACK_KEY);
             back.setTitle(initializationBackLabel(activity));
             back.setPersistent(false);
@@ -676,28 +688,50 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
         }
     }
 
+    /**
+     * Leaves the failed page and nothing else. A page inside a dialog cancels that dialog, which
+     * reads to its owner exactly as the person closing it; a page on a back stack pops it; only a
+     * page that is its activity's whole content finishes the activity. A settings page hosted in
+     * another app's activity used to reach that activity's own manager here, and with nothing on
+     * its back stack it finished the host app.
+     */
     private void leaveFailedPage() {
-        Activity activity = getActivity();
-        if (activity == null) return;
-        if (activity.getFragmentManager().getBackStackEntryCount() > 0) {
-            activity.getFragmentManager().popBackStack();
-        } else {
-            activity.finish();
+        Fragment parent = getParentFragment();
+        if (parent instanceof DialogFragment) {
+            DialogFragment host = (DialogFragment) parent;
+            if (host.getDialog() != null) {
+                host.getDialog().cancel();
+            } else {
+                host.dismissAllowingStateLoss();
+            }
+            return;
         }
+        FragmentManager manager = getFragmentManager();
+        if (manager != null && manager.getBackStackEntryCount() > 0) {
+            manager.popBackStack();
+            return;
+        }
+        Activity activity = getActivity();
+        if (activity != null && parent == null) activity.finish();
     }
 
-    /** A new Fragment also rebuilds app-specific adapters and clears every partial subclass field. */
+    /**
+     * A new Fragment also rebuilds app-specific adapters and clears every partial subclass field.
+     * It goes in through the manager that holds this page: for a page inside a dialog that is the
+     * dialog's child manager, and the activity's manager can't find the dialog's container.
+     */
     private void replaceFailedPage() {
         if (retryScheduled) return;
         Activity activity = getActivity();
+        FragmentManager manager = getFragmentManager();
         int containerId = getId();
-        if (activity == null || containerId == 0 || containerId == android.view.View.NO_ID) return;
+        if (activity == null || manager == null || containerId == 0 || containerId == android.view.View.NO_ID) return;
 
         retryScheduled = true;
         try {
             Bundle arguments = getArguments() == null ? null : new Bundle(getArguments());
             Fragment replacement = Fragment.instantiate(activity, getClass().getName(), arguments);
-            activity.getFragmentManager().beginTransaction()
+            manager.beginTransaction()
                     .replace(containerId, replacement)
                     .commit();
         } catch (Exception retryFailure) {

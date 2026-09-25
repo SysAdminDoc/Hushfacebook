@@ -6,6 +6,7 @@
  */
 package app.morphe.extension.facebook.settings;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -39,8 +40,16 @@ import app.morphe.extension.shared.settings.preference.ExportDiagnosticReportPre
 public final class HushfacebookPreferenceFragment extends AbstractPreferenceFragment {
     static final String SOURCE_URL = "https://github.com/SysAdminDoc/Hushfacebook";
 
+    /** Thrown by the next initialize() and then cleared: how a test reaches the recovery page. */
+    static volatile RuntimeException failNextInitialization;
+
     @Override
     protected void initialize() {
+        RuntimeException fault = failNextInitialization;
+        if (fault != null) {
+            failNextInitialization = null;
+            throw fault;
+        }
         // Loads the switches before the shared fragment syncs them to the screen.
         Settings.HIDE_SPONSORED_POSTS.get();
 
@@ -218,6 +227,12 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
     /** The dark Material theme every row on this screen is built with, over Facebook's own. */
     static Context themed(Context base) {
         return new ContextThemeWrapper(base, android.R.style.Theme_Material_NoActionBar);
+    }
+
+    /** The recovery page draws on the same black page, so it gets the same theme. */
+    @Override
+    protected Context pageContext(Activity activity) {
+        return themed(activity);
     }
 
     private static PreferenceCategory category(PreferenceScreen screen, String title) {
