@@ -435,7 +435,7 @@ public class SettingsBackupTest {
                 .put(Settings.HIDE_SPONSORED_REELS.key, false)
                 .put(BaseSettings.PAUSED.key, true)
                 .put(BaseSettings.DEBUG.key, true)
-                .put("hushfacebook_sanitize_sharing_links", "whatever a later version keeps here");
+                .put("hushfacebook_kept_by_a_later_version", "whatever that version keeps here");
         SettingsBackup.Snapshot snapshot = SettingsBackup.parse(file.toString());
         assertEquals(4, snapshot.unknown);
         assertEquals(1, snapshot.changes().size());
