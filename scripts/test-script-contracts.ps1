@@ -34,6 +34,15 @@ function Assert-Throws {
     throw "$Message No error was raised."
 }
 
+function New-NotFoundAnswer {
+    # What Invoke-WebRequest raises for a 404 in both shells, as far as Assert-UrlReachable reads
+    # it: an error whose Response carries the status. A function named Invoke-WebRequest that
+    # throws this stands in for the request, so no case here needs the network.
+    $answer = New-Object System.Exception 'Response status code does not indicate success: 404 (Not Found).'
+    Add-Member -InputObject $answer -NotePropertyName Response -NotePropertyValue ([pscustomobject]@{ StatusCode = 404 })
+    return $answer
+}
+
 # --- patch-target.ps1 ------------------------------------------------------------------------
 #
 # Facebook ships a build a week, so the catalog declares the build the bundle was last proved on
@@ -1108,14 +1117,30 @@ try {
         'A bug report form naming a Manager below the floor was accepted.'
     Reset-FactsFile $bugFormRelative
 
-    # A dead link in the index, answered from this machine so the case needs no network of its
-    # own: nothing listens on port 1, so the request is refused before it leaves the host.
-    Set-FactsFile 'patches-bundle.json' {
-        param($text) $text -replace 'https://github\.com/SysAdminDoc/Hushfacebook/releases/download/[^"]+',
-            'http://127.0.0.1:1/patches.mpp'
+    # The download address, one check at a time in the order the script makes them: the release
+    # asset's path, HTTPS, then GitHub. Each is refused by name, because a pattern that accepts
+    # any error let this case pass on the shape check while it said it tested a dead link.
+    foreach ($address in @(
+            @{ From = 'https://github\.com/SysAdminDoc/Hushfacebook/releases/download/[^"]+'; To = 'http://127.0.0.1:1/patches.mpp'
+                Pattern = '*patches-bundle.json download URL does not match*'; Name = 'an index whose address is not the release asset' },
+            @{ From = '"https://github\.com/'; To = '"http://github.com/'
+                Pattern = '*must use HTTPS*'; Name = 'an index serving the bundle over plain HTTP' },
+            @{ From = '"https://github\.com/'; To = '"https://example.com/'
+                Pattern = '*must be on github.com*'; Name = 'an index serving the bundle from another host' })) {
+        Set-FactsFile 'patches-bundle.json' { param($text) $text -replace $address.From, $address.To }
+        Assert-Throws { Invoke-Facts } $address.Pattern "The release facts check accepted $($address.Name)."
+        Reset-FactsFile 'patches-bundle.json'
     }
-    Assert-Throws { Invoke-Facts -WithUrls } '*' 'An index pointing at a dead address was accepted.'
-    Reset-FactsFile 'patches-bundle.json'
+
+    # A dead link: the address has every right shape and names a release nobody published, which
+    # is how the index once pointed at a tag that did not exist yet. GitHub answers 404 for it;
+    # here a stand-in for the request does, so the case needs no network. The fetch itself is
+    # held to a refused connection with the shared helpers below.
+    & {
+        function Invoke-WebRequest { throw (New-NotFoundAnswer) }
+        Assert-Throws { Invoke-Facts -WithUrls } '*indexed bundle URL https://github.com/*answered HTTP 404*' `
+            'An index naming a release nobody published was accepted.'
+    }
 
     # The test counts the description quotes, which only the strict path reads: a release, or the
     # push that rewrites the index. The copied tree holds no test results, so each folder gets a
@@ -2049,6 +2074,26 @@ try {
     New-TestBundleArchive -Path $noApk -Entries ([ordered]@{ 'info.json' = '{}' })
     Assert-Throws { Get-BaseApk -Apk $noApk -Destination (Join-Path $commonRoot 'out/none.apk') } `
         '*holds no APK*' 'A bundle with no APK in it handed back something to read.'
+
+    # The fetch the release facts make of the indexed bundle and the add-source page. A real
+    # request first: nothing listens on port 1, so it is refused before it leaves this machine.
+    # Then the two answers a stand-in gives, a 404 the way both shells raise it and a 200.
+    Assert-Throws {
+        Assert-UrlReachable -Uri ([Uri]'http://127.0.0.1:1/patches.mpp') -Description 'test bundle URL' -FailureHint 'hint'
+    } '*Could not reach the test bundle URL http://127.0.0.1:1/patches.mpp*' 'An address nothing answers passed the reachability check.'
+    & {
+        function Invoke-WebRequest { throw (New-NotFoundAnswer) }
+        Assert-Throws {
+            Assert-UrlReachable -Uri ([Uri]'https://github.com/example/none.mpp') -Description 'test bundle URL' `
+                -FailureHint 'Publish it first.'
+        } '*test bundle URL https://github.com/example/none.mpp answered HTTP 404. Publish it first.' `
+            'An address answering 404 passed the reachability check.'
+    }
+    & {
+        function Invoke-WebRequest { [pscustomobject]@{ StatusCode = 200 } }
+        Assert-UrlReachable -Uri ([Uri]'https://github.com/example/patches.mpp') -Description 'test bundle URL' `
+            -FailureHint 'hint' 6> $null
+    }
 } finally {
     $env:HUSHFACEBOOK_DESKTOP_JAR = $savedJar
     $env:HUSHFACEBOOK_WORKDIR = $savedWork
