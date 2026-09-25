@@ -183,9 +183,21 @@ public class LogBufferManagerClipboardTest {
             assertTrue(target + ": " + copy, copy.startsWith("MORPHE DIAGNOSTIC REPORT\n"));
             if (head.length() + allLeftOut.length() <= limit) {
                 assertTrue("a head of " + head.length() + " was not kept whole", timeless(copy).startsWith(timeless(head)));
-                // Twenty events never fit beside these heads, so the copy has to say they went.
+                // Twenty events never fit beside these heads, so the copy has to say they went, and
+                // how many: every one of them, or every one the copy doesn't carry.
                 assertTrue("a head of " + head.length() + " lost the events with no count: " + copy,
                         copy.contains(" events left out; use Save full report for everything"));
+                int kept = copy.split("\\| event ", -1).length - 1;
+                Matcher all = Pattern.compile("clipboard_note: (\\d+) events left out").matcher(copy);
+                Matcher older = Pattern.compile("clipboard_note: (\\d+) older events left out").matcher(copy);
+                if (all.find()) {
+                    assertEquals("a head of " + head.length() + " said how many went", 20, Integer.parseInt(all.group(1)));
+                    assertEquals("the copy carries events it says it left out", 0, kept);
+                } else {
+                    assertTrue(copy, older.find());
+                    assertEquals("a head of " + head.length() + " kept " + kept + " events", 20 - kept,
+                            Integer.parseInt(older.group(1)));
+                }
             }
         }
     }
