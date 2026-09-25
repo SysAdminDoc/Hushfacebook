@@ -175,6 +175,15 @@ public final class MediaDownload {
             return false;
         }
 
+        // The walk collects any address the object can reach, a link in a caption included. Only
+        // Meta's media servers are candidates, so a foreign address can't outrank a real one.
+        int found = urls.size();
+        urls = metaOnly(urls);
+        if (urls.isEmpty()) {
+            Log.w(TAG, "nothing to save: none of the " + found + " addresses was on Meta's media servers");
+            return false;
+        }
+
         String video = RenditionPicker.bestOf(urls, true);
         String image = RenditionPicker.bestOf(urls, false);
 
@@ -202,8 +211,50 @@ public final class MediaDownload {
             + " " + describe(chosen)
             + " from " + urls.size() + " candidate(s): " + all);
 
-        start(safe, isVideo, writer -> Downloader.fetch(chosen, writer));
+        Downloader.Kind kind = isVideo ? Downloader.Kind.VIDEO : Downloader.Kind.IMAGE;
+        start(safe, isVideo, writer -> saveFile(safe, chosen, kind, writer));
         return true;
+    }
+
+    /** One checked file, fetched into the cache and then published. */
+    private static Downloader.Result saveFile(Context application, String url, Downloader.Kind kind,
+            MediaStoreWriter writer) {
+        java.io.File folder = DashSave.workFolder(application);
+        if (folder == null) return Downloader.Result.fail(Downloader.Status.WRITE_ERROR, "no cache folder");
+        return Downloader.save(url, kind, folder, writer, policyFor(application), Downloader.MAX_BYTES);
+    }
+
+    /**
+     * Meta's address rules, with the lookup fence up only while the socket goes straight to the
+     * answer: no proxy for the address and no VPN on the network. See {@link MediaUrlPolicy}.
+     */
+    private static MediaUrlPolicy policyFor(Context application) {
+        return new MediaUrlPolicy(MediaUrlPolicy.DNS, url -> !MediaUrlPolicy.proxied(url) && !onVpn(application));
+    }
+
+    /**
+     * Whether the network a save would use runs through a VPN, a fake-IP proxy client's among
+     * them. Facebook holds ACCESS_NETWORK_STATE. No answer keeps the fence up.
+     */
+    private static boolean onVpn(Context context) {
+        try {
+            android.net.ConnectivityManager manager =
+                (android.net.ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (manager == null) return false;
+            android.net.Network active = manager.getActiveNetwork();
+            android.net.NetworkCapabilities capabilities = active == null ? null : manager.getNetworkCapabilities(active);
+            return capabilities != null && capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static List<String> metaOnly(List<String> urls) {
+        List<String> kept = new ArrayList<>();
+        for (String url : urls) {
+            if (MediaUrlPolicy.shapeRefusal(url) == null) kept.add(url);
+        }
+        return kept;
     }
 
     /**
@@ -218,7 +269,11 @@ public final class MediaDownload {
      * @return whether a download started. {@code false} lets the caller save a single file.
      */
     private static boolean beginDash(Context context, String label, String manifest, List<String> urls) {
-        List<DashManifest.Track> tracks = DashManifest.parse(manifest);
+        List<DashManifest.Track> tracks = new ArrayList<>();
+        for (DashManifest.Track track : DashManifest.parse(manifest)) {
+            if (MediaUrlPolicy.shapeRefusal(track.url) == null) tracks.add(track);
+        }
+        urls = metaOnly(urls);
         DashManifest.Track video = DashManifest.bestVideo(tracks, DashSave.canWriteAv1());
 
         if (video == null) {
@@ -243,11 +298,11 @@ public final class MediaDownload {
             + ", instead of " + (fallback == null ? "nothing" : describe(fallback)));
 
         start(safe, true, writer -> {
-            Downloader.Status status = DashSave.save(safe, video, audio, writer);
-            if (status == Downloader.Status.OK || fallback == null) return status;
+            Downloader.Result result = DashSave.save(safe, video, audio, writer, policyFor(safe));
+            if (result.ok() || fallback == null) return result;
 
-            Log.w(TAG, "the DASH save ended with " + status + ", saving " + describe(fallback));
-            return Downloader.fetch(fallback, writer);
+            Log.w(TAG, "the DASH save ended with " + result + ", saving " + describe(fallback));
+            return saveFile(safe, fallback, Downloader.Kind.VIDEO, writer);
         });
         return true;
     }
@@ -272,7 +327,7 @@ public final class MediaDownload {
 
     /** One save on the worker thread. It writes through [writer] and returns the result. */
     private interface Job {
-        Downloader.Status run(MediaStoreWriter writer);
+        Downloader.Result run(MediaStoreWriter writer);
     }
 
     private static void start(Context application, boolean video, Job job) {
@@ -283,9 +338,9 @@ public final class MediaDownload {
             MediaStoreWriter writer = new MediaStoreWriter(application, video);
 
             try {
-                Downloader.Status status = job.run(writer);
-                Log.i(TAG, "save finished: " + status);
-                Feedback.show(application, message(status, writer.savedLocation()), status != Downloader.Status.OK);
+                Downloader.Result result = job.run(writer);
+                Log.i(TAG, "save finished: " + result);
+                Feedback.show(application, message(result.status, writer.savedLocation()), !result.ok());
             } catch (Throwable t) {
                 // Nothing can leave this thread. Facebook installs its own handler for uncaught
                 // exceptions and reports them as its own crashes.
@@ -308,7 +363,11 @@ public final class MediaDownload {
             case OK:
                 return "Saved to " + (location == null ? "the gallery" : location);
             case EXPIRED:
-                return "Link expired - reopen the item and try again";
+                return "Link expired. Reopen the item and try again";
+            case REFUSED:
+                return "Not saved: that isn't a Facebook photo or video";
+            case TOO_LARGE:
+                return "Not saved: the file is over 512 MB";
             default:
                 return "Download failed";
         }

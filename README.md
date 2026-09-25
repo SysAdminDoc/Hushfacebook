@@ -88,7 +88,7 @@ Some patches work entirely while patching, such as the ad prefetch block and the
 
 ## Privacy
 
-Hushfacebook doesn't collect anything and has no server. The only time the patched app goes online on Hushfacebook's behalf is to download a story or reel you asked to save, from the same Facebook address the player streams it from. Links in the code point only at github.com and gitlab.com, the sources named in the notices, and www.gnu.org for the licence.
+Hushfacebook doesn't collect anything and has no server. The only time the patched app goes online on Hushfacebook's behalf is to download a story or reel you asked to save, from the same Facebook address the player streams it from. A save only follows HTTPS addresses on Meta's media servers (fbcdn.net, fbsbx.com and cdninstagram.com), redirects included, and the file lands in Facebook's cache first. Only once it's whole, under 512 MB and actually a photo or video does it go to your gallery. Links in the code point only at github.com and gitlab.com, the sources named in the notices, and www.gnu.org for the licence.
 
 ## Where the patches come from
 

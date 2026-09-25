@@ -18,11 +18,7 @@ import android.os.Build;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -35,7 +31,8 @@ import java.nio.ByteBuffer;
  *
  * <p>The two tracks and the result go into the cache of the app first, because the muxer must seek
  * in its files. Only the finished file goes into the gallery, through the same
- * {@link Downloader.Sink} as all other saves. So an error at any step leaves nothing in the gallery.
+ * {@link Downloader.Sink} as all other saves. So an error at any step leaves nothing in the gallery,
+ * and the files in the cache are removed whatever happens.
  */
 final class DashSave {
 
@@ -79,45 +76,66 @@ final class DashSave {
     }
 
     /**
-     * Download [video] and [audio], join them, and write the result to [sink]. This blocks and
-     * never throws. [audio] is {@code null} for a video with no sound.
+     * The folder every save works in, created and cleared of what a stopped save left, or
+     * {@code null} when the cache can't hold one.
      */
-    static Downloader.Status save(
+    static File workFolder(Context application) {
+        File folder = new File(application.getCacheDir(), CACHE_FOLDER);
+        if (!folder.isDirectory() && !folder.mkdirs()) return null;
+        removeStale(folder);
+        return folder;
+    }
+
+    /**
+     * Download [video] and [audio], join them, and write the result to [sink]. This blocks and
+     * never throws. [audio] is {@code null} for a video with no sound. Both tracks go through the
+     * same checks as a single file, so nothing reaches the gallery unless both are Meta's media.
+     */
+    static Downloader.Result save(
         Context application,
         DashManifest.Track video,
         DashManifest.Track audio,
         Downloader.Sink sink
     ) {
-        File folder = new File(application.getCacheDir(), CACHE_FOLDER);
+        return save(application, video, audio, sink, MediaUrlPolicy.META);
+    }
+
+    static Downloader.Result save(
+        Context application,
+        DashManifest.Track video,
+        DashManifest.Track audio,
+        Downloader.Sink sink,
+        MediaUrlPolicy policy
+    ) {
         File videoFile = null;
         File audioFile = null;
         File joined = null;
 
         try {
-            if (!folder.isDirectory() && !folder.mkdirs()) return Downloader.Status.WRITE_ERROR;
-            removeStale(folder);
+            File folder = workFolder(application);
+            if (folder == null) return Downloader.Result.fail(Downloader.Status.WRITE_ERROR, "no cache folder");
 
             videoFile = File.createTempFile("video", ".mp4", folder);
-            Downloader.Status status = Downloader.fetch(video.url, new FileSink(videoFile));
-            if (status != Downloader.Status.OK) return status;
+            Downloader.Result result = Downloader.fetch(video.url, Downloader.Kind.VIDEO, videoFile, policy);
+            if (!result.ok()) return result;
 
             if (audio != null) {
                 audioFile = File.createTempFile("audio", ".mp4", folder);
-                status = Downloader.fetch(audio.url, new FileSink(audioFile));
-                if (status != Downloader.Status.OK) return status;
+                result = Downloader.fetch(audio.url, Downloader.Kind.AUDIO, audioFile, policy);
+                if (!result.ok()) return result;
             }
 
             joined = File.createTempFile("joined", ".mp4", folder);
             join(videoFile, audioFile, joined);
 
-            return publish(joined, sink);
+            return Downloader.publish(joined, "video/mp4", sink);
         } catch (Throwable t) {
             Log.w(TAG, "the DASH save failed", t);
-            return Downloader.Status.WRITE_ERROR;
+            return Downloader.Result.fail(Downloader.Status.WRITE_ERROR, "the tracks could not be joined");
         } finally {
-            delete(videoFile);
-            delete(audioFile);
-            delete(joined);
+            Downloader.delete(videoFile);
+            Downloader.delete(audioFile);
+            Downloader.delete(joined);
         }
     }
 
@@ -242,84 +260,13 @@ final class DashSave {
         }
     }
 
-    /** Copy the finished file into [sink]. If an error occurs, remove the entry again. */
-    private static Downloader.Status publish(File file, Downloader.Sink sink) {
-        boolean opened = false;
-
-        try (InputStream in = new FileInputStream(file)) {
-            OutputStream out = sink.open("video/mp4");
-            opened = true;
-
-            byte[] buffer = new byte[64 * 1024];
-            int read;
-            while ((read = in.read(buffer)) > 0) out.write(buffer, 0, read);
-            out.flush();
-
-            sink.commit();
-            return Downloader.Status.OK;
-        } catch (Throwable t) {
-            Log.w(TAG, "could not publish the joined file", t);
-            if (opened) {
-                try {
-                    sink.abandon();
-                } catch (Throwable ignored) {
-                    // Cleaning up must never replace the real failure.
-                }
-            }
-            return Downloader.Status.WRITE_ERROR;
-        }
-    }
-
     private static void removeStale(File folder) {
         File[] files = folder.listFiles();
         if (files == null) return;
 
         long now = System.currentTimeMillis();
         for (File file : files) {
-            if (now - file.lastModified() > STALE_MS) delete(file);
-        }
-    }
-
-    private static void delete(File file) {
-        if (file == null) return;
-        try {
-            //noinspection ResultOfMethodCallIgnored
-            file.delete();
-        } catch (Throwable ignored) {
-            // The next save removes a file that stays, or the system clears the cache.
-        }
-    }
-
-    /** A {@link Downloader.Sink} that writes one file in the cache. */
-    private static final class FileSink implements Downloader.Sink {
-        private final File file;
-        private OutputStream stream;
-
-        FileSink(File file) {
-            this.file = file;
-        }
-
-        @Override
-        public OutputStream open(String mimeFromServer) throws IOException {
-            stream = new FileOutputStream(file);
-            return stream;
-        }
-
-        @Override
-        public void commit() throws IOException {
-            if (stream != null) stream.close();
-            stream = null;
-        }
-
-        @Override
-        public void abandon() {
-            try {
-                if (stream != null) stream.close();
-            } catch (Throwable ignored) {
-                // The file is removed next.
-            }
-            stream = null;
-            delete(file);
+            if (now - file.lastModified() > STALE_MS) Downloader.delete(file);
         }
     }
 }
