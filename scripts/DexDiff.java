@@ -838,6 +838,22 @@ public class DexDiff {
                         + above.getOpcode().name + " at " + layout.addresses.get(k - 1));
             }
         }
+
+        // A payload is data, and ART fails the class wherever flow reaches one. A branch, a case
+        // or a handler sent to one is reported above; falling into one from the instruction above
+        // it, which a return or goto removed from before a switch table leaves, and a payload at
+        // the very start are the other ways in.
+        if (!layout.instructions.isEmpty() && isPayload(layout.instructions.get(0))) {
+            findings.add("branch: the payload at 0 is reached from the method's entry");
+        }
+        for (int k = 1; k < layout.instructions.size(); k++) {
+            if (!isPayload(layout.instructions.get(k))) continue;
+            Instruction above = layout.instructions.get(k - 1);
+            if (kinds[k - 1] != null && above.getOpcode().canContinue()) {
+                findings.add("branch: the payload at " + layout.addresses.get(k) + " is reached by falling through from "
+                        + above.getOpcode().name + " at " + layout.addresses.get(k - 1));
+            }
+        }
         return findings;
     }
 

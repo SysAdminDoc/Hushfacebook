@@ -535,6 +535,11 @@ public class BadDexFixture {
         // branch: a sparse switch's case sent to its own payload.
         dexes.put("bad-sparse-case-to-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 sparseSwitchToOwnPayload(), tryHost(CLEAN_TRY)));
+        // branch: case 1 sent to the nop that aligns the payload, which falls into the table.
+        dexes.put("bad-fallthrough-into-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchHost(9), tryHost(CLEAN_TRY)));
+        // branch: a method that starts at a payload, which its entry runs into.
+        dexes.put("bad-payload-at-entry", withStaticHost(body(3, oneInt())));
         // invoke: one register for a callee that takes two.
         dexes.put("bad-invoke-count", withStaticHost(body(3,
                 invoke(INSPECT, 0), invoke(WIDE, 1, 2), op(Opcode.RETURN_VOID))));

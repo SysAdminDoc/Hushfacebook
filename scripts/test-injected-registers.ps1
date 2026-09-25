@@ -6,23 +6,24 @@
     BadDexFixture.java writes a clean host, a patched build of it that passes every check, and one
     patched build per check that breaks that check and nothing else: a branch into an instruction,
     a branch to itself, a switch case into an instruction, a branch or switch case onto a payload
-    (a packed or sparse switch's, or fill-array-data's) or a move-result, an invoke with too few
-    registers, a wide argument split across two registers, the static off-by-one, the upper half of
-    a wide parameter read as an object, a narrow constant read as a long and the reverse (the
-    AMOLED sweep's bug on 580), either half of a live long overwritten and the other half still
-    read, a broken pair or a narrow constant on one arm of a branch or on a loop's back edge,
-    either half of a pair broken on one arm moved where the arms meet, a zero on one arm read as a
-    long, a conflict (an object on one arm, an int on the other) read by each instruction that
-    takes a value or read through a copy, a wide move of a conflict, a long tested against zero, a
-    move-result the patch separated from its invoke, bad try ranges and handlers (a handler at a
-    switch or array payload among them), a move-exception the method's entry reaches, and the one
-    feed guard doubled, moved or missing. The good build carries the joins, copies and reads ART
-    accepts, so a check made stricter still has to pass them. Each bad build has to fail with
-    findings of its own category only, so a check that fires for the wrong reason fails here too.
-    Removed methods and DEX entries, the removal allowlist, and the device tally comparison are
-    held to what they did before. verify-injected-registers.ps1 also runs end to end with stand-in
-    tools, and its wiring is read through the parser (script-wiring.ps1), with the wiring checks
-    themselves tried on copies that drop the calls but keep their text.
+    (a packed or sparse switch's, or fill-array-data's) or a move-result, flow that falls into a
+    payload or starts at one, an invoke with too few registers, a wide argument split across two
+    registers, the static off-by-one, the upper half of a wide parameter read as an object, a
+    narrow constant read as a long and the reverse (the AMOLED sweep's bug on 580), either half of
+    a live long overwritten and the other half still read, a broken pair or a narrow constant on
+    one arm of a branch or on a loop's back edge, either half of a pair broken on one arm moved
+    where the arms meet, a zero on one arm read as a long, a conflict (an object on one arm, an int
+    on the other) read by each instruction that takes a value or read through a copy, a wide move
+    of a conflict, a long tested against zero, a move-result the patch separated from its invoke,
+    bad try ranges and handlers (a handler at a switch or array payload among them), a
+    move-exception the method's entry reaches, and the one feed guard doubled, moved or missing.
+    The good build carries the joins, copies and reads ART accepts, so a check made stricter still
+    has to pass them. Each bad build has to fail with findings of its own category only, so a check
+    that fires for the wrong reason fails here too. Removed methods and DEX entries, the removal
+    allowlist, and the device tally comparison are held to what they did before.
+    verify-injected-registers.ps1 also runs end to end with stand-in tools, and its wiring is read
+    through the parser (script-wiring.ps1), with the wiring checks themselves tried on copies that
+    drop the calls but keep their text.
 #>
 [CmdletBinding()]
 param(
@@ -340,6 +341,8 @@ try {
         'bad-goto-to-array-payload' = 'branch'
         'bad-switch-to-array-payload' = 'branch'
         'bad-sparse-case-to-payload' = 'branch'
+        'bad-fallthrough-into-payload' = 'branch'
+        'bad-payload-at-entry' = 'branch'
         'bad-branch-to-result' = 'branch'
         'bad-goto-to-handler' = 'branch'
         'bad-fallthrough-handler' = 'try'
