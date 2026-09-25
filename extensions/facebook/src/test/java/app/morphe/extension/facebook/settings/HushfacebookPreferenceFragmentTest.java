@@ -4,7 +4,9 @@
  */
 package app.morphe.extension.facebook.settings;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -13,9 +15,14 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.preference.Preference;
 import android.preference.PreferenceGroup;
+import android.preference.SwitchPreference;
 
 import app.morphe.extension.shared.SettingsContextRule;
+import app.morphe.extension.shared.settings.BooleanSetting;
+import app.morphe.extension.shared.settings.HushfacebookPause;
+import app.morphe.extension.shared.settings.PauseForTests;
 
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +32,11 @@ import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * The settings screen as it draws inside Facebook: a black page whose rows must be readable.
@@ -39,33 +50,95 @@ import java.util.List;
 public class HushfacebookPreferenceFragmentTest {
     @Rule public final SettingsContextRule settingsContext = new SettingsContextRule();
 
+    /** Wording that tells the reader a paused Facebook is an unpatched one, which it isn't. */
+    private static final Pattern UNPATCHED = Pattern.compile("(?i)unpatched|n't patched|not patched|as if it weren");
+
+    @After
+    public void restore() {
+        PatchFamily.inBuildForTests = null;
+        PauseForTests.resume();
+    }
+
     @Test
     public void everyRowHasATitleAndLightText() {
         try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
-            HushfacebookPreferenceFragment fragment = new HushfacebookPreferenceFragment();
-            controller.get().getFragmentManager().beginTransaction()
-                    .add(android.R.id.content, fragment)
-                    .commitNow();
+            assertReadable(rowsOf(controller));
+        }
+    }
 
-            List<Preference> rows = new ArrayList<>();
-            collect(fragment.getPreferenceScreen(), rows);
-            assertFalse("the screen has no rows", rows.isEmpty());
+    /**
+     * A test JVM has no patched status flags, so the test above sees only the rows every build
+     * has. This one draws the screen with every patch in.
+     */
+    @Test
+    public void withEveryPatchInEveryRowIsReadableAndNoneCallsAPausedFacebookUnpatched() {
+        PatchFamily.inBuildForTests = EnumSet.allOf(PatchFamily.class);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            List<Preference> rows = rowsOf(controller);
+            assertReadable(rows);
 
+            Set<String> switchKeys = new HashSet<>();
+            for (PatchFamily family : PatchFamily.values()) {
+                for (BooleanSetting setting : family.switches) switchKeys.add(setting.key);
+            }
+            Set<String> shown = new HashSet<>();
+            Preference stays = null;
             for (Preference row : rows) {
-                CharSequence title = row.getTitle();
-                assertTrue("a row has no title: " + row.getClass().getSimpleName() + " " + row.getKey(),
-                        title != null && title.toString().trim().length() > 0);
+                String text = row.getTitle() + " " + row.getSummary();
+                assertFalse("\"" + text + "\" says a paused Facebook is unpatched", UNPATCHED.matcher(text).find());
+                if (row instanceof SwitchPreference && switchKeys.contains(row.getKey())) shown.add(row.getKey());
+                if (HushfacebookPreferenceFragment.STAYS_WHILE_PAUSED.contentEquals(row.getTitle())) stays = row;
+            }
+            assertEquals("a switch Pause turns off is missing from the screen", switchKeys, shown);
+            assertNotNull("nothing on the screen says what Pause can't reach", stays);
+            assertEquals(PatchFamily.staysWhilePausedSummary(EnumSet.allOf(PatchFamily.class)),
+                    String.valueOf(stays.getSummary()));
+        }
+    }
 
-                TypedArray styled = row.getContext().obtainStyledAttributes(
-                        new int[]{android.R.attr.textColorPrimary});
-                try {
-                    ColorStateList primary = styled.getColorStateList(0);
-                    assertTrue("no primary text color for " + title, primary != null);
-                    assertTrue("\"" + title + "\" is drawn dark on the black page",
-                            Color.luminance(primary.getDefaultColor()) > 0.5f);
-                } finally {
-                    styled.recycle();
-                }
+    @Test
+    public void thePausedCardSaysWhatStaysInForEveryReason() {
+        for (HushfacebookPause.Reason why : HushfacebookPause.Reason.values()) {
+            String summary = HushfacebookPreferenceFragment.pausedSummary(why);
+            assertFalse(why + ": " + summary, UNPATCHED.matcher(summary).find());
+            assertTrue(why + ": " + summary, summary.contains("what was set when you patched stays in"));
+        }
+
+        PauseForTests.pause(HushfacebookPause.Reason.CRASH_LOOP);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Preference card = rowsOf(controller).get(0);
+            assertEquals("Hushfacebook is paused", String.valueOf(card.getTitle()));
+            assertEquals(HushfacebookPreferenceFragment.pausedSummary(HushfacebookPause.Reason.CRASH_LOOP)
+                    + " Tap to turn it back on.", String.valueOf(card.getSummary()));
+        }
+    }
+
+    private static List<Preference> rowsOf(ActivityController<Activity> controller) {
+        HushfacebookPreferenceFragment fragment = new HushfacebookPreferenceFragment();
+        controller.get().getFragmentManager().beginTransaction()
+                .add(android.R.id.content, fragment)
+                .commitNow();
+        List<Preference> rows = new ArrayList<>();
+        collect(fragment.getPreferenceScreen(), rows);
+        assertFalse("the screen has no rows", rows.isEmpty());
+        return rows;
+    }
+
+    private static void assertReadable(List<Preference> rows) {
+        for (Preference row : rows) {
+            CharSequence title = row.getTitle();
+            assertTrue("a row has no title: " + row.getClass().getSimpleName() + " " + row.getKey(),
+                    title != null && title.toString().trim().length() > 0);
+
+            TypedArray styled = row.getContext().obtainStyledAttributes(
+                    new int[]{android.R.attr.textColorPrimary});
+            try {
+                ColorStateList primary = styled.getColorStateList(0);
+                assertTrue("no primary text color for " + title, primary != null);
+                assertTrue("\"" + title + "\" is drawn dark on the black page",
+                        Color.luminance(primary.getDefaultColor()) > 0.5f);
+            } finally {
+                styled.recycle();
             }
         }
     }

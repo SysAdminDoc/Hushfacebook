@@ -71,13 +71,24 @@ Neither path has been tried here on a certified phone in one of those four count
 Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
 
 - Switches for the feed, story and Reels filters, for opening links in your browser and for story saves. They take effect straight away, with no restart and no new patching.
-- **Pause Hushfacebook**. From the next start, every switch answers off and Facebook runs as if it weren't patched, which is a quick way to tell whether a problem is Facebook's or ours. Your settings stay as they are.
-- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names.
+- **Pause Hushfacebook**. From the next start, every switch acts as if it were off and Facebook's own code runs in its place. Your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
+- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It also says which patches a switch runs and which stay in while paused.
 - **Licenses**, the notices of every project this is built on.
 
-Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in Facebook's folder under `Android/data` pauses it too.
+Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in Facebook's folder under `Android/data` pauses it too. Safe mode is the same pause. If Facebook still keeps closing, the cause is Facebook itself or a patch that stays in while paused, so patch again without the one you suspect.
 
-Some patches work entirely while patching, such as the ad prefetch block and the dark theme. The screen lists them, and changing one means patching again.
+### What Pause turns off
+
+| Patch | While paused |
+|---|---|
+| Hide sponsored posts | Off. Sponsored and promoted posts come back. |
+| Hide suggested and promoted posts | Off. |
+| Hide sponsored stories | Off. |
+| Hide sponsored reels | Partly. Ads inside a page of reels come back, but banners over a reel and mid-roll ads stay blocked. |
+| Open links in external browser | Off. Links open in Facebook's own browser. |
+| Download any story | Partly. Save stays in every story's menu, and it runs Facebook's own save. |
+| Download any reel | Stays. The Download button keeps working. |
+| Block ad telemetry, Block background ad prefetch, Disable Audience Network, AMOLED black theme, Restore screens on re-signed builds | Stay. They were set when you patched, and changing one means patching again. |
 
 ## Known limitations
 

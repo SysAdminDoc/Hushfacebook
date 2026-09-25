@@ -52,9 +52,9 @@ public class BaseSettings {
     public static final StringSetting EXPERIMENTAL_APP_CONFIRMED = new StringSetting("morphe_experimental_app_target_confirmed", "", false, false);
 
     /**
-     * Pause Hushfacebook: from the next start Facebook runs as if it were not patched for every hook a
-     * setting controls, and every saved value stays as it is. Left out of backups, so restoring
-     * one never pauses a phone by surprise.
+     * Pause Hushfacebook: from the next start every hook a setting controls takes Facebook's own
+     * path, and every saved value stays as it is. Edits made at patch time have no setting to ask
+     * and stay in. Left out of backups, so restoring one never pauses a phone by surprise.
      */
     public static final BooleanSetting PAUSED = new BooleanSetting("hushfacebook_paused", FALSE, true, false, null, null);
 

@@ -378,7 +378,8 @@ public final class LogBufferManager {
         if (paused) {
             report.append("hushfacebook: paused (")
                     .append(HushfacebookPause.reason().name().toLowerCase(java.util.Locale.ROOT))
-                    .append("), every hook a setting controls takes Facebook's own path\n");
+                    .append("), every hook a setting controls takes Facebook's own path, and what was set "
+                            + "when patching stays in\n");
         }
 
         if (!crash.isEmpty()) {

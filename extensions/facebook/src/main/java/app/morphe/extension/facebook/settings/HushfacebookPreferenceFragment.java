@@ -21,6 +21,8 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import java.util.Set;
+
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
@@ -28,17 +30,19 @@ import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.preference.AbstractPreferenceFragment;
 import app.morphe.extension.shared.settings.preference.ClearLogBufferPreference;
 import app.morphe.extension.shared.settings.preference.ExportDiagnosticReportPreference;
+import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /**
  * The preference list, built in code rather than from an XML resource so the bundle adds no
  * resources to Facebook. A switch appears only when its patch is in this build
- * ({@link SettingsStatus}); a patch that works entirely at patch time gets a line saying so.
- * Switches are keyed by their setting, which is how the shared fragment keeps them in sync with
- * stored values.
+ * ({@link PatchFamily}); a patch that works entirely at patch time gets a line saying so, and
+ * what Pause can't reach is listed under the Pause switch. Switches are keyed by their setting,
+ * which is how the shared fragment keeps them in sync with stored values.
  */
 @SuppressWarnings("deprecation")
 public final class HushfacebookPreferenceFragment extends AbstractPreferenceFragment {
     static final String SOURCE_URL = "https://github.com/SysAdminDoc/Hushfacebook";
+    static final String STAYS_WHILE_PAUSED = "Stays in while paused";
 
     /** Thrown by the next initialize() and then cleared: how a test reaches the recovery page. */
     static volatile RuntimeException failNextInitialization;
@@ -61,84 +65,91 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         setPreferenceScreen(screen);
 
         screen.addPreference(statusCard(context));
+        // The export row below reads this section; registering twice keeps one.
+        LogBufferManager.registerReportSection(PatchFamily.REPORT);
+        Set<PatchFamily> build = PatchFamily.inThisBuild();
 
-        if (SettingsStatus.sponsoredPosts() || SettingsStatus.suggestedPosts()) {
+        if (build.contains(PatchFamily.SPONSORED_POSTS) || build.contains(PatchFamily.SUGGESTED_POSTS)) {
             PreferenceCategory feed = category(screen, "News feed");
-            if (SettingsStatus.sponsoredPosts()) {
+            if (build.contains(PatchFamily.SPONSORED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_SPONSORED_POSTS, "Hide sponsored posts",
                         "Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left."));
                 feed.addPreference(toggle(context, Settings.HIDE_PROMOTED_POSTS, "Hide promoted posts",
                         "Posts Facebook files as promotions rather than as ads."));
             }
-            if (SettingsStatus.suggestedPosts()) {
+            if (build.contains(PatchFamily.SUGGESTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_POSTS, "Hide suggested and promoted units",
                         "\"Pages you may like\", Facebook's own upsell cards and the in-feed surveys."));
             }
         }
 
-        if (SettingsStatus.sponsoredStories() || SettingsStatus.storyDownload()) {
+        if (build.contains(PatchFamily.SPONSORED_STORIES) || build.contains(PatchFamily.STORY_DOWNLOAD)) {
             PreferenceCategory stories = category(screen, "Stories");
-            if (SettingsStatus.sponsoredStories()) {
+            if (build.contains(PatchFamily.SPONSORED_STORIES)) {
                 stories.addPreference(toggle(context, Settings.HIDE_SPONSORED_STORIES, "Hide sponsored stories",
                         "Ad cards between the stories people posted."));
             }
-            if (SettingsStatus.storyDownload()) {
+            if (build.contains(PatchFamily.STORY_DOWNLOAD)) {
                 stories.addPreference(toggle(context, Settings.DOWNLOAD_STORIES, "Save any story",
                         "Save in a story's menu downloads it at the best quality the player streams. "
-                                + "Off, Facebook's own save runs instead."));
+                                + "Off or paused, Facebook's own save runs instead, and Save stays in the menu."));
             }
         }
 
-        if (SettingsStatus.sponsoredReels() || SettingsStatus.reelDownload()) {
+        if (build.contains(PatchFamily.SPONSORED_REELS) || build.contains(PatchFamily.REEL_DOWNLOAD)) {
             PreferenceCategory reels = category(screen, "Reels and Watch");
-            if (SettingsStatus.sponsoredReels()) {
+            if (build.contains(PatchFamily.SPONSORED_REELS)) {
                 reels.addPreference(toggle(context, Settings.HIDE_SPONSORED_REELS, "Hide sponsored reels",
                         "Ads that arrive inside a page of reels. Banners and mid-roll ads stay blocked "
-                                + "while the patch is in, whatever this switch says."));
+                                + "while the patch is in, whatever this switch or Pause says."));
             }
-            if (SettingsStatus.reelDownload()) {
+            if (build.contains(PatchFamily.REEL_DOWNLOAD)) {
                 reels.addPreference(info(context, "Download button on reels",
-                        "A Download button sits in the sidebar of every reel."));
+                        "A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused."));
             }
         }
 
-        if (SettingsStatus.externalBrowser()) {
+        if (build.contains(PatchFamily.EXTERNAL_BROWSER)) {
             PreferenceCategory links = category(screen, "Links");
             links.addPreference(toggle(context, Settings.OPEN_LINKS_EXTERNALLY, "Open links in your browser",
                     "Web links leave Facebook's in-app browser. Facebook's own pages still open in the app."));
         }
 
-        if (SettingsStatus.adPrefetch() || SettingsStatus.adTelemetry() || SettingsStatus.audienceNetwork()
-                || SettingsStatus.amoledTheme() || SettingsStatus.restoreTrust()) {
+        if (build.contains(PatchFamily.AD_PREFETCH) || build.contains(PatchFamily.AD_TELEMETRY)
+                || build.contains(PatchFamily.AUDIENCE_NETWORK) || build.contains(PatchFamily.AMOLED_THEME)
+                || build.contains(PatchFamily.RESTORE_TRUST)) {
             PreferenceCategory patched = category(screen, "Set when you patched");
-            if (SettingsStatus.adPrefetch()) {
+            if (build.contains(PatchFamily.AD_PREFETCH)) {
                 patched.addPreference(info(context, "Background ad prefetch blocked",
                         "Facebook doesn't download ads or its ad model in the background."));
             }
-            if (SettingsStatus.adTelemetry()) {
+            if (build.contains(PatchFamily.AD_TELEMETRY)) {
                 patched.addPreference(info(context, "Ad telemetry blocked",
                         "No screenshot watching for ads, and no reports of which apps you install."));
             }
-            if (SettingsStatus.audienceNetwork()) {
+            if (build.contains(PatchFamily.AUDIENCE_NETWORK)) {
                 patched.addPreference(info(context, "Audience Network off",
                         "Facebook doesn't serve ads to other apps on this phone."));
             }
-            if (SettingsStatus.amoledTheme()) {
+            if (build.contains(PatchFamily.AMOLED_THEME)) {
                 patched.addPreference(info(context, "AMOLED black theme",
                         "Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it."));
             }
-            if (SettingsStatus.restoreTrust()) {
+            if (build.contains(PatchFamily.RESTORE_TRUST)) {
                 patched.addPreference(info(context, "Re-signed build fix",
                         "Profiles and some Settings pages open again on this re-signed build."));
             }
             patched.addPreference(info(context, "Changing these",
-                    "They're chosen in Morphe Manager when you patch. Patch again to change them."));
+                    "They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. "
+                            + "Patch again to change them."));
         }
 
         PreferenceCategory hushfacebook = category(screen, "Hushfacebook");
         hushfacebook.addPreference(toggle(context, BaseSettings.PAUSED, "Pause Hushfacebook",
-                "From the next start, every switch above answers off and Facebook runs as if it "
-                        + "weren't patched. Your settings stay as they are."));
+                "From the next start, every switch on this screen acts as if it were off, and Facebook's "
+                        + "own code runs in its place. Your settings stay as they are."));
+        String stays = PatchFamily.staysWhilePausedSummary(build);
+        if (stays != null) hushfacebook.addPreference(info(context, STAYS_WHILE_PAUSED, stays));
         hushfacebook.addPreference(toggle(context, BaseSettings.DEBUG, "Debug logging",
                 "Writes what each patch does to the Android log. Leave it off unless you're reporting a problem."));
         // Both rows come without a title of their own: Hushfeed's gave them one from string
@@ -210,18 +221,26 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         return card;
     }
 
-    /** Why this start runs paused, and that nothing the reader saved has changed. */
+    /**
+     * Why this start runs paused, what a pause does and doesn't reach, and that nothing the reader
+     * saved has changed.
+     */
     static String pausedSummary(HushfacebookPause.Reason reason) {
+        String why;
         switch (reason) {
             case CRASH_LOOP:
-                return "Facebook closed three times within a minute of starting, so Hushfacebook paused "
-                        + "itself. Your settings stay as they are.";
+                why = "Facebook closed three times within a minute of starting, so Hushfacebook paused itself.";
+                break;
             case MARKER_FILE:
-                return "A file named " + HushfacebookPause.MARKER_FILE_NAME + " in Facebook's folder under "
-                        + "Android/data paused Hushfacebook. Your settings stay as they are.";
+                why = "A file named " + HushfacebookPause.MARKER_FILE_NAME + " in Facebook's folder under "
+                        + "Android/data paused Hushfacebook.";
+                break;
             default:
-                return "Facebook runs as if it weren't patched. Your settings stay as they are.";
+                why = "You paused Hushfacebook.";
+                break;
         }
+        return why + " Every switch acts as if it were off, and what was set when you patched stays in. "
+                + "Your settings stay as they are.";
     }
 
     /** The dark Material theme every row on this screen is built with, over Facebook's own. */
