@@ -146,8 +146,8 @@ public class SettingsL10nTest {
             RuntimeEnvironment.setQualifiers("+" + language[0]);
             Map<String, String> table = language[1] == null ? null : TranslationsForTests.of(language[1]);
 
-            String single = PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD));
-            String item = row(table, PatchFamily.REEL_DOWNLOAD.staysWhilePaused);
+            String single = PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.AD_PREFETCH));
+            String item = row(table, PatchFamily.AD_PREFETCH.staysWhilePaused);
             assertNotNull(single);
             assertTrue(language[0] + " doesn't start with a capital: " + single,
                     Character.isUpperCase(single.codePointAt(0)));

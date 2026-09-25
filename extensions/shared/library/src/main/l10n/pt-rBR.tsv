@@ -6,11 +6,12 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Isso foi definido quando você aplicou os patches, então a pausa não consegue desligá-lo. Para descartar isso como causa, aplique os patches de novo sem o patch responsável.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Tudo isso foi definido quando você aplicou os patches, então a pausa não consegue desligar nada disso. Para descartar um desses itens como causa, aplique os patches de novo sem o patch responsável por ele.
 A diagnostic report is already being saved.	Um relatório de diagnóstico já está sendo salvo.
-A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.	Um botão de download fica na barra lateral de cada reel. Ele continua lá mesmo com o Hushfacebook pausado.
+A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Um botão de download na barra lateral de cada reel salva o reel na melhor qualidade que o player reproduz. Com esta opção desligada ou durante a pausa, os reels só mostram os botões do próprio Facebook.
 A file named %1$s in %2$s paused Hushfacebook.	Um arquivo chamado %1$s em %2$s pausou o Hushfacebook.
 About	Sobre
 Ad cards between the stories people posted.	Anúncios entre os stories que as pessoas postaram.
 Ad telemetry blocked	Telemetria de anúncios bloqueada
+Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Adiciona o item Salvar ao menu do story de qualquer pessoa e salva na melhor qualidade que o player reproduz. Com esta opção desligada ou durante a pausa, o item Salvar só aparece nos seus próprios stories, e quem salva é o próprio Facebook.
 Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Anúncios que chegam dentro de um lote de reels. Banners e anúncios no meio do vídeo continuam bloqueados enquanto o patch estiver aplicado, independentemente desta opção ou da pausa. O mesmo vale para os anúncios que o app adiciona por conta própria.
 AMOLED black theme	Tema preto AMOLED
 Audience Network off	Audience Network desativado
@@ -70,8 +71,6 @@ Retry	Tentar novamente
 Save any story	Salvar qualquer story
 Save cancelled	Salvamento cancelado
 Save full report	Salvar relatório completo
-Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.	O item Salvar no menu de um story baixa o story na melhor qualidade que o player reproduz. Com esta opção desligada ou durante a pausa, quem salva é o próprio Facebook, e Salvar continua no menu.
-Save in every story's menu	o item Salvar no menu de cada story
 Saved to %1$s	Salvo em %1$s
 Saved to the gallery	Salvo na galeria
 Saved. Restart Facebook to apply this change.	Salvo. Reinicie o Facebook para aplicar esta alteração.
@@ -91,7 +90,6 @@ the Audience Network block	o bloqueio do Audience Network
 the background ad prefetch block	o bloqueio do pré-carregamento de anúncios em segundo plano
 The diagnostic report couldn't be saved yet. Try again in a moment.	O relatório de diagnóstico ainda não pôde ser salvo. Tente de novo em instantes.
 The diagnostic report couldn't be saved. Try again.	Não foi possível salvar o relatório de diagnóstico. Tente de novo.
-the Download button on reels	o botão de download nos reels
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	Não foi possível remover o arquivo %1$s. Exclua-o de %2$s para reativar o Hushfacebook.
 the part of the Reels ad block patched into the app	a parte do bloqueio de anúncios do Reels aplicada no app
 the re-signed build fix	a correção para versão reassinada

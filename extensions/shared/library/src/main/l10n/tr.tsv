@@ -6,11 +6,12 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Yamaladığında ayarlandığı için Duraklatma bunu kapatamaz. Bunu elemek için, ait olduğu yama olmadan yeniden yamala.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Yamaladığında ayarlandıkları için Duraklatma bunları kapatamaz. Bunlardan birini elemek için, ait olduğu yama olmadan yeniden yamala.
 A diagnostic report is already being saved.	Bir tanılama raporu zaten kaydediliyor.
-A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.	Her Reels videosunun kenar çubuğunda bir İndir düğmesi bulunur. Hushfacebook duraklatılsa da kalır.
+A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Her Reels videosunun kenar çubuğundaki İndir düğmesi, videoyu oynatıcının sunduğu en iyi kalitede kaydeder. Kapalıyken veya duraklatılmışken Reels videolarında yalnızca Facebook'un kendi düğmeleri görünür.
 A file named %1$s in %2$s paused Hushfacebook.	%2$s içindeki %1$s adlı bir dosya Hushfacebook'u duraklattı.
 About	Hakkında
 Ad cards between the stories people posted.	İnsanların paylaştığı hikayeler arasındaki reklam kartları.
 Ad telemetry blocked	Reklam telemetrisi engellendi
+Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Kimin olursa olsun her hikayenin menüsüne Kaydet seçeneğini ekler ve hikayeyi oynatıcının sunduğu en iyi kalitede kaydeder. Kapalıyken veya duraklatılmışken Kaydet seçeneği yalnızca kendi hikayelerinde bulunur ve Facebook'un kendi kaydetme işlevini çalıştırır.
 Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Reels videoları arasında gelen reklamlar. Banner ve video ortası reklamlar ise yama uygulandığı sürece, bu anahtar veya Duraklatma ne derse desin, engellenmiş kalır. Uygulamanın kendi başına eklediği reklamlar da öyle.
 AMOLED black theme	AMOLED siyah tema
 Audience Network off	Audience Network kapalı
@@ -70,8 +71,6 @@ Retry	Yeniden dene
 Save any story	Herhangi bir hikayeyi kaydet
 Save cancelled	Kaydetme iptal edildi
 Save full report	Tam raporu kaydet
-Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.	Hikaye menüsündeki Kaydet, hikayeyi oynatıcının sunduğu en iyi kalitede indirir. Kapalıyken veya duraklatılmışken bunun yerine Facebook'un kendi kaydetme işlevi çalışır ve Kaydet menüde kalır.
-Save in every story's menu	her hikayenin menüsündeki Kaydet seçeneği
 Saved to %1$s	Şuraya kaydedildi: %1$s
 Saved to the gallery	Galeriye kaydedildi
 Saved. Restart Facebook to apply this change.	Kaydedildi. Bu değişikliği uygulamak için Facebook'u yeniden başlat.
@@ -91,7 +90,6 @@ the Audience Network block	Audience Network engeli
 the background ad prefetch block	arka planda reklam indirme engeli
 The diagnostic report couldn't be saved yet. Try again in a moment.	Tanılama raporu henüz kaydedilemedi. Birazdan tekrar dene.
 The diagnostic report couldn't be saved. Try again.	Tanılama raporu kaydedilemedi. Tekrar dene.
-the Download button on reels	Reels'teki İndir düğmesi
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	%1$s dosyası kaldırılamadı. Hushfacebook'u yeniden açmak için onu %2$s içinden sil.
 the part of the Reels ad block patched into the app	Reels reklam engelinin uygulamaya yamalanan kısmı
 the re-signed build fix	yeniden imzalanmış sürüm düzeltmesi

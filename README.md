@@ -72,7 +72,7 @@ While a story or reel saves, a notification shows how far it's got, with a Cance
 
 Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
 
-- A switch for each filter. Opening links in your browser and saving stories have switches too. They take effect straight away, with no restart and no new patching. While Hushfacebook is paused, a change waits until it's back on.
+- A switch for each filter. Opening links in your browser and the two download features have switches too. They take effect straight away, with no restart and no new patching, though a reel already on screen keeps the buttons it was built with. While Hushfacebook is paused, a change waits until it's back on.
 - **Pause Hushfacebook**. From the next start, every one of those switches acts as if it were off and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
 - **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build and says, for every patch but the settings entry itself, whether a switch runs it. For each of those whose hooks have run, it gives how often they ran and the first thing they couldn't find. Failed saves and links no browser opened are in it too.
 - **Licenses**, the notices of every project this is built on.
@@ -90,8 +90,8 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 | Hide sponsored stories | Off. |
 | Hide sponsored reels | Partly. Ads inside a page of reels come back. Banners over a reel and mid-roll ads stay blocked, and so do ads the app adds on its own. |
 | Open links in external browser | Off. Links open in Facebook's own browser. |
-| Download any story | Partly. Save stays in every story's menu, and it runs Facebook's own save. |
-| Download any reel | Stays. The Download button keeps working. |
+| Download any story | Off. Only your own stories have Save, and it's Facebook's own. |
+| Download any reel | Off. Reels show only Facebook's own buttons. |
 | Block ad telemetry, Block background ad prefetch, Disable Audience Network, AMOLED black theme, Restore screens on re-signed builds | Stay. They were set when you patched, and changing one means patching again. |
 
 ## Known limitations

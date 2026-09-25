@@ -114,19 +114,21 @@ public class PatchFamilyTest {
     public void theStaysRowNamesWhatPauseCantReach() {
         assertNull("a build of switches alone has nothing that stays in",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_POSTS, PatchFamily.EXTERNAL_BROWSER)));
-        assertEquals("The Download button on reels. It was set when you patched, so Pause can't turn it off. "
+        assertEquals("The background ad prefetch block. It was set when you patched, so Pause can't turn it off. "
                         + "To rule it out, patch again without the patch it comes from.",
-                PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD)));
+                PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.AD_PREFETCH)));
+        // Both downloads ask their switch before they go in, so a pause takes them out whole.
+        assertNull(PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD, PatchFamily.STORY_DOWNLOAD)));
         // Alone, a family's text is followed by "It was set", so a text naming several parts still
         // has to be one thing. 4a7bba9 made the Reels one plural and this sentence stopped reading.
         assertEquals("The part of the Reels ad block patched into the app. It was set when you patched, so "
                         + "Pause can't turn it off. To rule it out, patch again without the patch it comes from.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS)));
-        assertEquals("The part of the Reels ad block patched into the app and Save in every "
-                        + "story's menu. They were set when you patched, so Pause can't turn them off. To rule one "
-                        + "out, patch again without the patch it comes from.",
-                PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS, PatchFamily.STORY_DOWNLOAD,
-                        PatchFamily.SPONSORED_POSTS)));
+        assertEquals("The part of the Reels ad block patched into the app and the ad telemetry block. They "
+                        + "were set when you patched, so Pause can't turn them off. To rule one out, patch again "
+                        + "without the patch it comes from.",
+                PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS, PatchFamily.AD_TELEMETRY,
+                        PatchFamily.SPONSORED_POSTS, PatchFamily.STORY_DOWNLOAD)));
 
         String everything = PatchFamily.staysWhilePausedSummary(EnumSet.allOf(PatchFamily.class));
         for (PatchFamily family : PatchFamily.values()) {
@@ -139,7 +141,7 @@ public class PatchFamilyTest {
     @Test
     public void theReportSaysWhatASwitchRunsAndWhatStaysIn() {
         Set<PatchFamily> build = EnumSet.of(PatchFamily.SPONSORED_POSTS, PatchFamily.SPONSORED_REELS,
-                PatchFamily.REEL_DOWNLOAD);
+                PatchFamily.AD_PREFETCH);
         Settings.HIDE_PROMOTED_POSTS.save(false);
 
         List<String> running = PatchFamily.reportLines(build, false);
@@ -147,11 +149,14 @@ public class PatchFamilyTest {
                 "Hide sponsored posts: on (hushfacebook_hide_sponsored_posts=on, hushfacebook_hide_promoted_posts=off)",
                 "Hide sponsored reels: on (hushfacebook_hide_sponsored_reels=on); stays in while paused: "
                         + "the part of the Reels ad block patched into the app",
-                "Download any reel: no switch, stays in while paused: the Download button on reels",
+                "Block background ad prefetch: no switch, stays in while paused: the background ad prefetch block",
                 "not in this build: Hide suggested and promoted posts, Hide sponsored stories, Open links in "
-                        + "external browser, Download any story, Block background ad prefetch, Block ad telemetry, "
+                        + "external browser, Download any story, Download any reel, Block ad telemetry, "
                         + "Disable Audience Network, AMOLED black theme, Restore screens on re-signed builds"),
                 running);
+        // The reel button has a switch now, so the report says what it's set to.
+        assertEquals("Download any reel: on (hushfacebook_download_reels=on)",
+                PatchFamily.reportLines(EnumSet.of(PatchFamily.REEL_DOWNLOAD), false).get(0));
 
         List<String> paused = PatchFamily.reportLines(build, true);
         assertEquals("Hide sponsored posts: disabled while paused (saved "

@@ -6,11 +6,12 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Este cambio se aplicó al parchear, así que Pausar no puede desactivarlo. Para descartarlo, vuelve a parchear sin el parche del que proviene.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Estos cambios se aplicaron al parchear, así que Pausar no puede desactivarlos. Para descartar uno, vuelve a parchear sin el parche del que proviene.
 A diagnostic report is already being saved.	Ya se está guardando un informe de diagnóstico.
-A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.	Hay un botón de descarga en la barra lateral de cada reel. Se mantiene aunque Hushfacebook esté en pausa.
+A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Un botón de descarga en la barra lateral de cada reel lo guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, los reels solo muestran los botones propios de Facebook.
 A file named %1$s in %2$s paused Hushfacebook.	Un archivo llamado %1$s en %2$s pausó Hushfacebook.
 About	Acerca de
 Ad cards between the stories people posted.	Tarjetas de anuncios entre las historias que publicó la gente.
 Ad telemetry blocked	Telemetría de anuncios bloqueada
+Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Agrega la opción Guardar al menú de cualquier historia, sea de quien sea, y la guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, solo tus propias historias tienen la opción Guardar, y se usa el guardado propio de Facebook.
 Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Anuncios que llegan dentro de un lote de reels. Los banners y los anuncios a mitad de video siguen bloqueados mientras el parche esté aplicado, diga lo que diga este interruptor o Pausar. Lo mismo pasa con los anuncios que la app inserta por su cuenta.
 AMOLED black theme	Tema negro AMOLED
 Audience Network off	Sin Audience Network
@@ -70,8 +71,6 @@ Retry	Reintentar
 Save any story	Guardar cualquier historia
 Save cancelled	Se canceló el guardado
 Save full report	Guardar informe completo
-Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.	La opción Guardar del menú de una historia la descarga con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, se usa en su lugar el guardado propio de Facebook, y Guardar sigue en el menú.
-Save in every story's menu	la opción Guardar en el menú de cada historia
 Saved to %1$s	Se guardó en %1$s
 Saved to the gallery	Se guardó en la galería
 Saved. Restart Facebook to apply this change.	Guardado. Reinicia Facebook para aplicar este cambio.
@@ -91,7 +90,6 @@ the Audience Network block	el bloqueo de Audience Network
 the background ad prefetch block	el bloqueo de precarga de anuncios en segundo plano
 The diagnostic report couldn't be saved yet. Try again in a moment.	Todavía no se pudo guardar el informe de diagnóstico. Inténtalo de nuevo en un momento.
 The diagnostic report couldn't be saved. Try again.	No se pudo guardar el informe de diagnóstico. Inténtalo de nuevo.
-the Download button on reels	el botón de descarga en los reels
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	No se pudo eliminar el archivo %1$s. Bórralo de %2$s para volver a activar Hushfacebook.
 the part of the Reels ad block patched into the app	la parte del bloqueo de anuncios de Reels integrada en la app
 the re-signed build fix	el arreglo para la nueva firma

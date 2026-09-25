@@ -29,6 +29,7 @@ import java.util.List;
 import app.morphe.extension.facebook.ads.ReelsAdFilter;
 import app.morphe.extension.facebook.download.MediaDownload;
 import app.morphe.extension.facebook.download.PlayerSourcesForTests;
+import app.morphe.extension.facebook.download.ReelDownload;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
@@ -99,6 +100,9 @@ public class ColdStartHooksTest {
                 new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.org/"))).create().get();
         assertFalse(ExternalBrowser.redirect(browser, browser.getIntent()));
         assertFalse(MediaDownload.saveStory(app, new StoryCard()));
+        assertFalse(MediaDownload.offersSave(false));
+        assertTrue("Facebook's own yes has to stand", MediaDownload.offersSave(true));
+        assertFalse(ReelDownload.showsButton());
         assertFalse(PlayerSourcesForTests.recordsAPlayer());
 
         // A hook that touched the settings above left them unusable, and this is where a real

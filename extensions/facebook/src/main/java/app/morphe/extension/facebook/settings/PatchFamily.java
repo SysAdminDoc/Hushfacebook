@@ -26,9 +26,10 @@ import app.morphe.extension.shared.settings.preference.LogBufferManager;
  * <p>Pause and safe mode work through the switches: while either is on, every feature switch
  * answers off and the hook behind it takes Facebook's own path. The hook's code is still there,
  * only its answer changes, and Debug logging keeps its saved value. An edit made when you patched
- * has no switch to ask. A neutered method, a disabled manifest component, a button added to a
- * sidebar and a forced menu item all stay in until you patch again. Some patches are both, so
- * each one says which of its parts stay.
+ * has no switch to ask: a neutered method or a disabled manifest component stays in until you
+ * patch again. The reel sidebar's Download button and the story menu's Save item were edits like
+ * that until each asked its switch before it goes in. Some patches are both, so each one says
+ * which of its parts stay.
  *
  * <p>The settings screen and the diagnostic report read this list, so they can't disagree about
  * it. A family is found in this build by the name of its {@link SettingsStatus} method, the same
@@ -46,9 +47,10 @@ public enum PatchFamily {
             Settings.HIDE_SPONSORED_REELS),
     EXTERNAL_BROWSER(FamilyNames.EXTERNAL_BROWSER, "externalBrowser", null,
             Settings.OPEN_LINKS_EXTERNALLY),
-    STORY_DOWNLOAD(FamilyNames.STORY_DOWNLOAD, "storyDownload", "Save in every story's menu",
+    STORY_DOWNLOAD(FamilyNames.STORY_DOWNLOAD, "storyDownload", null,
             Settings.DOWNLOAD_STORIES),
-    REEL_DOWNLOAD(FamilyNames.REEL_DOWNLOAD, "reelDownload", "the Download button on reels"),
+    REEL_DOWNLOAD(FamilyNames.REEL_DOWNLOAD, "reelDownload", null,
+            Settings.DOWNLOAD_REELS),
     AD_PREFETCH(FamilyNames.AD_PREFETCH, "adPrefetch", "the background ad prefetch block"),
     AD_TELEMETRY(FamilyNames.AD_TELEMETRY, "adTelemetry", "the ad telemetry block"),
     AUDIENCE_NETWORK(FamilyNames.AUDIENCE_NETWORK, "audienceNetwork", "the Audience Network block"),

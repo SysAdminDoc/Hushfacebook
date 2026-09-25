@@ -38,6 +38,7 @@ import java.util.Set;
 import app.morphe.extension.facebook.ads.ReelsAdFilter;
 import app.morphe.extension.facebook.download.MediaDownload;
 import app.morphe.extension.facebook.download.PlayerSourcesForTests;
+import app.morphe.extension.facebook.download.ReelDownload;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
@@ -143,8 +144,12 @@ public class PausedHooksTest {
                     MediaDownload.saveStory(RuntimeEnvironment.getApplication(), card);
                     return card.asked;
                 },
+                // The menu offers Save on someone else's story.
+                () -> MediaDownload.offersSave(false),
                 // The recorder runs in every player Facebook builds, not only in stories.
                 PlayerSourcesForTests::recordsAPlayer));
+        // Every reel's sidebar gets the Download button.
+        probes.put(PatchFamily.REEL_DOWNLOAD, Collections.singletonList(ReelDownload::showsButton));
         return probes;
     }
 

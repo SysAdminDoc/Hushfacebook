@@ -6,11 +6,12 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Das wurde beim Patchen festgelegt, deshalb kann die Pause es nicht ausschalten. Um es auszuschließen, patche erneut ohne den zugehörigen Patch.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Diese wurden beim Patchen festgelegt, deshalb kann die Pause sie nicht ausschalten. Um eines davon auszuschließen, patche erneut ohne den zugehörigen Patch.
 A diagnostic report is already being saved.	Ein Diagnosebericht wird bereits gespeichert.
-A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.	In der Seitenleiste jedes Reels sitzt ein Download-Button. Er bleibt, während Hushfacebook pausiert ist.
+A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Ein Download-Button in der Seitenleiste jedes Reels speichert es in der besten Qualität, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, zeigen Reels nur Facebooks eigene Buttons.
 A file named %1$s in %2$s paused Hushfacebook.	Eine Datei namens %1$s in %2$s hat Hushfacebook pausiert.
 About	Info
 Ad cards between the stories people posted.	Werbekarten zwischen den Stories, die Leute gepostet haben.
 Ad telemetry blocked	Werbe-Telemetrie blockiert
+Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Fügt „Speichern“ zum Menü jeder Story hinzu, egal von wem, und speichert sie in der besten Qualität, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, gibt es „Speichern“ nur bei deinen eigenen Stories, und dort läuft Facebooks eigene Speicherfunktion.
 Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Anzeigen, die in einem Schwung Reels mitkommen. Banner und Werbeunterbrechungen bleiben blockiert, solange der Patch eingebaut ist, unabhängig von diesem Schalter und der Pause. Das gilt auch für Anzeigen, die die App selbst einfügt.
 AMOLED black theme	Schwarzes AMOLED-Design
 Audience Network off	Audience Network aus
@@ -70,8 +71,6 @@ Retry	Erneut versuchen
 Save any story	Jede Story speichern
 Save cancelled	Speichern abgebrochen
 Save full report	Vollständigen Bericht speichern
-Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.	„Speichern“ im Menü einer Story lädt sie in der besten Qualität herunter, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, läuft stattdessen Facebooks eigene Speicherfunktion, und „Speichern“ bleibt im Menü.
-Save in every story's menu	„Speichern“ im Menü jeder Story
 Saved to %1$s	Gespeichert unter %1$s
 Saved to the gallery	In der Galerie gespeichert
 Saved. Restart Facebook to apply this change.	Gespeichert. Starte Facebook neu, um diese Änderung zu übernehmen.
@@ -91,7 +90,6 @@ the Audience Network block	die Sperre für das Audience Network
 the background ad prefetch block	die Sperre für das Vorabladen von Werbung im Hintergrund
 The diagnostic report couldn't be saved yet. Try again in a moment.	Der Diagnosebericht ließ sich noch nicht speichern. Versuche es gleich noch einmal.
 The diagnostic report couldn't be saved. Try again.	Der Diagnosebericht ließ sich nicht speichern. Versuche es noch einmal.
-the Download button on reels	der Download-Button bei Reels
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	Die Datei %1$s ließ sich nicht entfernen. Lösche sie aus %2$s, um Hushfacebook wieder einzuschalten.
 the part of the Reels ad block patched into the app	der in die App gepatchte Teil der Reels-Werbesperre
 the re-signed build fix	der Fix für neu signierte Builds

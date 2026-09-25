@@ -6,11 +6,12 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
 A diagnostic report is already being saved.	Sudah ada laporan diagnostik yang sedang disimpan.
-A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.	Tombol Unduh ada di bilah samping setiap reel. Tombol ini tetap ada saat Hushfacebook dijeda.
+A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Tombol Unduh di bilah samping setiap reel menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, reel hanya menampilkan tombol bawaan Facebook.
 A file named %1$s in %2$s paused Hushfacebook.	File bernama %1$s di %2$s menjeda Hushfacebook.
 About	Tentang
 Ad cards between the stories people posted.	Kartu iklan di antara cerita yang diposting orang.
 Ad telemetry blocked	Telemetri iklan diblokir
+Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Menambahkan opsi Simpan ke menu cerita siapa pun dan menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, opsi Simpan hanya ada di cerita Anda sendiri dan memakai fitur simpan bawaan Facebook.
 Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Iklan yang datang di dalam satu kumpulan reel. Banner dan iklan di tengah video tetap diblokir selama tambalan ini terpasang, apa pun status sakelar ini atau Jeda. Begitu juga iklan yang ditambahkan aplikasi dengan sendirinya.
 AMOLED black theme	Tema hitam AMOLED
 Audience Network off	Audience Network nonaktif
@@ -70,8 +71,6 @@ Retry	Coba lagi
 Save any story	Simpan cerita apa pun
 Save cancelled	Penyimpanan dibatalkan
 Save full report	Simpan laporan lengkap
-Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.	Opsi Simpan di menu cerita mengunduhnya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, fitur simpan bawaan Facebook yang berjalan sebagai gantinya, dan opsi Simpan tetap ada di menu.
-Save in every story's menu	opsi Simpan di menu setiap cerita
 Saved to %1$s	Disimpan ke %1$s
 Saved to the gallery	Disimpan ke galeri
 Saved. Restart Facebook to apply this change.	Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.
@@ -91,7 +90,6 @@ the Audience Network block	pemblokir Audience Network
 the background ad prefetch block	pemblokir pramuat iklan di latar belakang
 The diagnostic report couldn't be saved yet. Try again in a moment.	Laporan diagnostik belum dapat disimpan. Coba lagi dalam beberapa saat.
 The diagnostic report couldn't be saved. Try again.	Laporan diagnostik tidak dapat disimpan. Coba lagi.
-the Download button on reels	tombol Unduh di Reels
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	File %1$s tidak dapat dihapus. Hapus file itu dari %2$s untuk mengaktifkan Hushfacebook lagi.
 the part of the Reels ad block patched into the app	bagian pemblokir iklan Reels yang ditambalkan ke aplikasi
 the re-signed build fix	perbaikan build yang ditandatangani ulang

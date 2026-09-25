@@ -10,7 +10,9 @@ package app.morphe.extension.facebook.download;
 import android.content.Context;
 
 import app.morphe.extension.facebook.settings.FamilyNames;
+import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 import kotlin.jvm.functions.Function1;
@@ -82,6 +84,23 @@ public final class ReelDownload implements Function1<Object, Object> {
         this.manifestField = manifestField;
         this.slot = slot;
         this.saves = saves;
+    }
+
+    /**
+     * Whether the sidebar Facebook is building for a reel gets the Download button. The patch asks
+     * before it builds the button, so off, paused, or before the settings are ready, the reel has
+     * only Facebook's own buttons and none of this patch's code runs in the sidebar. Never throws:
+     * false is Facebook's own path.
+     */
+    public static boolean showsButton() {
+        try {
+            return Utils.settingsReady() && Settings.DOWNLOAD_REELS.get();
+        } catch (Throwable t) {
+            HookStatus.threw(FamilyNames.REEL_DOWNLOAD, "button switch", t);
+            Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE,
+                () -> "could not read the reel Download switch", t);
+            return false;
+        }
     }
 
     /**

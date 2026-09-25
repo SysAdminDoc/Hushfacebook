@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(210);
+        Map<String, String> table = new HashMap<>(206);
         fillDe0(table);
         fillDe1(table);
         return table;
@@ -61,8 +61,8 @@ public final class L10nTranslations {
                 "%1$s. Das wurde beim Patchen festgelegt, deshalb kann die Pause es nicht ausschalten. Um es auszuschlie\u00dfen, patche erneut ohne den zugeh\u00f6rigen Patch.");
         table.put("%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.",
                 "%1$s. Diese wurden beim Patchen festgelegt, deshalb kann die Pause sie nicht ausschalten. Um eines davon auszuschlie\u00dfen, patche erneut ohne den zugeh\u00f6rigen Patch.");
-        table.put("A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.",
-                "In der Seitenleiste jedes Reels sitzt ein Download-Button. Er bleibt, w\u00e4hrend Hushfacebook pausiert ist.");
+        table.put("A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.",
+                "Ein Download-Button in der Seitenleiste jedes Reels speichert es in der besten Qualit\u00e4t, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, zeigen Reels nur Facebooks eigene Buttons.");
         table.put("A diagnostic report is already being saved.",
                 "Ein Diagnosebericht wird bereits gespeichert.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
@@ -75,6 +75,8 @@ public final class L10nTranslations {
                 "Werbekarten zwischen den Stories, die Leute gepostet haben.");
         table.put("Ad telemetry blocked",
                 "Werbe-Telemetrie blockiert");
+        table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
+                "F\u00fcgt \u201eSpeichern\u201c zum Men\u00fc jeder Story hinzu, egal von wem, und speichert sie in der besten Qualit\u00e4t, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, gibt es \u201eSpeichern\u201c nur bei deinen eigenen Stories, und dort l\u00e4uft Facebooks eigene Speicherfunktion.");
         table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
                 "Anzeigen, die in einem Schwung Reels mitkommen. Banner und Werbeunterbrechungen bleiben blockiert, solange der Patch eingebaut ist, unabh\u00e4ngig von diesem Schalter und der Pause. Das gilt auch f\u00fcr Anzeigen, die die App selbst einf\u00fcgt.");
         table.put("Audience Network off",
@@ -169,11 +171,11 @@ public final class L10nTranslations {
                 "Nicht gespeichert: Das ist kein Foto oder Video von Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "Nicht gespeichert: Die Datei ist \u00fcber 512 MB gro\u00df");
-        table.put("Open links in your browser",
-                "Links in deinem Browser \u00f6ffnen");
     }
 
     private static void fillDe1(Map<String, String> table) {
+        table.put("Open links in your browser",
+                "Links in deinem Browser \u00f6ffnen");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
                 "Bezahlte Anzeigen im Feed. Diese werden aussortiert, bevor Facebook sie einf\u00fcgt, sodass keine L\u00fccke bleibt.");
         table.put("Pause Hushfacebook",
@@ -194,10 +196,6 @@ public final class L10nTranslations {
                 "Speichern abgebrochen");
         table.put("Save full report",
                 "Vollst\u00e4ndigen Bericht speichern");
-        table.put("Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.",
-                "\u201eSpeichern\u201c im Men\u00fc einer Story l\u00e4dt sie in der besten Qualit\u00e4t herunter, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, l\u00e4uft stattdessen Facebooks eigene Speicherfunktion, und \u201eSpeichern\u201c bleibt im Men\u00fc.");
-        table.put("Save in every story's menu",
-                "\u201eSpeichern\u201c im Men\u00fc jeder Story");
         table.put("Saved to %1$s",
                 "Gespeichert unter %1$s");
         table.put("Saved to the gallery",
@@ -254,8 +252,6 @@ public final class L10nTranslations {
                 "das schwarze AMOLED-Design");
         table.put("the Audience Network block",
                 "die Sperre f\u00fcr das Audience Network");
-        table.put("the Download button on reels",
-                "der Download-Button bei Reels");
         table.put("the ad telemetry block",
                 "die Sperre f\u00fcr Werbe-Telemetrie");
         table.put("the background ad prefetch block",
@@ -267,7 +263,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(210);
+        Map<String, String> table = new HashMap<>(206);
         fillEs0(table);
         fillEs1(table);
         return table;
@@ -284,8 +280,8 @@ public final class L10nTranslations {
                 "%1$s. Este cambio se aplic\u00f3 al parchear, as\u00ed que Pausar no puede desactivarlo. Para descartarlo, vuelve a parchear sin el parche del que proviene.");
         table.put("%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.",
                 "%1$s. Estos cambios se aplicaron al parchear, as\u00ed que Pausar no puede desactivarlos. Para descartar uno, vuelve a parchear sin el parche del que proviene.");
-        table.put("A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.",
-                "Hay un bot\u00f3n de descarga en la barra lateral de cada reel. Se mantiene aunque Hushfacebook est\u00e9 en pausa.");
+        table.put("A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.",
+                "Un bot\u00f3n de descarga en la barra lateral de cada reel lo guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, los reels solo muestran los botones propios de Facebook.");
         table.put("A diagnostic report is already being saved.",
                 "Ya se est\u00e1 guardando un informe de diagn\u00f3stico.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
@@ -298,6 +294,8 @@ public final class L10nTranslations {
                 "Tarjetas de anuncios entre las historias que public\u00f3 la gente.");
         table.put("Ad telemetry blocked",
                 "Telemetr\u00eda de anuncios bloqueada");
+        table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
+                "Agrega la opci\u00f3n Guardar al men\u00fa de cualquier historia, sea de quien sea, y la guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, solo tus propias historias tienen la opci\u00f3n Guardar, y se usa el guardado propio de Facebook.");
         table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
                 "Anuncios que llegan dentro de un lote de reels. Los banners y los anuncios a mitad de video siguen bloqueados mientras el parche est\u00e9 aplicado, diga lo que diga este interruptor o Pausar. Lo mismo pasa con los anuncios que la app inserta por su cuenta.");
         table.put("Audience Network off",
@@ -392,11 +390,11 @@ public final class L10nTranslations {
                 "No se guard\u00f3: no es una foto ni un video de Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "No se guard\u00f3: el archivo supera los 512 MB");
-        table.put("Open links in your browser",
-                "Abrir enlaces en tu navegador");
     }
 
     private static void fillEs1(Map<String, String> table) {
+        table.put("Open links in your browser",
+                "Abrir enlaces en tu navegador");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
                 "Anuncios pagados en el feed. Se eliminan antes de que Facebook los inserte, as\u00ed que no queda ning\u00fan espacio vac\u00edo.");
         table.put("Pause Hushfacebook",
@@ -417,10 +415,6 @@ public final class L10nTranslations {
                 "Se cancel\u00f3 el guardado");
         table.put("Save full report",
                 "Guardar informe completo");
-        table.put("Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.",
-                "La opci\u00f3n Guardar del men\u00fa de una historia la descarga con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, se usa en su lugar el guardado propio de Facebook, y Guardar sigue en el men\u00fa.");
-        table.put("Save in every story's menu",
-                "la opci\u00f3n Guardar en el men\u00fa de cada historia");
         table.put("Saved to %1$s",
                 "Se guard\u00f3 en %1$s");
         table.put("Saved to the gallery",
@@ -477,8 +471,6 @@ public final class L10nTranslations {
                 "el tema negro AMOLED");
         table.put("the Audience Network block",
                 "el bloqueo de Audience Network");
-        table.put("the Download button on reels",
-                "el bot\u00f3n de descarga en los reels");
         table.put("the ad telemetry block",
                 "el bloqueo de telemetr\u00eda de anuncios");
         table.put("the background ad prefetch block",
@@ -490,7 +482,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(210);
+        Map<String, String> table = new HashMap<>(206);
         fillIn0(table);
         fillIn1(table);
         return table;
@@ -507,8 +499,8 @@ public final class L10nTranslations {
                 "%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.");
         table.put("%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.",
                 "%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.");
-        table.put("A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.",
-                "Tombol Unduh ada di bilah samping setiap reel. Tombol ini tetap ada saat Hushfacebook dijeda.");
+        table.put("A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.",
+                "Tombol Unduh di bilah samping setiap reel menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, reel hanya menampilkan tombol bawaan Facebook.");
         table.put("A diagnostic report is already being saved.",
                 "Sudah ada laporan diagnostik yang sedang disimpan.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
@@ -521,6 +513,8 @@ public final class L10nTranslations {
                 "Kartu iklan di antara cerita yang diposting orang.");
         table.put("Ad telemetry blocked",
                 "Telemetri iklan diblokir");
+        table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
+                "Menambahkan opsi Simpan ke menu cerita siapa pun dan menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, opsi Simpan hanya ada di cerita Anda sendiri dan memakai fitur simpan bawaan Facebook.");
         table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
                 "Iklan yang datang di dalam satu kumpulan reel. Banner dan iklan di tengah video tetap diblokir selama tambalan ini terpasang, apa pun status sakelar ini atau Jeda. Begitu juga iklan yang ditambahkan aplikasi dengan sendirinya.");
         table.put("Audience Network off",
@@ -615,11 +609,11 @@ public final class L10nTranslations {
                 "Tidak disimpan: itu bukan foto atau video Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "Tidak disimpan: file lebih dari 512 MB");
-        table.put("Open links in your browser",
-                "Buka tautan di browser Anda");
     }
 
     private static void fillIn1(Map<String, String> table) {
+        table.put("Open links in your browser",
+                "Buka tautan di browser Anda");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
                 "Iklan berbayar di Kabar Beranda. Iklannya dibuang sebelum ditambahkan Facebook, jadi tidak meninggalkan ruang kosong.");
         table.put("Pause Hushfacebook",
@@ -640,10 +634,6 @@ public final class L10nTranslations {
                 "Penyimpanan dibatalkan");
         table.put("Save full report",
                 "Simpan laporan lengkap");
-        table.put("Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.",
-                "Opsi Simpan di menu cerita mengunduhnya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, fitur simpan bawaan Facebook yang berjalan sebagai gantinya, dan opsi Simpan tetap ada di menu.");
-        table.put("Save in every story's menu",
-                "opsi Simpan di menu setiap cerita");
         table.put("Saved to %1$s",
                 "Disimpan ke %1$s");
         table.put("Saved to the gallery",
@@ -700,8 +690,6 @@ public final class L10nTranslations {
                 "tema hitam AMOLED");
         table.put("the Audience Network block",
                 "pemblokir Audience Network");
-        table.put("the Download button on reels",
-                "tombol Unduh di Reels");
         table.put("the ad telemetry block",
                 "pemblokir telemetri iklan");
         table.put("the background ad prefetch block",
@@ -713,7 +701,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(210);
+        Map<String, String> table = new HashMap<>(206);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         return table;
@@ -730,8 +718,8 @@ public final class L10nTranslations {
                 "%1$s. Isso foi definido quando voc\u00ea aplicou os patches, ent\u00e3o a pausa n\u00e3o consegue deslig\u00e1-lo. Para descartar isso como causa, aplique os patches de novo sem o patch respons\u00e1vel.");
         table.put("%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.",
                 "%1$s. Tudo isso foi definido quando voc\u00ea aplicou os patches, ent\u00e3o a pausa n\u00e3o consegue desligar nada disso. Para descartar um desses itens como causa, aplique os patches de novo sem o patch respons\u00e1vel por ele.");
-        table.put("A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.",
-                "Um bot\u00e3o de download fica na barra lateral de cada reel. Ele continua l\u00e1 mesmo com o Hushfacebook pausado.");
+        table.put("A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.",
+                "Um bot\u00e3o de download na barra lateral de cada reel salva o reel na melhor qualidade que o player reproduz. Com esta op\u00e7\u00e3o desligada ou durante a pausa, os reels s\u00f3 mostram os bot\u00f5es do pr\u00f3prio Facebook.");
         table.put("A diagnostic report is already being saved.",
                 "Um relat\u00f3rio de diagn\u00f3stico j\u00e1 est\u00e1 sendo salvo.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
@@ -744,6 +732,8 @@ public final class L10nTranslations {
                 "An\u00fancios entre os stories que as pessoas postaram.");
         table.put("Ad telemetry blocked",
                 "Telemetria de an\u00fancios bloqueada");
+        table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
+                "Adiciona o item Salvar ao menu do story de qualquer pessoa e salva na melhor qualidade que o player reproduz. Com esta op\u00e7\u00e3o desligada ou durante a pausa, o item Salvar s\u00f3 aparece nos seus pr\u00f3prios stories, e quem salva \u00e9 o pr\u00f3prio Facebook.");
         table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
                 "An\u00fancios que chegam dentro de um lote de reels. Banners e an\u00fancios no meio do v\u00eddeo continuam bloqueados enquanto o patch estiver aplicado, independentemente desta op\u00e7\u00e3o ou da pausa. O mesmo vale para os an\u00fancios que o app adiciona por conta pr\u00f3pria.");
         table.put("Audience Network off",
@@ -838,11 +828,11 @@ public final class L10nTranslations {
                 "N\u00e3o foi salvo: isso n\u00e3o \u00e9 uma foto nem um v\u00eddeo do Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "N\u00e3o foi salvo: o arquivo tem mais de 512 MB");
-        table.put("Open links in your browser",
-                "Abrir links no seu navegador");
     }
 
     private static void fillPt_rBR1(Map<String, String> table) {
+        table.put("Open links in your browser",
+                "Abrir links no seu navegador");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
                 "An\u00fancios pagos no feed. S\u00e3o removidos antes de o Facebook adicion\u00e1-los, ent\u00e3o n\u00e3o fica nenhum espa\u00e7o vazio.");
         table.put("Pause Hushfacebook",
@@ -863,10 +853,6 @@ public final class L10nTranslations {
                 "Salvamento cancelado");
         table.put("Save full report",
                 "Salvar relat\u00f3rio completo");
-        table.put("Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.",
-                "O item Salvar no menu de um story baixa o story na melhor qualidade que o player reproduz. Com esta op\u00e7\u00e3o desligada ou durante a pausa, quem salva \u00e9 o pr\u00f3prio Facebook, e Salvar continua no menu.");
-        table.put("Save in every story's menu",
-                "o item Salvar no menu de cada story");
         table.put("Saved to %1$s",
                 "Salvo em %1$s");
         table.put("Saved to the gallery",
@@ -923,8 +909,6 @@ public final class L10nTranslations {
                 "o tema preto AMOLED");
         table.put("the Audience Network block",
                 "o bloqueio do Audience Network");
-        table.put("the Download button on reels",
-                "o bot\u00e3o de download nos reels");
         table.put("the ad telemetry block",
                 "o bloqueio da telemetria de an\u00fancios");
         table.put("the background ad prefetch block",
@@ -936,7 +920,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(210);
+        Map<String, String> table = new HashMap<>(206);
         fillTr0(table);
         fillTr1(table);
         return table;
@@ -953,8 +937,8 @@ public final class L10nTranslations {
                 "%1$s. Yamalad\u0131\u011f\u0131nda ayarland\u0131\u011f\u0131 i\u00e7in Duraklatma bunu kapatamaz. Bunu elemek i\u00e7in, ait oldu\u011fu yama olmadan yeniden yamala.");
         table.put("%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.",
                 "%1$s. Yamalad\u0131\u011f\u0131nda ayarland\u0131klar\u0131 i\u00e7in Duraklatma bunlar\u0131 kapatamaz. Bunlardan birini elemek i\u00e7in, ait oldu\u011fu yama olmadan yeniden yamala.");
-        table.put("A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.",
-                "Her Reels videosunun kenar \u00e7ubu\u011funda bir \u0130ndir d\u00fc\u011fmesi bulunur. Hushfacebook duraklat\u0131lsa da kal\u0131r.");
+        table.put("A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.",
+                "Her Reels videosunun kenar \u00e7ubu\u011fundaki \u0130ndir d\u00fc\u011fmesi, videoyu oynat\u0131c\u0131n\u0131n sundu\u011fu en iyi kalitede kaydeder. Kapal\u0131yken veya duraklat\u0131lm\u0131\u015fken Reels videolar\u0131nda yaln\u0131zca Facebook'un kendi d\u00fc\u011fmeleri g\u00f6r\u00fcn\u00fcr.");
         table.put("A diagnostic report is already being saved.",
                 "Bir tan\u0131lama raporu zaten kaydediliyor.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
@@ -967,6 +951,8 @@ public final class L10nTranslations {
                 "\u0130nsanlar\u0131n payla\u015ft\u0131\u011f\u0131 hikayeler aras\u0131ndaki reklam kartlar\u0131.");
         table.put("Ad telemetry blocked",
                 "Reklam telemetrisi engellendi");
+        table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
+                "Kimin olursa olsun her hikayenin men\u00fcs\u00fcne Kaydet se\u00e7ene\u011fini ekler ve hikayeyi oynat\u0131c\u0131n\u0131n sundu\u011fu en iyi kalitede kaydeder. Kapal\u0131yken veya duraklat\u0131lm\u0131\u015fken Kaydet se\u00e7ene\u011fi yaln\u0131zca kendi hikayelerinde bulunur ve Facebook'un kendi kaydetme i\u015flevini \u00e7al\u0131\u015ft\u0131r\u0131r.");
         table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
                 "Reels videolar\u0131 aras\u0131nda gelen reklamlar. Banner ve video ortas\u0131 reklamlar ise yama uyguland\u0131\u011f\u0131 s\u00fcrece, bu anahtar veya Duraklatma ne derse desin, engellenmi\u015f kal\u0131r. Uygulaman\u0131n kendi ba\u015f\u0131na ekledi\u011fi reklamlar da \u00f6yle.");
         table.put("Audience Network off",
@@ -1061,11 +1047,11 @@ public final class L10nTranslations {
                 "Kaydedilmedi: Bu bir Facebook foto\u011fraf\u0131 veya videosu de\u011fil");
         table.put("Not saved: the file is over 512 MB",
                 "Kaydedilmedi: Dosya 512 MB'tan b\u00fcy\u00fck");
-        table.put("Open links in your browser",
-                "Ba\u011flant\u0131lar\u0131 taray\u0131c\u0131nda a\u00e7");
     }
 
     private static void fillTr1(Map<String, String> table) {
+        table.put("Open links in your browser",
+                "Ba\u011flant\u0131lar\u0131 taray\u0131c\u0131nda a\u00e7");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
                 "Ak\u0131\u015ftaki \u00fccretli reklamlar. Facebook eklemeden \u00f6nce \u00e7\u0131kar\u0131ld\u0131klar\u0131 i\u00e7in yerlerinde bo\u015fluk kalmaz.");
         table.put("Pause Hushfacebook",
@@ -1086,10 +1072,6 @@ public final class L10nTranslations {
                 "Kaydetme iptal edildi");
         table.put("Save full report",
                 "Tam raporu kaydet");
-        table.put("Save in a story's menu downloads it at the best quality the player streams. Off or paused, Facebook's own save runs instead, and Save stays in the menu.",
-                "Hikaye men\u00fcs\u00fcndeki Kaydet, hikayeyi oynat\u0131c\u0131n\u0131n sundu\u011fu en iyi kalitede indirir. Kapal\u0131yken veya duraklat\u0131lm\u0131\u015fken bunun yerine Facebook'un kendi kaydetme i\u015flevi \u00e7al\u0131\u015f\u0131r ve Kaydet men\u00fcde kal\u0131r.");
-        table.put("Save in every story's menu",
-                "her hikayenin men\u00fcs\u00fcndeki Kaydet se\u00e7ene\u011fi");
         table.put("Saved to %1$s",
                 "\u015euraya kaydedildi: %1$s");
         table.put("Saved to the gallery",
@@ -1146,8 +1128,6 @@ public final class L10nTranslations {
                 "AMOLED siyah tema");
         table.put("the Audience Network block",
                 "Audience Network engeli");
-        table.put("the Download button on reels",
-                "Reels'teki \u0130ndir d\u00fc\u011fmesi");
         table.put("the ad telemetry block",
                 "reklam telemetrisi engeli");
         table.put("the background ad prefetch block",

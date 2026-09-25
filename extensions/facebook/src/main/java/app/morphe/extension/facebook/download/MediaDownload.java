@@ -81,6 +81,23 @@ public final class MediaDownload {
      *
      * @return whether a download started. {@code false} lets the caller fall back to the app.
      */
+    /**
+     * The answer the story viewer's menu gets when it asks whether a story can be saved, where
+     * Facebook's own [facebooks] means "it's yours". With Save any story on, every story can be.
+     * Off, paused, or before the settings are ready, Facebook's answer stands, so only your own
+     * stories offer Save. Never throws.
+     */
+    public static boolean offersSave(boolean facebooks) {
+        if (facebooks) return true;
+        try {
+            return Utils.settingsReady() && Settings.DOWNLOAD_STORIES.get();
+        } catch (Throwable t) {
+            HookStatus.threw(FamilyNames.STORY_DOWNLOAD, "save item", t);
+            failure(() -> "could not decide whether the story menu offers Save", t);
+            return false;
+        }
+    }
+
     public static boolean saveStory(Context context, Object host) {
         HookStatus.invoked(FamilyNames.STORY_DOWNLOAD);
         try {

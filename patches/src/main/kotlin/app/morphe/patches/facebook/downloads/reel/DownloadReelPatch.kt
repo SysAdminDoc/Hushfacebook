@@ -12,7 +12,10 @@ import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.patches.facebook.misc.extension.facebookExtensionPatch
 import app.morphe.patches.facebook.misc.extension.enableStatus
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import com.android.tools.smali.dexlib2.AccessFlags
@@ -401,9 +404,17 @@ val downloadReelPatch = bytecodePatch(
                 " at instruction(s) ${busy.joinToString()}, so the injection cannot borrow them"
         }
 
-        sidebar.addInstructions(
+        // The switch is asked first, every time a reel's sidebar is built. Off, paused, or before the
+        // settings are ready, the branch goes straight to the instruction the block was put in
+        // front of, so the sidebar is Facebook's own and none of the button's code runs. That
+        // keeps a paused or safe-mode start clear of this injection, and a Download button that
+        // crashed a start away from the next one.
+        sidebar.addInstructionsWithLabels(
             assemblyIndex - 3,
             """
+                invoke-static { }, $HANDLER->showsButton()Z
+                move-result v0
+                if-eqz v0, :facebooks_own
                 move-object/from16 v0, v${argumentRegister(FB_USER_SESSION)}
                 move-object/from16 v1, v${argumentRegister(scopedType)}
                 move-object/from16 v2, v$playerRegister
@@ -417,6 +428,9 @@ val downloadReelPatch = bytecodePatch(
                 move-object/from16 v0, v$markerRegister
                 invoke-virtual { v0, v2 }, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
             """,
+            // Bound to the instruction the block goes in front of. A label written inside an
+            // injected block is resolved against the block's own addresses.
+            ExternalLabel("facebooks_own", sidebar.getInstruction(assemblyIndex - 3)),
         )
 
         enableStatus("reelDownload")

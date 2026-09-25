@@ -37,6 +37,9 @@ import app.morphe.patches.facebook.misc.settings.settingsPatch
 private const val SAVE_STORY = "Lapp/morphe/extension/facebook/download/MediaDownload;->" +
     "saveStory(Landroid/content/Context;Ljava/lang/Object;)Z"
 
+/** The extension call that answers the menu's "can this story be saved": the switch, or Facebook's own. */
+private const val OFFERS_SAVE = "Lapp/morphe/extension/facebook/download/MediaDownload;->offersSave(Z)Z"
+
 /** The extension call that records the source of each player that the app builds. */
 private const val REMEMBER_SOURCE = "Lapp/morphe/extension/facebook/download/PlayerSources;->" +
     "remember(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"
@@ -62,7 +65,9 @@ val downloadStoryPatch = bytecodePatch(
     // The first limit decides whether the save item appears at all. The "More" menu of the story
     // viewer asks one capability question before it offers the item, and that question means "is
     // this story mine". Everything after it is unconditional, and the surface that the menu reads
-    // next only decides which label the item gets. Forcing that one answer shows the item.
+    // next only decides which label the item gets. Answering yes to that one question shows the
+    // item. The answer is the Save any story switch's, so off or paused only your own stories
+    // offer it, as unpatched.
     //
     // The second limit decides whether tapping the item does anything, and it is the reason this
     // patch no longer uses Facebook's save code. That code checks the story for licensed music
@@ -71,7 +76,7 @@ val downloadStoryPatch = bytecodePatch(
     // thing the handler does, so there is nothing to route around. The handler runs a download of
     // our own instead.
     //
-    // Both halves stay because they are different limits. The first still has to be forced, or
+    // Both halves stay because they are different limits. The first still has to be answered, or
     // there is no item to tap.
     execute {
         // The class of the action that the menu creates. The patch finds it through the event that
@@ -119,7 +124,7 @@ val downloadStoryPatch = bytecodePatch(
                 capabilityCalls.joinToString { (_, it) -> "${it.methodReferenceOrNull()?.name}" }
         }
 
-        builder.forceResultTrue(instructions, capabilityCalls.single().index)
+        builder.answerWithTheSwitch(instructions, capabilityCalls.single().index)
 
         // Second half. The item now appears. This half decides what a tap on it does.
         val action = mutableClassDefBy(saveAction)
@@ -271,23 +276,31 @@ private fun BytecodePatchContext.rememberPlayerSources() {
 }
 
 /**
- * Overwrite the result of the call at [index] with `true`.
+ * Hand the answer of the call at [index] to the extension, which answers yes while Save any story
+ * is on and passes Facebook's own answer through when it's off, paused, or not ready yet. It
+ * used to be overwritten with `true`, so a paused Facebook still offered Save on every story.
  *
- * The patch replaces the `move-result` after the call, and not the branch that reads it. The
- * constant goes into the register that this instruction already writes. Both instructions are one
- * code unit. Thus the layout of the method, its branch offsets and its register allocation do not
- * change. The call still runs. Only its answer is ignored.
+ * The call goes in right after the `move-result`, reading and writing the register that
+ * instruction already writes, so the branch that reads the answer reads the switch's. The
+ * capability call still runs.
  */
-private fun MutableMethod.forceResultTrue(instructions: List<Instruction>, index: Int) {
+private fun MutableMethod.answerWithTheSwitch(instructions: List<Instruction>, index: Int) {
     val moveResult = instructions.getOrNull(index + 1)
     check(moveResult?.opcode == Opcode.MOVE_RESULT) {
         "$definingClass->$name: the capability check no longer stores its result"
     }
 
+    // invoke-static names its arguments in four bits.
     val register = (moveResult as OneRegisterInstruction).registerA
     check(register < 16) { "$definingClass->$name: result register v$register is out of range" }
 
-    replaceInstruction(index + 1, "const/4 v$register, 0x1")
+    addInstructions(
+        index + 2,
+        """
+            invoke-static { v$register }, $OFFERS_SAVE
+            move-result v$register
+        """,
+    )
 }
 
 private fun MutableMethod.instructionsOrEmpty(): List<Instruction> =

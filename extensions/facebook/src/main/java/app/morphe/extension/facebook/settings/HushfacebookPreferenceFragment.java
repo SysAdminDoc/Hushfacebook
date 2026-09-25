@@ -103,8 +103,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.STORY_DOWNLOAD)) {
                 stories.addPreference(toggle(context, Settings.DOWNLOAD_STORIES, L10n.t("Save any story"),
-                        L10n.t("Save in a story's menu downloads it at the best quality the player streams. "
-                                + "Off or paused, Facebook's own save runs instead, and Save stays in the menu.")));
+                        L10n.t("Adds Save to the menu of anyone's story, and saves at the best quality the "
+                                + "player streams. Off or paused, only your own stories have Save, and it's "
+                                + "Facebook's own.")));
             }
         }
 
@@ -116,8 +117,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                                 + "patch is in, whatever this switch or Pause says. So do ads the app adds on its own.")));
             }
             if (build.contains(PatchFamily.REEL_DOWNLOAD)) {
-                reels.addPreference(info(context, L10n.t("Download button on reels"),
-                        L10n.t("A Download button sits in the sidebar of every reel. It stays while Hushfacebook is paused.")));
+                reels.addPreference(toggle(context, Settings.DOWNLOAD_REELS, L10n.t("Download button on reels"),
+                        L10n.t("A Download button in the sidebar of every reel saves it at the best quality "
+                                + "the player streams. Off or paused, reels show only Facebook's own buttons.")));
             }
         }
 

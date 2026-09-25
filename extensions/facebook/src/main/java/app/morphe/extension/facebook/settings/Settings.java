@@ -45,7 +45,14 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting OPEN_LINKS_EXTERNALLY =
             new BooleanSetting("hushfacebook_open_links_externally", TRUE);
 
-    /** The story viewer's Save item runs Hushfacebook's own download. */
+    /**
+     * The story viewer's menu offers Save on anyone's story, and Save runs Hushfacebook's own
+     * download. Off, only your own stories offer it, and it's Facebook's own save.
+     */
     public static final BooleanSetting DOWNLOAD_STORIES =
             new BooleanSetting("hushfacebook_download_stories", TRUE);
+
+    /** The Download button the reel patch adds to every reel's sidebar. */
+    public static final BooleanSetting DOWNLOAD_REELS =
+            new BooleanSetting("hushfacebook_download_reels", TRUE);
 }
