@@ -2128,7 +2128,7 @@ Write-Host '[scripts] split bundle contracts passed'
 # by a pattern over the script's text, which also matched a mutation that held the receipt to the
 # newest build alone. The receipt builder runs here too, on stand-ins for the tools it starts,
 # since patterns over its text passed with the merged APK ignored and with forced runs decided
-# against the newest build.
+# against the newest build, and so does the device build, on the same stand-ins.
 
 $releaseRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-release-" + [guid]::NewGuid().ToString('N'))
 try {
@@ -2251,16 +2251,30 @@ try {
         'set "HERE=%~dp0"',
         'shift',
         'shift',
+        'rem patch-for-device.ps1 hands the CLI one argument file, a quoted value a line with',
+        'rem backslashes doubled; the receipt builder passes the arguments themselves.',
+        'set "FIRST=%~1"',
+        'if not "!FIRST:~0,1!"=="@" goto next',
+        'set "ARGUMENTS=!FIRST:~1!"',
+        'for /f "usebackq delims=" %%L in ("%ARGUMENTS%") do (',
+        '    set "V=%%~L"',
+        '    set "V=!V:\\=\!"',
+        '    call :take',
+        ')',
+        'goto run',
         ':next',
         'if "%~1"=="" goto run',
         'set "V=%~1"',
+        'call :take',
+        'shift',
+        'goto next',
+        ':take',
         'if "!PREV!"=="-o" set "OUT=!V!"',
         'if "!PREV!"=="-r" set "RESULT=!V!"',
         'if "!V!"=="-f" set "FORCED=1"',
         'set "PREV=!V!"',
         'set "LAST=!V!"',
-        'shift',
-        'goto next',
+        'exit /b 0',
         ':run',
         '>>"!HERE!java.log" echo patch !LAST! forced=!FORCED!',
         'copy /y "!LAST!.result.json" "!RESULT!" >nul || exit /b 3',
@@ -2411,6 +2425,46 @@ try {
                 (@(Get-Content -LiteralPath $javaLog) -join '; '))
         }
     }
+
+    # patch-for-device.ps1 on the same root and stand-ins. It held every run's report to the
+    # newest declared build, so an older declared build (README: 577 works too) was patched and
+    # then refused with "unexpected package or version". Each declared build is held to its own
+    # version now, the default fixture is still the newest build, and an undeclared build is
+    # refused before the CLI starts. No -Serial, so nothing goes near adb.
+    $deviceOut = Join-Path $releaseRoot 'device'
+    function Invoke-DeviceBuild([string]$Apk) {
+        Remove-Item -LiteralPath $javaLog -Force -ErrorAction SilentlyContinue
+        $arguments = @{ Root = $releaseRepo; DesktopJar = $stubJar; Java = $stubJava; Aapt2 = $stubAapt2; OutDir = $deviceOut }
+        if ($Apk) { $arguments['Apk'] = $Apk }
+        & (Join-Path $PSScriptRoot 'patch-for-device.ps1') @arguments 6> $null
+    }
+    $deviceApk = Join-Path $deviceOut "hushfacebook-$releaseVersionHere-signed.apk"
+    foreach ($build in $releaseTarget.PackageVersions) {
+        try {
+            Invoke-DeviceBuild -Apk $fixturePaths[$build]
+        } catch {
+            throw "patch-for-device.ps1 refused the declared build ${build}: $($_.Exception.Message)"
+        }
+        $deviceRuns = @(Get-Content -LiteralPath $javaLog)
+        Assert-True ($deviceRuns.Count -eq 1 -and $deviceRuns[0] -eq "patch $($fixturePaths[$build]) forced=0" -and
+            (Test-Path -LiteralPath $deviceApk -PathType Leaf)) `
+            "patch-for-device.ps1 did not build $build once, without -f: $($deviceRuns -join '; ')"
+        Assert-True (-not (Test-Path -LiteralPath (Join-Path $deviceOut 'stock-base.apk'))) `
+            "patch-for-device.ps1 left the base APK it read for $build behind."
+    }
+    $savedFixtureDir = $env:HUSHFACEBOOK_FIXTURE_DIR
+    try {
+        $env:HUSHFACEBOOK_FIXTURE_DIR = $fixtures
+        Invoke-DeviceBuild
+        Assert-True ((@(Get-Content -LiteralPath $javaLog) -join '; ') -eq
+            "patch $($fixturePaths[$releaseTarget.PackageVersion]) forced=0") `
+            "With no -Apk, patch-for-device.ps1 did not take the newest declared build from the fixture folder."
+    } finally {
+        $env:HUSHFACEBOOK_FIXTURE_DIR = $savedFixtureDir
+    }
+    Assert-Throws { Invoke-DeviceBuild -Apk $fixturePaths[$newerBuild] } "*$newerBuild, which the bundle does not declare*" `
+        'patch-for-device.ps1 took a build the catalog does not declare.'
+    Assert-True (-not (Test-Path -LiteralPath $javaLog)) 'patch-for-device.ps1 started the CLI on an undeclared build.'
 } finally {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue
 }

@@ -14,10 +14,12 @@
     through a temporary Java argument file so the password value is not in the child process
     command line. The file is deleted when patching exits.
 
-    The vendor APK defaults to the build of the target version in the folder
-    HUSHFACEBOOK_FIXTURE_DIR names. The desktop CLI is found through -DesktopJar,
-    HUSHFACEBOOK_DESKTOP_JAR or HUSHFACEBOOK_WORKDIR, and Java through -Java, HUSHFACEBOOK_JAVA or
-    JAVA_HOME. None of them has a machine-specific default.
+    The vendor APK defaults to the newest declared build in the folder HUSHFACEBOOK_FIXTURE_DIR
+    names. -Apk takes any build the catalog declares, and the result is held to that APK's own
+    version, read with aapt2. A build the catalog doesn't declare is refused before anything is
+    patched. The desktop CLI is found through -DesktopJar, HUSHFACEBOOK_DESKTOP_JAR or
+    HUSHFACEBOOK_WORKDIR, Java through -Java, HUSHFACEBOOK_JAVA or JAVA_HOME, and aapt2 through
+    -Aapt2, HUSHFACEBOOK_AAPT2 or the SDK. None of them has a machine-specific default.
 
 .EXAMPLE
     scripts/patch-for-device.ps1 -Serial $env:HUSHFACEBOOK_DEVICE_SERIAL -Replace
@@ -38,17 +40,24 @@ param(
     [string]$Apk,
     [string]$DesktopJar,
     [string]$Java,
+    [string]$Aapt2,
     [string]$Keystore = "$HOME\.android\sideload-release.jks",
     [string]$KeyAlias = 'sideload',
-    [string]$OutDir = (Join-Path $env:TEMP 'hushfacebook-device')
+    [string]$OutDir = (Join-Path $env:TEMP 'hushfacebook-device'),
+    # The checkout whose catalog and release bundle are used, the one holding this script unless
+    # given. The contract tests point it at a fixture.
+    [string]$Root
 )
 
 $ErrorActionPreference = 'Stop'
-$root = Split-Path -Parent $PSScriptRoot
+# Not a parameter default: Windows PowerShell leaves $PSScriptRoot empty while it evaluates the
+# defaults of an advanced script started with -File. $root below is this same variable.
+if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'patch-target.ps1')
 . (Join-Path $PSScriptRoot 'patch-report.ps1')
 . (Join-Path $PSScriptRoot 'common.ps1')
 . (Join-Path $PSScriptRoot 'Resolve-Java.ps1')
+. (Join-Path $PSScriptRoot 'release-receipt.ps1')
 $Java = Resolve-Java -Explicit $Java
 $DesktopJar = Resolve-DesktopCli -Explicit $DesktopJar -Root $root -Required
 $catalogPath = Join-Path $root 'patches-list.json'
@@ -64,6 +73,27 @@ if (-not $Apk -and $env:HUSHFACEBOOK_FIXTURE_DIR -and (Test-Path -LiteralPath $e
 if (-not $Apk -or -not (Test-Path -LiteralPath $Apk -PathType Leaf)) {
     throw ("No vendor APK. Pass -Apk with the $($target.PackageVersion) build, or set " +
         'HUSHFACEBOOK_FIXTURE_DIR to the folder that holds it.')
+}
+# The version the result is held to: the vendor APK's own, read the way verify-all-patches.ps1
+# and the receipt read it. The catalog declares more than one build and the CLI reports the
+# version of the APK it was given, so holding every run to the newest build failed a 577 build
+# after it had been patched. A build the catalog doesn't declare is refused here: without -f the
+# CLI refuses it too, but only after unpacking it, and this is the APK that goes on a phone.
+$Aapt2 = Resolve-Aapt2 -Explicit $Aapt2 -Root $root
+$stockBase = Join-Path $OutDir 'stock-base.apk'
+try {
+    $stock = Get-ApkManifestFacts -Apk (Get-BaseApk -Apk $Apk -Destination $stockBase) -Aapt2 $Aapt2
+} finally {
+    # Only the copy taken out of a bundle. A plain APK is read where it is and stays there.
+    Remove-Item -LiteralPath $stockBase -Force -ErrorAction SilentlyContinue
+}
+if ($stock.package -ne $target.PackageName) {
+    throw "$(Split-Path -Leaf $Apk) is $($stock.package), not the catalog's target $($target.PackageName)."
+}
+if ($target.PackageVersions -notcontains [string]$stock.versionName) {
+    throw ("$(Split-Path -Leaf $Apk) is $($stock.package) $($stock.versionName), which the bundle does not " +
+        "declare ($($target.PackageVersions -join ', ')). Build for a phone from a declared build; " +
+        'scripts/verify-all-patches.ps1 -Force shows what still applies on another one.')
 }
 $passwordVariable = 'HUSHFACEBOOK_SIDELOAD_KEYSTORE_PASSWORD'
 $keystorePassword = [Environment]::GetEnvironmentVariable(
@@ -133,7 +163,7 @@ $report = $null
 if (Test-Path -LiteralPath $result -PathType Leaf) { $report = Get-Content -LiteralPath $result -Raw | ConvertFrom-Json }
 $validation = Test-PatchingReport -Report $report -ExpectedNames $names `
     -AllowedDependencyNames $dependencyNames -OutputPath $out `
-    -ExpectedPackageName $target.PackageName -ExpectedPackageVersion $target.PackageVersion
+    -ExpectedPackageName $target.PackageName -ExpectedPackageVersion $stock.versionName
 if (-not $validation.Valid) { throw "Patching did not produce a complete APK: $($validation.Reason)" }
 Write-Host "[device] applied $(@($report.appliedPatches).Count), failed $(@($report.failedPatches).Count), target $($report.packageName) $($report.packageVersion)"
 Write-Host "[device] $out"
