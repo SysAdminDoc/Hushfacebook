@@ -40,7 +40,8 @@ import java.util.zip.ZipFile;
  * search layout, Hushfeed upstream #84). Every resource of every stock package has to resolve in the patched table by its
  * id, with the same type and a value in every configuration the stock table gives it; every file
  * a patched value names has to be in the patched archive; and every value the patches changed has
- * to point at something the patched table has. A failure names the id and exits 1.
+ * to point at something the patched table has. A style keeps its parent, and a file keeps the bytes
+ * the stock archive has for it, since no patch writes either. A failure names the id and exits 1.
  *
  * <p>What the patches changed is reported, not failed: each rewritten value with its old and new
  * value (the AMOLED dark theme's palette and sheet colors), each entry the rebuild renamed (it
@@ -72,7 +73,6 @@ public final class ResourceTableCheck {
     private final List<String> droppedWithSplits = new ArrayList<>();
     private final List<String> added = new ArrayList<>();
     private final List<String> moved = new ArrayList<>();
-    private final List<String> changedFiles = new ArrayList<>();
     private final List<String> absentInStock = new ArrayList<>();
     private int stockResources;
     private int stockValues;
@@ -210,8 +210,10 @@ public final class ResourceTableCheck {
         ResTableMapEntry before = (ResTableMapEntry) entry.getTableEntry();
         ResTableMapEntry after = (ResTableMapEntry) other.getTableEntry();
         if (before.getParentId() != after.getParentId()) {
-            rewritten.add(where + " parent " + reference(before.getParentId()) + " -> " + reference(after.getParentId()));
-            checkId(where + " parent", after.getParentId(), patched, packages);
+            // A style inherits every item its parent sets, so a parent that goes or changes drops
+            // or swaps all of them at once. No patch moves one, so it fails like a lost item.
+            failures.add(where + ": its parent " + reference(before.getParentId()) + " became "
+                    + reference(after.getParentId()) + ", which drops or swaps every item it inherits");
         }
         // Per attr, in order: a bag can set one attr more than once (TikTok 47.0.3's style/aed sets
         // windowBackground twice), and a map keyed by attr keeps only the last.
@@ -279,8 +281,10 @@ public final class ResourceTableCheck {
                     }
                     if (stockPath == null || stockFile == null) continue;
                     if (!stockPath.equals(path)) moved.add(where + " " + stockPath + " -> " + path);
+                    // No patch writes a resource file, so a file whose bytes changed is one the
+                    // rebuild swapped or damaged (a path clash loses content as well as paths).
                     if (stockFile.getCrc() != file.getCrc() || stockFile.getSize() != file.getSize()) {
-                        changedFiles.add(where + " " + path);
+                        failures.add(where + ": " + path + " is not the file the stock archive holds for it");
                     }
                 }
             }
@@ -411,10 +415,9 @@ public final class ResourceTableCheck {
         section(lines, "renamed by the rebuild (still resolved by id; a lookup by the old name finds nothing)", renamed);
         section(lines, "dropped with the split metadata when the bundle was merged", droppedWithSplits);
         section(lines, "added resources", added);
-        lines.add(String.format(Locale.ROOT, "[resources] files named by the patched table: %d, moved %d, content changed %d, absent from the stock archive too %d",
-                files, moved.size(), changedFiles.size(), absentInStock.size()));
+        lines.add(String.format(Locale.ROOT, "[resources] files named by the patched table: %d, moved %d, absent from the stock archive too %d",
+                files, moved.size(), absentInStock.size()));
         for (String line : moved) lines.add("  moved " + line);
-        for (String line : changedFiles) lines.add("  changed " + line);
         for (String line : absentInStock) lines.add("  absent in both " + line);
         if (failures.isEmpty()) {
             lines.add(String.format(Locale.ROOT, "[resources] every one of the stock table's %d resources resolves in the patched table, with its type and a value in each of its configurations, and every file and reference the patched values name is there",
