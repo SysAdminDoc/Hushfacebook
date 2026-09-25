@@ -59,6 +59,8 @@ public final class SettingsEntry {
     /** The activity the screen was last shown over, while the person hasn't closed it. */
     private static WeakReference<Activity> host;
     private static volatile boolean closedByUser;
+    /** The long label last pushed, or found already on the shortcut, in this process. */
+    private static volatile String publishedLabel;
 
     private SettingsEntry() {
     }
@@ -87,7 +89,20 @@ public final class SettingsEntry {
     }
 
     /**
-     * Publishes the launcher shortcut, or labels it again when the phone's language has changed,
+     * Labels the shortcut again once Facebook has set its own language. That happens after the
+     * application starts, so a label published then is in the phone's language, and it stayed
+     * that way next to a screen in Facebook's. A string compare while the label still matches.
+     */
+    static void relabelIfStale(Context context) {
+        try {
+            if (!L10n.t(context, "Hushfacebook settings").equals(publishedLabel)) publishShortcut(context);
+        } catch (Exception ex) {
+            Logger.printException(() -> "Settings entry: could not check the shortcut's label", ex);
+        }
+    }
+
+    /**
+     * Publishes the launcher shortcut, or labels it again when Facebook's language has changed,
      * on the thread it's called on. Package-visible for tests.
      */
     static void publishShortcutNow(Context app) {
@@ -95,6 +110,8 @@ public final class SettingsEntry {
             ShortcutManager manager = app.getSystemService(ShortcutManager.class);
             if (manager == null) return;
             String longLabel = L10n.t(app, "Hushfacebook settings");
+            // Set before the attempt, so a shortcut that can't be pushed isn't tried on every screen.
+            publishedLabel = longLabel;
             for (ShortcutInfo existing : manager.getDynamicShortcuts()) {
                 // One labelled in another language is pushed again below, which replaces it.
                 if (SHORTCUT_ID.equals(existing.getId())
@@ -145,6 +162,7 @@ public final class SettingsEntry {
         public void onActivityResumed(Activity activity) {
             resumed = new WeakReference<>(activity);
             if (openPending) openWhenSettled(activity);
+            relabelIfStale(activity);
         }
 
         @Override

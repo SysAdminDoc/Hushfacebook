@@ -21,6 +21,7 @@ AMOLED black theme	AMOLED siyah tema
 Audience Network off	Audience Network kapalı
 Back	Geri
 Background ad prefetch blocked	Arka planda reklam indirme engellendi
+Cancel	İptal
 Changing these	Bunları değiştirmek
 Choose a settings file. You'll see how many switches it changes before anything does.	Bir ayar dosyası seç. Herhangi bir şey değişmeden önce kaç anahtarı değiştireceğini görürsün.
 Clear diagnostic data	Tanılama verilerini temizle
@@ -76,6 +77,7 @@ No matching diagnostics found.	Eşleşen tanılama bulunamadı.
 No screenshot watching for ads, and no reports of which apps you install.	Reklamlarda ekran görüntüsü takibi yok, hangi uygulamaları yüklediğine dair rapor da yok.
 Not saved: that isn't a Facebook photo or video	Kaydedilmedi: Bu bir Facebook fotoğrafı veya videosu değil
 Not saved: the file is over 512 MB	Kaydedilmedi: Dosya 512 MB'tan büyük
+OK	Tamam
 Open links in your browser	Bağlantıları tarayıcında aç
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Akıştaki ücretli reklamlar. Facebook eklemeden önce çıkarıldıkları için yerlerinde boşluk kalmaz.
 Pause Hushfacebook	Hushfacebook'u duraklat

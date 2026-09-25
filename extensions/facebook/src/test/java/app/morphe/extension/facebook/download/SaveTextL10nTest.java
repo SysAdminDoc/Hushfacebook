@@ -71,8 +71,9 @@ public class SaveTextL10nTest {
             assertNotNull("no save notification", shown);
             String title = String.valueOf(shown.extras.getCharSequence(Notification.EXTRA_TITLE));
             assertTrue(title, title.startsWith("[") && title.endsWith("]"));
-            // Cancel is Android's own word, which the phone has in every language.
-            assertEquals(context.getString(android.R.string.cancel), String.valueOf(shown.actions[0].title));
+            // Cancel comes from the catalog too, so it's in the title's language.
+            String cancel = String.valueOf(shown.actions[0].title);
+            assertTrue(cancel, cancel.startsWith("[") && cancel.endsWith("]"));
 
             NotificationChannel channel = notifications().getNotificationChannel(SaveControl.CHANNEL);
             assertTrue(String.valueOf(channel.getName()), String.valueOf(channel.getName()).startsWith("["));

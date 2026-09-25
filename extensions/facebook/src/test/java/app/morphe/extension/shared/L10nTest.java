@@ -12,6 +12,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.Configuration;
 import android.os.LocaleList;
 
@@ -279,6 +280,27 @@ public class L10nTest {
         assertEquals(appBefore, application.getResources().getConfiguration().getLocales());
     }
 
+    /**
+     * Facebook sets its own language on the application, and an activity or a dialog can carry
+     * another. Every lookup answers in the application's, whichever of them asks, or a Back label
+     * and the title beside it come out in two languages.
+     */
+    @Test
+    @Config(qualifiers = "de")
+    public void anActivitysOwnLanguageNeverReachesTheText() {
+        Context englishActivity = configured(Locale.US);
+        assertEquals(Locale.US, englishActivity.getResources().getConfiguration().getLocales().get(0));
+        assertEquals(table("de").get(KEY), L10n.t(englishActivity, KEY));
+        assertEquals(table("de").get("Cancel"), L10n.t(englishActivity, "Cancel"));
+        assertEquals("a, b und c", L10n.join(englishActivity, Arrays.asList("a", "b", "c")));
+        assertEquals(Locale.GERMANY.getLanguage(), L10n.locale(englishActivity).getLanguage());
+
+        Context germanActivity = configured(Locale.GERMANY);
+        RuntimeEnvironment.setQualifiers("en-rUS");
+        assertEquals(KEY, L10n.t(germanActivity, KEY));
+        assertEquals("Cancel", L10n.t(germanActivity, "Cancel"));
+    }
+
     /** The same English is looked up again after the phone's languages change. */
     @Test
     public void aChangedLanguageListIsNeverAnsweredFromTheLastOne() {
@@ -305,8 +327,22 @@ public class L10nTest {
         }
     }
 
-    /** A context whose phone is set to these languages, in this order. */
+    /**
+     * A context whose phone is set to these languages, in this order. L10n reads the application's
+     * configuration whichever context it is given, so this one stands in as its own application.
+     */
     static Context in(Locale... locales) {
+        Context configured = configured(locales);
+        return new ContextWrapper(configured) {
+            @Override
+            public Context getApplicationContext() {
+                return this;
+            }
+        };
+    }
+
+    /** A context in these languages that belongs to the test's application, as an activity's does. */
+    private static Context configured(Locale... locales) {
         Context base = RuntimeEnvironment.getApplication();
         Configuration configuration = new Configuration(base.getResources().getConfiguration());
         configuration.setLocales(new LocaleList(locales));

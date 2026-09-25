@@ -282,9 +282,9 @@ final class SaveControl {
                     .setShowWhen(false)
                     .setCategory(Notification.CATEGORY_PROGRESS)
                     .setProgress(100, Math.max(0, percent), percent < 0)
-                    // Android's own Cancel, which the phone already has in every language.
+                    // The catalog's Cancel, in the language of the title above it.
                     .addAction(new Notification.Action.Builder((Icon) null,
-                        application.getString(android.R.string.cancel), cancel).build());
+                        L10n.t(application, "Cancel"), cancel).build());
                 String text = progressText(done, total);
                 if (text != null) builder.setContentText(text);
                 manager.notify(TAG, id, builder.build());

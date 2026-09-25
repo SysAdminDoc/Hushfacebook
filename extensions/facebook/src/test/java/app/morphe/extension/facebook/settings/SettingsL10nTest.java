@@ -170,6 +170,62 @@ public class SettingsL10nTest {
     }
 
     /**
+     * Facebook sets its own language on the application, and its activities can carry another.
+     * The screen, its dialogs and their buttons all follow the application: with it in German
+     * and the activity in English nothing the table translates is left English, and the other
+     * way round nothing German shows. Built from the activity, the Back label, the export
+     * dialog and Android's own Cancel and OK came out in the activity's language.
+     */
+    @Test
+    @Config(qualifiers = "de")
+    public void anActivityInAnotherLanguageLeavesTheWholeScreenInFacebooksLanguage() throws Exception {
+        Map<String, String> german = TranslationsForTests.of("de");
+        List<String> english = new ArrayList<>();
+        for (String text : everythingShown(ActivityInEnglish.class)) {
+            String translated = german.get(text);
+            if (translated != null && !translated.equals(text)) english.add(text);
+        }
+        assertEquals("shown in the activity's English: " + english, 0, english.size());
+
+        RuntimeEnvironment.setQualifiers("en-rUS");
+        Set<String> germanOnly = new java.util.HashSet<>();
+        for (Map.Entry<String, String> row : german.entrySet()) {
+            if (!row.getKey().equals(row.getValue())) germanOnly.add(row.getValue());
+        }
+        Set<String> shown = everythingShown(ActivityInGerman.class);
+        List<String> shownGerman = new ArrayList<>();
+        for (String text : shown) {
+            if (germanOnly.contains(text)) shownGerman.add(text);
+        }
+        assertEquals("shown in the activity's German: " + shownGerman, 0, shownGerman.size());
+        assertTrue("the English screen lost its Back label: " + shown, shown.contains("Back"));
+        assertTrue("the English screen lost its Cancel: " + shown, shown.contains("Cancel"));
+    }
+
+    /** An activity that runs in English whatever the application's language is. */
+    public static class ActivityInEnglish extends Activity {
+        @Override
+        protected void attachBaseContext(android.content.Context base) {
+            super.attachBaseContext(inLanguage(base, Locale.US));
+        }
+    }
+
+    /** An activity that runs in German whatever the application's language is. */
+    public static class ActivityInGerman extends Activity {
+        @Override
+        protected void attachBaseContext(android.content.Context base) {
+            super.attachBaseContext(inLanguage(base, Locale.GERMANY));
+        }
+    }
+
+    private static android.content.Context inLanguage(android.content.Context base, Locale locale) {
+        android.content.res.Configuration configuration =
+                new android.content.res.Configuration(base.getResources().getConfiguration());
+        configuration.setLocales(new android.os.LocaleList(locale));
+        return base.createConfigurationContext(configuration);
+    }
+
+    /**
      * The row listing what Pause can't reach is built from pieces: the items, the language's own
      * "and", and a sentence around them. In each language it has to start with a capital, carry
      * every item, and switch to the plural sentence past one item.
@@ -217,8 +273,13 @@ public class SettingsL10nTest {
 
     /** Titles, summaries, dialog text and toasts, from every state the screen can be drawn in. */
     private static Set<String> everythingShown() throws Exception {
+        return everythingShown(Activity.class);
+    }
+
+    /** As above, over an activity of this class. */
+    private static Set<String> everythingShown(Class<? extends Activity> host) throws Exception {
         Set<String> shown = new LinkedHashSet<>();
-        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+        try (ActivityController<? extends Activity> controller = Robolectric.buildActivity(host).setup()) {
             Activity activity = controller.get();
 
             SettingsDialog dialog = show(activity);
@@ -236,9 +297,10 @@ public class SettingsL10nTest {
             ShadowAlertDialog shadow = org.robolectric.Shadows.shadowOf(choices);
             shown.add(String.valueOf(shadow.getTitle()));
             for (CharSequence item : shadow.getItems()) shown.add(String.valueOf(item));
-            // Its button is Android's own Cancel, which the phone has in every language.
-            assertEquals(activity.getString(android.R.string.cancel),
-                    String.valueOf(choices.getButton(AlertDialog.BUTTON_NEGATIVE).getText()));
+            // Its button is the catalog's Cancel, so the activity's own language can't reach it.
+            String cancel = String.valueOf(choices.getButton(AlertDialog.BUTTON_NEGATIVE).getText());
+            assertEquals(L10n.t("Cancel"), cancel);
+            shown.add(cancel);
             choices.dismiss();
 
             // The licences dialog's title; the notice under it stays English, as the licences do.
@@ -248,6 +310,7 @@ public class SettingsL10nTest {
             AlertDialog notice = (AlertDialog) ShadowAlertDialog.getLatestDialog();
             assertNotNull("the licences row opened no dialog", notice);
             shown.add(String.valueOf(org.robolectric.Shadows.shadowOf(notice).getTitle()));
+            shown.add(String.valueOf(notice.getButton(AlertDialog.BUTTON_POSITIVE).getText()));
             notice.dismiss();
 
             addSettingsFileText(activity, rows, shown);
@@ -319,8 +382,9 @@ public class SettingsL10nTest {
         shown.add(String.valueOf(shadow.getTitle()));
         shown.add(String.valueOf(shadow.getMessage()));
         shown.add(String.valueOf(preview.getButton(AlertDialog.BUTTON_POSITIVE).getText()));
-        assertEquals(activity.getString(android.R.string.cancel),
-                String.valueOf(preview.getButton(AlertDialog.BUTTON_NEGATIVE).getText()));
+        String cancel = String.valueOf(preview.getButton(AlertDialog.BUTTON_NEGATIVE).getText());
+        assertEquals(L10n.t("Cancel"), cancel);
+        shown.add(cancel);
         preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         settle();
         addToast(shown);
@@ -329,6 +393,7 @@ public class SettingsL10nTest {
         String changesNothing = "{\"format\":\"hushfacebook-settings\",\"schema\":1,\"settings\":{\"" + key + "\":true}}";
         AlertDialog unchanged = importPreview(activity, rows, changesNothing);
         shown.add(String.valueOf(org.robolectric.Shadows.shadowOf(unchanged).getMessage()));
+        shown.add(String.valueOf(unchanged.getButton(AlertDialog.BUTTON_POSITIVE).getText()));
         unchanged.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         settle();
 

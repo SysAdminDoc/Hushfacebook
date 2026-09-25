@@ -22,7 +22,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Hushfacebook's own text in the phone's language.
+ * Hushfacebook's own text in the language Facebook shows: the one picked in Facebook's own
+ * settings, or the phone's when none was picked. It's read from the application's configuration,
+ * so every string on a screen comes out in one language whichever context builds it.
  *
  * <p>The English string in the code is the lookup key. The translations are generated into
  * {@link L10nTranslations} from extensions/shared/library/src/main/l10n by scripts/gen-l10n.py,
@@ -270,7 +272,7 @@ public final class L10n {
         return locale(context());
     }
 
-    /** The phone's first language, or the default when there is no context to ask. */
+    /** The first language Facebook runs in, or the default when there is no context to ask. */
     public static Locale locale(Context context) {
         return locales(context).get(0);
     }
@@ -324,10 +326,18 @@ public final class L10n {
         return Utils.context;
     }
 
-    /** The languages the phone is set to, or the default when there is no context to ask. */
+    /**
+     * The languages Facebook runs in, from the application's configuration whichever context
+     * asks, or the default when there is no context to ask. Facebook sets its own language on
+     * the application once it has started, and an activity's or a dialog's context can carry
+     * another one. Read from each caller's own context, a Back label built from the activity
+     * and a title built from the application came out in two languages on one screen.
+     */
     private static List<Locale> locales(Context context) {
         try {
-            Resources resources = context == null ? null : context.getResources();
+            Context application = context == null ? null : context.getApplicationContext();
+            Context source = application != null ? application : context;
+            Resources resources = source == null ? null : source.getResources();
             if (resources != null) {
                 LocaleList list = resources.getConfiguration().getLocales();
                 List<Locale> found = new ArrayList<>(list.size());

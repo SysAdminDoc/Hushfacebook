@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(272);
+        Map<String, String> table = new HashMap<>(276);
         fillDe0(table);
         fillDe1(table);
         fillDe2(table);
@@ -94,6 +94,8 @@ public final class L10nTranslations {
                 "Zur\u00fcck");
         table.put("Background ad prefetch blocked",
                 "Vorabladen von Werbung im Hintergrund blockiert");
+        table.put("Cancel",
+                "Abbrechen");
         table.put("Changing these",
                 "So \u00e4nderst du sie");
         table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
@@ -170,11 +172,11 @@ public final class L10nTranslations {
                 "Fortschritt beim Speichern eines Fotos oder Videos, mit einem Button zum Abbrechen");
         table.put("Hushfacebook %1$s on Facebook %2$s",
                 "Hushfacebook %1$s auf Facebook %2$s");
-        table.put("Hushfacebook is on",
-                "Hushfacebook ist aktiv");
     }
 
     private static void fillDe1(Map<String, String> table) {
+        table.put("Hushfacebook is on",
+                "Hushfacebook ist aktiv");
         table.put("Hushfacebook is paused",
                 "Hushfacebook ist pausiert");
         table.put("Hushfacebook saves",
@@ -207,6 +209,8 @@ public final class L10nTranslations {
                 "Nicht gespeichert: Das ist kein Foto oder Video von Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "Nicht gespeichert: Die Datei ist \u00fcber 512 MB gro\u00df");
+        table.put("OK",
+                "OK");
         table.put("Open links in your browser",
                 "Links in deinem Browser \u00f6ffnen");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -291,13 +295,13 @@ public final class L10nTranslations {
                 "Der Diagnosebericht lie\u00df sich nicht speichern. Versuche es noch einmal.");
         table.put("The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.",
                 "Die Datei %1$s lie\u00df sich nicht entfernen. L\u00f6sche sie aus %2$s, um Hushfacebook wieder einzuschalten.");
+    }
+
+    private static void fillDe2(Map<String, String> table) {
         table.put("The setting couldn't finish updating. Its saved value is shown.",
                 "Die Einstellung lie\u00df sich nicht vollst\u00e4ndig aktualisieren. Der gespeicherte Wert wird angezeigt.");
         table.put("There is no diagnostic data to clear.",
                 "Es gibt keine Diagnosedaten zum L\u00f6schen.");
-    }
-
-    private static void fillDe2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "Es gibt keine Diagnosedaten zum Wiederherstellen.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
@@ -333,7 +337,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(272);
+        Map<String, String> table = new HashMap<>(276);
         fillEs0(table);
         fillEs1(table);
         fillEs2(table);
@@ -383,6 +387,8 @@ public final class L10nTranslations {
                 "Atr\u00e1s");
         table.put("Background ad prefetch blocked",
                 "Precarga de anuncios en segundo plano bloqueada");
+        table.put("Cancel",
+                "Cancelar");
         table.put("Changing these",
                 "C\u00f3mo cambiarlos");
         table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
@@ -459,11 +465,11 @@ public final class L10nTranslations {
                 "El progreso de la foto o el video que est\u00e1s guardando, con un bot\u00f3n para cancelar");
         table.put("Hushfacebook %1$s on Facebook %2$s",
                 "Hushfacebook %1$s en Facebook %2$s");
-        table.put("Hushfacebook is on",
-                "Hushfacebook est\u00e1 activado");
     }
 
     private static void fillEs1(Map<String, String> table) {
+        table.put("Hushfacebook is on",
+                "Hushfacebook est\u00e1 activado");
         table.put("Hushfacebook is paused",
                 "Hushfacebook est\u00e1 en pausa");
         table.put("Hushfacebook saves",
@@ -496,6 +502,8 @@ public final class L10nTranslations {
                 "No se guard\u00f3: no es una foto ni un video de Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "No se guard\u00f3: el archivo supera los 512 MB");
+        table.put("OK",
+                "Aceptar");
         table.put("Open links in your browser",
                 "Abrir enlaces en tu navegador");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -580,13 +588,13 @@ public final class L10nTranslations {
                 "No se pudo guardar el informe de diagn\u00f3stico. Int\u00e9ntalo de nuevo.");
         table.put("The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.",
                 "No se pudo eliminar el archivo %1$s. B\u00f3rralo de %2$s para volver a activar Hushfacebook.");
+    }
+
+    private static void fillEs2(Map<String, String> table) {
         table.put("The setting couldn't finish updating. Its saved value is shown.",
                 "No se pudo terminar de actualizar el ajuste. Se muestra su valor guardado.");
         table.put("There is no diagnostic data to clear.",
                 "No hay datos de diagn\u00f3stico que borrar.");
-    }
-
-    private static void fillEs2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "No hay datos de diagn\u00f3stico que restaurar.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
@@ -622,7 +630,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(272);
+        Map<String, String> table = new HashMap<>(276);
         fillIn0(table);
         fillIn1(table);
         fillIn2(table);
@@ -672,6 +680,8 @@ public final class L10nTranslations {
                 "Kembali");
         table.put("Background ad prefetch blocked",
                 "Pramuat iklan di latar belakang diblokir");
+        table.put("Cancel",
+                "Batal");
         table.put("Changing these",
                 "Mengubah pilihan ini");
         table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
@@ -748,11 +758,11 @@ public final class L10nTranslations {
                 "Progres foto atau video yang sedang Anda simpan, dengan tombol untuk membatalkannya");
         table.put("Hushfacebook %1$s on Facebook %2$s",
                 "Hushfacebook %1$s di Facebook %2$s");
-        table.put("Hushfacebook is on",
-                "Hushfacebook aktif");
     }
 
     private static void fillIn1(Map<String, String> table) {
+        table.put("Hushfacebook is on",
+                "Hushfacebook aktif");
         table.put("Hushfacebook is paused",
                 "Hushfacebook dijeda");
         table.put("Hushfacebook saves",
@@ -785,6 +795,8 @@ public final class L10nTranslations {
                 "Tidak disimpan: itu bukan foto atau video Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "Tidak disimpan: file lebih dari 512 MB");
+        table.put("OK",
+                "Oke");
         table.put("Open links in your browser",
                 "Buka tautan di browser Anda");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -869,13 +881,13 @@ public final class L10nTranslations {
                 "Laporan diagnostik tidak dapat disimpan. Coba lagi.");
         table.put("The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.",
                 "File %1$s tidak dapat dihapus. Hapus file itu dari %2$s untuk mengaktifkan Hushfacebook lagi.");
+    }
+
+    private static void fillIn2(Map<String, String> table) {
         table.put("The setting couldn't finish updating. Its saved value is shown.",
                 "Pengaturan ini tidak dapat selesai diperbarui. Nilai yang tersimpan ditampilkan.");
         table.put("There is no diagnostic data to clear.",
                 "Tidak ada data diagnostik yang dapat dihapus.");
-    }
-
-    private static void fillIn2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "Tidak ada data diagnostik yang dapat dikembalikan.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
@@ -911,7 +923,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(272);
+        Map<String, String> table = new HashMap<>(276);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         fillPt_rBR2(table);
@@ -961,6 +973,8 @@ public final class L10nTranslations {
                 "Voltar");
         table.put("Background ad prefetch blocked",
                 "Pr\u00e9-carregamento de an\u00fancios em segundo plano bloqueado");
+        table.put("Cancel",
+                "Cancelar");
         table.put("Changing these",
                 "Como mudar esses itens");
         table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
@@ -1037,11 +1051,11 @@ public final class L10nTranslations {
                 "O progresso da foto ou do v\u00eddeo que voc\u00ea est\u00e1 salvando, com um bot\u00e3o para cancelar");
         table.put("Hushfacebook %1$s on Facebook %2$s",
                 "Hushfacebook %1$s no Facebook %2$s");
-        table.put("Hushfacebook is on",
-                "O Hushfacebook est\u00e1 ativo");
     }
 
     private static void fillPt_rBR1(Map<String, String> table) {
+        table.put("Hushfacebook is on",
+                "O Hushfacebook est\u00e1 ativo");
         table.put("Hushfacebook is paused",
                 "O Hushfacebook est\u00e1 pausado");
         table.put("Hushfacebook saves",
@@ -1074,6 +1088,8 @@ public final class L10nTranslations {
                 "N\u00e3o foi salvo: isso n\u00e3o \u00e9 uma foto nem um v\u00eddeo do Facebook");
         table.put("Not saved: the file is over 512 MB",
                 "N\u00e3o foi salvo: o arquivo tem mais de 512 MB");
+        table.put("OK",
+                "OK");
         table.put("Open links in your browser",
                 "Abrir links no seu navegador");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -1158,13 +1174,13 @@ public final class L10nTranslations {
                 "N\u00e3o foi poss\u00edvel salvar o relat\u00f3rio de diagn\u00f3stico. Tente de novo.");
         table.put("The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.",
                 "N\u00e3o foi poss\u00edvel remover o arquivo %1$s. Exclua-o de %2$s para reativar o Hushfacebook.");
+    }
+
+    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("The setting couldn't finish updating. Its saved value is shown.",
                 "N\u00e3o foi poss\u00edvel concluir a atualiza\u00e7\u00e3o da configura\u00e7\u00e3o. O valor salvo est\u00e1 sendo mostrado.");
         table.put("There is no diagnostic data to clear.",
                 "N\u00e3o h\u00e1 dados de diagn\u00f3stico para limpar.");
-    }
-
-    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "N\u00e3o h\u00e1 dados de diagn\u00f3stico para restaurar.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",
@@ -1200,7 +1216,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(272);
+        Map<String, String> table = new HashMap<>(276);
         fillTr0(table);
         fillTr1(table);
         fillTr2(table);
@@ -1250,6 +1266,8 @@ public final class L10nTranslations {
                 "Geri");
         table.put("Background ad prefetch blocked",
                 "Arka planda reklam indirme engellendi");
+        table.put("Cancel",
+                "\u0130ptal");
         table.put("Changing these",
                 "Bunlar\u0131 de\u011fi\u015ftirmek");
         table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
@@ -1326,11 +1344,11 @@ public final class L10nTranslations {
                 "Kaydetti\u011fin foto\u011fraf veya videonun ilerleme durumu ve iptal etmek i\u00e7in bir d\u00fc\u011fme");
         table.put("Hushfacebook %1$s on Facebook %2$s",
                 "Facebook %2$s \u00fczerinde Hushfacebook %1$s");
-        table.put("Hushfacebook is on",
-                "Hushfacebook a\u00e7\u0131k");
     }
 
     private static void fillTr1(Map<String, String> table) {
+        table.put("Hushfacebook is on",
+                "Hushfacebook a\u00e7\u0131k");
         table.put("Hushfacebook is paused",
                 "Hushfacebook duraklat\u0131ld\u0131");
         table.put("Hushfacebook saves",
@@ -1363,6 +1381,8 @@ public final class L10nTranslations {
                 "Kaydedilmedi: Bu bir Facebook foto\u011fraf\u0131 veya videosu de\u011fil");
         table.put("Not saved: the file is over 512 MB",
                 "Kaydedilmedi: Dosya 512 MB'tan b\u00fcy\u00fck");
+        table.put("OK",
+                "Tamam");
         table.put("Open links in your browser",
                 "Ba\u011flant\u0131lar\u0131 taray\u0131c\u0131nda a\u00e7");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -1447,13 +1467,13 @@ public final class L10nTranslations {
                 "Tan\u0131lama raporu kaydedilemedi. Tekrar dene.");
         table.put("The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.",
                 "%1$s dosyas\u0131 kald\u0131r\u0131lamad\u0131. Hushfacebook'u yeniden a\u00e7mak i\u00e7in onu %2$s i\u00e7inden sil.");
+    }
+
+    private static void fillTr2(Map<String, String> table) {
         table.put("The setting couldn't finish updating. Its saved value is shown.",
                 "Ayar\u0131n g\u00fcncellenmesi tamamlanamad\u0131. Kay\u0131tl\u0131 de\u011feri g\u00f6steriliyor.");
         table.put("There is no diagnostic data to clear.",
                 "Temizlenecek tan\u0131lama verisi yok.");
-    }
-
-    private static void fillTr2(Map<String, String> table) {
         table.put("There is no diagnostic data to put back.",
                 "Geri getirilecek tan\u0131lama verisi yok.");
         table.put("They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.",

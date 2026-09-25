@@ -63,6 +63,26 @@ public class SettingsEntryTest {
         org.junit.Assert.assertEquals("one shortcut, relabelled, not two", 1, manager.getDynamicShortcuts().size());
     }
 
+    /**
+     * Facebook sets its own language after the application starts, so the label published then
+     * is in the phone's. On a German phone with Facebook in English it stayed German next to an
+     * English screen. The next Facebook screen to resume labels it again in Facebook's language.
+     */
+    @Test public void theShortcutIsLabelledAgainOnceFacebookHasSetItsLanguage() throws Exception {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        android.content.pm.ShortcutManager manager = context.getSystemService(android.content.pm.ShortcutManager.class);
+        SettingsEntry.publishShortcutNow(context);
+        org.junit.Assert.assertEquals("Hushfacebook settings", longLabel(manager));
+
+        RuntimeEnvironment.setQualifiers("+de");
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            app.morphe.extension.shared.Utils.awaitBackgroundTasksForTests();
+            org.junit.Assert.assertEquals(app.morphe.extension.shared.L10nTablesForTests.of("de").get("Hushfacebook settings"),
+                    longLabel(manager));
+            org.junit.Assert.assertEquals(1, manager.getDynamicShortcuts().size());
+        }
+    }
+
     private static String longLabel(android.content.pm.ShortcutManager manager) {
         for (android.content.pm.ShortcutInfo shortcut : manager.getDynamicShortcuts()) {
             if (SettingsEntry.SHORTCUT_ID.equals(shortcut.getId())) return String.valueOf(shortcut.getLongLabel());

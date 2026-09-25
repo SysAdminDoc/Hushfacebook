@@ -51,9 +51,12 @@ public class ExportDiagnosticReportPreference extends Preference {
                 L10n.t(getContext(), "Save full report")};
     }
 
-    /** Android's own Cancel, which the phone already has in every language. */
+    /**
+     * Cancel from the catalog. Android's own was read from the dialog's activity, which can be
+     * in another language than the title and choices above it.
+     */
     protected CharSequence negativeText() {
-        return getContext().getString(android.R.string.cancel);
+        return L10n.t(getContext(), "Cancel");
     }
 
     public ExportDiagnosticReportPreference(

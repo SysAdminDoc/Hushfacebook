@@ -548,7 +548,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         new AlertDialog.Builder(context)
                 .setTitle(L10n.t("Licenses"))
                 .setView(scroll)
-                .setPositiveButton(android.R.string.ok, null)
+                .setPositiveButton(L10n.t("OK"), null)
                 .show();
     }
 

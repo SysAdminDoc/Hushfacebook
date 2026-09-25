@@ -289,14 +289,14 @@ public class SettingsBackupPreference extends Preference {
                 .setMessage(message)
                 .setOnCancelListener(dialog -> answered(page));
         if (changes == 0) {
-            builder.setPositiveButton(android.R.string.ok, (dialog, which) -> answered(page));
+            builder.setPositiveButton(L10n.t("OK"), (dialog, which) -> answered(page));
         } else {
             builder.setPositiveButton(L10n.t("Import"), (dialog, which) -> {
                 Bundle chosen = page.pendingImport;
                 answered(page);
                 apply(page, chosen);
             });
-            builder.setNegativeButton(android.R.string.cancel, (dialog, which) -> answered(page));
+            builder.setNegativeButton(L10n.t("Cancel"), (dialog, which) -> answered(page));
         }
         page.importPreview = builder.show();
     }

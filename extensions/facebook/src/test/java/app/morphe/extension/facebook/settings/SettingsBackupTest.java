@@ -595,8 +595,7 @@ public class SettingsBackupTest {
                     + "Hushfacebook knows, so it'll be left out.", String.valueOf(shadowOf(preview).getMessage()));
             assertEquals("the preview wrote something", before, store());
             assertEquals("Import", String.valueOf(preview.getButton(AlertDialog.BUTTON_POSITIVE).getText()));
-            assertEquals(activity.getString(android.R.string.cancel),
-                    String.valueOf(preview.getButton(AlertDialog.BUTTON_NEGATIVE).getText()));
+            assertEquals("Cancel", String.valueOf(preview.getButton(AlertDialog.BUTTON_NEGATIVE).getText()));
 
             preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
             settle();
@@ -620,8 +619,7 @@ public class SettingsBackupTest {
             AlertDialog preview = shownPreview();
             assertEquals("Your switches already match that file, so nothing will change.",
                     String.valueOf(shadowOf(preview).getMessage()));
-            assertEquals(activity.getString(android.R.string.ok),
-                    String.valueOf(preview.getButton(AlertDialog.BUTTON_POSITIVE).getText()));
+            assertEquals("OK", String.valueOf(preview.getButton(AlertDialog.BUTTON_POSITIVE).getText()));
             assertFalse(preview.getButton(AlertDialog.BUTTON_NEGATIVE).isShown());
             preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
             settle();
