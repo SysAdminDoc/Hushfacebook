@@ -22,8 +22,6 @@ import com.android.tools.smali.dexlib2.Opcode
  *
  * R8 keeps the owner class names but renames the methods on every release. Thus each fingerprint
  * uses the class, the return type, the parameters and the shape of the body, and never a name.
- *
- * See `docs/facebook-theme-map.md`.
  */
 
 internal const val DARK_COLOR_SCHEME = "Lcom/facebook/mig/scheme/schemes/DarkColorScheme;"

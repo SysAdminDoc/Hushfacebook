@@ -19,7 +19,7 @@ import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
  * Helper for the "[General] AMOLED black theme" patch. It holds the rule for route one and route
- * four. See {@code docs/facebook-theme-map.md}.
+ * four. The four routes are described with the patch's fingerprints, in\n * patches/src/main/kotlin/app/morphe/patches/facebook/layout/theme/Fingerprints.kt.
  *
  * <p>The decision needs the token, because a colour alone cannot show the difference between a card
  * and a dark divider. The names of the tokens carry that difference, and R8 cannot rename an enum
