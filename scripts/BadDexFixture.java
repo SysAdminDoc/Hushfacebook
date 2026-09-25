@@ -123,10 +123,15 @@ public class BadDexFixture {
 
     /** A packed switch over the argument, v1. Case 0 lands at 5 and case 1 at 7. */
     private static Method switchHost(int caseOneOffset) {
+        return switchHost(caseOneOffset, op(Opcode.RETURN, 0));
+    }
+
+    /** The same, with [atFour] as the one-unit instruction that ends the no-case path at 4. */
+    private static Method switchHost(int caseOneOffset, Instruction atFour) {
         return define(HOST, "switchHost", "I", true, body(2,
                 new ImmutableInstruction31t(Opcode.PACKED_SWITCH, 1, 10), // 0
                 new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),        // 3
-                op(Opcode.RETURN, 0),                                      // 4
+                atFour,                                                    // 4
                 new ImmutableInstruction11n(Opcode.CONST_4, 0, 1),        // 5
                 op(Opcode.RETURN, 0),                                      // 6
                 new ImmutableInstruction11n(Opcode.CONST_4, 0, 2),        // 7
@@ -153,6 +158,42 @@ public class BadDexFixture {
     }
 
     private static final ImmutableTryBlock CLEAN_TRY = tryBlock(0, 3, 5);
+
+    /** switchHost with case 1 sent to the move-result of an invoke on the no-case path. */
+    private static Method switchToResult() {
+        return define(HOST, "switchHost", "I", true, body(2,
+                new ImmutableInstruction31t(Opcode.PACKED_SWITCH, 1, 10), // 0
+                invoke(RISKY),                                             // 3
+                op(Opcode.MOVE_RESULT, 0),                                 // 6
+                op(Opcode.RETURN, 0),                                      // 7
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 1),        // 8
+                op(Opcode.RETURN, 0),                                      // 9
+                new ImmutablePackedSwitchPayload(Arrays.asList(            // 10
+                        new ImmutableSwitchElement(0, 8),
+                        new ImmutableSwitchElement(1, 6)))), "I");
+    }
+
+    /** tryHost whose handler is the packed-switch payload at 10 instead of a move-exception. */
+    private static Method tryHandlerAtPayload() {
+        return define(HOST, "tryHost", "V", true, body(1, Collections.singletonList(tryBlock(0, 3, 10)),
+                invoke(RISKY),                                             // 0
+                op(Opcode.MOVE_RESULT, 0),                                 // 3
+                new ImmutableInstruction31t(Opcode.PACKED_SWITCH, 0, 6),  // 4 -> 10
+                op(Opcode.RETURN_VOID),                                    // 7
+                op(Opcode.RETURN_VOID),                                    // 8, case 0
+                op(Opcode.NOP),                                            // 9, aligns the payload
+                new ImmutablePackedSwitchPayload(Collections.singletonList( // 10
+                        new ImmutableSwitchElement(0, 4)))));
+    }
+
+    /** tryHost with its handler moved to the top: the move-exception is the method's first instruction. */
+    private static Method moveExceptionAtEntry() {
+        return define(HOST, "tryHost", "V", true, body(1, Collections.singletonList(tryBlock(1, 3, 0)),
+                op(Opcode.MOVE_EXCEPTION, 0),                              // 0
+                invoke(RISKY),                                             // 1
+                op(Opcode.MOVE_RESULT, 0),                                 // 4
+                op(Opcode.RETURN_VOID)));                                  // 5
+    }
 
     private static Method risky() {
         return define(HOST, "risky", "I", true, body(1,
@@ -368,6 +409,15 @@ public class BadDexFixture {
         // branch: case 1 lands inside the packed-switch instruction itself.
         dexes.put("bad-switch-case", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 switchHost(2), tryHost(CLEAN_TRY)));
+        // branch: case 1 lands on the switch's own payload, which ART reaches as data.
+        dexes.put("bad-switch-to-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchHost(10), tryHost(CLEAN_TRY)));
+        // branch: case 1 lands on a move-result, cut off from the invoke it takes its result from.
+        dexes.put("bad-switch-to-result", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchToResult(), tryHost(CLEAN_TRY)));
+        // branch: the no-case path jumps into the switch's payload.
+        dexes.put("bad-goto-to-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchHost(7, new ImmutableInstruction10t(Opcode.GOTO, 6)), tryHost(CLEAN_TRY)));
         // invoke: one register for a callee that takes two.
         dexes.put("bad-invoke-count", withStaticHost(body(3,
                 invoke(INSPECT, 0), invoke(WIDE, 1, 2), op(Opcode.RETURN_VOID))));
@@ -411,6 +461,10 @@ public class BadDexFixture {
         dexes.put("bad-try-handler", withTry(tryBlock(0, 3, 2)));
         // try: the handler starts at the invoke's move-result.
         dexes.put("bad-try-handler-result", withTry(tryBlock(0, 3, 3)));
+        // try: the handler starts at a switch payload.
+        dexes.put("bad-try-handler-payload", withTryHost(tryHandlerAtPayload()));
+        // try: the handler's move-exception is the method's first instruction, which the entry reaches.
+        dexes.put("bad-move-exception-entry", withTryHost(moveExceptionAtEntry()));
         // contract: two guards stacked on the feed method.
         dexes.put("bad-double-guard", withFeedEdge(body(4,
                 invoke(HIDE_EDGE, 2, 3), op(Opcode.MOVE_RESULT, 0), ifEqz(0, 3), op(Opcode.RETURN_VOID),

@@ -666,8 +666,6 @@ public class DexDiff {
                     findings.add("branch: fill-array-data at " + at + " points at " + target
                             + ", which is not an array payload");
                 }
-            } else if (payload instanceof SwitchPayload || payload instanceof ArrayPayload) {
-                findings.add("branch: " + opcode.name + " at " + at + " jumps into a payload at " + target);
             } else {
                 String bad = badLanding(payload);
                 if (bad != null) {
@@ -697,6 +695,9 @@ public class DexDiff {
                             + address + ", which is not the start of an instruction");
                 } else if (isMoveResult(layout.byAddress.get(address).getOpcode())) {
                     findings.add("try: a handler for " + handler.getExceptionType() + " starts with a move-result at "
+                            + address);
+                } else if (isPayload(layout.byAddress.get(address))) {
+                    findings.add("try: a handler for " + handler.getExceptionType() + " starts at a payload at "
                             + address);
                 }
             }
@@ -785,7 +786,11 @@ public class DexDiff {
         }
 
         // A move-exception takes the exception a handler caught, so only a throw may reach it.
-        // Falling into one from the instruction above is what ART calls flowing through to it.
+        // Falling into one from the instruction above is what ART calls flowing through to it,
+        // and the method's entry reaches one at the very start the same way.
+        if (!layout.instructions.isEmpty() && layout.instructions.get(0).getOpcode() == Opcode.MOVE_EXCEPTION) {
+            findings.add("try: move-exception at 0 is reached from the method's entry");
+        }
         for (int k = 1; k < layout.instructions.size(); k++) {
             if (layout.instructions.get(k).getOpcode() != Opcode.MOVE_EXCEPTION) continue;
             Instruction above = layout.instructions.get(k - 1);
@@ -807,9 +812,18 @@ public class DexDiff {
         return argument ? "parameter: " : "width: ";
     }
 
-    /** Whether a branch may not land on this: ART refuses a move-result or move-exception there. */
+    /** A switch or array payload: data inside the code, which ART fails the moment flow reaches it. */
+    private static boolean isPayload(Instruction i) {
+        return i instanceof SwitchPayload || i instanceof ArrayPayload;
+    }
+
+    /**
+     * What a branch or switch case may not land on, or null: ART refuses a move-result or
+     * move-exception there, and a payload is data ("encountered data table in instruction stream").
+     */
     private static String badLanding(Instruction landing) {
         if (landing == null) return null;
+        if (isPayload(landing)) return "a payload";
         Opcode opcode = landing.getOpcode();
         if (isMoveResult(opcode)) return "a move-result";
         if (opcode == Opcode.MOVE_EXCEPTION) return "a move-exception";

@@ -5,17 +5,18 @@
 .DESCRIPTION
     BadDexFixture.java writes a clean host, a patched build of it that passes every check, and one
     patched build per check that breaks that check and nothing else: a branch into an instruction,
-    a branch to itself, a switch case into an instruction, an invoke with too few registers, a
-    wide argument split across two registers, the static off-by-one, the upper half of a wide
-    parameter read as an object, a narrow constant read as a long and the reverse (the AMOLED
-    sweep's bug on 580), either half of a live long overwritten and the other half still read, a
-    broken pair or a narrow constant on one arm of a branch or on a loop's back edge, a move-result
-    the patch separated from its invoke, three bad try ranges or handlers, and the one feed guard
-    doubled, moved or missing. The good build carries the joins ART accepts, so a check made
-    stricter still has to pass them. Each bad build has to fail with findings of its own category
-    only, so a check that fires for the wrong reason fails here too. Removed methods and DEX
-    entries, the removal allowlist, and the device tally comparison are held to what they did
-    before.
+    a branch to itself, a switch case into an instruction, a branch or switch case onto a payload
+    or a move-result, an invoke with too few registers, a wide argument split across two
+    registers, the static off-by-one, the upper half of a wide parameter read as an object, a
+    narrow constant read as a long and the reverse (the AMOLED sweep's bug on 580), either half of
+    a live long overwritten and the other half still read, a broken pair or a narrow constant on
+    one arm of a branch or on a loop's back edge, a move-result the patch separated from its
+    invoke, bad try ranges and handlers (a handler at a payload among them), a move-exception the
+    method's entry reaches, and the one feed guard doubled, moved or missing. The good build
+    carries the joins ART accepts, so a check made stricter still has to pass them. Each bad build
+    has to fail with findings of its own category only, so a check that fires for the wrong reason
+    fails here too. Removed methods and DEX entries, the removal allowlist, and the device tally
+    comparison are held to what they did before.
 #>
 [CmdletBinding()]
 param(
@@ -204,9 +205,13 @@ try {
         'bad-branch' = 'branch'
         'bad-branch-self' = 'branch'
         'bad-switch-case' = 'branch'
+        'bad-switch-to-payload' = 'branch'
+        'bad-switch-to-result' = 'branch'
+        'bad-goto-to-payload' = 'branch'
         'bad-branch-to-result' = 'branch'
         'bad-goto-to-handler' = 'branch'
         'bad-fallthrough-handler' = 'try'
+        'bad-move-exception-entry' = 'try'
         'bad-wide-high-clobber' = 'width'
         'bad-wide-high-clobber-branch' = 'width'
         'bad-wide-high-clobber-loop' = 'width'
@@ -224,6 +229,7 @@ try {
         'bad-try-range' = 'try'
         'bad-try-handler' = 'try'
         'bad-try-handler-result' = 'try'
+        'bad-try-handler-payload' = 'try'
         'bad-double-guard' = 'contract'
         'bad-guard-elsewhere' = 'contract'
         'bad-no-guard' = 'contract'
