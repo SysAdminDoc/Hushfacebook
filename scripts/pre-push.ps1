@@ -273,10 +273,13 @@ try {
     }).Count -gt 0
     $touchesScripts = @($paths | Where-Object { $_ -like 'scripts/*' }).Count -gt 0
     $injectedRegisterVerifierPaths = @(
+        'scripts/BadDexFixture.java',
         'scripts/DexDiff.java',
+        'scripts/injected-mutation-contracts.txt',
         'scripts/injected-register-contracts.ps1',
         'scripts/injected-register-removal-allowlist.txt',
         'scripts/test-injected-registers.ps1',
+        'scripts/verify-all-patches.ps1',
         'scripts/verify-injected-registers.ps1'
     )
     $touchesInjectedRegisterVerifier = @($paths | Where-Object {
@@ -360,24 +363,23 @@ try {
             'in a clean worktree of the commit instead.')
     }
 
-    if ($touchesScripts) {
-        # Script, notice, failure message. The two injected-register suites and the resource
-        # table check's run only when their own files moved; each one is the pushed commit's
-        # copy, run against that commit.
-        $suites = @(, @('scripts/test-script-contracts.ps1', 'scripts changed, running their contract tests',
-            'The script contract tests did not pass.'))
-        if ($touchesInjectedRegisterVerifier) {
-            $suites += , @('scripts/test-injected-registers.ps1', 'injected-register verifier changed, running its fixture tests',
-                'The injected-register verifier fixture tests did not pass.')
-        }
-        if ($touchesResourceTableCheck) {
-            $suites += , @('scripts/test-resource-table-check.ps1', 'resource table check changed, running its fixture tests',
-                'The resource table check fixture tests did not pass.')
-        }
-        if ($touchesInjectedRegisterDevice) {
-            $suites += , @('scripts/test-injected-register-device.ps1', 'injected-register device helper changed, running its cleanup fixtures',
-                'The injected-register device cleanup fixtures did not pass.')
-        }
+    # Script, notice, failure message. The two injected-register suites and the resource table
+    # check's run only when their own files moved; each one is the pushed commit's copy, run
+    # against that commit.
+    $suites = @()
+    if ($touchesInjectedRegisterVerifier) {
+        $suites += , @('scripts/test-injected-registers.ps1', 'injected-register verifier changed, running its fixture tests',
+            'The injected-register verifier fixture tests did not pass.')
+    }
+    if ($touchesResourceTableCheck) {
+        $suites += , @('scripts/test-resource-table-check.ps1', 'resource table check changed, running its fixture tests',
+            'The resource table check fixture tests did not pass.')
+    }
+    if ($touchesInjectedRegisterDevice) {
+        $suites += , @('scripts/test-injected-register-device.ps1', 'injected-register device helper changed, running its cleanup fixtures',
+            'The injected-register device cleanup fixtures did not pass.')
+    }
+    if ($suites.Count -gt 0) {
         $scriptsLock = $null
         try {
             foreach ($scriptsCommit in $gateCommits) {
@@ -394,8 +396,10 @@ try {
                         if ($paths.Contains($suite[0])) {
                             throw "$($suite[0]) was deleted in this push. The gate scripts must not lose their tests."
                         }
-                        Write-Step "$($suite[0]) is not in $scriptsCommit, so it has nothing to run there"
-                        continue
+                        # Every suite listed here is one the gate expects. Skipping a missing one
+                        # with a note is how three of them were absent from the first commit on.
+                        $inCommit = if ($scriptsCommit) { $scriptsCommit } else { 'the working tree' }
+                        throw "$($suite[0]) is missing from $inCommit. The gate expects it, so the push stops."
                     }
                     $where = if ($scriptsRoot -eq $Root) { '' } else { " for $scriptsCommit in $scriptsRoot" }
                     Write-Step ($suite[1] + $where)

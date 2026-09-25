@@ -20,6 +20,10 @@
     has to be there. A failure names the id. What the patches rewrote, what the rebuild renamed
     and what was added go in a report beside the result file.
 
+    Last, verify-injected-registers.ps1 holds the patched dex to the stock dex: register counts,
+    branch targets, invoke registers, parameter kinds, try ranges and the one feed guard. Its
+    report goes beside the result file too.
+
 .EXAMPLE
     scripts/verify-all-patches.ps1 -Apk C:\path\to\native-fixture.apk `
         -DesktopJar C:\path\to\morphe-desktop.jar -WorkDir C:\path\to\scratch
@@ -167,8 +171,21 @@ try {
         $resourceOutput | ForEach-Object { Write-Host "[verify] $_" }
         Write-Host "[verify] resource report: $resourceReport"
         if ($resourceExitCode -eq 0) {
-            Write-Host '[verify] success: every requested patch applied to a valid APK whose resource table holds every stock resource.'
-            $exitCode = 0
+            # The injected code against Meta's: registers, branches, invokes, parameters, try
+            # ranges and the one feed guard, the shapes that pass the CLI and fail on a device.
+            $registerReport = Resolve-WithinRoot -Path (Join-Path $workRoot "verify-all-registers-$runId.txt") -Root $workRoot
+            $global:LASTEXITCODE = 0
+            & (Join-Path $PSScriptRoot 'verify-injected-registers.ps1') -CleanApk $stockApk -PatchedApk $out `
+                -ReportPath $registerReport -Java $Java -DesktopJar $DesktopJar -Aapt2 $Aapt2
+            $registerExitCode = $LASTEXITCODE
+            Write-Host "[verify] register report: $registerReport"
+            if ($registerExitCode -eq 0) {
+                Write-Host ('[verify] success: every requested patch applied to a valid APK whose resource table ' +
+                    'holds every stock resource and whose injected code passes the structural checks.')
+                $exitCode = 0
+            } else {
+                Write-Warning "[verify] the injected code failed its structural checks (exit $registerExitCode)."
+            }
         } else {
             Write-Warning "[verify] the patched resource table failed its check against the stock one (exit $resourceExitCode)."
         }

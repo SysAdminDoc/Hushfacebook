@@ -1,4 +1,6 @@
+import com.android.tools.smali.dexlib2.AccessFlags;
 import com.android.tools.smali.dexlib2.DexFileFactory;
+import com.android.tools.smali.dexlib2.Opcode;
 import com.android.tools.smali.dexlib2.Opcodes;
 import com.android.tools.smali.dexlib2.iface.ClassDef;
 import com.android.tools.smali.dexlib2.iface.DexFile;
@@ -13,9 +15,13 @@ import com.android.tools.smali.dexlib2.iface.instruction.OffsetInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction;
+import com.android.tools.smali.dexlib2.iface.instruction.SwitchElement;
+import com.android.tools.smali.dexlib2.iface.instruction.SwitchPayload;
 import com.android.tools.smali.dexlib2.iface.instruction.ThreeRegisterInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction;
+import com.android.tools.smali.dexlib2.iface.instruction.formats.ArrayPayload;
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference;
 import com.android.tools.smali.dexlib2.iface.reference.Reference;
 
 import java.io.File;
@@ -23,12 +29,16 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -57,12 +67,21 @@ import java.util.TreeSet;
  * </ul>
  *
  * <p>Branch targets and try-block ranges are part of a body's identity here, so a change that only
- * moves a jump or widens an exception range still shows up as a changed method. Whether the result
- * verifies is a question for a verifier, which is the other half of
- * scripts/verify-injected-registers.ps1.
+ * moves a jump or widens an exception range still shows up as a changed method.
+ *
+ * <p>Every changed and added method is also held to the structural rules Facebook's own crash
+ * reports came from (FroggoMorphePatches issues 3, 16 and 21): a branch or switch case that lands
+ * inside an instruction ("target dex pc is not at instruction start"), an invoke whose registers
+ * don't match what the callee takes, a parameter register read as the wrong kind (the static and
+ * wide off-by-one), a register the body wrote at the wrong width (a narrow const left where a
+ * const-wide was, which the AMOLED sweep did on 580), a move-result cut off from its invoke, and a
+ * try range or handler off an instruction boundary. A contract file adds
+ * rules about the whole APK: the feed filter's guard has exactly one call site, in
+ * addNewEdgeToCollection, because two guards stacked on that method is what broke Froggo's
+ * builds. The device verifier stays the authority; these catch the known shapes without a phone.
  *
  *   java -cp &lt;cli jar&gt; DexDiff.java &lt;cleanApk&gt; &lt;patchedApk&gt; &lt;reportFile&gt;
- *       &lt;removalAllowlist&gt;
+ *       &lt;removalAllowlist&gt; [&lt;contracts&gt;]
  */
 public class DexDiff {
 
@@ -100,6 +119,693 @@ public class DexDiff {
             }
         }
         return allowlist;
+    }
+
+    /** "single-call &lt;method reference&gt; in &lt;caller method name&gt;": exactly one call site, there. */
+    private static final class Contract {
+        final String callee;
+        final String callerName;
+
+        Contract(String callee, String callerName) {
+            this.callee = callee;
+            this.callerName = callerName;
+        }
+    }
+
+    private static List<Contract> readContracts(File file) throws Exception {
+        List<Contract> contracts = new ArrayList<>();
+        if (file == null) return contracts;
+        if (!file.isFile()) throw new IllegalArgumentException("Contract file not found: " + file);
+        int lineNumber = 0;
+        for (String raw : Files.readAllLines(file.toPath(), StandardCharsets.UTF_8)) {
+            lineNumber++;
+            String line = raw.trim();
+            if (line.isEmpty() || line.startsWith("#")) continue;
+            String[] parts = line.split("\\s+");
+            if (parts.length != 4 || !parts[0].equals("single-call") || !parts[2].equals("in")
+                    || !parts[1].contains("->")) {
+                throw new IllegalArgumentException("Invalid contract line " + lineNumber
+                        + ": expected single-call <method reference> in <caller method name>");
+            }
+            contracts.add(new Contract(parts[1], parts[3]));
+        }
+        return contracts;
+    }
+
+    /** Every instruction of a body with its code-unit address, and where the body ends. */
+    private static final class Layout {
+        final List<Instruction> instructions = new ArrayList<>();
+        final List<Integer> addresses = new ArrayList<>();
+        final Map<Integer, Instruction> byAddress = new HashMap<>();
+        int size;
+
+        Layout(MethodImplementation impl) {
+            int address = 0;
+            for (Instruction i : impl.getInstructions()) {
+                instructions.add(i);
+                addresses.add(address);
+                byAddress.put(address, i);
+                address += i.getCodeUnits();
+            }
+            size = address;
+        }
+
+        boolean isStart(int address) {
+            return byAddress.containsKey(address);
+        }
+    }
+
+    /** Registers a parameter of this type takes: two for long and double, one for anything else. */
+    private static int slots(CharSequence type) {
+        char c = type.charAt(0);
+        return c == 'J' || c == 'D' ? 2 : 1;
+    }
+
+    /** The kind a value of this type has in a register: L object, W wide (low half), I narrow. */
+    private static char kindOf(CharSequence type) {
+        char c = type.charAt(0);
+        if (c == 'J' || c == 'D') return 'W';
+        if (c == 'L' || c == '[') return 'L';
+        return 'I';
+    }
+
+    private static boolean isStaticInvoke(Opcode opcode) {
+        return opcode == Opcode.INVOKE_STATIC || opcode == Opcode.INVOKE_STATIC_RANGE;
+    }
+
+    /** The invoke kinds whose registers are the callee's receiver and parameters, in order. */
+    private static boolean isPlainInvoke(Opcode opcode) {
+        switch (opcode) {
+            case INVOKE_VIRTUAL: case INVOKE_SUPER: case INVOKE_DIRECT: case INVOKE_STATIC:
+            case INVOKE_INTERFACE: case INVOKE_VIRTUAL_RANGE: case INVOKE_SUPER_RANGE:
+            case INVOKE_DIRECT_RANGE: case INVOKE_STATIC_RANGE: case INVOKE_INTERFACE_RANGE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /** The registers an invoke passes, in argument order. */
+    private static int[] invokeRegisters(Instruction i) {
+        if (i instanceof RegisterRangeInstruction) {
+            RegisterRangeInstruction r = (RegisterRangeInstruction) i;
+            int[] regs = new int[r.getRegisterCount()];
+            for (int k = 0; k < regs.length; k++) regs[k] = r.getStartRegister() + k;
+            return regs;
+        }
+        FiveRegisterInstruction r = (FiveRegisterInstruction) i;
+        int[] all = { r.getRegisterC(), r.getRegisterD(), r.getRegisterE(), r.getRegisterF(), r.getRegisterG() };
+        int[] regs = new int[r.getRegisterCount()];
+        System.arraycopy(all, 0, regs, 0, regs.length);
+        return regs;
+    }
+
+    /**
+     * For each instruction, the parameter registers some path from the entry may have written
+     * before it runs, as bits counted from the first parameter register, or null where no path
+     * reaches it. A register no path has written still holds its argument, so its kind is known.
+     * An exception edge carries the state after the throwing instruction, which only adds writes,
+     * so wherever a path is in doubt the check that reads this stays quiet.
+     */
+    private static BitSet[] parameterWrites(MethodImplementation impl, Layout layout, int firstParameter) {
+        int count = layout.instructions.size();
+        BitSet[] before = new BitSet[count];
+        if (count == 0) return before;
+        Map<Integer, Integer> indexAt = new HashMap<>();
+        for (int k = 0; k < count; k++) indexAt.put(layout.addresses.get(k), k);
+        Deque<Integer> work = new ArrayDeque<>();
+        before[0] = new BitSet();
+        work.add(0);
+        while (!work.isEmpty()) {
+            int k = work.poll();
+            Instruction i = layout.instructions.get(k);
+            Opcode opcode = i.getOpcode();
+            int at = layout.addresses.get(k);
+            BitSet after = (BitSet) before[k].clone();
+            if (opcode.setsRegister() && i instanceof OneRegisterInstruction) {
+                int destination = ((OneRegisterInstruction) i).getRegisterA();
+                int last = destination + (opcode.setsWideRegister() ? 1 : 0);
+                for (int r = Math.max(destination, firstParameter); r <= last; r++) after.set(r - firstParameter);
+            }
+            List<Integer> next = new ArrayList<>();
+            if (opcode.canContinue()) next.add(at + i.getCodeUnits());
+            if (i instanceof OffsetInstruction && opcode != Opcode.FILL_ARRAY_DATA) {
+                int target = at + ((OffsetInstruction) i).getCodeOffset();
+                if (opcode == Opcode.PACKED_SWITCH || opcode == Opcode.SPARSE_SWITCH) {
+                    Instruction payload = layout.byAddress.get(target);
+                    if (payload instanceof SwitchPayload) {
+                        for (SwitchElement element : ((SwitchPayload) payload).getSwitchElements()) {
+                            next.add(at + element.getOffset());
+                        }
+                    }
+                } else {
+                    next.add(target);
+                }
+            }
+            if (opcode.canThrow()) {
+                for (TryBlock<? extends ExceptionHandler> block : impl.getTryBlocks()) {
+                    int start = block.getStartCodeAddress();
+                    if (at < start || at >= start + block.getCodeUnitCount()) continue;
+                    for (ExceptionHandler handler : block.getExceptionHandlers()) {
+                        next.add(handler.getHandlerCodeAddress());
+                    }
+                }
+            }
+            for (int address : next) {
+                Integer successor = indexAt.get(address);
+                if (successor == null) continue;
+                if (before[successor] == null) {
+                    before[successor] = (BitSet) after.clone();
+                    work.add(successor);
+                    continue;
+                }
+                BitSet merged = (BitSet) before[successor].clone();
+                merged.or(after);
+                if (!merged.equals(before[successor])) {
+                    before[successor] = merged;
+                    work.add(successor);
+                }
+            }
+        }
+        return before;
+    }
+
+    private static boolean isMoveResult(Opcode opcode) {
+        return opcode == Opcode.MOVE_RESULT || opcode == Opcode.MOVE_RESULT_WIDE
+                || opcode == Opcode.MOVE_RESULT_OBJECT;
+    }
+
+    /**
+     * The kind each register holds before each instruction, along every path from the entry, or
+     * null where no path reaches it: L an object, I a narrow value, Z a zero constant (narrow or
+     * null), W and w the halves of a wide value, T unknown. The parameters start with their
+     * declared kinds; constants, moves, move-results and the plain object producers set theirs;
+     * a wide result sets a pair; anything else, or two paths that disagree, leaves T, which no
+     * check reads. An exception edge carries the kinds from before and after the throwing
+     * instruction, merged, so it can only add doubt.
+     */
+    private static char[][] registerKinds(MethodImplementation impl, Layout layout,
+            Map<Integer, Character> parameterKind) {
+        int count = layout.instructions.size();
+        int registers = impl.getRegisterCount();
+        char[][] before = new char[count][];
+        if (count == 0) return before;
+        Map<Integer, Integer> indexAt = new HashMap<>();
+        for (int k = 0; k < count; k++) indexAt.put(layout.addresses.get(k), k);
+        char[] entry = new char[registers];
+        java.util.Arrays.fill(entry, 'T');
+        for (Map.Entry<Integer, Character> p : parameterKind.entrySet()) {
+            if (p.getKey() < registers) entry[p.getKey()] = p.getValue();
+        }
+        Deque<Integer> work = new ArrayDeque<>();
+        before[0] = entry;
+        work.add(0);
+        while (!work.isEmpty()) {
+            int k = work.poll();
+            Instruction i = layout.instructions.get(k);
+            Opcode opcode = i.getOpcode();
+            int at = layout.addresses.get(k);
+            char[] after = transfer(i, before[k]);
+            List<Integer> next = new ArrayList<>();
+            if (opcode.canContinue()) next.add(at + i.getCodeUnits());
+            if (i instanceof OffsetInstruction && opcode != Opcode.FILL_ARRAY_DATA) {
+                int target = at + ((OffsetInstruction) i).getCodeOffset();
+                if (opcode == Opcode.PACKED_SWITCH || opcode == Opcode.SPARSE_SWITCH) {
+                    Instruction payload = layout.byAddress.get(target);
+                    if (payload instanceof SwitchPayload) {
+                        for (SwitchElement element : ((SwitchPayload) payload).getSwitchElements()) {
+                            next.add(at + element.getOffset());
+                        }
+                    }
+                } else {
+                    next.add(target);
+                }
+            }
+            List<Integer> handlers = new ArrayList<>();
+            if (opcode.canThrow()) {
+                for (TryBlock<? extends ExceptionHandler> block : impl.getTryBlocks()) {
+                    int start = block.getStartCodeAddress();
+                    if (at < start || at >= start + block.getCodeUnitCount()) continue;
+                    for (ExceptionHandler handler : block.getExceptionHandlers()) {
+                        handlers.add(handler.getHandlerCodeAddress());
+                    }
+                }
+            }
+            for (int address : next) flow(before, indexAt, work, address, after);
+            for (int address : handlers) {
+                flow(before, indexAt, work, address, before[k]);
+                flow(before, indexAt, work, address, after);
+            }
+        }
+        return before;
+    }
+
+    private static void flow(char[][] before, Map<Integer, Integer> indexAt, Deque<Integer> work,
+            int address, char[] state) {
+        Integer successor = indexAt.get(address);
+        if (successor == null) return;
+        if (before[successor] == null) {
+            before[successor] = state.clone();
+            work.add(successor);
+            return;
+        }
+        boolean changed = false;
+        char[] into = before[successor];
+        for (int r = 0; r < into.length; r++) {
+            if (into[r] != state[r] && into[r] != 'T') {
+                into[r] = 'T';
+                changed = true;
+            }
+        }
+        if (changed) work.add(successor);
+    }
+
+    /** The kinds after one instruction. */
+    private static char[] transfer(Instruction i, char[] in) {
+        Opcode opcode = i.getOpcode();
+        if (!opcode.setsRegister() || !(i instanceof OneRegisterInstruction)) return in;
+        char[] out = in.clone();
+        int a = ((OneRegisterInstruction) i).getRegisterA();
+        // A move copies its source's kind, unless the read is already a finding: then what it
+        // wrote is unknown, and the one mistake is reported once rather than at every later use.
+        if (opcode.setsWideRegister()) {
+            char low = 'W', high = 'w';
+            if (opcode == Opcode.MOVE_WIDE || opcode == Opcode.MOVE_WIDE_FROM16 || opcode == Opcode.MOVE_WIDE_16) {
+                int b = ((TwoRegisterInstruction) i).getRegisterB();
+                boolean wide = b + 1 < in.length && in[b] == 'W' && in[b + 1] == 'w';
+                low = wide ? 'W' : 'T';
+                high = wide ? 'w' : 'T';
+            }
+            write(out, a, low);
+            write(out, a + 1, high);
+            return out;
+        }
+        char kind;
+        switch (opcode) {
+            case CONST_4: case CONST_16: case CONST: case CONST_HIGH16:
+                kind = ((com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction) i)
+                        .getNarrowLiteral() == 0 ? 'Z' : 'I';
+                break;
+            case MOVE: case MOVE_FROM16: case MOVE_16: {
+                int b = ((TwoRegisterInstruction) i).getRegisterB();
+                char source = b < in.length ? in[b] : 'T';
+                kind = source != 'T' && readableAs(source, 'I') ? source : 'T';
+                break;
+            }
+            case MOVE_OBJECT: case MOVE_OBJECT_FROM16: case MOVE_OBJECT_16: {
+                int b = ((TwoRegisterInstruction) i).getRegisterB();
+                char source = b < in.length ? in[b] : 'T';
+                kind = source != 'T' && readableAs(source, 'L') ? source : 'T';
+                break;
+            }
+            case MOVE_RESULT: case INSTANCE_OF: case ARRAY_LENGTH:
+            case IGET: case IGET_BOOLEAN: case IGET_BYTE: case IGET_CHAR: case IGET_SHORT:
+            case SGET: case SGET_BOOLEAN: case SGET_BYTE: case SGET_CHAR: case SGET_SHORT:
+            case AGET: case AGET_BOOLEAN: case AGET_BYTE: case AGET_CHAR: case AGET_SHORT:
+                kind = 'I';
+                break;
+            case MOVE_RESULT_OBJECT: case MOVE_EXCEPTION: case CONST_STRING: case CONST_STRING_JUMBO:
+            case CONST_CLASS: case NEW_INSTANCE: case NEW_ARRAY: case CHECK_CAST:
+            case IGET_OBJECT: case SGET_OBJECT: case AGET_OBJECT:
+                kind = 'L';
+                break;
+            default:
+                // Arithmetic, compares and conversions that don't set a pair set a narrow value.
+                kind = arithmeticOperands(opcode) != null ? 'I' : 'T';
+        }
+        write(out, a, kind);
+        return out;
+    }
+
+    /** One register's new kind, and the wide pair it breaks if it was half of one. */
+    private static void write(char[] out, int register, char kind) {
+        if (register >= out.length) return;
+        if (out[register] == 'W' && register + 1 < out.length && out[register + 1] == 'w' && kind != 'W') {
+            out[register + 1] = 'T';
+        }
+        if (out[register] == 'w' && register > 0 && out[register - 1] == 'W' && kind != 'w') {
+            out[register - 1] = 'T';
+        }
+        out[register] = kind;
+    }
+
+    /** Whether a register of this kind can be read as that kind. T is never in doubt here. */
+    private static boolean readableAs(char have, char want) {
+        if (have == 'T') return true;
+        switch (want) {
+            case 'W': return have == 'W';
+            case 'I': return have == 'I' || have == 'Z';
+            case 'L': return have == 'L' || have == 'Z';
+            default: return true;
+        }
+    }
+
+    private static final java.util.regex.Pattern WIDE_PAIR = java.util.regex.Pattern.compile(
+            "(add|sub|mul|div|rem|and|or|xor)-(long|double)(/2addr)?|cmp-long|cmp[lg]-double");
+    private static final java.util.regex.Pattern WIDE_SHIFT = java.util.regex.Pattern.compile(
+            "(shl|shr|ushr)-long(/2addr)?");
+    private static final java.util.regex.Pattern NARROW_PAIR = java.util.regex.Pattern.compile(
+            "(add|sub|mul|div|rem|and|or|xor|shl|shr|ushr)-(int|float)(/2addr)?|cmp[lg]-float");
+    private static final java.util.regex.Pattern NARROW_LITERAL = java.util.regex.Pattern.compile(
+            "(add|rsub|mul|div|rem|and|or|xor|shl|shr|ushr)-int/lit(8|16)|rsub-int");
+    private static final java.util.regex.Pattern WIDE_SINGLE = java.util.regex.Pattern.compile(
+            "(neg|not)-(long|double)|(long|double)-to-(int|long|float|double)");
+    private static final java.util.regex.Pattern NARROW_SINGLE = java.util.regex.Pattern.compile(
+            "(neg|not)-(int|float)|(int|float)-to-(int|long|float|double|byte|char|short)");
+
+    /** The kinds an arithmetic, compare or conversion instruction reads its operands as, or null. */
+    private static char[] arithmeticOperands(Opcode opcode) {
+        String name = opcode.name;
+        if (WIDE_PAIR.matcher(name).matches()) return new char[]{'W', 'W'};
+        if (WIDE_SHIFT.matcher(name).matches()) return new char[]{'W', 'I'};
+        if (NARROW_PAIR.matcher(name).matches()) return new char[]{'I', 'I'};
+        if (NARROW_LITERAL.matcher(name).matches() || NARROW_SINGLE.matcher(name).matches()) return new char[]{'I'};
+        if (WIDE_SINGLE.matcher(name).matches()) return new char[]{'W'};
+        return null;
+    }
+
+    private static void read(List<int[]> reads, int register, char kind) {
+        reads.add(new int[]{register, kind});
+    }
+
+    /** Every register an instruction reads as a value, with the kind it reads it as. */
+    private static List<int[]> valueReads(Instruction i) {
+        List<int[]> reads = new ArrayList<>();
+        Opcode opcode = i.getOpcode();
+        switch (opcode) {
+            case MOVE: case MOVE_FROM16: case MOVE_16:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'I');
+                return reads;
+            case MOVE_WIDE: case MOVE_WIDE_FROM16: case MOVE_WIDE_16:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'W');
+                return reads;
+            case MOVE_OBJECT: case MOVE_OBJECT_FROM16: case MOVE_OBJECT_16:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'L');
+                return reads;
+            case RETURN:
+            case SPUT: case SPUT_BOOLEAN: case SPUT_BYTE: case SPUT_CHAR: case SPUT_SHORT:
+                read(reads, ((OneRegisterInstruction) i).getRegisterA(), 'I');
+                return reads;
+            case RETURN_WIDE: case SPUT_WIDE:
+                read(reads, ((OneRegisterInstruction) i).getRegisterA(), 'W');
+                return reads;
+            case RETURN_OBJECT: case SPUT_OBJECT:
+                read(reads, ((OneRegisterInstruction) i).getRegisterA(), 'L');
+                return reads;
+            case IPUT: case IPUT_BOOLEAN: case IPUT_BYTE: case IPUT_CHAR: case IPUT_SHORT:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterA(), 'I');
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'L');
+                return reads;
+            case IPUT_WIDE:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterA(), 'W');
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'L');
+                return reads;
+            case IPUT_OBJECT:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterA(), 'L');
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'L');
+                return reads;
+            case IGET: case IGET_BOOLEAN: case IGET_BYTE: case IGET_CHAR: case IGET_SHORT:
+            case IGET_WIDE: case IGET_OBJECT:
+                read(reads, ((TwoRegisterInstruction) i).getRegisterB(), 'L');
+                return reads;
+            case APUT: case APUT_BOOLEAN: case APUT_BYTE: case APUT_CHAR: case APUT_SHORT:
+            case APUT_WIDE: case APUT_OBJECT: {
+                ThreeRegisterInstruction t = (ThreeRegisterInstruction) i;
+                char value = opcode == Opcode.APUT_WIDE ? 'W' : opcode == Opcode.APUT_OBJECT ? 'L' : 'I';
+                read(reads, t.getRegisterA(), value);
+                read(reads, t.getRegisterB(), 'L');
+                read(reads, t.getRegisterC(), 'I');
+                return reads;
+            }
+            case AGET: case AGET_BOOLEAN: case AGET_BYTE: case AGET_CHAR: case AGET_SHORT:
+            case AGET_WIDE: case AGET_OBJECT: {
+                ThreeRegisterInstruction t = (ThreeRegisterInstruction) i;
+                read(reads, t.getRegisterB(), 'L');
+                read(reads, t.getRegisterC(), 'I');
+                return reads;
+            }
+            default:
+                break;
+        }
+        char[] operands = arithmeticOperands(opcode);
+        if (operands == null) return reads;
+        int[] registers;
+        if (i instanceof ThreeRegisterInstruction) {
+            registers = new int[]{((ThreeRegisterInstruction) i).getRegisterB(), ((ThreeRegisterInstruction) i).getRegisterC()};
+        } else if (i instanceof TwoRegisterInstruction && opcode.name.endsWith("/2addr")) {
+            registers = new int[]{((TwoRegisterInstruction) i).getRegisterA(), ((TwoRegisterInstruction) i).getRegisterB()};
+        } else if (i instanceof TwoRegisterInstruction) {
+            registers = new int[]{((TwoRegisterInstruction) i).getRegisterB()};
+        } else {
+            return reads;
+        }
+        for (int k = 0; k < Math.min(operands.length, registers.length); k++) read(reads, registers[k], operands[k]);
+        return reads;
+    }
+
+    /**
+     * The structural findings for one method, each as "category: detail". The parameter check
+     * reads a register only where no path from the entry has written it, where the value can
+     * only be the argument the method was called with.
+     */
+    private static List<String> structuralFindings(ClassDef cd, Method m) {
+        List<String> findings = new ArrayList<>();
+        MethodImplementation impl = m.getImplementation();
+        if (impl == null) return findings;
+        Layout layout = new Layout(impl);
+
+        // A move-result takes the result of the instruction right before it, so an instruction
+        // injected between an invoke and its move-result leaves nothing to take.
+        for (int k = 0; k < layout.instructions.size(); k++) {
+            if (!isMoveResult(layout.instructions.get(k).getOpcode())) continue;
+            if (k == 0 || !layout.instructions.get(k - 1).getOpcode().setsResult()) {
+                findings.add("result: " + layout.instructions.get(k).getOpcode().name + " at "
+                        + layout.addresses.get(k) + " does not follow an invoke");
+            }
+        }
+
+        // Branches and switch cases.
+        for (int k = 0; k < layout.instructions.size(); k++) {
+            Instruction i = layout.instructions.get(k);
+            if (!(i instanceof OffsetInstruction)) continue;
+            int at = layout.addresses.get(k);
+            int target = at + ((OffsetInstruction) i).getCodeOffset();
+            Opcode opcode = i.getOpcode();
+            if (target == at && opcode != Opcode.GOTO_32) {
+                findings.add("branch: " + opcode.name + " at " + at + " branches to itself");
+                continue;
+            }
+            if (!layout.isStart(target)) {
+                findings.add("branch: " + opcode.name + " at " + at + " targets " + target
+                        + ", which is not the start of an instruction");
+                continue;
+            }
+            Instruction payload = layout.byAddress.get(target);
+            if (opcode == Opcode.PACKED_SWITCH || opcode == Opcode.SPARSE_SWITCH) {
+                if (!(payload instanceof SwitchPayload)) {
+                    findings.add("branch: " + opcode.name + " at " + at + " points at " + target
+                            + ", which is not a switch payload");
+                    continue;
+                }
+                for (SwitchElement element : ((SwitchPayload) payload).getSwitchElements()) {
+                    int caseTarget = at + element.getOffset();
+                    if (!layout.isStart(caseTarget)) {
+                        findings.add("branch: " + opcode.name + " at " + at + " sends case "
+                                + element.getKey() + " to " + caseTarget
+                                + ", which is not the start of an instruction");
+                    }
+                }
+            } else if (opcode == Opcode.FILL_ARRAY_DATA) {
+                if (!(payload instanceof ArrayPayload)) {
+                    findings.add("branch: fill-array-data at " + at + " points at " + target
+                            + ", which is not an array payload");
+                }
+            } else if (payload instanceof SwitchPayload || payload instanceof ArrayPayload) {
+                findings.add("branch: " + opcode.name + " at " + at + " jumps into a payload at " + target);
+            }
+        }
+
+        // Try ranges and handlers.
+        for (TryBlock<? extends ExceptionHandler> block : impl.getTryBlocks()) {
+            int start = block.getStartCodeAddress();
+            int end = start + block.getCodeUnitCount();
+            if (block.getCodeUnitCount() <= 0) {
+                findings.add("try: a try range at " + start + " covers nothing");
+            }
+            if (!layout.isStart(start)) {
+                findings.add("try: a try range starts at " + start + ", which is not the start of an instruction");
+            }
+            if (end > layout.size || (end != layout.size && !layout.isStart(end))) {
+                findings.add("try: a try range ends at " + end + ", which is not an instruction boundary");
+            }
+            for (ExceptionHandler handler : block.getExceptionHandlers()) {
+                int address = handler.getHandlerCodeAddress();
+                if (!layout.isStart(address)) {
+                    findings.add("try: a handler for " + handler.getExceptionType() + " is at "
+                            + address + ", which is not the start of an instruction");
+                } else if (isMoveResult(layout.byAddress.get(address).getOpcode())) {
+                    findings.add("try: a handler for " + handler.getExceptionType() + " starts with a move-result at "
+                            + address);
+                }
+            }
+        }
+
+        // Invokes: as many registers as the callee takes, and each wide argument in a pair.
+        for (int k = 0; k < layout.instructions.size(); k++) {
+            Instruction i = layout.instructions.get(k);
+            Opcode opcode = i.getOpcode();
+            if (!isPlainInvoke(opcode) || !(i instanceof ReferenceInstruction)
+                    || !(((ReferenceInstruction) i).getReference() instanceof MethodReference)) continue;
+            MethodReference callee = (MethodReference) ((ReferenceInstruction) i).getReference();
+            List<Character> expected = expectedArguments(opcode, callee);
+            int[] regs = invokeRegisters(i);
+            int at = layout.addresses.get(k);
+            if (regs.length != expected.size()) {
+                findings.add("invoke: " + opcode.name + " at " + at + " passes " + regs.length
+                        + (regs.length == 1 ? " register" : " registers") + " to " + callee
+                        + ", which takes " + expected.size());
+                continue;
+            }
+            for (int a = 0; a < regs.length; a++) {
+                if (expected.get(a) == 'w' && regs[a] != regs[a - 1] + 1) {
+                    findings.add("invoke: " + opcode.name + " at " + at + " splits a wide argument of "
+                            + callee + " across v" + regs[a - 1] + " and v" + regs[a]);
+                }
+            }
+        }
+
+        // Parameters: registerCount minus the ins, then this, then each parameter in order.
+        boolean isStatic = AccessFlags.STATIC.isSet(m.getAccessFlags());
+        int ins = isStatic ? 0 : 1;
+        for (CharSequence p : m.getParameterTypes()) ins += slots(p);
+        int firstParameter = impl.getRegisterCount() - ins;
+        if (firstParameter < 0) {
+            findings.add("parameter: declares " + impl.getRegisterCount() + " registers but its parameters need " + ins);
+            return findings;
+        }
+        Map<Integer, Character> parameterKind = new HashMap<>();
+        int register = firstParameter;
+        if (!isStatic) parameterKind.put(register++, 'L');
+        for (CharSequence p : m.getParameterTypes()) {
+            char kind = kindOf(p);
+            parameterKind.put(register, kind);
+            if (kind == 'W') parameterKind.put(register + 1, 'w');
+            register += slots(p);
+        }
+
+        // Kinds: a read of a register that every path gives the wrong kind. Where no path has
+        // written the register it still holds its argument, and the finding is the parameter
+        // layout's (the static and wide off-by-one); otherwise the body wrote the wrong width,
+        // such as a narrow const left where a const-wide was.
+        BitSet[] writes = parameterWrites(impl, layout, firstParameter);
+        char[][] kinds = registerKinds(impl, layout, parameterKind);
+        for (int k = 0; k < layout.instructions.size(); k++) {
+            if (kinds[k] == null || writes[k] == null) continue;
+            Instruction i = layout.instructions.get(k);
+            Opcode opcode = i.getOpcode();
+            int at = layout.addresses.get(k);
+
+            for (int[] read : valueReads(i)) {
+                if (read[0] >= kinds[k].length || readableAs(kinds[k][read[0]], (char) read[1])) continue;
+                findings.add(origin(read[0], firstParameter, writes[k]) + opcode.name + " at " + at
+                        + " reads v" + read[0] + ", which holds " + describe(kinds[k][read[0]])
+                        + ", as " + describe((char) read[1]));
+            }
+
+            if (!isPlainInvoke(opcode) || !(i instanceof ReferenceInstruction)
+                    || !(((ReferenceInstruction) i).getReference() instanceof MethodReference)) continue;
+            MethodReference callee = (MethodReference) ((ReferenceInstruction) i).getReference();
+            List<Character> expected = expectedArguments(opcode, callee);
+            int[] regs = invokeRegisters(i);
+            if (regs.length != expected.size()) continue;
+            for (int a = 0; a < regs.length; a++) {
+                char want = expected.get(a);
+                if (want == 'w' || regs[a] >= kinds[k].length) continue;
+                char have = kinds[k][regs[a]];
+                if (!readableAs(have, want)) {
+                    findings.add(origin(regs[a], firstParameter, writes[k]) + opcode.name + " at " + at
+                            + " passes v" + regs[a] + ", which holds " + describe(have) + ", where "
+                            + callee + " takes " + describe(want));
+                }
+            }
+        }
+        return findings;
+    }
+
+    /** "parameter" for a register that still holds its argument on every path, else "width". */
+    private static String origin(int register, int firstParameter, BitSet written) {
+        boolean argument = register >= firstParameter && !written.get(register - firstParameter);
+        return argument ? "parameter: " : "width: ";
+    }
+
+    /** The kind of each register an invoke passes: the receiver, then each parameter's slots. */
+    private static List<Character> expectedArguments(Opcode opcode, MethodReference callee) {
+        List<Character> expected = new ArrayList<>();
+        if (!isStaticInvoke(opcode)) expected.add('L');
+        for (CharSequence p : callee.getParameterTypes()) {
+            expected.add(kindOf(p));
+            if (slots(p) == 2) expected.add('w');
+        }
+        return expected;
+    }
+
+    private static String describe(char kind) {
+        switch (kind) {
+            case 'L': return "an object";
+            case 'W': return "a wide value";
+            case 'w': return "the upper half of a wide value";
+            case 'Z': return "a zero constant";
+            default: return "a narrow value";
+        }
+    }
+
+    /**
+     * Holds every changed and added method of the patched APK to the structural rules, and counts
+     * each contract's call sites across the whole APK. Returns method signature to findings, with
+     * contract results under the pseudo-method "contract".
+     */
+    private static Map<String, List<String>> structuralPass(File apk, Set<String> wanted,
+            List<Contract> contracts) throws Exception {
+        Map<String, List<String>> out = new TreeMap<>();
+        Map<String, List<String>> callSites = new LinkedHashMap<>();
+        for (Contract contract : contracts) callSites.put(contract.callee, new ArrayList<>());
+        MultiDexContainer<? extends DexFile> container =
+                DexFileFactory.loadDexContainer(apk, Opcodes.getDefault());
+        for (String entry : container.getDexEntryNames()) {
+            for (ClassDef cd : container.getEntry(entry).getDexFile().getClasses()) {
+                for (Method m : cd.getMethods()) {
+                    String s = sig(cd, m);
+                    if (wanted.contains(s)) {
+                        List<String> findings = structuralFindings(cd, m);
+                        if (!findings.isEmpty()) out.put(s, findings);
+                    }
+                    if (callSites.isEmpty() || m.getImplementation() == null) continue;
+                    for (Instruction i : m.getImplementation().getInstructions()) {
+                        if (!(i instanceof ReferenceInstruction)) continue;
+                        Reference r = ((ReferenceInstruction) i).getReference();
+                        if (!(r instanceof MethodReference)) continue;
+                        List<String> sites = callSites.get(r.toString());
+                        if (sites != null) sites.add(s);
+                    }
+                }
+            }
+        }
+        List<String> contractFindings = new ArrayList<>();
+        for (Contract contract : contracts) {
+            List<String> sites = callSites.get(contract.callee);
+            System.out.println("[diff] contract " + contract.callee + ": " + sites.size() + " call site"
+                    + (sites.size() == 1 ? "" : "s") + (sites.isEmpty() ? "" : ", in " + String.join(", ", sites)));
+            if (sites.size() != 1) {
+                contractFindings.add("contract: " + contract.callee + " has " + sites.size()
+                        + " call sites, and must have exactly one, in " + contract.callerName
+                        + (sites.isEmpty() ? "" : ": " + String.join(", ", sites)));
+            } else if (!sites.get(0).contains("->" + contract.callerName + "(")) {
+                contractFindings.add("contract: " + contract.callee + " is called from " + sites.get(0)
+                        + ", not from " + contract.callerName);
+            }
+        }
+        if (!contractFindings.isEmpty()) out.put("contract", contractFindings);
+        return out;
     }
 
     private static Set<String> dexEntries(File apk) throws Exception {
@@ -227,18 +933,31 @@ public class DexDiff {
             Reference r = ((ReferenceInstruction) i).getReference();
             if (r != null) b.append(", ").append(r);
         }
+        // A payload's cases and values are part of the body: a case moved to another target
+        // changed nothing else, and left out of the text, the method read as untouched.
+        if (i instanceof SwitchPayload) {
+            for (SwitchElement e : ((SwitchPayload) i).getSwitchElements()) {
+                b.append(' ').append(e.getKey()).append("->").append(String.format("%+d", e.getOffset()));
+            }
+        }
+        if (i instanceof ArrayPayload) {
+            b.append(" width=").append(((ArrayPayload) i).getElementWidth());
+            for (Number n : ((ArrayPayload) i).getArrayElements()) b.append(' ').append(n);
+        }
         return b.append(" |maxreg=").append(maxReg).toString();
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 4) {
-            System.err.println("usage: DexDiff <cleanApk> <patchedApk> <reportFile> <removalAllowlist>");
+        if (args.length < 4 || args.length > 5) {
+            System.err.println("usage: DexDiff <cleanApk> <patchedApk> <reportFile> <removalAllowlist> [<contracts>]");
             System.exit(2);
         }
         File clean = new File(args[0]);
         File patched = new File(args[1]);
         File allowlistFile = new File(args[3]);
         RemovalAllowlist allowlist = readRemovalAllowlist(allowlistFile);
+        File contractFile = args.length > 4 ? new File(args[4]) : null;
+        List<Contract> contracts = readContracts(contractFile);
 
         System.out.println("[diff] fingerprinting clean " + clean.getName());
         Map<String, String> before = fingerprintAll(clean);
@@ -317,15 +1036,40 @@ public class DexDiff {
         Map<String, List<String>> beforeBodies = bodiesOf(clean, changed);
         Map<String, List<String>> afterBodies = bodiesOf(patched, wanted);
 
+        // Every method the patch wrote or touched, the host's and the bundle's alike.
+        System.out.println("[diff] checking branches, invokes, parameters and try ranges of "
+                + (changed.size() + added.size()) + " methods");
+        Set<String> structuralWanted = new TreeSet<>(changed);
+        structuralWanted.addAll(added);
+        Map<String, List<String>> structural = structuralPass(patched, structuralWanted, contracts);
+        int structuralCount = 0;
+        for (Map.Entry<String, List<String>> e : structural.entrySet()) {
+            for (String finding : e.getValue()) {
+                structuralCount++;
+                System.out.println("[diff] FAIL: " + finding
+                        + (e.getKey().equals("contract") ? "" : "  in " + e.getKey()));
+            }
+        }
+        System.out.println("[diff] structural findings: " + structuralCount);
+        problems += structuralCount;
+
         PrintWriter report = new PrintWriter(args[2], "UTF-8");
         try {
             report.println("Methods a patched APK does not share with the clean build it came from.");
             report.println("clean:   " + clean.getAbsolutePath());
             report.println("patched: " + patched.getAbsolutePath());
             report.println("removal allowlist: " + allowlistFile.getAbsolutePath());
+            report.println("contracts: " + (contractFile == null ? "none" : contractFile.getAbsolutePath()));
             report.println("changed=" + changed.size() + " added=" + added.size()
                     + " (own=" + ownAdded.size() + ") removed=" + removed.size()
                     + " removedDex=" + removedDexEntries.size());
+            report.println();
+
+            report.println("Structural findings: " + structuralCount);
+            for (Map.Entry<String, List<String>> e : structural.entrySet()) {
+                report.println("  " + e.getKey());
+                for (String finding : e.getValue()) report.println("    FAIL  " + finding);
+            }
             report.println();
 
             report.println("Removed methods:");

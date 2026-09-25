@@ -1,0 +1,5 @@
+# Call sites a patched Facebook must have, checked across every dex of the APK by DexDiff.java.
+#   single-call <method reference> in <caller method name>
+# Two feed guards stacked on addNewEdgeToCollection is the shape that broke builds before, and a
+# guard anywhere else filters nothing.
+single-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideEdge(Ljava/lang/Object;Ljava/lang/Object;)Z in addNewEdgeToCollection
