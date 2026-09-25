@@ -833,6 +833,13 @@ try {
         Assert-True ($null -eq $unreadFloor.Floor -and $unreadFloor.Note -like $unread.Note) `
             "A floor the remote couldn't give was not reported as unchecked: $($unreadFloor.Floor), $($unreadFloor.Note)"
     }
+    # The clone's tag can be stale: a release re-cut on GitHub moves the tag there, and git fetch
+    # won't move it here. With a remote named, the published tag is read first. The clone's v0.0.9
+    # still names the release commit, and the remote's names the next one.
+    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('push', '--quiet', $toolchainRemote, "${head}:refs/tags/v0.0.9") | Out-Null
+    $publishedFirst = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.9' -RemoteUrl $toolchainRemote
+    Assert-True ($publishedFirst.Floor -eq '1.30.0' -and $publishedFirst.Source -eq "tag v0.0.9 on $toolchainRemote") `
+        "The clone's own tag was read over the published one: $($publishedFirst.Floor) from $($publishedFirst.Source)"
 
     # A commit with no catalog in it, and a receipt naming no commit at all. Both fall back to
     # the working catalog rather than throwing, and the first says so.

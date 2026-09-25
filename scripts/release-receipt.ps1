@@ -610,12 +610,13 @@ function Resolve-IndexManagerFloor {
         v<version> says which commit it was.
 
         -Commit is that commit when the caller has read the published tag already, as the release
-        check's published asset run does: a local tag can name another commit than GitHub's, after
-        a release is re-cut there, and git fetch won't move it. Without -Commit the clone's own tag
-        is read, and when the clone doesn't have one, -RemoteUrl is asked. `gh release create` makes
-        the tag on GitHub only, so the push that writes a new description comes from a clone
-        without it. A tag found nowhere, a commit this clone doesn't hold, or one with no catalog
-        can't tell, and answers Floor $null with a Note saying the check didn't run.
+        check's published asset run does. Without it, -RemoteUrl is asked first: a local tag can
+        name another commit than GitHub's after a release is re-cut there, and git fetch won't move
+        it, and `gh release create` makes the tag on GitHub only, so the push that writes a new
+        description comes from a clone without one. The clone's own tag answers when no remote is
+        named, or when the remote doesn't have the tag or can't be asked. A tag found nowhere, a
+        commit this clone doesn't hold, or one with no catalog can't tell, and answers Floor $null
+        with a Note saying the check didn't run.
 
         Answers @{ Floor; Source; Note }.
     #>
@@ -629,31 +630,30 @@ function Resolve-IndexManagerFloor {
     $tag = "v$Version"
     $source = "tag $tag"
     $unchecked = 'so the Manager floor the index names wasn''t checked'
+    $remoteSaid = ''
+    if ($Commit -notmatch '^[0-9a-f]{40}$' -and $RemoteUrl) {
+        $advertised = @(Invoke-RepoGit -Root $Root -Arguments @('ls-remote', $RemoteUrl, "refs/tags/$tag", "refs/tags/$tag^{}"))
+        $asked = $LASTEXITCODE -eq 0
+        # An annotated tag's own line names the tag object; the peeled line names its commit.
+        $escaped = [regex]::Escape("refs/tags/$tag")
+        $line = @(@($advertised | Where-Object { "$_" -match "^[0-9a-f]{40}\s+$escaped\^\{\}$" }) +
+            @($advertised | Where-Object { "$_" -match "^[0-9a-f]{40}\s+$escaped$" })) | Select-Object -First 1
+        if (-not $asked) {
+            $remoteSaid = " and $RemoteUrl couldn't be asked for it"
+        } elseif (-not $line) {
+            $remoteSaid = " or on $RemoteUrl"
+        } else {
+            $Commit = ([string]$line).Substring(0, 40)
+            $source = "tag $tag on $RemoteUrl"
+        }
+    }
     if ($Commit -notmatch '^[0-9a-f]{40}$') {
         $Commit = "$(Invoke-RepoGit -Root $Root -Arguments @('rev-parse', '--verify', '--quiet', "refs/tags/$tag^{commit}") |
             Select-Object -First 1)".Trim()
     }
     if ($Commit -notmatch '^[0-9a-f]{40}$') {
-        $missing = "tag $tag isn't in this clone"
-        if ($RemoteUrl) {
-            $advertised = @(Invoke-RepoGit -Root $Root -Arguments @('ls-remote', $RemoteUrl, "refs/tags/$tag", "refs/tags/$tag^{}"))
-            $asked = $LASTEXITCODE -eq 0
-            # An annotated tag's own line names the tag object; the peeled line names its commit.
-            $escaped = [regex]::Escape("refs/tags/$tag")
-            $line = @(@($advertised | Where-Object { "$_" -match "^[0-9a-f]{40}\s+$escaped\^\{\}$" }) +
-                @($advertised | Where-Object { "$_" -match "^[0-9a-f]{40}\s+$escaped$" })) | Select-Object -First 1
-            if (-not $asked) {
-                $missing += " and $RemoteUrl couldn't be asked for it"
-            } elseif (-not $line) {
-                $missing += " or on $RemoteUrl"
-            } else {
-                $Commit = ([string]$line).Substring(0, 40)
-                $source = "tag $tag on $RemoteUrl"
-            }
-        }
-        if ($Commit -notmatch '^[0-9a-f]{40}$') {
-            return [pscustomobject]@{ Floor = $null; Source = $null; Note = "$missing, $unchecked" }
-        }
+        return [pscustomobject]@{ Floor = $null; Source = $null
+            Note = "tag $tag isn't in this clone$remoteSaid, $unchecked" }
     }
     $held = "$(Invoke-RepoGit -Root $Root -Arguments @('rev-parse', '--verify', '--quiet', "$Commit^{commit}") |
         Select-Object -First 1)".Trim()
