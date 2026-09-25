@@ -304,6 +304,11 @@ function Find-MachineNames {
         carried the test phone's serial. .gitignore is the one file allowed to name what it keeps
         out. Both patterns are built from parts, so the file holding them can't match itself.
 
+        git grep reads bytes, so text in UTF-16 has patterns of its own: every letter followed by a
+        NUL for little-endian, the way Windows PowerShell's > writes a file, or preceded by one for
+        big-endian. They go through git grep's Perl regexes, which read \x00. A git built without
+        them can't search, which throws like any search that doesn't run.
+
         With -Commit the files are read out of those commits, which is what a push publishes, and
         no worktree is needed: git grep reads them all in one pass and puts the commit in front of
         each hit, <commit>:<path>:<line>:<text>. Without it, the tracked files as they stand in the
@@ -333,18 +338,29 @@ function Find-MachineNames {
     }
     # Windows PowerShell 5.1 turns a native command's stderr into a terminating error under Stop,
     # even redirected, and git grep says why it could not search on stderr.
+    $wideLe = { param([string[]]$Parts) ($Parts | ForEach-Object { "$_\x00" }) -join '' }
+    $wideBe = { param([string[]]$Parts) ($Parts | ForEach-Object { "\x00$_" }) -join '' }
+    $notes = @('c', 'l', 'a', 'u', 'd', 'e')
+    $serial = @('R', '5', 'C')
+    $scans = @(
+        @{ Name = 'the notes folder'; Flags = @('-i', '-P')
+            Pattern = @(($notes -join ''), (& $wideLe $notes), (& $wideBe $notes)) -join '|' }
+        @{ Name = 'a phone serial'; Flags = @('-P')
+            Pattern = @((($serial -join '') + '[A-Z0-9]{8}'), ((& $wideLe $serial) + '(?:[A-Z0-9]\x00){8}'),
+                ((& $wideBe $serial) + '(?:\x00[A-Z0-9]){8}')) -join '|' }
+    )
     $preference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        foreach ($scan in @(@('-i', ('cla' + 'ude')), @('-E', ('R5' + 'C[A-Z0-9]{8}')))) {
+        foreach ($scan in $scans) {
             foreach ($batch in $batches) {
-                $arguments = @('-C', $Root, 'grep', '-n', '-a', $scan[0], '-e', $scan[1]) + @($batch) +
+                $arguments = @('-C', $Root, 'grep', '-n', '-a') + $scan.Flags + @('-e', $scan.Pattern) + @($batch) +
                     @('--', '.', ':!.gitignore')
                 $found = @(& git @arguments 2>$null)
                 # 1 is git grep's "no match". Anything above it means the search did not run.
                 if ($LASTEXITCODE -gt 1) {
                     $what = if ($batch.Count -gt 0) { "commit $($batch -join ', ')" } else { 'the tracked files' }
-                    throw "git grep could not search $what in $Root for $($scan[1])."
+                    throw "git grep could not search $what in $Root for $($scan.Name)."
                 }
                 foreach ($line in $found) { $hits.Add([string]$line) }
             }

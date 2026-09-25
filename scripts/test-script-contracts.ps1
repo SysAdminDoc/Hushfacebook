@@ -1802,6 +1802,42 @@ try {
         "A hit in a binary file was not put down to its commit alone: $binaryRefusal"
     & git -C $hookRoot rm --quiet docs/logo.bin
     & git -C $hookRoot commit --quiet -m 'takes the picture out'
+    $pictureGone = (& git -C $hookRoot rev-parse HEAD).Trim()
+
+    # Text in UTF-16, which is what Windows PowerShell's > writes (little-endian, with a byte order
+    # mark), or big-endian: git grep reads bytes, where every letter sits beside a NUL. The phone
+    # and the notes folder are both found that way, in a pushed commit and in the working tree.
+    # Mid-sentence each byte order's pattern also finds the other, the NULs of the letters around
+    # lining up, so each file puts its name where only its own pattern can: first thing after the
+    # little-endian byte order mark, or last thing in a big-endian file.
+    $notesName = $notesFolder.Substring(1)
+    $wideDocs = [ordered]@{
+        'docs/notes-be.txt' = @([Text.Encoding]::BigEndianUnicode, "Fixtures live in ~/.$notesName")
+        'docs/notes-le.txt' = @([Text.Encoding]::Unicode, "$notesName keeps the working notes.")
+        'docs/phone-be.txt' = @([Text.Encoding]::BigEndianUnicode, "adb -s $phoneSerial")
+        'docs/phone-le.txt' = @([Text.Encoding]::Unicode, "$phoneSerial is the test phone.")
+    }
+    New-Item -ItemType Directory -Path (Join-Path $hookRoot 'docs') -Force | Out-Null
+    foreach ($doc in $wideDocs.Keys) {
+        [IO.File]::WriteAllText((Join-Path $hookRoot $doc), $wideDocs[$doc][1], $wideDocs[$doc][0])
+    }
+    & git -C $hookRoot add -- @($wideDocs.Keys)
+    & git -C $hookRoot commit --quiet -m 'wide text names the machine'
+    $wideNamed = (& git -C $hookRoot rev-parse HEAD).Trim()
+    Assert-Throws { & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $wideNamed refs/heads/main $pictureGone" 6> $null } `
+        ("*${wideNamed}:docs/notes-be.txt:1:*${wideNamed}:docs/notes-le.txt:1:*" +
+            "${wideNamed}:docs/phone-be.txt:1:*${wideNamed}:docs/phone-le.txt:1:*") `
+        'A push went through with UTF-16 text naming the machine and a phone.'
+    try {
+        & $prePushScript -Root $hookRoot -ChangedPaths @('docs/phone-le.txt') 6> $null
+        $wideHandRun = 'no refusal'
+    } catch {
+        $wideHandRun = $_.Exception.Message
+    }
+    Assert-True ($wideHandRun -like '*the working tree*docs/notes-be.txt:1:*docs/notes-le.txt:1:*docs/phone-be.txt:1:*docs/phone-le.txt:1:*') `
+        "A run by hand passed a working tree whose UTF-16 text names the machine: $wideHandRun"
+    & git -C $hookRoot rm --quiet -- @($wideDocs.Keys)
+    & git -C $hookRoot commit --quiet -m 'takes the wide text out'
 
     # The build branch, which runs the Gradle gates that hold the Bouncy Castle graphs to the
     # reviewed release. Starting a real build from a contract test would be absurd, so the case
