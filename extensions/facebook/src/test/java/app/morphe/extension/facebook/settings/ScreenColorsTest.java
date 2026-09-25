@@ -17,6 +17,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -239,6 +240,37 @@ public class ScreenColorsTest {
             assertTrue("no row titles were painted", titles > 10);
             assertTrue("no switch was painted", switches > 3);
             assertFalse(colors.light != light);
+        }
+    }
+
+    /**
+     * The save folder's field. The framework theme draws its underline, cursor and selection in
+     * Facebook's teal, which clashes with every wallpaper, so they take the accent the dialog's
+     * buttons have, and the underline reads against the dialog at the ratio a control needs.
+     */
+    @Test
+    public void theFolderDialogsFieldTakesTheAccent() {
+        PatchFamily.inBuildForTests = EnumSet.allOf(PatchFamily.class);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            SettingsDialog dialog = show(controller.get());
+            HushfacebookPreferenceFragment page = (HushfacebookPreferenceFragment)
+                    dialog.getChildFragmentManager().findFragmentById(SettingsDialog.CONTAINER_ID);
+            HushfacebookPreferenceFragment.FolderRow row =
+                    (HushfacebookPreferenceFragment.FolderRow) page.findPreference(Settings.SAVE_FOLDER.key);
+            assertNotNull("no save folder row", row);
+            row.showDialog(null);
+            ShadowLooper.idleMainLooper();
+            try {
+                ScreenColors colors = ScreenColors.shown;
+                assertNotNull(colors);
+                EditText field = row.getEditText();
+                assertNotNull("the underline keeps the framework's colour", field.getBackgroundTintList());
+                assertEquals(colors.accent, field.getBackgroundTintList().getDefaultColor());
+                assertEquals(ScreenColors.half(colors.accent), field.getHighlightColor());
+                assertTrue(contrast(colors.accent, colors.dialog) >= NON_TEXT);
+            } finally {
+                row.getDialog().dismiss();
+            }
         }
     }
 

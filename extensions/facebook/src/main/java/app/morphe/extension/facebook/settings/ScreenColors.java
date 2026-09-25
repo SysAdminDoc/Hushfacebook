@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -122,7 +123,10 @@ final class ScreenColors {
         if (title != null) title.setTextColor(heading);
     }
 
-    /** A dialog on show: its surface, title, message and buttons. A list's rows keep the theme's colours. */
+    /**
+     * A dialog on show: its surface, title, message, buttons and text field. A list's rows keep the
+     * theme's colours.
+     */
     void paint(@Nullable AlertDialog dialog) {
         if (dialog == null) return;
         Window window = dialog.getWindow();
@@ -139,6 +143,41 @@ final class ScreenColors {
         for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL}) {
             Button button = dialog.getButton(which);
             if (button != null) button.setTextColor(accent);
+        }
+        View field = dialog.findViewById(android.R.id.edit);
+        if (field instanceof EditText) paintField((EditText) field);
+    }
+
+    /**
+     * A dialog's text field. The framework theme draws its underline, cursor and selection in
+     * Facebook's teal, whatever the wallpaper, so they take the accent the buttons have.
+     */
+    void paintField(EditText field) {
+        field.setBackgroundTintList(ColorStateList.valueOf(accent));
+        field.setHighlightColor(half(accent));
+        Drawable cursor = field.getTextCursorDrawable();
+        if (cursor != null) {
+            cursor = cursor.mutate();
+            cursor.setTint(accent);
+            field.setTextCursorDrawable(cursor);
+        }
+        Drawable handle = field.getTextSelectHandle();
+        if (handle != null) {
+            handle = handle.mutate();
+            handle.setTint(accent);
+            field.setTextSelectHandle(handle);
+        }
+        Drawable left = field.getTextSelectHandleLeft();
+        if (left != null) {
+            left = left.mutate();
+            left.setTint(accent);
+            field.setTextSelectHandleLeft(left);
+        }
+        Drawable right = field.getTextSelectHandleRight();
+        if (right != null) {
+            right = right.mutate();
+            right.setTint(accent);
+            field.setTextSelectHandleRight(right);
         }
     }
 
@@ -161,7 +200,7 @@ final class ScreenColors {
     }
 
     /** A switch's track: the thumb's colour at half strength, as Material's own switch draws it. */
-    private static int half(int color) {
+    static int half(int color) {
         return (color & 0x00FFFFFF) | 0x80000000;
     }
 }
