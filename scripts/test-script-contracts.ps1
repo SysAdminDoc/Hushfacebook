@@ -1181,6 +1181,24 @@ try {
     Assert-Throws { Invoke-Facts } '*README badge Manager floor*' 'A README badge showing an older Manager was accepted.'
     Reset-FactsFile 'README.md'
 
+    # And each copy has to be there. The alt text and install step cases above name a stale floor,
+    # which the stale-floor check refuses before the presence checks run, so neither presence check
+    # was ever reached. An alt text with no version, or a step reworded past the stale-floor
+    # pattern ("or later" for "or newer"), leaves no stale floor to find, and each is refused by
+    # its own check's name.
+    Set-FactsFile 'README.md' {
+        param($text) $text.Replace("alt=`"For Morphe Manager $fixtureFloor or newer`"", 'alt="For Morphe Manager"')
+    }
+    Assert-Throws { Invoke-Facts } '*README badge alt Manager floor*' 'A README badge whose alt text names no Manager was accepted.'
+    Reset-FactsFile 'README.md'
+    Set-FactsFile 'README.md' {
+        param($text) $text -replace ('(?m)^(\d+\.\s+Install \[Morphe Manager\]\([^)\s]+\))\s+' + [regex]::Escape($fixtureFloor) +
+            '\s+or newer\.'), '${1}, version 1.31.0 or later.'
+    }
+    Assert-Throws { Invoke-Facts } '*README install step Manager floor*' `
+        'A README install step reworded past the stale-floor check was accepted.'
+    Reset-FactsFile 'README.md'
+
     # The heading that says this version shipped. Renaming it is what happened on 2026-09-14,
     # and the file is read by this check and by nothing else.
     Set-FactsFile 'CHANGELOG.md' {
