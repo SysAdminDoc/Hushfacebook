@@ -1541,6 +1541,26 @@ try {
     & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $cleanCommit refs/heads/main $namingCommit" 6> $null
     Assert-True ($LASTEXITCODE -eq 0) 'A push whose files name nothing, .gitignore aside, was stopped.'
 
+    # Both cases above push HEAD of a tree that matches it, so a scan of the working tree passed
+    # them too. Here the pushed commit and the working tree disagree, both ways round, and the
+    # refusal is read for the <commit>:<path>: prefix git grep gives only a hit it read out of a
+    # commit: the naming commit is refused while the tree holds the clean text, and the clean
+    # commit goes through while the tree names the machine.
+    Assert-Throws { & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $namingCommit refs/heads/main $newBranchHead" 6> $null } `
+        "*${namingCommit}:CONTRIBUTING.md:1:*${namingCommit}:docs/phone.md:1:*" `
+        'A push of a commit naming the machine went through because the working tree does not.'
+    Set-Content -LiteralPath (Join-Path $hookRoot 'CONTRIBUTING.md') -Encoding UTF8 -Value "Fixtures live in ~/$notesFolder/fixtures."
+    Set-Content -LiteralPath $phoneDoc -Encoding UTF8 -Value "adb -s $phoneSerial install app.apk"
+    try {
+        $global:LASTEXITCODE = 0
+        & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $cleanCommit refs/heads/main $namingCommit" 6> $null
+        Assert-True ($LASTEXITCODE -eq 0) "pre-push exited $LASTEXITCODE."
+    } catch {
+        throw "A push of a clean commit was stopped by what the working tree names: $($_.Exception.Message)"
+    } finally {
+        & git -C $hookRoot checkout --quiet -- CONTRIBUTING.md docs/phone.md
+    }
+
     # Every commit the push publishes, not only each ref's tip: a serial one commit adds and the
     # next removes still goes out in the first, and the refusal names that commit by the prefix git
     # grep gives a hit read out of it. Pushed as an update of a branch, and as a new branch beside a
