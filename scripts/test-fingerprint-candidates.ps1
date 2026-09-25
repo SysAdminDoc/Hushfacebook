@@ -24,8 +24,9 @@
 
     Through all of it, nothing under patches/ may change, and an output path there, or one ending in
     .kt or .java, has to be refused by both the tool and the wrapper. The tool has to refuse it
-    however the path spells or reaches it: in another case, with a trailing dot, or through a
-    junction.
+    however the path spells or reaches it: in another case, with a trailing dot, through a
+    junction, or on a subst drive standing for patches/ or a folder inside it, directly or through
+    another subst drive.
 #>
 [CmdletBinding()]
 param(
@@ -54,10 +55,10 @@ function Invoke-Checked {
 }
 
 function Invoke-Tool {
-    param([string[]]$Arguments)
+    param([string[]]$Arguments, [string[]]$JavaOptions = @())
     $ErrorActionPreference = 'Continue'
     $global:LASTEXITCODE = -1
-    $output = @(& $Java '-Xmx2g' '-cp' $classPath 'FingerprintCandidates' @Arguments 2>&1 | ForEach-Object { "$_" })
+    $output = @(& $Java '-Xmx2g' @JavaOptions '-cp' $classPath 'FingerprintCandidates' @Arguments 2>&1 | ForEach-Object { "$_" })
     [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output; Text = $output -join "`n" }
 }
 
@@ -287,6 +288,26 @@ try {
         Assert-True ($blocked.ExitCode -eq 2 -and $blocked.Text -match 'never edits a patch' -and
             -not (Test-Path -LiteralPath $spellings[$spelling])) "The tool wrote under patches/ as $spelling.`n$($blocked.Text)"
     }
+    # A subst drive is a root of its own to toRealPath, so the tool swaps it for its folder. The
+    # listing stands in for subst's own, on a letter no drive uses, so no case makes a real drive.
+    $free = @([char[]]'QRSTUVWXYZ' | Where-Object { -not (Test-Path -LiteralPath "$($_):\") })
+    $letter = $free[-1]
+    $outer = $free[-2]
+    $landing = Join-Path $fakePatches 'src\fingerprint-probe.json'
+    $substCases = [ordered]@{
+        "$($letter):\src\fingerprint-probe.json" = "$($letter):\: => $fakePatches"
+        "$($letter):\fingerprint-probe.json" = "$($letter):\: => $(Join-Path $fakePatches 'src')"
+        # A subst drive for a folder on another subst drive.
+        "$($outer):\fingerprint-probe.json" = "$($outer):\: => $($letter):\src`n$($letter):\: => $fakePatches"
+    }
+    foreach ($through in $substCases.Keys) {
+        $blocked = Invoke-Tool @('capture', $oldApk, $target, $through) -JavaOptions @("-Dhushfacebook.subst=$($substCases[$through])")
+        Assert-True ($blocked.ExitCode -eq 2 -and $blocked.Text -match 'never edits a patch' -and -not (Test-Path -LiteralPath $landing)) `
+            "The tool wrote through the subst drive in $through ($($substCases[$through])).`n$($blocked.Text)"
+    }
+    $lost = Invoke-Tool @('capture', $oldApk, $target, "$($letter):\fingerprint-probe.json") `
+        -JavaOptions @("-Dhushfacebook.subst=$($letter):\: => $(Join-Path $caseRoot 'no-such-folder')")
+    Assert-True ($lost.ExitCode -eq 2 -and $lost.Text -match 'is a subst drive for') "A subst drive whose folder can't be found was passed.`n$($lost.Text)"
     foreach ($name in 'Candidate.kt', 'Candidate.JAVA', 'Candidate.kt.') {
         $blockedSource = Invoke-Tool @('rank', $signature, (Join-Path $caseRoot 'moved.apk'), (Join-Path $caseRoot $name))
         Assert-True ($blockedSource.ExitCode -eq 2 -and $blockedSource.Text -match 'only reports' -and

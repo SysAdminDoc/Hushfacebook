@@ -185,8 +185,10 @@ public final class FingerprintCandidates {
             throw new InputException("Refusing to write " + file + ": it would be source, and this tool only reports.");
         }
         // The path as the file system has it, from the nearest part that exists: NTFS takes PATCHES
-        // and patches. for patches, and a junction or a link reaches it under any name.
-        File real = file;
+        // and patches. for patches, and a junction or a link reaches it under any name. A subst
+        // drive is a root of its own that toRealPath keeps, so it's swapped for its folder first:
+        // W:\src would never show the patches it stands for.
+        File real = unsubst(file);
         while (real != null && !real.exists()) real = real.getParentFile();
         try {
             if (real != null) real = real.toPath().toRealPath().toFile();
@@ -209,6 +211,70 @@ public final class FingerprintCandidates {
         String lower = name.toLowerCase(Locale.ROOT);
         return lower.endsWith(".kt") || lower.endsWith(".kts") || lower.endsWith(".java");
     }
+
+    /**
+     * The path with a drive subst made swapped for the folder it stands for, as often as that folder
+     * is on another subst drive, or the path itself.
+     */
+    static File unsubst(File file) throws InputException {
+        String path = file.getPath();
+        String first = substFolder(path);
+        if (first == null) return file;
+        String rest = path.substring(2);
+        String swapped = path;
+        for (int hop = 0; ; hop++) {
+            if (hop == 26) throw new InputException("Refusing to write " + file + ": its subst drives stand for each other in a circle.");
+            String folder = substFolder(swapped);
+            if (folder == null) break;
+            swapped = folder + swapped.substring(2);
+        }
+        // A folder read back wrong (subst prints in the OEM code page) would check some other path
+        // than the one written, so a drive whose folder isn't there is refused, not passed.
+        if (!new File(swapped.substring(0, swapped.length() - rest.length()) + File.separator).isDirectory()) {
+            throw new InputException("Refusing to write " + file + ": " + path.substring(0, 2)
+                    + " is a subst drive for " + first + ", which isn't a folder this tool can find.");
+        }
+        return new File(swapped);
+    }
+
+    /** The folder the drive a path starts with stands for, when subst made that drive. */
+    static String substFolder(String path) throws InputException {
+        if (path.length() < 2 || path.charAt(1) != ':') return null;
+        return substDrives().get(path.substring(0, 2).toUpperCase(Locale.ROOT));
+    }
+
+    static Map<String, String> substCache;
+
+    /** Each subst drive and its folder, from subst's own listing ("W:\: => C:\folder"). */
+    static Map<String, String> substDrives() throws InputException {
+        if (substCache != null) return substCache;
+        // The tests hand in a listing, so they need no drive of their own.
+        String listing = System.getProperty("hushfacebook.subst");
+        if (listing == null && System.getProperty("os.name", "").startsWith("Windows")) {
+            try {
+                Process subst = new ProcessBuilder("subst").redirectErrorStream(true).start();
+                listing = new String(subst.getInputStream().readAllBytes(), StandardCharsets.ISO_8859_1);
+                if (subst.waitFor() != 0) throw new IOException("subst exited " + subst.exitValue());
+            } catch (IOException e) {
+                throw new InputException("Refusing to write a report: subst couldn't list the drives it made (" + e.getMessage()
+                        + "), so a path through one can't be checked.");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new InputException("Refusing to write a report: interrupted while listing the subst drives.");
+            }
+        }
+        Map<String, String> drives = new HashMap<>();
+        if (listing != null) {
+            for (String line : listing.split("\\R")) {
+                java.util.regex.Matcher m = SUBST_LINE.matcher(line.trim());
+                if (m.matches()) drives.put(m.group(1).toUpperCase(Locale.ROOT), m.group(2).trim());
+            }
+        }
+        substCache = drives;
+        return drives;
+    }
+
+    static final java.util.regex.Pattern SUBST_LINE = java.util.regex.Pattern.compile("([A-Za-z]:)\\\\: => (.+)");
 
     // ---- names Redex keeps and names it makes up -------------------------------------------------
 
