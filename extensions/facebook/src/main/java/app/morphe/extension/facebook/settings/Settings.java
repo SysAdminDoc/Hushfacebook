@@ -9,9 +9,11 @@ package app.morphe.extension.facebook.settings;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
+import app.morphe.extension.facebook.download.DownloadQuality;
 import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
+import app.morphe.extension.shared.settings.EnumSetting;
 import app.morphe.extension.shared.settings.StringSetting;
 
 /**
@@ -138,4 +140,13 @@ public class Settings extends BaseSettings {
      */
     public static final StringSetting SAVE_FOLDER =
             new StringSetting("hushfacebook_save_folder", SaveFolder.DEFAULT);
+
+    /**
+     * The quality a video save asks for: the best the player streams, a ceiling, or the smallest
+     * file. Every save of a story, a reel or a feed video reads it when it starts, and one that
+     * finds nothing at or under a ceiling takes the nearest above it. Photos always save whole.
+     * Like the folder, it isn't a switch.
+     */
+    public static final EnumSetting<DownloadQuality> DOWNLOAD_QUALITY =
+            new EnumSetting<>("hushfacebook_download_quality", DownloadQuality.BEST);
 }

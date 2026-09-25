@@ -67,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
+import app.morphe.extension.facebook.download.DownloadQuality;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.HookStatus;
@@ -122,6 +123,7 @@ public class SettingsBackupTest {
         ShadowLooper.idleMainLooper();
         for (BooleanSetting setting : SettingsBackup.ALLOWLIST) setting.resetToDefault();
         Settings.SAVE_FOLDER.resetToDefault();
+        Settings.DOWNLOAD_QUALITY.resetToDefault();
         BaseSettings.PAUSED.resetToDefault();
         BaseSettings.DEBUG.resetToDefault();
         BaseSettings.DEBUG_LOG_FILTERS.resetToDefault();
@@ -149,15 +151,18 @@ public class SettingsBackupTest {
         assertTrue("STAYS_OUT names a switch Settings no longer has", switches.containsAll(STAYS_OUT.keySet()));
         assertEquals("the list names a switch twice", SettingsBackup.ALLOWLIST.size(),
                 new HashSet<>(SettingsBackup.ALLOWLIST).size());
-        // A file carries true or false, and one folder name it checks as a folder name. Any other
-        // setting in Settings needs a format that can carry it before it can be decided on.
+        // A file carries true or false, one folder name it checks as a folder name and one quality
+        // it checks against the ones this build offers. Any other setting in Settings needs a
+        // format that can carry it before it can be decided on.
         List<Setting<?>> notSwitches = new ArrayList<>();
         for (Setting<?> setting : declaredSettings(Settings.class)) {
             if (!(setting instanceof BooleanSetting)) notSwitches.add(setting);
         }
         assertEquals("a setting in Settings that isn't a switch has no format in a settings file",
-                Collections.singletonList(SettingsBackup.FOLDER), notSwitches);
+                SettingsBackup.VALUES, notSwitches);
+        assertEquals(Arrays.<Setting<?>>asList(Settings.SAVE_FOLDER, Settings.DOWNLOAD_QUALITY), SettingsBackup.VALUES);
         assertEquals(Settings.SAVE_FOLDER, SettingsBackup.FOLDER);
+        assertEquals(Settings.DOWNLOAD_QUALITY, SettingsBackup.QUALITY);
     }
 
     @Test
@@ -183,6 +188,7 @@ public class SettingsBackupTest {
         Settings.DOWNLOAD_REELS.save(false);
         // Stored as it came, and written as the folder the saves really use.
         Settings.SAVE_FOLDER.save("../My/Clips");
+        Settings.DOWNLOAD_QUALITY.save(DownloadQuality.P480);
         BaseSettings.PAUSED.save(true);
         BaseSettings.DEBUG.save(true);
         BaseSettings.DEBUG_LOG_FILTERS.save("downloads");
@@ -199,7 +205,7 @@ public class SettingsBackupTest {
         assertEquals(1, root.get("schema"));
         JSONObject switches = root.getJSONObject("settings");
         Set<String> carried = keys(SettingsBackup.ALLOWLIST);
-        carried.add(SettingsBackup.FOLDER.key);
+        carried.addAll(keys(SettingsBackup.VALUES));
         assertEquals(carried, names(switches));
         for (BooleanSetting setting : SettingsBackup.ALLOWLIST) {
             // Saved, not what a paused Facebook is answered: paused, every switch answers false.
@@ -207,8 +213,10 @@ public class SettingsBackupTest {
             assertEquals(setting.key, setting.savedValue(), switches.get(setting.key));
         }
         assertEquals("My_Clips", switches.get(SettingsBackup.FOLDER.key));
+        // Saved, not what a paused Facebook is answered: paused, the quality answers the best.
+        assertEquals("480p", switches.get(SettingsBackup.QUALITY.key));
         for (Setting<?> setting : Setting.allLoadedSettings()) {
-            if (SettingsBackup.ALLOWLIST.contains(setting) || setting == SettingsBackup.FOLDER) continue;
+            if (SettingsBackup.ALLOWLIST.contains(setting) || SettingsBackup.VALUES.contains(setting)) continue;
             assertFalse(setting.key + " is in the file", text.contains(setting.key));
         }
         for (String leak : new String[]{"sentinel", "c_user", "100012345678901", "secret-session",
@@ -539,6 +547,70 @@ public class SettingsBackupTest {
         }
     }
 
+    /**
+     * The quality goes out as its file value and comes back only as one this build offers: any
+     * other value, or one that isn't text, refuses the whole file.
+     */
+    @Test
+    public void theQualityRoundTripsAndComesBackOnlyAsOneThisBuildOffers() throws Exception {
+        for (DownloadQuality quality
+                : DownloadQuality.values()) {
+            Settings.DOWNLOAD_QUALITY.save(quality);
+            String file = SettingsBackup.create();
+            assertEquals(quality.fileValue, new JSONObject(file).getJSONObject("settings").get(SettingsBackup.QUALITY.key));
+            Settings.DOWNLOAD_QUALITY.save(quality == DownloadQuality.P720
+                    ? DownloadQuality.SMALLEST
+                    : DownloadQuality.P720);
+
+            SettingsBackup.Snapshot snapshot = SettingsBackup.parse(file);
+            assertEquals(quality, snapshot.quality);
+            assertEquals(quality, snapshot.qualityChange());
+            assertEquals(0, snapshot.switchChanges());
+            assertEquals(Collections.singletonMap(SettingsBackup.QUALITY, quality), snapshot.changes());
+            assertEquals(1, SettingsBackup.apply(snapshot));
+            assertEquals(quality, Settings.DOWNLOAD_QUALITY.savedValue());
+            assertEquals("a file read back is the file", file, SettingsBackup.create());
+            assertEquals("the same quality again changes nothing", 0, SettingsBackup.parse(file).changes().size());
+        }
+
+        Settings.DOWNLOAD_QUALITY.save(DownloadQuality.P480);
+        String file = SettingsBackup.create();
+        Map<String, ?> before = store();
+        for (Object refused : new Object[]{"BEST", "P480", "Best", "720", "720P", "1440p", " 480p", "", 480, true,
+                JSONObject.NULL, new JSONObject(), new org.json.JSONArray()}) {
+            JSONObject hostile = new JSONObject(file);
+            hostile.getJSONObject("settings").put(SettingsBackup.QUALITY.key, refused);
+            try {
+                SettingsBackup.parse(hostile.toString());
+                fail("a file with the quality " + printable(String.valueOf(refused)) + " was read");
+            } catch (SettingsBackup.Rejected rejected) {
+                assertEquals(printable(String.valueOf(refused)), SettingsBackup.Reason.VALUE, rejected.reason);
+            }
+        }
+        assertEquals("a refused file wrote something", before, store());
+
+        // A file from before the quality was carried leaves it alone.
+        SettingsBackup.Snapshot older = SettingsBackup.parse(fileWith(Settings.HIDE_SUGGESTED_POSTS, false));
+        assertNull(older.quality);
+        assertNull(older.qualityChange());
+        SettingsBackup.apply(older);
+        assertEquals(DownloadQuality.P480, Settings.DOWNLOAD_QUALITY.savedValue());
+    }
+
+    /** A preview kept across a rebuild keeps its quality, and only one this build offers comes back. */
+    @Test
+    public void aWaitingImportKeepsItsQualityOnlyWhileItIsOne() throws Exception {
+        Settings.DOWNLOAD_QUALITY.save(DownloadQuality.SMALLEST);
+        Bundle state = SettingsBackup.parse(SettingsBackup.create()).toBundle();
+        assertEquals(DownloadQuality.SMALLEST,
+                SettingsBackup.Snapshot.fromBundle(state).quality);
+
+        state.putString("quality", "SMALLEST");
+        assertNull(SettingsBackup.Snapshot.fromBundle(state).quality);
+        state.putInt("quality", 360);
+        assertNull(SettingsBackup.Snapshot.fromBundle(state).quality);
+    }
+
     /** A preview kept across a rebuild keeps its folder, and only a clean one comes back. */
     @Test
     public void aWaitingImportKeepsItsFolderOnlyWhileItIsClean() throws Exception {
@@ -756,6 +828,62 @@ public class SettingsBackupTest {
             assertFalse(Settings.DOWNLOAD_REELS.savedValue());
             assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
         }
+    }
+
+    /**
+     * A file that moves the quality says what videos will save at, before and after, beside the
+     * switches and the folder it changes, and the row shows the new quality.
+     */
+    @Test
+    public void importOfAQualitySaysWhatVideosWillSaveAt() throws Exception {
+        JSONObject file = new JSONObject(SettingsBackup.create());
+        file.getJSONObject("settings").put(SettingsBackup.QUALITY.key, "480p");
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            HushfacebookPreferenceFragment page = SettingsL10nTest.pageOf(SettingsL10nTest.show(activity));
+            deliver(activity, tap(activity, page, IMPORT_ROW), file.toString());
+            AlertDialog preview = shownPreview();
+            String quality = "Videos will save at " + app.morphe.extension.shared.L10n.isolate("480p")
+                    + ", or the closest quality each one has.";
+            assertEquals(quality, String.valueOf(shadowOf(preview).getMessage()));
+            preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            settle();
+            assertEquals("Settings imported. " + quality, ShadowToast.getTextOfLatestToast());
+            assertEquals(DownloadQuality.P480, Settings.DOWNLOAD_QUALITY.savedValue());
+            assertEquals("the quality row still shows the old quality",
+                    HushfacebookPreferenceFragment.qualitySummary(DownloadQuality.P480),
+                    String.valueOf(page.findPreference(Settings.DOWNLOAD_QUALITY.key).getSummary()));
+        }
+
+        file = new JSONObject(fileWith(Settings.DOWNLOAD_REELS, false));
+        file.getJSONObject("settings").put(SettingsBackup.QUALITY.key, "smallest")
+                .put(SettingsBackup.FOLDER.key, "Clips");
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            HushfacebookPreferenceFragment page = SettingsL10nTest.pageOf(SettingsL10nTest.show(activity));
+            deliver(activity, tap(activity, page, IMPORT_ROW), file.toString());
+            AlertDialog preview = shownPreview();
+            String quality = "Videos will save at their lowest quality, for the smallest files.";
+            String folder = "Saves will go to a folder named " + app.morphe.extension.shared.L10n.isolate("Clips") + ".";
+            assertEquals("1 switch will change.\n\n" + quality + "\n\n" + folder,
+                    String.valueOf(shadowOf(preview).getMessage()));
+            preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            settle();
+            assertEquals("Settings imported. 1 switch changed. " + quality + " " + folder,
+                    ShadowToast.getTextOfLatestToast());
+            assertEquals(DownloadQuality.SMALLEST,
+                    Settings.DOWNLOAD_QUALITY.savedValue());
+            assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
+            assertFalse(Settings.DOWNLOAD_REELS.savedValue());
+        }
+        // Back to the best: that has a sentence of its own, and a quality with a folder drops the
+        // folder's own toast for the sentences.
+        assertEquals("Videos will save at the best quality.",
+                SettingsBackupPreference.qualitySentence(DownloadQuality.BEST));
+        assertEquals("Settings imported. Videos will save at the best quality. Saves will go to a folder named "
+                        + app.morphe.extension.shared.L10n.isolate("Clips") + ".",
+                SettingsBackupPreference.importedMessage(0, "Clips",
+                        DownloadQuality.BEST));
     }
 
     @Test

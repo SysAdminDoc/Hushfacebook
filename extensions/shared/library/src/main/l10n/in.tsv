@@ -10,13 +10,13 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
 A diagnostic report is already being saved.	Sudah ada laporan diagnostik yang sedang disimpan.
-A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Tombol Unduh di bilah samping setiap reel menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, reel hanya menampilkan tombol bawaan Facebook.
+A Download button in the sidebar of every reel saves it at the quality set under Downloads. Off or paused, reels show only Facebook's own buttons.	Tombol Unduh di bilah samping setiap reel menyimpannya dengan kualitas yang diatur di bagian Unduhan. Jika nonaktif atau dijeda, reel hanya menampilkan tombol bawaan Facebook.
 A file named %1$s in %2$s paused Hushfacebook.	File bernama %1$s di %2$s menjeda Hushfacebook.
 About	Tentang
 Ad cards between the stories people posted.	Kartu iklan di antara cerita yang diposting orang.
 Ad telemetry blocked	Telemetri iklan diblokir
-Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.	Menambahkan Unduh ke ponsel ke menu video beranda dan Watch. Menyimpan kualitas tertinggi yang dialirkan Facebook. Saat mati atau dijeda, menu Facebook kembali.
-Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Menambahkan opsi Simpan ke menu cerita siapa pun dan menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, opsi Simpan hanya ada di cerita Anda sendiri dan memakai fitur simpan bawaan Facebook.
+Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Menambahkan Unduh ke ponsel ke menu video beranda dan Watch. Menyimpan dengan kualitas yang diatur di bawah. Saat mati atau dijeda, menu Facebook kembali.
+Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Menambahkan opsi Simpan ke menu cerita siapa pun dan menyimpannya dengan kualitas yang diatur di bagian Unduhan. Jika nonaktif atau dijeda, opsi Simpan hanya ada di cerita Anda sendiri dan memakai fitur simpan bawaan Facebook.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Iklan di dalam Reels. Banner, iklan di tengah video, dan iklan yang disisipkan aplikasi tetap diblokir saat dijeda.
 AMOLED black theme	Tema hitam AMOLED
 Audience Network off	Audience Network nonaktif
@@ -110,7 +110,7 @@ Save full report	Simpan laporan lengkap
 Saved to %1$s	Disimpan ke %1$s
 Saved to the gallery	Disimpan ke galeri
 Saved. Restart Facebook to apply this change.	Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.
-Save your switches and folder to a file. Pause and debug logging aren't included.	Simpan tombol dan folder Anda ke sebuah berkas. Jeda dan pencatatan debug tidak disertakan.
+Save your switches and download settings to a file. Pause and debug logging aren't included.	Simpan tombol dan pengaturan unduhan Anda ke sebuah berkas. Jeda dan pencatatan debug tidak disertakan.
 Saves will go to a folder named %1$s.	Semua yang Anda simpan akan masuk ke folder bernama %1$s.
 Saving a photo	Menyimpan foto
 Saving a video	Menyimpan video
@@ -176,3 +176,13 @@ Hide the Follow button on reels	Sembunyikan tombol Ikuti di reel
 The Follow button next to the reel's author. You can still follow them from their profile.	Tombol Ikuti di samping nama pembuat reel. Anda tetap bisa mengikutinya dari profilnya.
 Hide comment and reaction previews	Sembunyikan pratinjau komentar dan reaksi
 The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.	Komentar yang ditampilkan Facebook sebagai pratinjau di bawah reel, dan gelembung teman yang memberi reaksi. Buka komentar untuk melihat semuanya.
+Download quality	Kualitas unduhan
+Best	Terbaik
+Smallest	Terkecil
+Each video saves at the best quality the player streams.	Setiap video disimpan dengan kualitas streaming terbaik dari pemutar.
+Each video saves at its lowest quality, for the smallest file.	Setiap video disimpan dengan kualitas terendahnya, agar ukuran filenya sekecil mungkin.
+Each video saves at %1$s, or the closest quality it has.	Setiap video disimpan dalam %1$s, atau kualitas terdekat yang dimilikinya.
+Videos will save at the best quality.	Video akan disimpan dengan kualitas terbaik.
+Videos will save at their lowest quality, for the smallest files.	Video akan disimpan dengan kualitas terendahnya, agar ukuran filenya sekecil mungkin.
+Videos will save at %1$s, or the closest quality each one has.	Video akan disimpan dalam %1$s, atau kualitas terdekat yang dimiliki tiap video.
+Settings imported.	Pengaturan diimpor.

@@ -216,6 +216,39 @@ final class RenditionPicker {
         return best;
     }
 
+    /**
+     * The video address among these that suits [quality] best, or {@code null} when none is a
+     * video. The best quality is {@link #bestOf}, as it always was. Below it, a single file still
+     * wins over a plausible address first, then {@link DownloadQuality#compare} decides on the
+     * stated qualities, and the address itself breaks a tie, for the same reason as in
+     * {@link #compare}. An address that states no quality comes last but still counts, so a
+     * ceiling never leaves a save with nothing.
+     */
+    static String bestVideo(Collection<String> urls, DownloadQuality quality) {
+        if (quality == null || quality == DownloadQuality.BEST) return bestOf(urls, true);
+        if (urls == null || urls.isEmpty()) return null;
+
+        String best = null;
+        for (String url : new LinkedHashSet<>(urls)) {
+            if (videoTier(url) == TIER_NONE) continue;
+            if (best == null || compare(url, best, quality) < 0) best = url;
+        }
+
+        return best;
+    }
+
+    /** {@link #compare} for a video save held to [quality]. Lower sorts better. */
+    static int compare(String a, String b, DownloadQuality quality) {
+        int tierA = videoTier(a);
+        int tierB = videoTier(b);
+        if (tierA != tierB) return tierB - tierA;
+
+        int order = quality.compare(qualityOf(a), qualityOf(b));
+        if (order != 0) return order;
+
+        return a.compareTo(b);
+    }
+
     // ---------------------------------------------------------------- reading an object
 
     /**

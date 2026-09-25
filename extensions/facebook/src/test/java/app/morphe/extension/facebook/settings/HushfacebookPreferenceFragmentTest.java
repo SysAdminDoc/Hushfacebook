@@ -17,6 +17,7 @@ import android.preference.Preference;
 import android.preference.PreferenceGroup;
 import android.preference.SwitchPreference;
 
+import app.morphe.extension.facebook.download.DownloadQuality;
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.settings.BaseSettings;
@@ -36,6 +37,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +65,7 @@ public class HushfacebookPreferenceFragmentTest {
         ScreenColors.shown = null;
         PauseForTests.resume();
         Settings.SAVE_FOLDER.resetToDefault();
+        Settings.DOWNLOAD_QUALITY.resetToDefault();
     }
 
     @Test
@@ -212,6 +215,77 @@ public class HushfacebookPreferenceFragmentTest {
             for (Preference row : rowsOf(controller)) {
                 assertFalse("a folder row with no download in the build",
                         row instanceof HushfacebookPreferenceFragment.FolderRow);
+            }
+        }
+    }
+
+    /**
+     * The download quality's row offers every quality, says what the chosen one does, and a pick
+     * reaches the setting the way the list's own dialog sends it. It sits above the folder, and
+     * it's there with any download in the build.
+     */
+    @Test
+    public void theQualityRowOffersEveryQualityAndSaysWhatItDoes() {
+        PatchFamily.inBuildForTests = EnumSet.of(PatchFamily.REEL_DOWNLOAD);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            HushfacebookPreferenceFragment page = new HushfacebookPreferenceFragment();
+            controller.get().getFragmentManager().beginTransaction().add(android.R.id.content, page).commitNow();
+            List<Preference> rows = new ArrayList<>();
+            collect(page.getPreferenceScreen(), rows);
+            HushfacebookPreferenceFragment.QualityRow quality = null;
+            int qualityAt = -1;
+            int folderAt = -1;
+            for (int i = 0; i < rows.size(); i++) {
+                if (rows.get(i) instanceof HushfacebookPreferenceFragment.QualityRow) {
+                    quality = (HushfacebookPreferenceFragment.QualityRow) rows.get(i);
+                    qualityAt = i;
+                }
+                if (rows.get(i) instanceof HushfacebookPreferenceFragment.FolderRow) folderAt = i;
+            }
+            assertNotNull("no quality row with a download in the build", quality);
+            assertTrue("the quality row isn't next to the folder", qualityAt == folderAt - 1);
+            assertEquals(Settings.DOWNLOAD_QUALITY.key, quality.getKey());
+            assertEquals("Download quality", String.valueOf(quality.getTitle()));
+
+            List<String> entries = new ArrayList<>();
+            for (CharSequence entry : quality.getEntries()) entries.add(String.valueOf(entry));
+            assertEquals(Arrays.asList("Best", L10n.isolate("1080p"), L10n.isolate("720p"), L10n.isolate("480p"),
+                    L10n.isolate("360p"), "Smallest"), entries);
+            List<String> values = new ArrayList<>();
+            for (CharSequence value : quality.getEntryValues()) values.add(String.valueOf(value));
+            List<String> names = new ArrayList<>();
+            for (DownloadQuality each : DownloadQuality.values()) names.add(each.name());
+            assertEquals(names, values);
+
+            assertEquals("BEST", quality.getValue());
+            assertEquals("Each video saves at the best quality the player streams.", String.valueOf(quality.getSummary()));
+
+            // A pick in the list, the way its dialog sends one.
+            quality.setValue("P480");
+            ShadowLooper.idleMainLooper();
+            assertEquals(DownloadQuality.P480, Settings.DOWNLOAD_QUALITY.savedValue());
+            assertEquals("Each video saves at " + L10n.isolate("480p") + ", or the closest quality it has.",
+                    String.valueOf(quality.getSummary()));
+
+            quality.setValue("SMALLEST");
+            ShadowLooper.idleMainLooper();
+            assertEquals(DownloadQuality.SMALLEST, Settings.DOWNLOAD_QUALITY.savedValue());
+            assertEquals("Each video saves at its lowest quality, for the smallest file.",
+                    String.valueOf(quality.getSummary()));
+
+            // A value set behind the row, as an import does, shows once the page syncs.
+            Settings.DOWNLOAD_QUALITY.save(DownloadQuality.P720);
+            page.refreshSwitches();
+            assertEquals("P720", quality.getValue());
+            assertEquals(HushfacebookPreferenceFragment.qualitySummary(DownloadQuality.P720),
+                    String.valueOf(quality.getSummary()));
+        }
+
+        PatchFamily.inBuildForTests = EnumSet.of(PatchFamily.SPONSORED_POSTS);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            for (Preference row : rowsOf(controller)) {
+                assertFalse("a quality row with no download in the build",
+                        row instanceof HushfacebookPreferenceFragment.QualityRow);
             }
         }
     }

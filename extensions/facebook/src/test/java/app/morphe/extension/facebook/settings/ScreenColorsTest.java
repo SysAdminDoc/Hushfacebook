@@ -42,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import app.morphe.extension.facebook.download.DownloadQuality;
 import app.morphe.extension.facebook.theme.PalettesForTests;
 import app.morphe.extension.facebook.theme.TonePalette;
 import app.morphe.extension.shared.SettingsContextRule;
@@ -289,6 +290,39 @@ public class ScreenColorsTest {
                 }
                 assertEquals(colors.summary, field.getCurrentHintTextColor());
                 assertTrue(contrast(field.getCurrentHintTextColor(), colors.dialog) >= TEXT);
+            } finally {
+                row.getDialog().dismiss();
+            }
+        }
+    }
+
+    /**
+     * The download quality's list. Its title and its Cancel button take the screen's colours, as
+     * every other dialog here does, and each choice reads on the dialog.
+     */
+    @Test
+    public void theQualityListTakesTheScreensColours() {
+        PatchFamily.inBuildForTests = EnumSet.allOf(PatchFamily.class);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            SettingsDialog dialog = show(controller.get());
+            HushfacebookPreferenceFragment page = (HushfacebookPreferenceFragment)
+                    dialog.getChildFragmentManager().findFragmentById(SettingsDialog.CONTAINER_ID);
+            HushfacebookPreferenceFragment.QualityRow row =
+                    (HushfacebookPreferenceFragment.QualityRow) page.findPreference(Settings.DOWNLOAD_QUALITY.key);
+            assertNotNull("no download quality row", row);
+            row.showDialog(null);
+            ShadowLooper.idleMainLooper();
+            try {
+                ScreenColors colors = ScreenColors.shown;
+                assertNotNull(colors);
+                android.app.AlertDialog list = (android.app.AlertDialog) row.getDialog();
+                int titleId = list.getContext().getResources().getIdentifier("alertTitle", "id", "android");
+                TextView title = list.findViewById(titleId);
+                assertNotNull("the list has no title", title);
+                assertEquals("Download quality", String.valueOf(title.getText()));
+                assertEquals(colors.title, title.getCurrentTextColor());
+                assertEquals(colors.accent, list.getButton(android.app.AlertDialog.BUTTON_NEGATIVE).getCurrentTextColor());
+                assertEquals(DownloadQuality.values().length, list.getListView().getAdapter().getCount());
             } finally {
                 row.getDialog().dismiss();
             }

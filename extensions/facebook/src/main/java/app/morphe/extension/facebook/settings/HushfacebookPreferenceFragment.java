@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.EditTextPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
@@ -49,12 +50,14 @@ import androidx.annotation.Nullable;
 
 import java.util.Set;
 
+import app.morphe.extension.facebook.download.DownloadQuality;
 import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.HushfacebookPause;
+import app.morphe.extension.shared.settings.Setting;
 import app.morphe.extension.shared.settings.preference.AbstractPreferenceFragment;
 import app.morphe.extension.shared.settings.preference.ClearLogBufferPreference;
 import app.morphe.extension.shared.settings.preference.ExportDiagnosticReportPreference;
@@ -223,8 +226,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.STORY_DOWNLOAD)) {
                 stories.addPreference(toggle(context, Settings.DOWNLOAD_STORIES, L10n.t("Save any story"),
-                        L10n.t("Adds Save to the menu of anyone's story, and saves at the best quality the "
-                                + "player streams. Off or paused, only your own stories have Save, and it's "
+                        L10n.t("Adds Save to the menu of anyone's story, and saves at the quality set under "
+                                + "Downloads. Off or paused, only your own stories have Save, and it's "
                                 + "Facebook's own.")));
             }
         }
@@ -251,8 +254,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.REEL_DOWNLOAD)) {
                 reels.addPreference(toggle(context, Settings.DOWNLOAD_REELS, L10n.t("Download button on reels"),
-                        L10n.t("A Download button in the sidebar of every reel saves it at the best quality "
-                                + "the player streams. Off or paused, reels show only Facebook's own buttons.")));
+                        L10n.t("A Download button in the sidebar of every reel saves it at the quality set "
+                                + "under Downloads. Off or paused, reels show only Facebook's own buttons.")));
             }
         }
 
@@ -261,9 +264,10 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             PreferenceCategory downloads = category(screen, L10n.t("Downloads"));
             if (build.contains(PatchFamily.VIDEO_DOWNLOAD)) {
                 downloads.addPreference(toggle(context, Settings.DOWNLOAD_VIDEOS, L10n.t("Download feed and Watch videos"),
-                        L10n.t("Adds Download to phone to feed and Watch video menus. Saves the highest quality "
-                                + "Facebook streams. Off or paused, Facebook's menu returns.")));
+                        L10n.t("Adds Download to phone to feed and Watch video menus. Saves at the quality set "
+                                + "below. Off or paused, Facebook's menu returns.")));
             }
+            downloads.addPreference(qualityRow(context));
             downloads.addPreference(folderRow(context));
         }
 
@@ -324,7 +328,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         // Morphe Manager can export the patch choices and the signing key, not these switches.
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.EXPORT,
                 L10n.t("Export settings"),
-                L10n.t("Save your switches and folder to a file. Pause and debug logging aren't included.")));
+                L10n.t("Save your switches and download settings to a file. Pause and debug logging aren't included.")));
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.IMPORT,
                 L10n.t("Import settings"),
                 L10n.t("Choose a settings file and preview what would change before importing.")));
@@ -495,6 +499,63 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
     }
 
     /**
+     * The quality a video save asks for. The list's values are the setting's own names, which is
+     * what the shared page syncs a list by, and the summary says what the choice does.
+     */
+    static QualityRow qualityRow(Context context) {
+        QualityRow row = new QualityRow(context);
+        row.setKey(Settings.DOWNLOAD_QUALITY.key);
+        row.setTitle(L10n.t("Download quality"));
+        row.setDialogTitle(L10n.t("Download quality"));
+        DownloadQuality[] qualities = DownloadQuality.values();
+        CharSequence[] entries = new CharSequence[qualities.length];
+        CharSequence[] values = new CharSequence[qualities.length];
+        for (int i = 0; i < qualities.length; i++) {
+            entries[i] = qualityLabel(qualities[i]);
+            values[i] = qualities[i].name();
+        }
+        row.setEntries(entries);
+        row.setEntryValues(values);
+        row.setValue(Settings.DOWNLOAD_QUALITY.savedValue().name());
+        return row;
+    }
+
+    /** What the list shows for [quality]: a word for the two ends, the label itself between them. */
+    static String qualityLabel(DownloadQuality quality) {
+        switch (quality) {
+            case BEST:
+                return L10n.t("Best");
+            case SMALLEST:
+                return L10n.t("Smallest");
+            default:
+                return L10n.isolate(quality.ceilingLabel());
+        }
+    }
+
+    /** What a save does with [quality], for the row's summary. */
+    static String qualitySummary(DownloadQuality quality) {
+        switch (quality) {
+            case BEST:
+                return L10n.t("Each video saves at the best quality the player streams.");
+            case SMALLEST:
+                return L10n.t("Each video saves at its lowest quality, for the smallest file.");
+            default:
+                return L10n.f("Each video saves at %1$s, or the closest quality it has.",
+                        L10n.isolate(quality.ceilingLabel()));
+        }
+    }
+
+    /** The quality row's summary is a sentence of its own rather than the chosen entry. */
+    @Override
+    protected void updateListPreferenceSummary(ListPreference listPreference, Setting<?> setting) {
+        if (listPreference instanceof QualityRow) {
+            ((QualityRow) listPreference).showSummary();
+        } else {
+            super.updateListPreferenceSummary(listPreference, setting);
+        }
+    }
+
+    /**
      * The folder every save goes to. What's typed is cleaned before it's kept, so the row, the
      * setting and the next save all show the one folder name the save will use.
      */
@@ -623,6 +684,45 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         }
 
         /** Its edit dialog takes the screen's colours, as the other rows' dialogs do. */
+        @Override
+        protected void showDialog(Bundle state) {
+            super.showDialog(state);
+            if (getDialog() instanceof AlertDialog) ScreenColors.dialog((AlertDialog) getDialog());
+        }
+    }
+
+    /**
+     * The download quality's row. Its summary follows its value, whoever sets it: the person, the
+     * shared page syncing it from the setting, or an import.
+     */
+    static final class QualityRow extends ListPreference {
+        QualityRow(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void setValue(String value) {
+            super.setValue(value);
+            showSummary();
+        }
+
+        void showSummary() {
+            DownloadQuality quality = DownloadQuality.BEST;
+            for (DownloadQuality candidate : DownloadQuality.values()) {
+                if (candidate.name().equals(getValue())) quality = candidate;
+            }
+            setSummary(qualitySummary(quality));
+        }
+
+        @Override
+        protected void onBindView(View view) {
+            super.onBindView(view);
+            showAllText(view);
+            ScreenColors.row(view, this);
+            view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
+        }
+
+        /** Its list takes the screen's colours, as the other rows' dialogs do. */
         @Override
         protected void showDialog(Bundle state) {
             super.showDialog(state);

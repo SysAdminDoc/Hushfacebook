@@ -28,10 +28,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import app.morphe.extension.facebook.download.DownloadQuality;
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
@@ -266,8 +268,8 @@ public class SettingsBackupPreference extends Preference {
     }
 
     /**
-     * How many switches the waiting file changes, the folder it moves the saves to, and what's in
-     * it that this build doesn't know.
+     * How many switches the waiting file changes, the folder it moves the saves to, the quality it
+     * sets, and what's in it that this build doesn't know.
      */
     static void showPreview(HushfacebookPreferenceFragment page) {
         if (page.importPreview != null) return;
@@ -279,15 +281,16 @@ public class SettingsBackupPreference extends Preference {
         }
         int changes = snapshot.changes().size();
         int switches = snapshot.switchChanges();
-        String folder = snapshot.folderChange();
         String message;
         if (changes == 0) {
             message = L10n.t("Your switches already match that file, so nothing will change.");
-        } else if (switches == 0) {
-            message = folderSentence(folder);
         } else {
-            message = L10n.quantity(switches, "%1$d switch will change.", "%1$d switches will change.", switches);
-            if (folder != null) message += "\n\n" + folderSentence(folder);
+            List<String> parts = new ArrayList<>();
+            if (switches > 0) {
+                parts.add(L10n.quantity(switches, "%1$d switch will change.", "%1$d switches will change.", switches));
+            }
+            parts.addAll(valueSentences(snapshot.folderChange(), snapshot.qualityChange()));
+            message = String.join("\n\n", parts);
         }
         if (snapshot.unknown > 0) {
             message += "\n\n" + L10n.quantity(snapshot.unknown,
@@ -318,6 +321,27 @@ public class SettingsBackupPreference extends Preference {
         return L10n.f("Saves will go to a folder named %1$s.", L10n.isolate(folder));
     }
 
+    /** The sentence that says what quality videos save at after an import. */
+    static String qualitySentence(DownloadQuality quality) {
+        switch (quality) {
+            case BEST:
+                return L10n.t("Videos will save at the best quality.");
+            case SMALLEST:
+                return L10n.t("Videos will save at their lowest quality, for the smallest files.");
+            default:
+                return L10n.f("Videos will save at %1$s, or the closest quality each one has.",
+                        L10n.isolate(quality.ceilingLabel()));
+        }
+    }
+
+    /** A sentence for each download setting an import changes, in the order the screen shows them. */
+    static List<String> valueSentences(@Nullable String folder, @Nullable DownloadQuality quality) {
+        List<String> sentences = new ArrayList<>();
+        if (quality != null) sentences.add(qualitySentence(quality));
+        if (folder != null) sentences.add(folderSentence(folder));
+        return sentences;
+    }
+
     private static void answered(HushfacebookPreferenceFragment page) {
         page.pendingImport = null;
         page.importPreview = null;
@@ -330,16 +354,11 @@ public class SettingsBackupPreference extends Preference {
         // The page shows what the store now holds rather than reading its own switches back into it.
         AbstractPreferenceFragment.settingImportInProgress = true;
         // Counted before the write, which makes every change match the store.
-        int switches = snapshot.switchChanges();
-        String folder = snapshot.folderChange();
+        String done = importedMessage(snapshot.switchChanges(), snapshot.folderChange(), snapshot.qualityChange());
         boolean accepted = Utils.runOnBackgroundThread(() -> {
             try {
                 SettingsBackup.apply(snapshot);
-                Utils.showToastLong(switches == 0 && folder != null
-                        ? L10n.f("Settings imported. Saves will go to a folder named %1$s.", L10n.isolate(folder))
-                        : L10n.quantity(switches, "Settings imported. %1$d switch changed.",
-                                "Settings imported. %1$d switches changed.", switches)
-                                + (folder == null ? "" : " " + folderSentence(folder)));
+                Utils.showToastLong(done);
             } catch (SettingsBackup.ApplyFailed failure) {
                 Logger.printInfo(() -> "Settings import failed: " + failure.getMessage()
                         + (failure.rolledBack ? ", rolled back" : ", not rolled back"));
@@ -359,6 +378,21 @@ public class SettingsBackupPreference extends Preference {
             AbstractPreferenceFragment.settingImportInProgress = false;
             notStarted();
         }
+    }
+
+    /**
+     * What the toast after an import says: how many switches changed, then a sentence for each
+     * download setting that did. A folder alone keeps the one sentence it always had.
+     */
+    static String importedMessage(int switches, @Nullable String folder, @Nullable DownloadQuality quality) {
+        if (switches == 0 && folder != null && quality == null) {
+            return L10n.f("Settings imported. Saves will go to a folder named %1$s.", L10n.isolate(folder));
+        }
+        List<String> parts = new ArrayList<>();
+        parts.add(switches == 0 ? L10n.t("Settings imported.") : L10n.quantity(switches,
+                "Settings imported. %1$d switch changed.", "Settings imported. %1$d switches changed.", switches));
+        parts.addAll(valueSentences(folder, quality));
+        return String.join(" ", parts);
     }
 
     @Nullable

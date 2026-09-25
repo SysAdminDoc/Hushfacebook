@@ -10,13 +10,13 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Yamaladığında ayarlandığı için Duraklatma bunu kapatamaz. Bunu elemek için, ait olduğu yama olmadan yeniden yamala.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Yamaladığında ayarlandıkları için Duraklatma bunları kapatamaz. Bunlardan birini elemek için, ait olduğu yama olmadan yeniden yamala.
 A diagnostic report is already being saved.	Bir tanılama raporu zaten kaydediliyor.
-A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Her Reels videosunun kenar çubuğundaki İndir düğmesi, videoyu oynatıcının sunduğu en iyi kalitede kaydeder. Kapalıyken veya duraklatılmışken Reels videolarında yalnızca Facebook'un kendi düğmeleri görünür.
+A Download button in the sidebar of every reel saves it at the quality set under Downloads. Off or paused, reels show only Facebook's own buttons.	Her Reels videosunun kenar çubuğundaki İndir düğmesi, videoyu İndirmeler bölümünde seçilen kalitede kaydeder. Kapalıyken veya duraklatılmışken Reels videolarında yalnızca Facebook'un kendi düğmeleri görünür.
 A file named %1$s in %2$s paused Hushfacebook.	%2$s içindeki %1$s adlı bir dosya Hushfacebook'u duraklattı.
 About	Hakkında
 Ad cards between the stories people posted.	İnsanların paylaştığı hikayeler arasındaki reklam kartları.
 Ad telemetry blocked	Reklam telemetrisi engellendi
-Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.	Akış ve Watch video menülerine Telefona indir seçeneğini ekler. Facebook'un yayınladığı en yüksek kalitede kaydeder. Kapalıyken veya duraklatıldığında Facebook menüsü geri gelir.
-Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Kimin olursa olsun her hikayenin menüsüne Kaydet seçeneğini ekler ve hikayeyi oynatıcının sunduğu en iyi kalitede kaydeder. Kapalıyken veya duraklatılmışken Kaydet seçeneği yalnızca kendi hikayelerinde bulunur ve Facebook'un kendi kaydetme işlevini çalıştırır.
+Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Akış ve Watch video menülerine Telefona indir seçeneğini ekler. Aşağıda seçilen kalitede kaydeder. Kapalıyken veya duraklatıldığında Facebook menüsü geri gelir.
+Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Kimin olursa olsun her hikayenin menüsüne Kaydet seçeneğini ekler ve hikayeyi İndirmeler bölümünde seçilen kalitede kaydeder. Kapalıyken veya duraklatılmışken Kaydet seçeneği yalnızca kendi hikayelerinde bulunur ve Facebook'un kendi kaydetme işlevini çalıştırır.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Reels içindeki reklamlar. Banner'lar, video ortası reklamlar ve uygulamanın eklediği reklamlar duraklatıldığında da engellenir.
 AMOLED black theme	AMOLED siyah tema
 Audience Network off	Audience Network kapalı
@@ -110,7 +110,7 @@ Save full report	Tam raporu kaydet
 Saved to %1$s	Şuraya kaydedildi: %1$s
 Saved to the gallery	Galeriye kaydedildi
 Saved. Restart Facebook to apply this change.	Kaydedildi. Bu değişikliği uygulamak için Facebook'u yeniden başlat.
-Save your switches and folder to a file. Pause and debug logging aren't included.	Anahtarlarınızı ve klasörünüzü bir dosyaya kaydedin. Duraklatma ve hata ayıklama günlüğü dahil edilmez.
+Save your switches and download settings to a file. Pause and debug logging aren't included.	Anahtarlarınızı ve indirme ayarlarınızı bir dosyaya kaydedin. Duraklatma ve hata ayıklama günlüğü dahil edilmez.
 Saves will go to a folder named %1$s.	Kaydettiklerin %1$s adlı bir klasöre gidecek.
 Saving a photo	Fotoğraf kaydediliyor
 Saving a video	Video kaydediliyor
@@ -176,3 +176,13 @@ Hide the Follow button on reels	Reels videolarındaki Takip Et düğmesini gizle
 The Follow button next to the reel's author. You can still follow them from their profile.	Reels videosunu paylaşan kişinin adının yanındaki Takip Et düğmesi. Onu profilinden yine takip edebilirsin.
 Hide comment and reaction previews	Yorum ve tepki önizlemelerini gizle
 The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.	Facebook'un bir Reels videosunun altında önizleme olarak gösterdiği yorum ve tepki veren arkadaşlarının baloncukları. Hepsini görmek için yorumları aç.
+Download quality	İndirme kalitesi
+Best	En iyi
+Smallest	En küçük
+Each video saves at the best quality the player streams.	Her video, oynatıcının sunduğu en iyi kalitede kaydedilir.
+Each video saves at its lowest quality, for the smallest file.	Her video en düşük kalitesinde kaydedilir, böylece dosya en küçük olur.
+Each video saves at %1$s, or the closest quality it has.	Her video %1$s kalitesinde ya da sahip olduğu en yakın kalitede kaydedilir.
+Videos will save at the best quality.	Videolar en iyi kalitede kaydedilecek.
+Videos will save at their lowest quality, for the smallest files.	Videolar en düşük kalitelerinde kaydedilecek, böylece dosyalar en küçük olur.
+Videos will save at %1$s, or the closest quality each one has.	Videolar %1$s kalitesinde ya da her birinin sahip olduğu en yakın kalitede kaydedilecek.
+Settings imported.	Ayarlar içe aktarıldı.

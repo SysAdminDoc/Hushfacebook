@@ -55,7 +55,7 @@
         "https://github.com/SapitoSucio/FroggoMorphePatches"
       ],
       "license": "GPL-3.0",
-      "changes": "Rewritten from the source at that commit, not cherry-picked. Packages, extension descriptors, log tags, injected method names and the cache folder renamed; plain patch names with categories; the two feed guards merged into one shared hook; a settings switch in front of the story, reel, browser and download hooks, and the reel sidebar's Download button and the story menu's Save item asking theirs before they go in, so Pause takes both out; the player-source recorder shared with Download any video through a call and a switch of each patch's own; the save folder read per file from the settings; the list register of the story filter computed for static and wide parameters; the borrowed v0 in the reel collection hooks checked; the DASH join ends a track on an empty read and shifts both tracks by one lead-in; the reel handler answers null instead of Facebook's renamed kotlin.Unit; the debug println lines removed. Saves fetch only what MediaUrlPolicy allows, every redirect included, into a cache file first, and reach MediaStore only once the declared type, the first bytes, the length and the 512 MB cap (the two DASH tracks together) all check out; save steps go to the diagnostic report without file names; a save reports its progress to a notification with a Cancel button and stops when cancelled, and lists its pending gallery row until it's settled. Andrew Liang credits FroggoMorphePatches for some ideas and implementations."
+      "changes": "Rewritten from the source at that commit, not cherry-picked. Packages, extension descriptors, log tags, injected method names and the cache folder renamed; plain patch names with categories; the two feed guards merged into one shared hook; a settings switch in front of the story, reel, browser and download hooks, and the reel sidebar's Download button and the story menu's Save item asking theirs before they go in, so Pause takes both out; the player-source recorder shared with Download any video through a call and a switch of each patch's own; the save folder read per file from the settings; the DASH track and the single file picked for the download quality read per save, by the track's own FBQualityLabel; the list register of the story filter computed for static and wide parameters; the borrowed v0 in the reel collection hooks checked; the DASH join ends a track on an empty read and shifts both tracks by one lead-in; the reel handler answers null instead of Facebook's renamed kotlin.Unit; the debug println lines removed. Saves fetch only what MediaUrlPolicy allows, every redirect included, into a cache file first, and reach MediaStore only once the declared type, the first bytes, the length and the 512 MB cap (the two DASH tracks together) all check out; save steps go to the diagnostic report without file names; a save reports its progress to a notification with a Cancel button and stops when cancelled, and lists its pending gallery row until it's settled. Andrew Liang credits FroggoMorphePatches for some ideas and implementations."
     },
     {
       "paths": [
@@ -68,6 +68,7 @@
     },
     {
       "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/download/DownloadQuality.java",
         "extensions/facebook/src/main/java/app/morphe/extension/facebook/download/SaveFolder.java",
         "extensions/facebook/src/main/java/app/morphe/extension/facebook/download/VideoMenuItem.java",
         "patches/src/main/kotlin/app/morphe/patches/facebook/downloads/video/DownloadVideoPatch.kt",
@@ -76,7 +77,7 @@
       "origin": "original",
       "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
       "license": "GPL-3.0-only",
-      "changes": "Written for Hushfacebook: Download to phone in the menu of a feed or Watch video, added after Facebook fills the menu so its own Save and Download rows stay as they are, found in Facebook 577 and 580 through the video feed menu's log tag, the kept GraphQL models and the hashes of their field names; and the save folder, one sanitized folder name under Movies and Pictures."
+      "changes": "Written for Hushfacebook: Download to phone in the menu of a feed or Watch video, added after Facebook fills the menu so its own Save and Download rows stay as they are, found in Facebook 577 and 580 through the video feed menu's log tag, the kept GraphQL models and the hashes of their field names; the save folder, one sanitized folder name under Movies and Pictures; and the download quality, the ceiling a save holds the DASH track and the single file to, falling back to the nearest above it."
     },
     {
       "paths": [

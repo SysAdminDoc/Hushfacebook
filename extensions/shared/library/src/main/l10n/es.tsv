@@ -10,13 +10,13 @@
 %1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Este cambio se aplicó al parchear, así que Pausar no puede desactivarlo. Para descartarlo, vuelve a parchear sin el parche del que proviene.
 %1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Estos cambios se aplicaron al parchear, así que Pausar no puede desactivarlos. Para descartar uno, vuelve a parchear sin el parche del que proviene.
 A diagnostic report is already being saved.	Ya se está guardando un informe de diagnóstico.
-A Download button in the sidebar of every reel saves it at the best quality the player streams. Off or paused, reels show only Facebook's own buttons.	Un botón de descarga en la barra lateral de cada reel lo guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, los reels solo muestran los botones propios de Facebook.
+A Download button in the sidebar of every reel saves it at the quality set under Downloads. Off or paused, reels show only Facebook's own buttons.	Un botón de descarga en la barra lateral de cada reel lo guarda con la calidad elegida en Descargas. Con este interruptor desactivado o Hushfacebook en pausa, los reels solo muestran los botones propios de Facebook.
 A file named %1$s in %2$s paused Hushfacebook.	Un archivo llamado %1$s en %2$s pausó Hushfacebook.
 About	Acerca de
 Ad cards between the stories people posted.	Tarjetas de anuncios entre las historias que publicó la gente.
 Ad telemetry blocked	Telemetría de anuncios bloqueada
-Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.	Añade Descargar en el teléfono a los menús de videos del feed y Watch. Guarda la mayor calidad que transmite Facebook. Si está desactivado o en pausa, vuelve el menú de Facebook.
-Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Agrega la opción Guardar al menú de cualquier historia, sea de quien sea, y la guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, solo tus propias historias tienen la opción Guardar, y se usa el guardado propio de Facebook.
+Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Añade Descargar en el teléfono a los menús de videos del feed y Watch. Guarda con la calidad elegida más abajo. Si está desactivado o en pausa, vuelve el menú de Facebook.
+Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Agrega la opción Guardar al menú de cualquier historia, sea de quien sea, y la guarda con la calidad elegida en Descargas. Con este interruptor desactivado o Hushfacebook en pausa, solo tus propias historias tienen la opción Guardar, y se usa el guardado propio de Facebook.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Anuncios dentro de Reels. Los banners, los anuncios a mitad de video y los que inserta la app siguen bloqueados incluso en pausa.
 AMOLED black theme	Tema negro AMOLED
 Audience Network off	Sin Audience Network
@@ -110,7 +110,7 @@ Save full report	Guardar informe completo
 Saved to %1$s	Se guardó en %1$s
 Saved to the gallery	Se guardó en la galería
 Saved. Restart Facebook to apply this change.	Guardado. Reinicia Facebook para aplicar este cambio.
-Save your switches and folder to a file. Pause and debug logging aren't included.	Guarda tus interruptores y la carpeta en un archivo. Pausa y el registro de depuración no se incluyen.
+Save your switches and download settings to a file. Pause and debug logging aren't included.	Guarda tus interruptores y los ajustes de descarga en un archivo. Pausa y el registro de depuración no se incluyen.
 Saves will go to a folder named %1$s.	Lo que guardes irá a una carpeta llamada %1$s.
 Saving a photo	Guardando una foto
 Saving a video	Guardando un video
@@ -176,3 +176,13 @@ Hide the Follow button on reels	Ocultar el botón Seguir en los reels
 The Follow button next to the reel's author. You can still follow them from their profile.	El botón Seguir junto a quien publicó el reel. Puedes seguir a esa persona desde su perfil.
 Hide comment and reaction previews	Ocultar las vistas previas de comentarios y reacciones
 The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.	El comentario que Facebook muestra como vista previa debajo de un reel y las burbujas de los amigos que reaccionaron. Abre los comentarios para verlos todos.
+Download quality	Calidad de descarga
+Best	La mejor
+Smallest	La más pequeña
+Each video saves at the best quality the player streams.	Cada video se guarda con la mejor calidad que ofrece el reproductor.
+Each video saves at its lowest quality, for the smallest file.	Cada video se guarda con su calidad más baja, para que el archivo sea lo más pequeño posible.
+Each video saves at %1$s, or the closest quality it has.	Cada video se guarda en %1$s o en la calidad más cercana que tenga.
+Videos will save at the best quality.	Los videos se guardarán con la mejor calidad.
+Videos will save at their lowest quality, for the smallest files.	Los videos se guardarán con su calidad más baja, para que los archivos sean lo más pequeños posible.
+Videos will save at %1$s, or the closest quality each one has.	Los videos se guardarán en %1$s o en la calidad más cercana que tenga cada uno.
+Settings imported.	Configuración importada.

@@ -39,13 +39,25 @@ final class DashManifest {
         final long bandwidth;
         final String url;
 
+        /**
+         * The quality Facebook's own menu names this track by, such as 480 for {@code 480p}, or 0
+         * when the track carries no label. Facebook encodes several of a video's tracks at one
+         * frame size and tells them apart by this: a 720 by 1280 track can be its 480p.
+         */
+        final int label;
+
         Track(String mime, String codecs, int width, int height, long bandwidth, String url) {
+            this(mime, codecs, width, height, bandwidth, url, 0);
+        }
+
+        Track(String mime, String codecs, int width, int height, long bandwidth, String url, int label) {
             this.mime = mime;
             this.codecs = codecs;
             this.width = width;
             this.height = height;
             this.bandwidth = bandwidth;
             this.url = url;
+            this.label = label;
         }
 
         boolean isVideo() {
@@ -61,9 +73,15 @@ final class DashManifest {
             return Math.min(width, height);
         }
 
+        /** The quality a setting below the best is held to: the label, else the short side. */
+        int quality() {
+            return label > 0 ? label : shortSide();
+        }
+
         @Override
         public String toString() {
-            return mime + " " + codecs + " " + width + "x" + height + " " + (bandwidth / 1000) + "kbps";
+            return mime + " " + codecs + " " + width + "x" + height + " " + (bandwidth / 1000) + "kbps"
+                + (label > 0 ? " " + label + "p" : "");
         }
     }
 
@@ -141,6 +159,48 @@ final class DashManifest {
     }
 
     /**
+     * The video track that suits [quality] best, or {@code null}. The best quality is
+     * {@link #bestVideo}, as it always was. Below it, the tracks are held to their labels: the
+     * best one at or under the ceiling, else the nearest above it, and for the smallest file the
+     * lowest. At one quality H.264 still goes first, then the higher bitrate, or the lower one for
+     * the smallest file. A track the muxer can't write is never picked, whatever it's labelled.
+     */
+    static Track pickVideo(List<Track> tracks, boolean allowAv1, DownloadQuality quality) {
+        if (quality == null || quality == DownloadQuality.BEST) return bestVideo(tracks, allowAv1);
+
+        Track best = null;
+
+        for (Track track : tracks) {
+            if (!track.isVideo()) continue;
+
+            int family = videoFamily(track.codecs, allowAv1);
+            if (family == 0) continue;
+
+            if (best == null) {
+                best = track;
+                continue;
+            }
+
+            int order = quality.compare(track.quality(), best.quality());
+            if (order != 0) {
+                if (order < 0) best = track;
+                continue;
+            }
+
+            int bestFamily = videoFamily(best.codecs, allowAv1);
+            if (family != bestFamily) {
+                if (family > bestFamily) best = track;
+                continue;
+            }
+
+            boolean smaller = quality == DownloadQuality.SMALLEST;
+            if (smaller ? track.bandwidth < best.bandwidth : track.bandwidth > best.bandwidth) best = track;
+        }
+
+        return best;
+    }
+
+    /**
      * The AAC track with the highest bitrate, or {@code null}. All AAC profiles are permitted.
      * Stories list xHE-AAC ({@code mp4a.40.42}).
      */
@@ -193,8 +253,21 @@ final class DashManifest {
             number(attribute(attributes, "width")),
             number(attribute(attributes, "height")),
             number(attribute(attributes, "bandwidth")),
-            url
+            url,
+            qualityLabel(attribute(attributes, "FBQualityLabel"))
         );
+    }
+
+    /** The number in a label such as {@code 720p}, or 0 for anything else. */
+    private static int qualityLabel(String label) {
+        if (label == null) return 0;
+        String text = label.trim().toLowerCase(Locale.US);
+        int digits = text.length() - 1;
+        if (digits < 3 || digits > 4 || text.charAt(digits) != 'p') return 0;
+        for (int i = 0; i < digits; i++) {
+            if (text.charAt(i) < '0' || text.charAt(i) > '9') return 0;
+        }
+        return number(text.substring(0, digits));
     }
 
     private static String attribute(String attributes, String name) {

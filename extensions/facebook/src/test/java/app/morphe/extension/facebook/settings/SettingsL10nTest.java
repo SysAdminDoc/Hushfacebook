@@ -314,6 +314,7 @@ public class SettingsL10nTest {
             notice.dismiss();
 
             addSettingsFileText(activity, rows, shown);
+            addDownloadSettingsText(shown);
 
             // What the diagnostics rows say in a toast, with nothing to export or clear.
             LogBufferManager.exportToClipboard();
@@ -415,6 +416,22 @@ public class SettingsL10nTest {
         }
     }
 
+    /**
+     * What the download settings say for every value, not only the one saved now: the quality
+     * row's summary, the sentence an import's preview gives for each quality, and the toast after
+     * an import that moves only the download settings.
+     */
+    private static void addDownloadSettingsText(Set<String> shown) {
+        for (app.morphe.extension.facebook.download.DownloadQuality quality
+                : app.morphe.extension.facebook.download.DownloadQuality.values()) {
+            shown.add(HushfacebookPreferenceFragment.qualityLabel(quality));
+            shown.add(HushfacebookPreferenceFragment.qualitySummary(quality));
+            shown.add(SettingsBackupPreference.qualitySentence(quality));
+            shown.add(SettingsBackupPreference.importedMessage(0, null, quality));
+            shown.add(SettingsBackupPreference.importedMessage(2, "Clips", quality));
+        }
+    }
+
     private static AlertDialog importPreview(Activity activity, List<Preference> rows, String file) throws Exception {
         Uri uri = Uri.parse("content://settings-l10n/" + System.nanoTime() + ".json");
         byte[] bytes = file.getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -487,6 +504,17 @@ public class SettingsL10nTest {
             Preference preference = group.getPreference(i);
             shown.add(String.valueOf(preference.getTitle()));
             if (preference.getSummary() != null) shown.add(String.valueOf(preference.getSummary()));
+            // A row's own dialog: its title and message, and a list's choices.
+            if (preference instanceof android.preference.DialogPreference) {
+                android.preference.DialogPreference dialog = (android.preference.DialogPreference) preference;
+                if (dialog.getDialogTitle() != null) shown.add(String.valueOf(dialog.getDialogTitle()));
+                if (dialog.getDialogMessage() != null) shown.add(String.valueOf(dialog.getDialogMessage()));
+            }
+            if (preference instanceof android.preference.ListPreference) {
+                for (CharSequence entry : ((android.preference.ListPreference) preference).getEntries()) {
+                    shown.add(String.valueOf(entry));
+                }
+            }
             if (preference instanceof PreferenceGroup) {
                 collect((PreferenceGroup) preference, rows, shown);
             } else {

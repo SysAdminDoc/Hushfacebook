@@ -273,7 +273,8 @@ public final class MediaDownload {
             return false;
         }
 
-        String video = RenditionPicker.bestOf(urls, true);
+        DownloadQuality quality = quality();
+        String video = RenditionPicker.bestVideo(urls, quality);
         String image = imagesToo ? RenditionPicker.bestOf(urls, false) : null;
 
         boolean isVideo = video != null;
@@ -302,11 +303,32 @@ public final class MediaDownload {
         final int candidates = urls.size();
         info(() -> "saving " + (isVideo ? "video" : "image")
             + " " + describe(chosen)
-            + " from " + candidates + " candidate(s): " + all);
+            + " from " + candidates + " candidate(s): " + all
+            + (isVideo ? qualityNote(quality) : ""));
 
         Downloader.Kind kind = isVideo ? Downloader.Kind.VIDEO : Downloader.Kind.IMAGE;
         start(safe, isVideo, fileJob(safe, chosen, kind));
         return true;
+    }
+
+    /**
+     * The quality the save starting now asks for. Read once per save, when it starts, so a save
+     * already running keeps the one it began with. Never throws: before the settings are ready,
+     * or when they can't be read, it's the best, as every save was before the setting existed.
+     */
+    static DownloadQuality quality() {
+        try {
+            if (!Utils.settingsReady()) return DownloadQuality.BEST;
+            DownloadQuality chosen = Settings.DOWNLOAD_QUALITY.get();
+            return chosen == null ? DownloadQuality.BEST : chosen;
+        } catch (Throwable t) {
+            return DownloadQuality.BEST;
+        }
+    }
+
+    /** What the report adds to a save line for a quality below the best. */
+    private static String qualityNote(DownloadQuality quality) {
+        return quality == DownloadQuality.BEST ? "" : ", quality setting " + quality.fileValue;
     }
 
     /** The save of one single file at [url]: the job every save of a single file runs. */
@@ -369,6 +391,11 @@ public final class MediaDownload {
      * into one file. If this fails, the save gets the best single file, so the user still gets a
      * file.
      *
+     * <p>Below the best quality, the track and the single file are each the one that suits the
+     * setting ({@link DashManifest#pickVideo}, {@link RenditionPicker#bestVideo}), and the manifest
+     * is used only when its track suits it better than the file does. On a tie the single file
+     * wins: one fetch and no join.
+     *
      * @return whether a download started. {@code false} lets the caller save a single file.
      */
     private static boolean beginDash(Context context, String label, String manifest, List<String> urls) {
@@ -377,7 +404,8 @@ public final class MediaDownload {
             if (MediaUrlPolicy.shapeRefusal(track.url) == null) tracks.add(track);
         }
         urls = metaOnly(urls);
-        DashManifest.Track video = DashManifest.bestVideo(tracks, DashSave.canWriteAv1());
+        DownloadQuality quality = quality();
+        DashManifest.Track video = DashManifest.pickVideo(tracks, DashSave.canWriteAv1(), quality);
 
         if (video == null) {
             if (manifest != null) {
@@ -386,10 +414,14 @@ public final class MediaDownload {
             return false;
         }
 
-        String fallback = RenditionPicker.bestOf(urls, true);
+        String fallback = RenditionPicker.bestVideo(urls, quality);
         int fallbackQuality = fallback == null ? 0 : RenditionPicker.qualityOf(fallback);
 
-        if (video.shortSide() <= fallbackQuality) return false;
+        if (quality == DownloadQuality.BEST) {
+            if (video.shortSide() <= fallbackQuality) return false;
+        } else if (fallback != null && quality.compare(video.quality(), fallbackQuality) >= 0) {
+            return false;
+        }
 
         Context safe = ready(context);
         if (safe == null) return false;
@@ -398,7 +430,8 @@ public final class MediaDownload {
 
         info(() -> "saving " + label + " from its DASH manifest: " + video
             + (audio == null ? ", no sound track" : " + " + audio)
-            + ", instead of " + (fallback == null ? "nothing" : describe(fallback)));
+            + ", instead of " + (fallback == null ? "nothing" : describe(fallback))
+            + qualityNote(quality));
 
         start(safe, true, dashJob(safe, video, audio, fallback));
         return true;
