@@ -37,7 +37,8 @@ function Read-AdvisoryExceptions {
         The accepted advisories, one per line: "<advisory> <group>:<name> <yyyy-MM-dd> <reason>".
     .DESCRIPTION
         The advisory is OSV's id or one of its aliases (a CVE, say). The date is the last day the
-        exception holds, at most 90 days after -Today, so accepting an advisory means reading it
+        exception holds on this computer's calendar (-Today defaults to the local date, not UTC's),
+        at most 90 days after -Today, so accepting an advisory means reading it
         again at least that often. The reason is at least three words: an exception is a claim
         about how the bundle uses the library, and a claim nobody wrote down can't be checked.
         Blank lines and # comments are ignored. A line in any other shape stops the run, naming
@@ -46,7 +47,7 @@ function Read-AdvisoryExceptions {
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Path,
-        [datetime]$Today = [datetime]::UtcNow.Date
+        [datetime]$Today = [datetime]::Today
     )
 
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
@@ -348,7 +349,7 @@ function Invoke-ReleaseAdvisoryGate {
         [Parameter(Mandatory = $true)]$Sbom,
         [Parameter(Mandatory = $true)][string]$ExceptionsPath,
         [switch]$SkipAdvisoryCheck,
-        [datetime]$Today = [datetime]::UtcNow.Date
+        [datetime]$Today = [datetime]::Today
     )
 
     $libraries = @($Sbom.Libraries)

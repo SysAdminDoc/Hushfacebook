@@ -1256,6 +1256,16 @@ try {
     }
     Assert-Throws { Read-AdvisoryExceptions -Path (Join-Path $advisoryRoot 'absent.txt') -Today $today } '*list is missing*' `
         'A missing exception list was read as an empty one.'
+    # The date in the list is a day on the maintainer's own calendar. Both functions defaulted to
+    # the UTC date, so on the east coast an exception ran out at 19:00 on the last day it named
+    # and refused a release it still covered. The clock can't be moved here, so the defaults are
+    # read as written.
+    foreach ($dated in 'Read-AdvisoryExceptions', 'Invoke-ReleaseAdvisoryGate') {
+        $parameter = @((Get-Command $dated).ScriptBlock.Ast.Body.ParamBlock.Parameters |
+            Where-Object { $_.Name.VariablePath.UserPath -eq 'Today' })
+        $default = if ($parameter.Count -eq 1 -and $parameter[0].DefaultValue) { $parameter[0].DefaultValue.Extent.Text } else { '' }
+        Assert-True ($default -eq '[datetime]::Today') "$dated takes today as $default, not the local calendar day."
+    }
     $checkedIn = Join-Path $PSScriptRoot 'advisory-exceptions.txt'
     try {
         $null = @(Read-AdvisoryExceptions -Path $checkedIn)
