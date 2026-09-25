@@ -807,12 +807,14 @@ try {
     Assert-True ($recutFloor.Floor -eq '1.30.0') "The clone's tag was read over the published commit: $($recutFloor.Floor)"
     # With no tag in the clone the remote is asked, since `gh release create` makes the tag on
     # GitHub only. A bare repository stands in for it: a lightweight tag, an annotated one read
-    # through the commit it peels to, and one on a commit this clone doesn't have.
+    # through the commit it peels to, and one on a commit this clone doesn't have. The annotated
+    # tag is made on the remote alone, so this clone has its commit and never saw the tag object:
+    # only the peeled line leads to a commit here.
     Invoke-FixtureGit -Root $toolchainRoot -Arguments @('init', '--bare', '--quiet', $toolchainRemote) | Out-Null
-    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('tag', '-a', '-m', 'release', 'v0.0.13', $head) | Out-Null
     Invoke-FixtureGit -Root $toolchainRoot -Arguments @('push', '--quiet', $toolchainRemote,
-        "${releaseCommitSha}:refs/tags/v0.0.12", 'refs/tags/v0.0.13') | Out-Null
-    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('tag', '-d', 'v0.0.13') | Out-Null
+        "${releaseCommitSha}:refs/tags/v0.0.12", "${head}:refs/heads/main") | Out-Null
+    Invoke-FixtureGit -Root $toolchainRemote -Arguments @('-c', 'user.name=Contracts', '-c', 'user.email=contracts@example.invalid',
+        'tag', '-a', '-m', 'release', 'v0.0.13', $head) | Out-Null
     $onlyThere = "$(Invoke-FixtureGit -Root $toolchainRemote -Arguments @('-c', 'user.name=Contracts',
         '-c', 'user.email=contracts@example.invalid', 'commit-tree', "$head^{tree}", '-m', 'only there') |
         Select-Object -First 1)".Trim()
