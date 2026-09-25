@@ -4,7 +4,9 @@
  */
 package app.morphe.extension.facebook.feed;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.facebook.graphql.model.GraphQLPagesYouMayLikeFeedUnit;
@@ -38,6 +40,9 @@ public class FeedFilterTest {
         Settings.HIDE_SPONSORED_POSTS.resetToDefault();
         Settings.HIDE_PROMOTED_POSTS.resetToDefault();
         Settings.HIDE_SUGGESTED_POSTS.resetToDefault();
+        Settings.HIDE_SUGGESTED_FOR_YOU.resetToDefault();
+        Settings.HIDE_PEOPLE_YOU_MAY_KNOW.resetToDefault();
+        Settings.HIDE_STORIES_TRAY.resetToDefault();
         FeedFilterCounters.clear();
     }
 
@@ -85,11 +90,11 @@ public class FeedFilterTest {
     /** With both patches in, the guard hides by category first and by unit type second. */
     @Test
     public void thePatchedGuardHidesByCategoryAndByUnit() {
-        assertTrue(FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, false));
+        assertTrue(FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, false, false));
         assertFalse("the suggested rule belongs to its own patch",
-                FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, false));
-        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), false, true));
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true));
+                FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, false, false));
+        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), false, true, false));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true, false));
     }
 
     /**
@@ -99,9 +104,9 @@ public class FeedFilterTest {
     @Test
     public void everyEdgeIsCountedAndEveryHiddenOneSaysWhy() {
         FeedFilterCounters.clear();
-        FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true);
-        FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, true);
-        FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true);
+        FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true, false);
+        FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, true, false);
+        FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true, false);
         FeedFilter.hideEdge(Category.SPONSORED, null);
 
         String report = String.join("\n", FeedFilterCounters.report());
@@ -122,7 +127,7 @@ public class FeedFilterTest {
         LogBufferManager.clearLogBuffer();
         try {
             cache.set(null, new Class<?>[0]);
-            assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true));
+            assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true, false));
             String report = LogBufferManager.buildExportText();
             assertTrue(report, report.contains("Hide suggested and promoted posts: invoked 1, 0 found, 1 missing. "
                     + "First missing: class com.facebook.graphql.model#any suggested feed unit"));
@@ -130,12 +135,76 @@ public class FeedFilterTest {
 
             cache.set(null, null);
             LogBufferManager.clearLogBuffer();
-            assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true));
+            assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true, false));
             assertTrue(String.join("\n", HookStatus.report()),
                     HookStatus.report().contains("Hide suggested and promoted posts: invoked 1, 1 found, 0 missing"));
         } finally {
             cache.set(null, null);
             LogBufferManager.clearLogBuffer();
         }
+    }
+
+    /**
+     * A "Suggested for you" post is an ordinary story that Facebook files under INJECTED_STORY. It
+     * goes under its own switch, and posts from people you follow (ORGANIC) stay.
+     */
+    @Test
+    public void aSuggestedForYouPostGoesByItsCategory() {
+        assertTrue(FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), false, true, false));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), false, true, false));
+        assertFalse("the rule belongs to the suggested patch",
+                FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), true, false, true));
+        Settings.HIDE_SUGGESTED_FOR_YOU.save(false);
+        assertFalse(FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), false, true, false));
+    }
+
+    /**
+     * "People you may know" has no kept class, so it's found by the GraphQL type its
+     * getTypeName() answers. The type of the row's own edges, and a unit with no type, stay.
+     */
+    @Test
+    public void peopleYouMayKnowGoesByItsTypeName() {
+        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), false, true, false));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC,
+                new TypedFeedUnit("PaginatedPeopleYouMayKnowFeedUnitUsersEdge"), false, true, false));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit("Story"), false, true, false));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), true, false, true));
+        Settings.HIDE_PEOPLE_YOU_MAY_KNOW.save(false);
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), false, true, false));
+    }
+
+    /** The Stories tray has its own patch, off unless it was picked, and its own switch. */
+    @Test
+    public void theStoriesTrayGoesOnlyWithItsOwnPatch() {
+        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), false, false, true));
+        assertFalse("the suggested patch leaves the tray alone",
+                FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), true, true, false));
+        Settings.HIDE_STORIES_TRAY.save(false);
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), false, false, true));
+    }
+
+    /** A type name that can't be read, or isn't text, keeps the unit: the rules fail open. */
+    @Test
+    public void aUnitWhoseTypeNameCantBeReadStays() {
+        assertNull(FeedFilter.typeName(new TypedFeedUnit.Unreadable()));
+        assertNull(FeedFilter.typeName(new Object()));
+        assertNull(FeedFilter.typeName(null));
+        assertEquals("StoriesTrayFeedUnit", FeedFilter.typeName(TypedFeedUnit.storiesTray()));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit.Unreadable(), true, true, true));
+    }
+
+    /** Each new rule leaves its own reason, so the report can tell them apart. */
+    @Test
+    public void eachNewRuleCountsUnderItsOwnReason() {
+        FeedFilterCounters.clear();
+        FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), true, true, true);
+        assertTrue(String.join("\n", FeedFilterCounters.report()).contains("Last reason: INJECTED_STORY"));
+        FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), true, true, true);
+        assertTrue(String.join("\n", FeedFilterCounters.report()).contains(
+                "Last reason: PaginatedPeopleYouMayKnowFeedUnit"));
+        FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), true, true, true);
+        String report = String.join("\n", FeedFilterCounters.report());
+        assertTrue(report, report.contains(FeedFilter.FEED_ROUTE + ": 3 lists, 3 items, 3 removed"));
+        assertTrue(report, report.contains("Last reason: StoriesTrayFeedUnit"));
     }
 }

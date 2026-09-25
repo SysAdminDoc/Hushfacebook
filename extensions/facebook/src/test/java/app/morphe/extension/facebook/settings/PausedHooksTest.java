@@ -42,6 +42,7 @@ import app.morphe.extension.facebook.download.PlayerSourcesForTests;
 import app.morphe.extension.facebook.download.ReelDownload;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
+import app.morphe.extension.facebook.feed.TypedFeedUnit;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
 import app.morphe.extension.facebook.misc.LinkCleaner;
 import app.morphe.extension.shared.SettingsContextRule;
@@ -65,7 +66,7 @@ public class PausedHooksTest {
     @Rule public final SettingsContextRule settingsContext = new SettingsContextRule();
 
     /** Stands in for GraphQLFeedStoryCategory: only the constant names matter to the guard. */
-    enum Category { ORGANIC, SPONSORED, PROMOTION }
+    enum Category { ORGANIC, SPONSORED, PROMOTION, INJECTED_STORY }
 
     /** Stands in for the obfuscated ad item base class; the patch passes its binary name. */
     public static class AdBase {
@@ -118,8 +119,12 @@ public class PausedHooksTest {
         probes.put(PatchFamily.SPONSORED_POSTS, Arrays.asList(
                 () -> FeedGuardForTests.hides(Category.SPONSORED, new Object()),
                 () -> FeedGuardForTests.hides(Category.PROMOTION, new Object())));
-        probes.put(PatchFamily.SUGGESTED_POSTS, Collections.singletonList(
-                () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit())));
+        probes.put(PatchFamily.SUGGESTED_POSTS, Arrays.asList(
+                () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit()),
+                () -> FeedGuardForTests.hides(Category.INJECTED_STORY, new Object()),
+                () -> FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow())));
+        probes.put(PatchFamily.STORIES_TRAY, Collections.singletonList(
+                () -> FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.storiesTray())));
         // A story Facebook's own detection marked as made with AI.
         probes.put(PatchFamily.AI_DETECTED_POSTS, Collections.singletonList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true))));

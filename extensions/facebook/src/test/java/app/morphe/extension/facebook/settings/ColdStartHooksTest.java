@@ -34,6 +34,7 @@ import app.morphe.extension.facebook.download.PlayerSourcesForTests;
 import app.morphe.extension.facebook.download.ReelDownload;
 import app.morphe.extension.facebook.feed.FeedFilter;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
+import app.morphe.extension.facebook.feed.TypedFeedUnit;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
 import app.morphe.extension.facebook.misc.LinkCleaner;
 import app.morphe.extension.shared.Utils;
@@ -55,7 +56,7 @@ import app.morphe.extension.shared.settings.PauseForTests;
 public class ColdStartHooksTest {
 
     /** Stands in for GraphQLFeedStoryCategory: only the constant names matter to the guard. */
-    enum Category { ORGANIC, SPONSORED }
+    enum Category { ORGANIC, SPONSORED, INJECTED_STORY }
 
     /** Stands in for the obfuscated ad item base class; the patch passes its binary name. */
     public static class AdBase {
@@ -91,6 +92,9 @@ public class ColdStartHooksTest {
         // public feed guard as the patch calls it. Each has to take Facebook's path.
         assertFalse(FeedGuardForTests.hides(Category.SPONSORED, new Object()));
         assertFalse(FeedGuardForTests.hides(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit()));
+        assertFalse(FeedGuardForTests.hides(Category.INJECTED_STORY, new Object()));
+        assertFalse(FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow()));
+        assertFalse(FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.storiesTray()));
         assertFalse(FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true)));
         assertFalse(FeedFilter.hideEdge(Category.SPONSORED, new Object()));
         assertFalse(FeedFilter.hideSponsoredStories());

@@ -15,7 +15,7 @@ public final class FeedGuardForTests {
     }
 
     public static boolean hides(Object category, Object feedUnit) {
-        return FeedFilter.hideEdge(category, feedUnit, true, true);
+        return FeedFilter.hideEdge(category, feedUnit, true, true, true);
     }
 
     /**

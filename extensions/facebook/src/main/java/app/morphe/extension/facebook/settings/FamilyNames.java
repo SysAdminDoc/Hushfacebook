@@ -17,6 +17,7 @@ public final class FamilyNames {
     public static final String SPONSORED_POSTS = "Hide sponsored posts";
     public static final String SUGGESTED_POSTS = "Hide suggested and promoted posts";
     public static final String AI_DETECTED_POSTS = "Hide AI-detected posts";
+    public static final String STORIES_TRAY = "Hide Stories tray";
     public static final String SPONSORED_STORIES = "Hide sponsored stories";
     public static final String SPONSORED_REELS = "Hide sponsored reels";
     public static final String EXTERNAL_BROWSER = "Open links in external browser";

@@ -34,6 +34,18 @@ public final class FeedFilter {
     private static final String SPONSORED = "SPONSORED";
     private static final String PROMOTION = "PROMOTION";
 
+    /** The category of a post Facebook adds as "Suggested for you" from someone you don't follow. */
+    static final String INJECTED_STORY = "INJECTED_STORY";
+
+    /**
+     * The GraphQL type the "People you may know" row answers {@code getTypeName()} with. Its class
+     * is renamed on every release, but the type name is a literal in the method, in 577 and 580.
+     */
+    static final String PEOPLE_YOU_MAY_KNOW_TYPE = "PaginatedPeopleYouMayKnowFeedUnit";
+
+    /** The type name of the row of stories at the top of the feed, found the same way. */
+    static final String STORIES_TRAY_TYPE = "StoriesTrayFeedUnit";
+
     /** The diagnostic counter routes. Each news feed edge counts as a list of one post. */
     static final String FEED_ROUTE = "News feed posts";
     static final String STORY_ROUTE = "Story ad sources";
@@ -88,16 +100,28 @@ public final class FeedFilter {
      */
     public static boolean hideEdge(Object category, Object feedUnit) {
         return hideEdge(category, feedUnit, SettingsStatus.sponsoredPosts(), SettingsStatus.suggestedPosts(),
-                SettingsStatus.aiDetectedPosts(), GenAiLabel.PATCHED);
+                SettingsStatus.storiesTray(), SettingsStatus.aiDetectedPosts(), GenAiLabel.PATCHED);
     }
 
-    /** The guard with the sponsored and suggested patch-time flags passed in, and no GenAI rule. */
+    /** The guard with the sponsored and suggested patch-time flags passed in, and neither the tray nor GenAI. */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, GenAiLabel.PATCHED);
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, false, GenAiLabel.PATCHED);
     }
+
+    /** The guard with the Stories tray's flag too, and no GenAI rule. */
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
+            boolean storiesTrayPatched) {
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, storiesTrayPatched, false,
+                GenAiLabel.PATCHED);
+    }
+
+    /** The guard with the GenAI rule's flag and accessor, and no Stories tray. */
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
+            boolean aiPatched, GenAiLabel.Accessor aiAccessor) {
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, aiPatched, aiAccessor);    }
 
     /**
-     * The guard, with the three patch-time flags passed in so a test can stand in for the patches,
+     * The guard, with the four patch-time flags passed in so a test can stand in for the patches,
      * and the GenAI accessor passed in so a test can stand in for the one the patch fills in.
      *
      * <p>Every edge is counted before any rule runs, and every hidden one records why, so a
@@ -109,13 +133,14 @@ public final class FeedFilter {
      * Hushfacebook paused it reads nothing of the post and Facebook's own path is all that runs.
      */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
-                            boolean aiPatched, GenAiLabel.Accessor aiAccessor) {
+            boolean storiesTrayPatched, boolean aiPatched, GenAiLabel.Accessor aiAccessor) {
         try {
             if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
             if (suggestedPatched) {
                 HookStatus.invoked(FamilyNames.SUGGESTED_POSTS);
                 reportSuggestedClasses();
             }
+            if (storiesTrayPatched) HookStatus.invoked(FamilyNames.STORIES_TRAY);
             if (aiPatched) {
                 HookStatus.invoked(FamilyNames.AI_DETECTED_POSTS);
                 GenAiLabel.reader();
@@ -123,14 +148,29 @@ public final class FeedFilter {
             FeedFilterCounters.sawList(FEED_ROUTE, 1);
             String categoryName = category instanceof Enum ? ((Enum<?>) category).name() : null;
             FeedFilterCounters.sawKind(FEED_ROUTE, categoryName);
+            // What kind of post this is, for a report of what reaches the feed: an enum constant and
+            // a GraphQL type name, never the post itself.
+            Logger.printDebug(() -> "Feed edge: " + categoryName + " " + typeName(feedUnit));
             // An edge a prefetch adds before the settings are ready stays: no switch can be read yet.
             if (!Utils.settingsReady()) return false;
 
             String reason = null;
             if (sponsoredPatched && hiddenCategory(category)) {
                 reason = categoryName;
-            } else if (suggestedPatched && Settings.HIDE_SUGGESTED_POSTS.get()) {
-                reason = suggestedUnitName(feedUnit);
+            }
+            if (reason == null && suggestedPatched) {
+                if (Settings.HIDE_SUGGESTED_POSTS.get()) reason = suggestedUnitName(feedUnit);
+                if (reason == null && Settings.HIDE_SUGGESTED_FOR_YOU.get() && INJECTED_STORY.equals(categoryName)) {
+                    reason = INJECTED_STORY;
+                }
+                if (reason == null && Settings.HIDE_PEOPLE_YOU_MAY_KNOW.get()
+                        && PEOPLE_YOU_MAY_KNOW_TYPE.equals(typeName(feedUnit))) {
+                    reason = PEOPLE_YOU_MAY_KNOW_TYPE;
+                }
+            }
+            if (reason == null && storiesTrayPatched && Settings.HIDE_STORIES_TRAY.get()
+                    && STORIES_TRAY_TYPE.equals(typeName(feedUnit))) {
+                reason = STORIES_TRAY_TYPE;
             }
             if (reason == null && aiPatched && Settings.HIDE_AI_DETECTED_POSTS.get()) {
                 reason = aiDetectedReason(feedUnit, aiAccessor);
@@ -144,6 +184,7 @@ public final class FeedFilter {
         } catch (Throwable failure) {
             if (sponsoredPatched) HookStatus.threw(FamilyNames.SPONSORED_POSTS, "feed guard", failure);
             if (suggestedPatched) HookStatus.threw(FamilyNames.SUGGESTED_POSTS, "feed guard", failure);
+            if (storiesTrayPatched) HookStatus.threw(FamilyNames.STORIES_TRAY, "feed guard", failure);
             if (aiPatched) HookStatus.threw(FamilyNames.AI_DETECTED_POSTS, "feed guard", failure);
             Logger.printException(() -> "Feed filter: could not judge an edge", failure);
             return false;
@@ -210,6 +251,37 @@ public final class FeedFilter {
             if (type.isInstance(feedUnit)) return type.getSimpleName();
         }
         return null;
+    }
+
+    /** Each feed unit class's public {@code getTypeName()}, or empty when it has none. */
+    private static final java.util.concurrent.ConcurrentHashMap<Class<?>, java.util.Optional<java.lang.reflect.Method>>
+            TYPE_NAME_METHODS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * The GraphQL type name a feed unit answers, or null when it has no {@code getTypeName()} or
+     * the call fails. Facebook's generated models all keep that method's name, whatever their own
+     * class is renamed to, and it answers a literal. A unit this can't read is kept: the rules
+     * built on it fail open.
+     */
+    static String typeName(Object feedUnit) {
+        if (feedUnit == null) return null;
+        try {
+            java.util.Optional<java.lang.reflect.Method> method = TYPE_NAME_METHODS.computeIfAbsent(
+                    feedUnit.getClass(), type -> {
+                        try {
+                            java.lang.reflect.Method found = type.getMethod("getTypeName");
+                            return found.getReturnType() == String.class
+                                    ? java.util.Optional.of(found) : java.util.Optional.empty();
+                        } catch (NoSuchMethodException none) {
+                            return java.util.Optional.empty();
+                        }
+                    });
+            if (!method.isPresent()) return null;
+            Object name = method.get().invoke(feedUnit);
+            return name instanceof String ? (String) name : null;
+        } catch (Throwable failure) {
+            return null;
+        }
     }
 
     private static Class<?>[] suggestedClasses() {

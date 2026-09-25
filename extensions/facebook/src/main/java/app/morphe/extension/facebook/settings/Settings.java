@@ -35,6 +35,18 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting HIDE_SUGGESTED_POSTS =
             new BooleanSetting("hushfacebook_hide_suggested_posts", TRUE);
 
+    /** Posts marked "Suggested for you", which Facebook files under the INJECTED_STORY category. */
+    public static final BooleanSetting HIDE_SUGGESTED_FOR_YOU =
+            new BooleanSetting("hushfacebook_hide_suggested_for_you", TRUE);
+
+    /** The "People you may know" row, found by its GraphQL type name. */
+    public static final BooleanSetting HIDE_PEOPLE_YOU_MAY_KNOW =
+            new BooleanSetting("hushfacebook_hide_people_you_may_know", TRUE);
+
+    /** The row of stories at the top of the feed, found by its GraphQL type name. */
+    public static final BooleanSetting HIDE_STORIES_TRAY =
+            new BooleanSetting("hushfacebook_hide_stories_tray", TRUE);
+
     /**
      * Feed posts Facebook's own detection marked as made with AI. Off until one AI-labeled and one
      * ordinary post have been recorded on a signed-in feed and the rule told them apart.

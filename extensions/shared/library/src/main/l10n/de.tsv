@@ -53,12 +53,15 @@ Facebook doesn't serve ads to other apps on this phone.	Facebook liefert keine W
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Ab dem nächsten Start verhält sich jeder Schalter weiter oben, als wäre er aus, und stattdessen läuft Facebooks eigener Code. Die Debug-Protokollierung funktioniert weiter, und deine Einstellungen bleiben, wie sie sind.
 Full report saved to %1$s	Vollständiger Bericht gespeichert unter %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut
+Hide "People you may know"	„Personen, die du kennen könntest“ ausblenden
+Hide "Suggested for you" posts	„Vorschläge für dich“ ausblenden
 Hide AI-detected posts	Als KI erkannte Beiträge ausblenden
 Hide promoted posts	Beworbene Beiträge ausblenden
 Hide sponsored posts	Gesponserte Beiträge ausblenden
 Hide sponsored reels	Gesponserte Reels ausblenden
 Hide sponsored stories	Gesponserte Stories ausblenden
 Hide suggested and promoted units	Vorschlags- und Werbekarten ausblenden
+Hide the Stories tray	Stories-Leiste ausblenden
 How far a photo or video you're saving has got, with a button to cancel it	Fortschritt beim Speichern eines Fotos oder Videos, mit einem Button zum Abbrechen
 Hushfacebook %1$s on Facebook %2$s	Hushfacebook %1$s auf Facebook %2$s
 Hushfacebook is on	Hushfacebook ist aktiv
@@ -83,6 +86,7 @@ Open links in your browser	Links in deinem Browser öffnen
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Bezahlte Anzeigen im Feed. Diese werden aussortiert, bevor Facebook sie einfügt, sodass keine Lücke bleibt.
 Pause Hushfacebook	Hushfacebook pausieren
 Posts Facebook files as promotions rather than as ads.	Beiträge, die Facebook als beworben statt als Anzeige einstuft.
+Posts from people and pages you don't follow that Facebook slips into your feed.	Beiträge von Personen und Seiten, denen du nicht folgst, die Facebook in deinen Feed schiebt.
 Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Beiträge, die Facebooks eigene Erkennung als mit KI erstellt markiert hat. Hat nur die Person, die einen Beitrag geteilt hat, ihn als KI gekennzeichnet, bleibt er sichtbar. Dieser Schalter ist anfangs aus, weil er noch nicht in einem echten Feed ausprobiert wurde.
 Profiles and some Settings pages open again on this re-signed build.	Profile und einige Einstellungsseiten öffnen sich in diesem neu signierten Build wieder.
 Re-signed build fix	Fix für neu signierte Builds
@@ -128,6 +132,8 @@ The diagnostic report couldn't be saved. Try again.	Der Diagnosebericht ließ si
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	Die Datei %1$s ließ sich nicht entfernen. Lösche sie aus %2$s, um Hushfacebook wieder einzuschalten.
 the part of the Reels ad block patched into the app	der in die App gepatchte Teil der Reels-Werbesperre
 the re-signed build fix	der Fix für neu signierte Builds
+The row of friend suggestions between posts.	Die Reihe mit Freundschaftsvorschlägen zwischen den Beiträgen.
+The row of stories at the top of the feed, Create story included.	Die Reihe mit Stories oben im Feed, „Story erstellen“ eingeschlossen.
 The setting couldn't finish updating. Its saved value is shown.	Die Einstellung ließ sich nicht vollständig aktualisieren. Der gespeicherte Wert wird angezeigt.
 There is no diagnostic data to clear.	Es gibt keine Diagnosedaten zum Löschen.
 There is no diagnostic data to put back.	Es gibt keine Diagnosedaten zum Wiederherstellen.

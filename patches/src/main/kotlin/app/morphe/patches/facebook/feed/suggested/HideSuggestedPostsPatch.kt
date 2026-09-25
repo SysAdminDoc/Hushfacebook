@@ -5,13 +5,17 @@
  *
  * Modified for Hushfacebook (Facebook), 2026: the instance-of chain moved into the extension's
  * feed filter, behind the shared feed hook. The patch still refuses a build that carries none of
- * the unit classes, so a rename fails at patch time instead of filtering nothing.
+ * the unit classes, so a rename fails at patch time instead of filtering nothing. It also needs the
+ * INJECTED_STORY category and the People you may know type name, which two new switches read.
  */
 package app.morphe.patches.facebook.feed.suggested
 
+import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.facebook.feed.hook.feedFilterHookPatch
+import app.morphe.patches.facebook.feed.requireFeedTypeName
+import app.morphe.patches.facebook.shared.FEED_STORY_CATEGORY
 import app.morphe.patches.facebook.misc.extension.enableStatus
 import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.patches.facebook.misc.settings.settingsPatch
@@ -42,11 +46,29 @@ internal val SUGGESTED_FEED_UNITS = listOf(
     "Lcom/facebook/graphql/model/GraphQLHoldoutAdFeedUnit;",
 )
 
+/**
+ * The type name the "People you may know" row answers. The extension's
+ * `FeedFilter.PEOPLE_YOU_MAY_KNOW_TYPE` matches it.
+ */
+internal const val PEOPLE_YOU_MAY_KNOW_TYPE = "PaginatedPeopleYouMayKnowFeedUnit"
+
+/**
+ * The story category's constant list, which names INJECTED_STORY: the category Facebook files a
+ * "Suggested for you" post under. The extension compares the constant's name, so the literal in
+ * `<clinit>` is the evidence.
+ */
+internal object InjectedStoryCategoryFingerprint : Fingerprint(
+    definingClass = FEED_STORY_CATEGORY,
+    name = "<clinit>",
+    strings = listOf("INJECTED_STORY"),
+)
+
 @Suppress("unused")
 val hideSuggestedPostsPatch = bytecodePatch(
     name = "Hide suggested and promoted posts",
-    description = "Removes posts that Facebook adds to the feed, such as \"Pages you may like\" and its own " +
-        "upsells. In-feed surveys go too.",
+    description = "Removes what Facebook adds to the feed besides ads: \"Suggested for you\" posts, \"People " +
+        "you may know\", \"Pages you may like\" and its own upsells. In-feed surveys go too. Each kind has " +
+        "its own switch.",
     default = true,
 ) {
     category("Feed")
@@ -60,6 +82,10 @@ val hideSuggestedPostsPatch = bytecodePatch(
                 "None of the suggested feed unit classes is in this APK; the model package was renamed or moved",
             )
         }
+        if (InjectedStoryCategoryFingerprint.methodOrNull == null) {
+            throw PatchException("The story category enum no longer names INJECTED_STORY")
+        }
+        requireFeedTypeName(PEOPLE_YOU_MAY_KNOW_TYPE)
         enableStatus("suggestedPosts")
     }
 }

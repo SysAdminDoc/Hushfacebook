@@ -26,6 +26,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean storiesTray() {
+        return false;
+    }
+
     public static boolean aiDetectedPosts() {
         return false;
     }

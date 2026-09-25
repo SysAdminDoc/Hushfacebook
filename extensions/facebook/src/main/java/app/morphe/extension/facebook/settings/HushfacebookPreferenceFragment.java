@@ -136,7 +136,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         Set<PatchFamily> build = PatchFamily.inThisBuild();
 
         if (build.contains(PatchFamily.SPONSORED_POSTS) || build.contains(PatchFamily.SUGGESTED_POSTS)
-                || build.contains(PatchFamily.AI_DETECTED_POSTS)) {
+                || build.contains(PatchFamily.STORIES_TRAY) || build.contains(PatchFamily.AI_DETECTED_POSTS)) {
             PreferenceCategory feed = category(screen, L10n.t("News feed"));
             if (build.contains(PatchFamily.SPONSORED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_SPONSORED_POSTS, L10n.t("Hide sponsored posts"),
@@ -148,6 +148,16 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                 feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_POSTS,
                         L10n.t("Hide suggested and promoted units"),
                         L10n.t("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.")));
+                feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_FOR_YOU,
+                        L10n.t("Hide \"Suggested for you\" posts"),
+                        L10n.t("Posts from people and pages you don't follow that Facebook slips into your feed.")));
+                feed.addPreference(toggle(context, Settings.HIDE_PEOPLE_YOU_MAY_KNOW,
+                        L10n.t("Hide \"People you may know\""),
+                        L10n.t("The row of friend suggestions between posts.")));
+            }
+            if (build.contains(PatchFamily.STORIES_TRAY)) {
+                feed.addPreference(toggle(context, Settings.HIDE_STORIES_TRAY, L10n.t("Hide the Stories tray"),
+                        L10n.t("The row of stories at the top of the feed, Create story included.")));
             }
             if (build.contains(PatchFamily.AI_DETECTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_AI_DETECTED_POSTS, L10n.t("Hide AI-detected posts"),

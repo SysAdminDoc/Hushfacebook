@@ -137,6 +137,8 @@
     {
       "paths": [
         "patches/src/main/kotlin/app/morphe/patches/facebook/feed/hook/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/feed/FeedTypeNames.kt",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/feed/storiestray/**",
         "patches/src/main/kotlin/app/morphe/patches/facebook/misc/extension/**",
         "patches/src/main/kotlin/app/morphe/patches/facebook/misc/settings/**",
         "extensions/facebook/src/main/java/app/morphe/extension/facebook/feed/**",

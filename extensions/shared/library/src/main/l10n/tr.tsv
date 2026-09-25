@@ -53,12 +53,15 @@ Facebook doesn't serve ads to other apps on this phone.	Facebook bu telefondaki 
 From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Bir sonraki açılıştan itibaren yukarıdaki her anahtar kapalıymış gibi davranır ve yerine Facebook'un kendi kodu çalışır. Hata ayıklama günlüğü çalışmaya devam eder ve ayarların olduğu gibi kalır.
 Full report saved to %1$s	Tam rapor şuraya kaydedildi: %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, üzerine kurulduğu projelerin lisans bildirimleriyle
+Hide "People you may know"	“Tanıyor olabileceğin kişiler” bölümünü gizle
+Hide "Suggested for you" posts	“Senin için önerilenler” gönderilerini gizle
 Hide AI-detected posts	Yapay zekâ ile üretildiği tespit edilen gönderileri gizle
 Hide promoted posts	Tanıtılan gönderileri gizle
 Hide sponsored posts	Sponsorlu gönderileri gizle
 Hide sponsored reels	Sponsorlu Reels videolarını gizle
 Hide sponsored stories	Sponsorlu hikayeleri gizle
 Hide suggested and promoted units	Önerilen ve tanıtılan kartları gizle
+Hide the Stories tray	Hikaye şeridini gizle
 How far a photo or video you're saving has got, with a button to cancel it	Kaydettiğin fotoğraf veya videonun ilerleme durumu ve iptal etmek için bir düğme
 Hushfacebook %1$s on Facebook %2$s	Facebook %2$s üzerinde Hushfacebook %1$s
 Hushfacebook is on	Hushfacebook açık
@@ -83,6 +86,7 @@ Open links in your browser	Bağlantıları tarayıcında aç
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Akıştaki ücretli reklamlar. Facebook eklemeden önce çıkarıldıkları için yerlerinde boşluk kalmaz.
 Pause Hushfacebook	Hushfacebook'u duraklat
 Posts Facebook files as promotions rather than as ads.	Facebook'un reklam yerine tanıtım olarak saydığı gönderiler.
+Posts from people and pages you don't follow that Facebook slips into your feed.	Takip etmediğin kişi ve sayfalardan Facebook'un akışına kattığı gönderiler.
 Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Facebook'un kendi tespitinin yapay zekâ ile üretilmiş diye işaretlediği gönderiler. Yapay zekâ etiketini yalnızca paylaşan kişinin eklediği gönderiler kalır. Bu anahtar henüz gerçek bir akışta denenmediği için kapalı başlar.
 Profiles and some Settings pages open again on this re-signed build.	Profiller ve bazı Ayarlar sayfaları bu yeniden imzalanmış sürümde tekrar açılır.
 Re-signed build fix	Yeniden imzalanmış sürüm düzeltmesi
@@ -128,6 +132,8 @@ The diagnostic report couldn't be saved. Try again.	Tanılama raporu kaydedileme
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	%1$s dosyası kaldırılamadı. Hushfacebook'u yeniden açmak için onu %2$s içinden sil.
 the part of the Reels ad block patched into the app	Reels reklam engelinin uygulamaya yamalanan kısmı
 the re-signed build fix	yeniden imzalanmış sürüm düzeltmesi
+The row of friend suggestions between posts.	Gönderilerin arasındaki arkadaş önerileri satırı.
+The row of stories at the top of the feed, Create story included.	Akışın en üstündeki hikaye şeridi, “Hikaye oluştur” da dahil.
 The setting couldn't finish updating. Its saved value is shown.	Ayarın güncellenmesi tamamlanamadı. Kayıtlı değeri gösteriliyor.
 There is no diagnostic data to clear.	Temizlenecek tanılama verisi yok.
 There is no diagnostic data to put back.	Geri getirilecek tanılama verisi yok.
