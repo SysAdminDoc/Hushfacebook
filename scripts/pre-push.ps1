@@ -35,6 +35,13 @@ $ErrorActionPreference = 'Stop'
 # wherever pwsh is off the PATH: a git hook runs with git's environment, so that is the ordinary
 # case rather than the rare one.
 if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
+# Read before anything that can fail to load. The switch is the way through the hook's own messages
+# offer, and common.ps1 is the working tree's copy: mid-rebase it can hold conflict markers, or a
+# half-made edit, and loading it first stopped the push with a parse error while the switch was set.
+if ($env:HUSHFACEBOOK_SKIP_PRE_PUSH -eq '1') {
+    Write-Host '[pre-push] skipped by HUSHFACEBOOK_SKIP_PRE_PUSH'
+    exit 0
+}
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 # A hook runs with git's own environment. User environment variables set after the shell
@@ -254,11 +261,6 @@ function Get-GateWorktree {
     $left = @(Invoke-HookGit @('-C', $tree, 'status', '--porcelain'))
     if ($left.Count -gt 0) { throw "The gate worktree $tree is not clean: $($left -join '; ')" }
     return $tree
-}
-
-if ($env:HUSHFACEBOOK_SKIP_PRE_PUSH -eq '1') {
-    Write-Step 'skipped by HUSHFACEBOOK_SKIP_PRE_PUSH'
-    exit 0
 }
 
 Push-Location $Root

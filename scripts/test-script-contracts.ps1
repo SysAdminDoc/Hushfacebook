@@ -1408,6 +1408,33 @@ try {
     Assert-True (-not (Test-Path -LiteralPath $factsMarker)) `
         'The release check ran for a push that changed nothing it reads.'
 
+    # HUSHFACEBOOK_SKIP_PRE_PUSH is the way through the hook's own messages offer, and it has to
+    # work whatever the working tree holds. A copy of the hook beside a common.ps1 with conflict
+    # markers in it, as mid-rebase, stops on the parse error without the switch and goes through
+    # with it. The hook used to load common.ps1 first and stop either way.
+    $brokenHook = Join-Path $hookRoot 'broken-hook'
+    New-Item -ItemType Directory -Path (Join-Path $brokenHook 'scripts') -Force | Out-Null
+    Copy-Item -LiteralPath $prePushScript -Destination (Join-Path $brokenHook 'scripts/pre-push.ps1')
+    Set-Content -LiteralPath (Join-Path $brokenHook 'scripts/common.ps1') -Encoding ASCII -Value @(
+        '<<<<<<< HEAD', 'function Find-MachineNames {', '=======', '>>>>>>> theirs')
+    $brokenPrePush = Join-Path $brokenHook 'scripts/pre-push.ps1'
+    try {
+        Assert-Throws { & $brokenPrePush -Root $brokenHook -ChangedPaths @('README.md') 6> $null } '*common.ps1*' `
+            'The hook ran with a common.ps1 that does not parse, so the case below would prove nothing.'
+        $env:HUSHFACEBOOK_SKIP_PRE_PUSH = '1'
+        $global:LASTEXITCODE = 0
+        try {
+            $skipped = @(& $brokenPrePush -Root $brokenHook -ChangedPaths @('README.md') 6>&1 | ForEach-Object { "$_" }) -join "`n"
+        } catch {
+            throw "HUSHFACEBOOK_SKIP_PRE_PUSH=1 did not get a push past a common.ps1 that does not parse: $($_.Exception.Message)"
+        }
+        Assert-True ($LASTEXITCODE -eq 0 -and $skipped -like '*skipped by HUSHFACEBOOK_SKIP_PRE_PUSH*') `
+            "HUSHFACEBOOK_SKIP_PRE_PUSH=1 did not say it skipped the hook: $skipped"
+    } finally {
+        $env:HUSHFACEBOOK_SKIP_PRE_PUSH = $null
+        Remove-Item -LiteralPath $brokenHook -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
     Invoke-Hook -Paths @('release-receipt-0.31.0.json')
     Assert-True (Test-Path -LiteralPath $factsMarker) `
         'A push that changed only the release receipt ran no release check.'
