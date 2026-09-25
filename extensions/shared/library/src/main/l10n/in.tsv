@@ -1,8 +1,8 @@
 # Indonesian for Hushfacebook: the English key, a tab, the translation. One row per string.
 # After editing, run python scripts/gen-l10n.py from the repository root.
 "Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Halaman yang mungkin Anda sukai” dan kartu penawaran dari Facebook sendiri. Survei di Kabar Beranda ikut hilang.
-%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.
-%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.
+%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	%1$d item dalam file itu bukan pengaturan yang dikenali versi Hushfacebook ini, jadi tidak akan disertakan.
+%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	%1$d item dalam file itu bukan pengaturan yang dikenali versi Hushfacebook ini, jadi tidak akan disertakan.
 %1$d switch will change.	%1$d sakelar akan berubah.
 %1$d switches will change.	%1$d sakelar akan berubah.
 %1$s of %2$s	%1$s dari %2$s
@@ -107,12 +107,12 @@ Stays in while paused	Tetap aktif saat dijeda
 Stories	Cerita
 Tap to turn it back on.	Ketuk untuk mengaktifkan Hushfacebook lagi.
 That file is too large to be a settings file. Nothing was changed.	File itu terlalu besar untuk sebuah file pengaturan. Tidak ada yang diubah.
-That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	File itu bukan teks yang dapat dibaca, jadi mungkin rusak saat dikirim. Tidak ada yang diubah.
-That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	File itu mencantumkan satu pengaturan dua kali, jadi tidak jelas nilai mana yang dipakai. Tidak ada yang diubah.
+That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	File itu bukan teks yang dapat dibaca, jadi mungkin rusak saat ditransfer. Tidak ada yang diubah.
+That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	File itu mencantumkan satu pengaturan dua kali, jadi tidak jelas nilai mana yang harus dipakai. Tidak ada yang diubah.
 That isn't a Hushfacebook settings file. Nothing was changed.	Itu bukan file pengaturan Hushfacebook. Tidak ada yang diubah.
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	File pengaturan itu memuat nilai yang tidak dapat dibaca Hushfacebook. Tidak ada yang diubah.
 That settings file is damaged or only partly downloaded. Nothing was changed.	File pengaturan itu rusak atau hanya terunduh sebagian. Tidak ada yang diubah.
-That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	File pengaturan itu dibuat oleh Hushfacebook yang lebih baru dari ini. Tidak ada yang diubah.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	File pengaturan itu dibuat oleh versi Hushfacebook yang lebih baru daripada versi ini. Tidak ada yang diubah.
 the ad telemetry block	pemblokir telemetri iklan
 the AMOLED black theme	tema hitam AMOLED
 the Audience Network block	pemblokir Audience Network
@@ -133,4 +133,4 @@ Version %1$s for Facebook %2$s	Versi %1$s untuk Facebook %2$s
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Tautan web tidak lagi dibuka di browser dalam aplikasi Facebook. Tautan ke Facebook sendiri tetap dibuka di aplikasi.
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Mencatat ke log Android apa yang dilakukan setiap tambalan. Biarkan nonaktif kecuali Anda sedang melaporkan masalah.
 You paused Hushfacebook.	Anda menjeda Hushfacebook.
-Your switches already match that file, so nothing will change.	Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang berubah.
+Your switches already match that file, so nothing will change.	Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang akan berubah.

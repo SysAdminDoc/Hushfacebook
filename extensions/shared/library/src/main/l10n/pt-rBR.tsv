@@ -22,7 +22,7 @@ Audience Network off	Audience Network desativado
 Back	Voltar
 Background ad prefetch blocked	Pré-carregamento de anúncios em segundo plano bloqueado
 Changing these	Como mudar esses itens
-Choose a settings file. You'll see how many switches it changes before anything does.	Escolha um arquivo de configurações. Você vai ver quantas opções ele muda antes de qualquer coisa mudar.
+Choose a settings file. You'll see how many switches it changes before anything does.	Escolha um arquivo de configurações. Você vai ver quantas opções ele muda antes de qualquer alteração.
 Clear diagnostic data	Limpar dados de diagnóstico
 Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Copie um relatório curto ou salve o completo em Download/Morphe. Links, IDs de conta e de post, cookies de sessão e nomes ficam de fora.
 Copy quick report	Copiar relatório rápido
@@ -32,7 +32,7 @@ Couldn't open that file. Nothing was changed.	Não foi possível abrir esse arqu
 Couldn't open the file picker. Try again.	Não foi possível abrir o seletor de arquivos. Tente de novo.
 Couldn't put back the diagnostic data. Try again.	Não foi possível restaurar os dados de diagnóstico. Tente de novo.
 Couldn't save the settings file. Try again.	Não foi possível salvar o arquivo de configurações. Tente de novo.
-Couldn't start that. Try again in a moment.	Não foi possível começar. Tente de novo daqui a pouco.
+Couldn't start that. Try again in a moment.	Não foi possível iniciar isso. Tente de novo em instantes.
 Couldn't start the report export. Try again shortly.	Não foi possível iniciar a exportação do relatório. Tente de novo daqui a pouco.
 Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	O modo escuro fica preto em vez de cinza-escuro. Ative o modo escuro no Facebook para ver.
 Debug logging	Registro de depuração
@@ -107,12 +107,12 @@ Stays in while paused	O que continua ativo na pausa
 Stories	Stories
 Tap to turn it back on.	Toque para reativar.
 That file is too large to be a settings file. Nothing was changed.	Esse arquivo é grande demais para ser um arquivo de configurações. Nada foi alterado.
-That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Esse arquivo não é texto legível, então pode ter se danificado no caminho. Nada foi alterado.
+That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Esse arquivo não é texto legível, então pode ter sido danificado no caminho. Nada foi alterado.
 That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	Esse arquivo lista uma configuração duas vezes, então não dá para saber qual valor usar. Nada foi alterado.
 That isn't a Hushfacebook settings file. Nothing was changed.	Isso não é um arquivo de configurações do Hushfacebook. Nada foi alterado.
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	Esse arquivo de configurações tem um valor que o Hushfacebook não consegue ler. Nada foi alterado.
 That settings file is damaged or only partly downloaded. Nothing was changed.	Esse arquivo de configurações está danificado ou só foi baixado em parte. Nada foi alterado.
-That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Esse arquivo de configurações foi escrito por um Hushfacebook mais novo que este. Nada foi alterado.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Esse arquivo de configurações foi criado por uma versão do Hushfacebook mais recente que esta. Nada foi alterado.
 the ad telemetry block	o bloqueio da telemetria de anúncios
 the AMOLED black theme	o tema preto AMOLED
 the Audience Network block	o bloqueio do Audience Network
@@ -126,7 +126,7 @@ The setting couldn't finish updating. Its saved value is shown.	Não foi possív
 There is no diagnostic data to clear.	Não há dados de diagnóstico para limpar.
 There is no diagnostic data to put back.	Não há dados de diagnóstico para restaurar.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Eles são escolhidos no Morphe Manager quando você aplica os patches, e a pausa não os desliga. Aplique os patches de novo para mudá-los.
-This phone has no file picker, so there's no way to choose a file here.	Este celular não tem seletor de arquivos, então não dá para escolher um aqui.
+This phone has no file picker, so there's no way to choose a file here.	Este celular não tem seletor de arquivos, então não dá para escolher um arquivo aqui.
 Try again, or go back to Facebook.	Tente de novo ou volte para o Facebook.
 Version	Versão
 Version %1$s for Facebook %2$s	Versão %1$s para o Facebook %2$s

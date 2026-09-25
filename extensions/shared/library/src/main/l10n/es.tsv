@@ -112,7 +112,7 @@ That file lists a setting twice, so there's no telling which value to use. Nothi
 That isn't a Hushfacebook settings file. Nothing was changed.	Eso no es un archivo de configuración de Hushfacebook. No se cambió nada.
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	Ese archivo de configuración contiene un valor que Hushfacebook no puede leer. No se cambió nada.
 That settings file is damaged or only partly downloaded. Nothing was changed.	Ese archivo de configuración está dañado o solo se descargó en parte. No se cambió nada.
-That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Ese archivo de configuración lo escribió un Hushfacebook más nuevo que este. No se cambió nada.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Ese archivo de configuración lo escribió una versión de Hushfacebook más reciente que esta. No se cambió nada.
 the ad telemetry block	el bloqueo de telemetría de anuncios
 the AMOLED black theme	el tema negro AMOLED
 the Audience Network block	el bloqueo de Audience Network
@@ -126,7 +126,7 @@ The setting couldn't finish updating. Its saved value is shown.	No se pudo termi
 There is no diagnostic data to clear.	No hay datos de diagnóstico que borrar.
 There is no diagnostic data to put back.	No hay datos de diagnóstico que restaurar.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Se eligen en Morphe Manager al parchear, y Pausar no los desactiva. Vuelve a parchear para cambiarlos.
-This phone has no file picker, so there's no way to choose a file here.	Este teléfono no tiene selector de archivos, así que aquí no se puede elegir uno.
+This phone has no file picker, so there's no way to choose a file here.	Este teléfono no tiene selector de archivos, así que aquí no hay forma de elegir un archivo.
 Try again, or go back to Facebook.	Inténtalo de nuevo o vuelve a Facebook.
 Version	Versión
 Version %1$s for Facebook %2$s	Versión %1$s para Facebook %2$s

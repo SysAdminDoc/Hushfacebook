@@ -107,12 +107,12 @@ Stays in while paused	Bleibt während der Pause aktiv
 Stories	Stories
 Tap to turn it back on.	Zum Wiedereinschalten tippen.
 That file is too large to be a settings file. Nothing was changed.	Diese Datei ist zu groß für eine Einstellungsdatei. Es wurde nichts geändert.
-That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Diese Datei ist kein lesbarer Text und wurde womöglich bei der Übertragung beschädigt. Es wurde nichts geändert.
+That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Diese Datei ist kein lesbarer Text, sie wurde also womöglich bei der Übertragung beschädigt. Es wurde nichts geändert.
 That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	Diese Datei führt eine Einstellung zweimal auf, daher ist unklar, welcher Wert gilt. Es wurde nichts geändert.
 That isn't a Hushfacebook settings file. Nothing was changed.	Das ist keine Hushfacebook-Einstellungsdatei. Es wurde nichts geändert.
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	Diese Einstellungsdatei enthält einen Wert, den Hushfacebook nicht lesen kann. Es wurde nichts geändert.
 That settings file is damaged or only partly downloaded. Nothing was changed.	Diese Einstellungsdatei ist beschädigt oder nur teilweise heruntergeladen. Es wurde nichts geändert.
-That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Diese Einstellungsdatei stammt aus einem neueren Hushfacebook als diesem. Es wurde nichts geändert.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Diese Einstellungsdatei stammt aus einer neueren Hushfacebook-Version als dieser. Es wurde nichts geändert.
 the ad telemetry block	die Sperre für Werbe-Telemetrie
 the AMOLED black theme	das schwarze AMOLED-Design
 the Audience Network block	die Sperre für das Audience Network

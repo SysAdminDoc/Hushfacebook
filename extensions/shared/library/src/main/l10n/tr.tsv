@@ -26,13 +26,13 @@ Choose a settings file. You'll see how many switches it changes before anything 
 Clear diagnostic data	Tanılama verilerini temizle
 Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Kısa bir rapor kopyala veya tam raporu Download/Morphe klasörüne kaydet. Bağlantılar, hesap ve gönderi kimlikleri, oturum çerezleri ve adlar dahil edilmez.
 Copy quick report	Hızlı raporu kopyala
-Couldn't import every setting. Check the switches on this screen.	Ayarların hepsi içe aktarılamadı. Bu ekrandaki anahtarları kontrol et.
+Couldn't import every setting. Check the switches on this screen.	Bazı ayarlar içe aktarılamadı. Bu ekrandaki anahtarları kontrol et.
 Couldn't import the settings. Nothing was changed.	Ayarlar içe aktarılamadı. Hiçbir şey değiştirilmedi.
 Couldn't open that file. Nothing was changed.	Bu dosya açılamadı. Hiçbir şey değiştirilmedi.
 Couldn't open the file picker. Try again.	Dosya seçici açılamadı. Tekrar dene.
 Couldn't put back the diagnostic data. Try again.	Tanılama verileri geri getirilemedi. Tekrar dene.
 Couldn't save the settings file. Try again.	Ayar dosyası kaydedilemedi. Tekrar dene.
-Couldn't start that. Try again in a moment.	Başlatılamadı. Birazdan tekrar dene.
+Couldn't start that. Try again in a moment.	Bu işlem başlatılamadı. Birazdan tekrar dene.
 Couldn't start the report export. Try again shortly.	Rapor dışa aktarımı başlatılamadı. Birazdan tekrar dene.
 Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.	Karanlık mod koyu gri yerine siyah görünür. Görmek için Facebook'ta karanlık modu aç.
 Debug logging	Hata ayıklama günlüğü
@@ -107,12 +107,12 @@ Stays in while paused	Duraklatılsa da devrede kalır
 Stories	Hikayeler
 Tap to turn it back on.	Yeniden açmak için dokun.
 That file is too large to be a settings file. Nothing was changed.	Bu dosya bir ayar dosyası olamayacak kadar büyük. Hiçbir şey değiştirilmedi.
-That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Bu dosya okunabilir bir metin değil, aktarım sırasında zarar görmüş olabilir. Hiçbir şey değiştirilmedi.
+That file isn't readable text, so it may have been damaged on the way. Nothing was changed.	Bu dosya okunabilir bir metin değil, aktarım sırasında hasar görmüş olabilir. Hiçbir şey değiştirilmedi.
 That file lists a setting twice, so there's no telling which value to use. Nothing was changed.	Bu dosyada bir ayar iki kez geçiyor, bu yüzden hangi değerin kullanılacağı belli değil. Hiçbir şey değiştirilmedi.
 That isn't a Hushfacebook settings file. Nothing was changed.	Bu bir Hushfacebook ayar dosyası değil. Hiçbir şey değiştirilmedi.
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	Bu ayar dosyasında Hushfacebook'un okuyamadığı bir değer var. Hiçbir şey değiştirilmedi.
 That settings file is damaged or only partly downloaded. Nothing was changed.	Bu ayar dosyası hasarlı ya da yalnızca bir kısmı indirilmiş. Hiçbir şey değiştirilmedi.
-That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Bu ayar dosyası, bundan daha yeni bir Hushfacebook sürümüyle yazılmış. Hiçbir şey değiştirilmedi.
+That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Bu ayar dosyası, Hushfacebook'un bu sürümünden daha yeni bir sürümüyle oluşturulmuş. Hiçbir şey değiştirilmedi.
 the ad telemetry block	reklam telemetrisi engeli
 the AMOLED black theme	AMOLED siyah tema
 the Audience Network block	Audience Network engeli

@@ -270,7 +270,7 @@ public final class L10nTranslations {
         table.put("That file is too large to be a settings file. Nothing was changed.",
                 "Diese Datei ist zu gro\u00df f\u00fcr eine Einstellungsdatei. Es wurde nichts ge\u00e4ndert.");
         table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
-                "Diese Datei ist kein lesbarer Text und wurde wom\u00f6glich bei der \u00dcbertragung besch\u00e4digt. Es wurde nichts ge\u00e4ndert.");
+                "Diese Datei ist kein lesbarer Text, sie wurde also wom\u00f6glich bei der \u00dcbertragung besch\u00e4digt. Es wurde nichts ge\u00e4ndert.");
         table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
                 "Diese Datei f\u00fchrt eine Einstellung zweimal auf, daher ist unklar, welcher Wert gilt. Es wurde nichts ge\u00e4ndert.");
         table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
@@ -280,7 +280,7 @@ public final class L10nTranslations {
         table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
                 "Diese Einstellungsdatei ist besch\u00e4digt oder nur teilweise heruntergeladen. Es wurde nichts ge\u00e4ndert.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
-                "Diese Einstellungsdatei stammt aus einem neueren Hushfacebook als diesem. Es wurde nichts ge\u00e4ndert.");
+                "Diese Einstellungsdatei stammt aus einer neueren Hushfacebook-Version als dieser. Es wurde nichts ge\u00e4ndert.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Der Diagnosebericht lie\u00df sich noch nicht speichern. Versuche es gleich noch einmal.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -565,7 +565,7 @@ public final class L10nTranslations {
         table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
                 "Ese archivo de configuraci\u00f3n est\u00e1 da\u00f1ado o solo se descarg\u00f3 en parte. No se cambi\u00f3 nada.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
-                "Ese archivo de configuraci\u00f3n lo escribi\u00f3 un Hushfacebook m\u00e1s nuevo que este. No se cambi\u00f3 nada.");
+                "Ese archivo de configuraci\u00f3n lo escribi\u00f3 una versi\u00f3n de Hushfacebook m\u00e1s reciente que esta. No se cambi\u00f3 nada.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Todav\u00eda no se pudo guardar el informe de diagn\u00f3stico. Int\u00e9ntalo de nuevo en un momento.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -584,7 +584,7 @@ public final class L10nTranslations {
 
     private static void fillEs2(Map<String, String> table) {
         table.put("This phone has no file picker, so there's no way to choose a file here.",
-                "Este tel\u00e9fono no tiene selector de archivos, as\u00ed que aqu\u00ed no se puede elegir uno.");
+                "Este tel\u00e9fono no tiene selector de archivos, as\u00ed que aqu\u00ed no hay forma de elegir un archivo.");
         table.put("Try again, or go back to Facebook.",
                 "Int\u00e9ntalo de nuevo o vuelve a Facebook.");
         table.put("Version",
@@ -625,9 +625,9 @@ public final class L10nTranslations {
         table.put("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.",
                 "\u201cHalaman yang mungkin Anda sukai\u201d dan kartu penawaran dari Facebook sendiri. Survei di Kabar Beranda ikut hilang.");
         table.put("%1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.",
-                "%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.");
+                "%1$d item dalam file itu bukan pengaturan yang dikenali versi Hushfacebook ini, jadi tidak akan disertakan.");
         table.put("%1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.",
-                "%1$d item di file itu bukan pengaturan yang dikenal versi Hushfacebook ini, jadi item itu akan dilewati.");
+                "%1$d item dalam file itu bukan pengaturan yang dikenali versi Hushfacebook ini, jadi tidak akan disertakan.");
         table.put("%1$d switch will change.",
                 "%1$d sakelar akan berubah.");
         table.put("%1$d switches will change.",
@@ -840,9 +840,9 @@ public final class L10nTranslations {
         table.put("That file is too large to be a settings file. Nothing was changed.",
                 "File itu terlalu besar untuk sebuah file pengaturan. Tidak ada yang diubah.");
         table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
-                "File itu bukan teks yang dapat dibaca, jadi mungkin rusak saat dikirim. Tidak ada yang diubah.");
+                "File itu bukan teks yang dapat dibaca, jadi mungkin rusak saat ditransfer. Tidak ada yang diubah.");
         table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
-                "File itu mencantumkan satu pengaturan dua kali, jadi tidak jelas nilai mana yang dipakai. Tidak ada yang diubah.");
+                "File itu mencantumkan satu pengaturan dua kali, jadi tidak jelas nilai mana yang harus dipakai. Tidak ada yang diubah.");
         table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
                 "Itu bukan file pengaturan Hushfacebook. Tidak ada yang diubah.");
         table.put("That settings file holds a value Hushfacebook can't read. Nothing was changed.",
@@ -850,7 +850,7 @@ public final class L10nTranslations {
         table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
                 "File pengaturan itu rusak atau hanya terunduh sebagian. Tidak ada yang diubah.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
-                "File pengaturan itu dibuat oleh Hushfacebook yang lebih baru dari ini. Tidak ada yang diubah.");
+                "File pengaturan itu dibuat oleh versi Hushfacebook yang lebih baru daripada versi ini. Tidak ada yang diubah.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Laporan diagnostik belum dapat disimpan. Coba lagi dalam beberapa saat.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -883,7 +883,7 @@ public final class L10nTranslations {
         table.put("You paused Hushfacebook.",
                 "Anda menjeda Hushfacebook.");
         table.put("Your switches already match that file, so nothing will change.",
-                "Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang berubah.");
+                "Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang akan berubah.");
         table.put("the AMOLED black theme",
                 "tema hitam AMOLED");
         table.put("the Audience Network block",
@@ -952,7 +952,7 @@ public final class L10nTranslations {
         table.put("Changing these",
                 "Como mudar esses itens");
         table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
-                "Escolha um arquivo de configura\u00e7\u00f5es. Voc\u00ea vai ver quantas op\u00e7\u00f5es ele muda antes de qualquer coisa mudar.");
+                "Escolha um arquivo de configura\u00e7\u00f5es. Voc\u00ea vai ver quantas op\u00e7\u00f5es ele muda antes de qualquer altera\u00e7\u00e3o.");
         table.put("Clear diagnostic data",
                 "Limpar dados de diagn\u00f3stico");
         table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
@@ -972,7 +972,7 @@ public final class L10nTranslations {
         table.put("Couldn't save the settings file. Try again.",
                 "N\u00e3o foi poss\u00edvel salvar o arquivo de configura\u00e7\u00f5es. Tente de novo.");
         table.put("Couldn't start that. Try again in a moment.",
-                "N\u00e3o foi poss\u00edvel come\u00e7ar. Tente de novo daqui a pouco.");
+                "N\u00e3o foi poss\u00edvel iniciar isso. Tente de novo em instantes.");
         table.put("Couldn't start the report export. Try again shortly.",
                 "N\u00e3o foi poss\u00edvel iniciar a exporta\u00e7\u00e3o do relat\u00f3rio. Tente de novo daqui a pouco.");
         table.put("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.",
@@ -1125,7 +1125,7 @@ public final class L10nTranslations {
         table.put("That file is too large to be a settings file. Nothing was changed.",
                 "Esse arquivo \u00e9 grande demais para ser um arquivo de configura\u00e7\u00f5es. Nada foi alterado.");
         table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
-                "Esse arquivo n\u00e3o \u00e9 texto leg\u00edvel, ent\u00e3o pode ter se danificado no caminho. Nada foi alterado.");
+                "Esse arquivo n\u00e3o \u00e9 texto leg\u00edvel, ent\u00e3o pode ter sido danificado no caminho. Nada foi alterado.");
         table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
                 "Esse arquivo lista uma configura\u00e7\u00e3o duas vezes, ent\u00e3o n\u00e3o d\u00e1 para saber qual valor usar. Nada foi alterado.");
         table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
@@ -1135,7 +1135,7 @@ public final class L10nTranslations {
         table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
                 "Esse arquivo de configura\u00e7\u00f5es est\u00e1 danificado ou s\u00f3 foi baixado em parte. Nada foi alterado.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
-                "Esse arquivo de configura\u00e7\u00f5es foi escrito por um Hushfacebook mais novo que este. Nada foi alterado.");
+                "Esse arquivo de configura\u00e7\u00f5es foi criado por uma vers\u00e3o do Hushfacebook mais recente que esta. Nada foi alterado.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "O relat\u00f3rio de diagn\u00f3stico ainda n\u00e3o p\u00f4de ser salvo. Tente de novo em instantes.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -1154,7 +1154,7 @@ public final class L10nTranslations {
 
     private static void fillPt_rBR2(Map<String, String> table) {
         table.put("This phone has no file picker, so there's no way to choose a file here.",
-                "Este celular n\u00e3o tem seletor de arquivos, ent\u00e3o n\u00e3o d\u00e1 para escolher um aqui.");
+                "Este celular n\u00e3o tem seletor de arquivos, ent\u00e3o n\u00e3o d\u00e1 para escolher um arquivo aqui.");
         table.put("Try again, or go back to Facebook.",
                 "Tente de novo ou volte para o Facebook.");
         table.put("Version",
@@ -1245,7 +1245,7 @@ public final class L10nTranslations {
         table.put("Copy quick report",
                 "H\u0131zl\u0131 raporu kopyala");
         table.put("Couldn't import every setting. Check the switches on this screen.",
-                "Ayarlar\u0131n hepsi i\u00e7e aktar\u0131lamad\u0131. Bu ekrandaki anahtarlar\u0131 kontrol et.");
+                "Baz\u0131 ayarlar i\u00e7e aktar\u0131lamad\u0131. Bu ekrandaki anahtarlar\u0131 kontrol et.");
         table.put("Couldn't import the settings. Nothing was changed.",
                 "Ayarlar i\u00e7e aktar\u0131lamad\u0131. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("Couldn't open that file. Nothing was changed.",
@@ -1257,7 +1257,7 @@ public final class L10nTranslations {
         table.put("Couldn't save the settings file. Try again.",
                 "Ayar dosyas\u0131 kaydedilemedi. Tekrar dene.");
         table.put("Couldn't start that. Try again in a moment.",
-                "Ba\u015flat\u0131lamad\u0131. Birazdan tekrar dene.");
+                "Bu i\u015flem ba\u015flat\u0131lamad\u0131. Birazdan tekrar dene.");
         table.put("Couldn't start the report export. Try again shortly.",
                 "Rapor d\u0131\u015fa aktar\u0131m\u0131 ba\u015flat\u0131lamad\u0131. Birazdan tekrar dene.");
         table.put("Dark mode draws black instead of dark grey. Turn on dark mode in Facebook to see it.",
@@ -1410,7 +1410,7 @@ public final class L10nTranslations {
         table.put("That file is too large to be a settings file. Nothing was changed.",
                 "Bu dosya bir ayar dosyas\u0131 olamayacak kadar b\u00fcy\u00fck. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("That file isn't readable text, so it may have been damaged on the way. Nothing was changed.",
-                "Bu dosya okunabilir bir metin de\u011fil, aktar\u0131m s\u0131ras\u0131nda zarar g\u00f6rm\u00fc\u015f olabilir. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+                "Bu dosya okunabilir bir metin de\u011fil, aktar\u0131m s\u0131ras\u0131nda hasar g\u00f6rm\u00fc\u015f olabilir. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("That file lists a setting twice, so there's no telling which value to use. Nothing was changed.",
                 "Bu dosyada bir ayar iki kez ge\u00e7iyor, bu y\u00fczden hangi de\u011ferin kullan\u0131laca\u011f\u0131 belli de\u011fil. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("That isn't a Hushfacebook settings file. Nothing was changed.",
@@ -1420,7 +1420,7 @@ public final class L10nTranslations {
         table.put("That settings file is damaged or only partly downloaded. Nothing was changed.",
                 "Bu ayar dosyas\u0131 hasarl\u0131 ya da yaln\u0131zca bir k\u0131sm\u0131 indirilmi\u015f. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
-                "Bu ayar dosyas\u0131, bundan daha yeni bir Hushfacebook s\u00fcr\u00fcm\u00fcyle yaz\u0131lm\u0131\u015f. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+                "Bu ayar dosyas\u0131, Hushfacebook'un bu s\u00fcr\u00fcm\u00fcnden daha yeni bir s\u00fcr\u00fcm\u00fcyle olu\u015fturulmu\u015f. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Tan\u0131lama raporu hen\u00fcz kaydedilemedi. Birazdan tekrar dene.");
         table.put("The diagnostic report couldn't be saved. Try again.",
