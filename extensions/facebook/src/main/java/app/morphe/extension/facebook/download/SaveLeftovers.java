@@ -18,10 +18,11 @@ import java.util.Set;
  * What a save that never finished leaves behind, and its removal.
  *
  * <p>A save removes its own files when it fails or is cancelled. When Android ends Facebook's
- * process in the middle of one, nothing runs: the work files stay in the cache, and a save that was
+ * process in the middle of one, nothing runs: the work files stay in the cache, a save that was
  * already copying into the gallery leaves a row marked pending, which the platform only clears
- * after about a week. So the first save of each process removes both before it makes anything of
- * its own. Only the main process saves, so nothing there can belong to a save still running.
+ * after about a week, and its notification stays up. So the first save of each process removes all
+ * three before it makes anything of its own. Only the main process saves, so nothing there can
+ * belong to a save still running, and a notification of one this process is running is kept.
  *
  * <p>The pending rows are known by a list kept here, not found by a query. Facebook's own save
  * writes into the same folders with the same kind of names, and a query can't tell its rows from
@@ -45,9 +46,10 @@ final class SaveLeftovers {
             swept = true;
             int files = removeWorkFiles(application);
             int rows = removePendingRows(application);
-            if (files > 0 || rows > 0) {
+            int notices = SaveControl.removeStale(application);
+            if (files > 0 || rows > 0 || notices > 0) {
                 MediaDownload.info(() -> "removed what a stopped save left: " + files + " work file(s), "
-                    + rows + " pending gallery row(s)");
+                    + rows + " pending gallery row(s), " + notices + " notification(s)");
             }
         }
     }

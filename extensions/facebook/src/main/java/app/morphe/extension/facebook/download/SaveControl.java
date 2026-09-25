@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
 import android.os.Build;
+import android.service.notification.StatusBarNotification;
 
 import java.util.Locale;
 import java.util.Map;
@@ -69,6 +70,29 @@ final class SaveControl {
         if (save.manager != null) listen(application);
         save.show(-1, 0, -1);
         return save;
+    }
+
+    /**
+     * Takes down the notifications of saves that aren't running in this process, and answers how
+     * many went. Android leaves a notification up when it ends the process that posted it, so a
+     * save it stopped half way stayed on screen, ongoing, with a Cancel nothing answered, until a
+     * later process happened to reuse its number.
+     */
+    static int removeStale(Context application) {
+        try {
+            NotificationManager manager = application.getSystemService(NotificationManager.class);
+            if (manager == null) return 0;
+            int removed = 0;
+            for (StatusBarNotification shown : manager.getActiveNotifications()) {
+                if (!TAG.equals(shown.getTag()) || RUNNING.containsKey(shown.getId())) continue;
+                manager.cancel(TAG, shown.getId());
+                removed++;
+            }
+            return removed;
+        } catch (Throwable t) {
+            MediaDownload.failure(() -> "could not take down a stopped save's notification", t);
+            return 0;
+        }
     }
 
     /** Cancels the save numbered [id]. Answers whether one was running. */

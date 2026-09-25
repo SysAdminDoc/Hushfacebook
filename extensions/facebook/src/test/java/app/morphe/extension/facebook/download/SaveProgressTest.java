@@ -215,6 +215,89 @@ public class SaveProgressTest {
         assertFalse("a cancel was logged as an error:\n" + report, report.contains("ERROR | save finished: CANCELLED"));
     }
 
+    /**
+     * Each save's button stops that save. Given one request code for every button, Android updates
+     * the one intent to the newest save's number, and the first notification's Cancel stops the
+     * second save while the first goes on.
+     */
+    @Test
+    public void cancelOnOneOfTwoSavesStopsThatOne() throws Exception {
+        server.serveGenerated("/one.mp4", "video/mp4", MP4_HEAD, 100 * MIB, 4 * MIB, release);
+        server.serveGenerated("/two.mp4", "video/mp4", MP4_HEAD, 100 * MIB, 4 * MIB, release);
+        Thread first = save("/one.mp4");
+        Thread second = save("/two.mp4");
+        List<Integer> ids = new ArrayList<>();
+        for (android.service.notification.StatusBarNotification up : notifications().getActiveNotifications()) {
+            if (SaveControl.TAG.equals(up.getTag())) ids.add(up.getId());
+        }
+        java.util.Collections.sort(ids);
+        assertEquals("two saves, two notifications: " + ids, 2, ids.size());
+        Notification firstShown = Shadows.shadowOf(notifications()).getNotification(SaveControl.TAG, ids.get(0));
+        assertEquals("the first save's button names another save", (int) ids.get(0), saveId(firstShown));
+        assertEquals((int) ids.get(1),
+                saveId(Shadows.shadowOf(notifications()).getNotification(SaveControl.TAG, ids.get(1))));
+
+        firstShown.actions[0].actionIntent.send();
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        first.join(15_000);
+        assertFalse("Cancel on the first save's notification didn't stop it", first.isAlive());
+        assertTrue("Cancel on the first save's notification stopped the second", second.isAlive());
+        assertFalse(shown(SaveControl.TAG, ids.get(0)));
+        assertTrue("the second save's notification went with the first", shown(SaveControl.TAG, ids.get(1)));
+
+        assertTrue(SaveControl.cancel(ids.get(1)));
+        finish(second);
+    }
+
+    /**
+     * From Android 13 the Cancel receiver is registered as not exported. Facebook targets a newer
+     * Android than 14, where a receiver registered with no flag throws, and every Cancel button
+     * then did nothing.
+     *
+     * <p>Android 13 itself is checked by setting SDK_INT here rather than with an sdk 33 config:
+     * that sandbox is ColdStartHooksTest's alone, and a class that shares it sets the context
+     * before that test runs.
+     */
+    @Test
+    @Config(sdk = 34)
+    public void fromAndroid13TheCancelReceiverIsNotExported() {
+        assertEquals(java.util.Collections.singletonList(Context.RECEIVER_NOT_EXPORTED), receiverRegistrations());
+        int sdk = android.os.Build.VERSION.SDK_INT;
+        try {
+            org.robolectric.util.ReflectionHelpers.setStaticField(android.os.Build.VERSION.class, "SDK_INT", 33);
+            assertEquals(java.util.Collections.singletonList(Context.RECEIVER_NOT_EXPORTED), receiverRegistrations());
+        } finally {
+            org.robolectric.util.ReflectionHelpers.setStaticField(android.os.Build.VERSION.class, "SDK_INT", sdk);
+        }
+    }
+
+    /** Below Android 13 there's no flag to give, and the token keeps other apps' broadcasts out. */
+    @Test
+    public void belowAndroid13TheCancelReceiverIsRegisteredWithNoFlag() {
+        assertEquals(java.util.Collections.singletonList(-1), receiverRegistrations());
+    }
+
+    /** The flags each receiver a save registers is given, -1 for a registration with none. */
+    private List<Integer> receiverRegistrations() {
+        List<Integer> flags = new ArrayList<>();
+        Context recording = new android.content.ContextWrapper(context) {
+            @Override
+            public Intent registerReceiver(android.content.BroadcastReceiver receiver, android.content.IntentFilter filter) {
+                flags.add(-1);
+                return super.registerReceiver(receiver, filter);
+            }
+
+            @Override
+            public Intent registerReceiver(android.content.BroadcastReceiver receiver, android.content.IntentFilter filter,
+                    int given) {
+                flags.add(given);
+                return super.registerReceiver(receiver, filter, given);
+            }
+        };
+        SaveControl.begin(recording, true).end();
+        return flags;
+    }
+
     @Test
     public void aFinishedSaveTakesItsNotificationAwayAndLeavesNoRowPending() throws Exception {
         long size = 8 * MIB;
@@ -259,6 +342,13 @@ public class SaveProgressTest {
         Uri finished = row(0);
         SaveLeftovers.pending(context, pending);
         SaveLeftovers.pending(context, finished);
+        // The stopped save's notification, which Android leaves up when it ends the process, and
+        // one of Facebook's own under another tag, which isn't this sweep's to touch.
+        notifications().notify(SaveControl.TAG, 42, new Notification.Builder(context, SaveControl.CHANNEL)
+                .setSmallIcon(android.R.drawable.stat_sys_download).setContentTitle("Saving a video")
+                .setOngoing(true).build());
+        notifications().notify("facebook", 42, new Notification.Builder(context, "facebook")
+                .setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("A message").build());
 
         server.serveGenerated("/next.mp4", "video/mp4", MP4_HEAD, 64 * 1024, Long.MAX_VALUE, null);
         Shadows.shadowOf(context.getContentResolver()).registerOutputStream(gallery.videoUri(3), published);
@@ -268,8 +358,11 @@ public class SaveProgressTest {
         assertTrue("a finished file was taken for a leftover", gallery.rows.containsKey(ContentUris.parseId(finished)));
         assertEquals(0, workFiles());
         assertTrue(pendingList().isEmpty());
+        assertFalse("the stopped save's notification is still up", shown(SaveControl.TAG, 42));
+        assertTrue("Facebook's own notification was taken down", shown("facebook", 42));
         String report = LogBufferManager.buildExportText();
-        assertTrue(report, report.contains("removed what a stopped save left: 2 work file(s), 1 pending gallery row(s)"));
+        assertTrue(report, report.contains("removed what a stopped save left: 2 work file(s), 1 pending gallery "
+                + "row(s), 1 notification(s)"));
 
         // Once per process: a file there now belongs to this process's own saves.
         assertTrue(new File(folder, "video9.part").createNewFile());
@@ -278,6 +371,13 @@ public class SaveProgressTest {
         assertTrue("a second save in the same process swept again", new File(folder, "video9.part").exists());
     }
 
+    /** Whether a notification with [tag] and [id] is up. */
+    private static boolean shown(String tag, int id) {
+        for (android.service.notification.StatusBarNotification up : notifications().getActiveNotifications()) {
+            if (tag.equals(up.getTag()) && up.getId() == id) return true;
+        }
+        return false;
+    }
     /** A row as a stopped save's writer would have left it. */
     private Uri row(int pendingFlag) {
         ContentValues values = new ContentValues();

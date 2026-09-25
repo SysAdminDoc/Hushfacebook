@@ -127,6 +127,8 @@ public class MediaUrlPolicyTest {
                 { "fdff:dcba:9876::1", "private" }, { "fdfe:ddba:9876::1", "private" },
                 { "fdfe:dcbb:9876::1", "private" }, { "fdfe:dcba:9976::1", "private" },
                 { "fdfe:dcba:9876:100::1", "private" }, { "fdfe:dcba:9875:ffff::1", "private" },
+                // The first byte too: fcfe: is the /64 with fc in front, in fc00::/7 but in neither pool.
+                { "fcfe:dcba:9876::1", "private" },
         };
         List<String> accepted = new ArrayList<>();
         for (String[] c : cases) {

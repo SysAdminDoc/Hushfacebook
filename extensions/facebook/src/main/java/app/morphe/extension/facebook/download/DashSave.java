@@ -156,8 +156,9 @@ final class DashSave {
 
             if (audio != null) {
                 audioFile = File.createTempFile("audio", ".mp4", folder);
+                // One count for the pair: the sound's bytes go on from the picture's.
                 result = Downloader.fetch(audio.url, Downloader.Kind.AUDIO, audioFile, policy,
-                    maxBytes - videoFile.length(), progress);
+                    maxBytes - videoFile.length(), Downloader.after(videoFile.length(), progress));
                 if (!result.ok()) return result;
             }
 

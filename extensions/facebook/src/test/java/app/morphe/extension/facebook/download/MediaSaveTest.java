@@ -6,6 +6,7 @@ package app.morphe.extension.facebook.download;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -237,6 +238,49 @@ public class MediaSaveTest {
     }
 
     /**
+     * A DASH save is one save to the person watching it. Told of the sound track on its own, its
+     * notification started over at the sound and gave that track's size as the whole save's; the
+     * sound's bytes now count on from the picture's.
+     */
+    @Test
+    public void aDashSavesProgressCountsOnThroughTheSoundTrack() {
+        byte[] picture = mp4(60_000);
+        serve("/v60.mp4", "video/mp4", picture, picture.length);
+        byte[] sound = mp4(40_000);
+        serve("/a40.mp4", "audio/mp4", sound, sound.length);
+        DashManifest.Track video = new DashManifest.Track("video/mp4", "avc1.64001f", 1280, 720, 2_000_000,
+                origin + "/v60.mp4");
+        DashManifest.Track audio = new DashManifest.Track("audio/mp4", "mp4a.40.2", 0, 0, 128_000, origin + "/a40.mp4");
+        List<long[]> told = new ArrayList<>();
+        Downloader.Progress watching = new Downloader.Progress() {
+            @Override
+            public void transferred(long done, long total) {
+                told.add(new long[]{done, total});
+            }
+
+            @Override
+            public void reading(Runnable close) {
+            }
+
+            @Override
+            public boolean cancelled() {
+                return false;
+            }
+        };
+
+        DashSave.save(context, video, audio, new MediaStoreWriter(context, true), policy, 100_000, watching);
+
+        assertFalse("nothing was reported", told.isEmpty());
+        for (int i = 1; i < told.size(); i++) {
+            assertTrue("the count went back from " + told.get(i - 1)[0] + " to " + told.get(i)[0],
+                    told.get(i)[0] >= told.get(i - 1)[0]);
+        }
+        long[] last = told.get(told.size() - 1);
+        assertEquals("the save's bytes", 100_000, last[0]);
+        assertEquals("the save's size, not the sound track's", 100_000, last[1]);
+    }
+
+    /**
      * A 1,000-byte picture and a 1,000-byte sound, saved under a 10,000-byte cap so both fetches
      * fit, and joined. Robolectric's extractor reads no file: it answers with the samples a test
      * gives it for a path, and its muxer writes exactly those samples into the joined file, so the
@@ -320,6 +364,27 @@ public class MediaSaveTest {
 
         assertEquals("TOO_LARGE (the joined file is 12000 bytes, more than 10000)", result.toString());
         assertNothingWasCreated("a pair whose joined file ran past the cap", result);
+    }
+
+    /**
+     * The cap is a limit and not a margin, on both sides of it: a joined file of exactly 10,000
+     * bytes reaches the gallery, and one byte more doesn't. The case above, 2,000 bytes over,
+     * couldn't tell the cap from a bound off by a byte or two.
+     */
+    @Test
+    public void aJoinedFileExactlyAtTheCapIsPublished() {
+        Downloader.Result result = saveAndJoin(sample(5_000, 'v'), sample(5_000, 'a'));
+
+        assertEquals(result.toString(), Downloader.Status.OK, result.status);
+        assertEquals(10_000, published.size());
+    }
+
+    @Test
+    public void aJoinedFileOneByteOverTheCapIsRefused() {
+        Downloader.Result result = saveAndJoin(sample(5_001, 'v'), sample(5_000, 'a'));
+
+        assertEquals("TOO_LARGE (the joined file is 10001 bytes, more than 10000)", result.toString());
+        assertNothingWasCreated("a joined file one byte over the cap", result);
     }
 
     /**

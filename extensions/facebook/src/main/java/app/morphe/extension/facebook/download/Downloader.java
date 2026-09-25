@@ -100,6 +100,31 @@ final class Downloader {
         }
     };
 
+    /**
+     * [progress] told of a second fetch of the same save as the continuation of one that moved
+     * [before] bytes. A DASH save fetches its picture and then its sound, and told of each on its
+     * own, its notification started over at the sound track and gave that track's size as the
+     * whole save's.
+     */
+    static Progress after(long before, Progress progress) {
+        return new Progress() {
+            @Override
+            public void transferred(long done, long total) {
+                progress.transferred(before + done, total < 0 ? -1 : before + total);
+            }
+
+            @Override
+            public void reading(Runnable close) {
+                progress.reading(close);
+            }
+
+            @Override
+            public boolean cancelled() {
+                return progress.cancelled();
+            }
+        };
+    }
+
     /** A cancel seen between two reads of a body. */
     private static final class Cancelled extends IOException {
         Cancelled() {
