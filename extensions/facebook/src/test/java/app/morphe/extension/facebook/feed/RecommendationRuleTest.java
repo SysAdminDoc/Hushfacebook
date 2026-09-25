@@ -28,8 +28,10 @@ import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 import app.morphe.extension.shared.diagnostics.HookStatus;
+import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.PauseForTests;
+import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /**
  * The "Suggested for you" rule in the shared feed guard: it hides a story only when Facebook's own
@@ -214,6 +216,37 @@ public class RecommendationRuleTest {
         Settings.HIDE_SUGGESTED_POSTS.save(false);
         assertFalse(guard(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), answer));
         assertEquals(FeedFilter.RECOMMENDATION_ROUTE + ": 1 lists, 1 items, 0 removed. Kinds: not a story 1", line());
+    }
+
+    /**
+     * With debug logging on, each edge's line says what the recommendation flag reads, to pair a
+     * report with the posts on screen: true, false, or none when there's nothing to read. It names
+     * no post and no account. With the suggested patch out, the flag isn't read at all.
+     */
+    @Test
+    public void theDebugLineSaysWhatTheFlagReads() {
+        BaseSettings.DEBUG.save(true);
+        LogBufferManager.clearLogBuffer();
+        try {
+            // Off, only the debug line reads the flag.
+            Settings.HIDE_SUGGESTED_FOR_YOU.save(false);
+            guard(Category.ENGAGEMENT, new GraphQLStory(), new Answer(FeedGuardForTests.recommendationContext(true)));
+            guard(Category.ORGANIC, new GraphQLStory(), new Answer(FeedGuardForTests.recommendationContext(false)));
+            guard(Category.ORGANIC, new GraphQLStory(), new Answer(null));
+            Answer unpatched = new Answer(FeedGuardForTests.recommendationContext(true));
+            FeedFilter.hideEdge(Category.SPONSORED, new GraphQLStory(), false, false, unpatched, false, GenAiLabel.PATCHED);
+
+            String log = LogBufferManager.buildExportText();
+            assertTrue(log, log.contains("Feed edge: ENGAGEMENT null ifr=true"));
+            assertTrue(log, log.contains("Feed edge: ORGANIC null ifr=false"));
+            assertTrue(log, log.contains("Feed edge: ORGANIC null ifr=none"));
+            assertTrue(log, log.contains("Feed edge: SPONSORED null ifr=none"));
+            assertEquals("the flag was read with the suggested patch out", 0, unpatched.calls);
+            assertNull("the debug line counted as a read of the rule", line());
+        } finally {
+            BaseSettings.DEBUG.resetToDefault();
+            LogBufferManager.clearLogBuffer();
+        }
     }
 
     /** The members the flag is read through go into the suggested family's Hook status row. */

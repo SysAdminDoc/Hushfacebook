@@ -16,6 +16,9 @@ import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 import app.morphe.extension.shared.diagnostics.HookStatus;
+import app.morphe.extension.shared.settings.BaseSettings;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * What the news feed guard asks about each edge before Facebook adds it to the feed.
@@ -150,9 +153,12 @@ public final class FeedFilter {
             FeedFilterCounters.sawList(FEED_ROUTE, 1);
             String categoryName = category instanceof Enum ? ((Enum<?>) category).name() : null;
             FeedFilterCounters.sawKind(FEED_ROUTE, categoryName);
-            // What kind of post this is, for a report of what reaches the feed: an enum constant and
-            // a GraphQL type name, never the post itself.
-            Logger.printDebug(() -> "Feed edge: " + categoryName + " " + typeName(feedUnit));
+            // What kind of post this is, for a report of what reaches the feed: an enum constant, a
+            // GraphQL type name and what Facebook's recommendation flag reads, never the post itself.
+            // Built only when debug logging is on, and the flag only read with the patch that fills
+            // its accessor.
+            Logger.printDebug(() -> "Feed edge: " + categoryName + " " + typeName(feedUnit) + " ifr="
+                    + (suggestedPatched ? recommendationFlag(feedUnit, recommendationAccessor) : "none"));
             // An edge a prefetch adds before the settings are ready stays: no switch can be read yet.
             if (!Utils.settingsReady()) return false;
 
@@ -201,6 +207,14 @@ public final class FeedFilter {
         if (!outcome.hides) return null;
         FeedFilterCounters.removed(route, 1, why);
         return flag.flag;
+    }
+
+    /** Facebook's recommendation flag for the debug line: true, false, or none when it can't say. */
+    private static String recommendationFlag(Object feedUnit, StoryFlag.Accessor accessor) {
+        StoryFlag.Outcome outcome = RecommendationLabel.FLAG.read(feedUnit, accessor);
+        if (outcome == StoryFlag.Outcome.FLAGGED) return "true";
+        if (outcome == StoryFlag.Outcome.NOT_FLAGGED) return "false";
+        return "none";
     }
 
     /** Which Hook status row the suggested unit classes were last reported into. */
@@ -343,12 +357,28 @@ public final class FeedFilter {
             FeedFilterCounters.sawKind(TRAY_ROUTE, kind);
             boolean hide = Utils.settingsReady() && Settings.HIDE_STORIES_TRAY.get();
             if (hide) FeedFilterCounters.removed(TRAY_ROUTE, 1, kind + " adapter skipped");
+            logTrayOnce(adapter, kind, hide);
             return hide;
         } catch (Throwable failure) {
             HookStatus.threw(FamilyNames.STORIES_TRAY, "stories tray adapter", failure);
             Logger.printException(() -> "Stories tray: could not read its switch", failure);
             return false;
         }
+    }
+
+    /** One bit per adapter and decision that has had its debug line, so each is logged once. */
+    static final AtomicInteger TRAY_LOGGED = new AtomicInteger();
+
+    /**
+     * A debug line the first time each adapter is skipped or kept: which tray Facebook builds on
+     * this phone, and what the switch did to it. Only once the settings can be read and debug
+     * logging is on, so turning logging on later still gets the line.
+     */
+    private static void logTrayOnce(int adapter, String kind, boolean hide) {
+        if (!Utils.settingsReady() || !BaseSettings.DEBUG.get()) return;
+        int bit = 1 << ((adapter == UNIFIED_TRAY ? 2 : 0) + (hide ? 1 : 0));
+        if ((TRAY_LOGGED.getAndUpdate(logged -> logged | bit) & bit) != 0) return;
+        Logger.printDebug(() -> "Stories tray: " + (hide ? "skipped" : "kept") + " " + kind + " adapter");
     }
 
     /** Injection point. Whether the story viewer's ad bucket sources contribute nothing. */

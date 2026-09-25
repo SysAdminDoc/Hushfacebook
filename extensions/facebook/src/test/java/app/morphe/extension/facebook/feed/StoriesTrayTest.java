@@ -20,8 +20,10 @@ import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 import app.morphe.extension.shared.diagnostics.HookStatus;
+import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.PauseForTests;
+import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /**
  * The Stories tray hook at the start of both of the feed's tray adapter methods: true skips the
@@ -72,6 +74,44 @@ public class StoriesTrayTest {
         assertFalse(FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY));
         assertFalse(FeedFilter.hideStoriesTray(FeedFilter.UNIFIED_TRAY));
         assertEquals(FeedFilter.TRAY_ROUTE + ": 2 lists, 2 items, 0 removed. Kinds: legacy 1, unified 1", line());
+    }
+
+    private static int occurrences(String text, String of) {
+        int count = 0;
+        for (int at = text.indexOf(of); at >= 0; at = text.indexOf(of, at + 1)) count++;
+        return count;
+    }
+
+    /**
+     * With debug logging on, the first time each adapter is skipped or kept says so once, which
+     * tells a report which tray this phone builds. Off, nothing is logged and nothing remembered,
+     * so turning logging on later still gets the lines.
+     */
+    @Test
+    public void theDebugLineNamesEachAdapterAndWhatHappenedOnce() {
+        FeedFilter.TRAY_LOGGED.set(0);
+        LogBufferManager.clearLogBuffer();
+        try {
+            FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY);
+            assertEquals("a line was remembered with debug logging off", 0, FeedFilter.TRAY_LOGGED.get());
+
+            BaseSettings.DEBUG.save(true);
+            for (int i = 0; i < 3; i++) FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY);
+            FeedFilter.hideStoriesTray(FeedFilter.UNIFIED_TRAY);
+            Settings.HIDE_STORIES_TRAY.save(false);
+            FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY);
+            FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY);
+
+            String log = LogBufferManager.buildExportText();
+            assertEquals(log, 1, occurrences(log, "Stories tray: skipped legacy adapter"));
+            assertEquals(log, 1, occurrences(log, "Stories tray: skipped unified adapter"));
+            assertEquals(log, 1, occurrences(log, "Stories tray: kept legacy adapter"));
+            assertEquals(log, 0, occurrences(log, "Stories tray: kept unified adapter"));
+        } finally {
+            BaseSettings.DEBUG.resetToDefault();
+            FeedFilter.TRAY_LOGGED.set(0);
+            LogBufferManager.clearLogBuffer();
+        }
     }
 
     @Test
