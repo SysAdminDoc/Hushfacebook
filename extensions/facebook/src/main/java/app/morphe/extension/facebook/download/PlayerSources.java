@@ -90,7 +90,10 @@ public final class PlayerSources {
      * fields. The patch reads them from the app.
      *
      * <p>Only a story save reads what is kept here, so with its switch off or Hushfacebook paused
-     * the player is left as Facebook built it.
+     * the player is left as Facebook built it. The price: a player built while the switch was off
+     * is never recorded, so a story already open when someone turns Save any story on saves at
+     * the card's own 360p until Facebook builds its player again. Recording regardless would do
+     * this work in every player while the feature is off or paused, which Pause promises not to.
      */
     public static void remember(Object params, String idField, String hdField, String manifestField) {
         try {
