@@ -2630,13 +2630,13 @@ try {
 
     $androidName = 'http://schemas.android.com/apk/res/android:name(0x01010003)='
     $androidExported = '          A: http://schemas.android.com/apk/res/android:exported(0x01010010)=true'
-    function Get-FixtureManifest([string]$Build, [string]$Code, [switch]$WithSplit) {
+    function Get-FixtureManifest([string]$Build, [string]$Code, [switch]$WithSplit, [string]$Package = $releaseTarget.PackageName) {
         $lines = @(
             'N: android=http://schemas.android.com/apk/res/android (line=1)',
             '  E: manifest (line=1)',
             "    A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=$Code",
             "    A: http://schemas.android.com/apk/res/android:versionName(0x0101021c)=`"$Build`" (Raw: `"$Build`")",
-            "    A: package=`"$($releaseTarget.PackageName)`" (Raw: `"$($releaseTarget.PackageName)`")",
+            "    A: package=`"$Package`" (Raw: `"$Package`")",
             '      E: uses-permission (line=10)',
             "        A: $androidName`"android.permission.INTERNET`" (Raw: `"android.permission.INTERNET`")",
             '      E: application (line=20)',
@@ -2797,6 +2797,21 @@ try {
     Assert-Throws { Invoke-DeviceBuild -Apk $fixturePaths[$newerBuild] } "*$newerBuild, which the bundle does not declare*" `
         'patch-for-device.ps1 took a build the catalog does not declare.'
     Assert-True (-not (Test-Path -LiteralPath $javaLog)) 'patch-for-device.ps1 started the CLI on an undeclared build.'
+
+    # Another Meta app at a build the catalog declares. Neither script may hand it to the CLI: each
+    # refuses it by name before anything is patched. The builder gets it beside the newest declared
+    # build, so every declared build has a fixture and only the package check stands in the way.
+    $otherPackage = 'com.facebook.lite'
+    $otherApkm = Join-Path $fixtures "facebook-lite-$($unproved[0])-arm64-v8a.apkm"
+    New-TestBundleArchive -Path $otherApkm -Entries ([ordered]@{
+        'info.json' = "{`"versioncode`":`"$versionCode`"}"
+        'base.apk' = Get-FixtureManifest -Build $unproved[0] -Code "$versionCode" -Package $otherPackage })
+    $otherRefusal = "*$(Split-Path -Leaf $otherApkm) is $otherPackage, not the catalog's target $($releaseTarget.PackageName)*"
+    Assert-Throws { Invoke-ReceiptBuilder -Fixtures @($fixturePaths[$releaseTarget.PackageVersion], $otherApkm) } $otherRefusal `
+        'build-release-receipt.ps1 took a fixture of another package.'
+    Assert-True (-not (Test-Path -LiteralPath $javaLog)) 'build-release-receipt.ps1 started the CLI on another package.'
+    Assert-Throws { Invoke-DeviceBuild -Apk $otherApkm } $otherRefusal 'patch-for-device.ps1 took another package.'
+    Assert-True (-not (Test-Path -LiteralPath $javaLog)) 'patch-for-device.ps1 started the CLI on another package.'
 
     # The builder, the release check and the device build given relative paths, from a location
     # the process directory isn't. Each found its file with Test-Path, in PowerShell's location,
