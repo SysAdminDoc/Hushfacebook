@@ -140,7 +140,7 @@ export GITHUB_TOKEN=<a token with read:packages>
 ./gradlew :patches:buildAndroid
 ```
 
-The bundle lands in `patches/build/release/patches-<version>.mpp`, beside its SHA-256. Run `generatePatchesList` before `buildAndroid`, or the bundle loses its Android payload.
+The bundle lands in `patches/build/release/patches-<version>.mpp`, beside its SHA-256 and `patches-<version>.cdx.json`. That's a CycloneDX SBOM of every library that goes into the bundle, at the version Gradle resolved, and releases after 0.1.1 publish it beside the bundle. Run `generatePatchesList` before `buildAndroid`, or the bundle loses its Android payload.
 
 Tests: `./gradlew :patches:test :extensions:facebook:testDebugUnitTest`. Set `HUSHFACEBOOK_FIXTURE_DIR` to a folder holding the Facebook bundles to run the tests that read real builds. Without it they skip and say so.
 

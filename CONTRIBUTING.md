@@ -34,10 +34,11 @@ The checks that matter before a release:
 - `:patches:test` and `:extensions:facebook:testDebugUnitTest`, with `HUSHFACEBOOK_FIXTURE_DIR` set so the tests that read real Facebook builds run instead of skipping.
 - `scripts/verify-all-patches.ps1` on every retained fixture. It applies all patches in one run, checks the CLI's own report and holds the rebuilt resource table to Facebook's.
 - `scripts/build-release-receipt.ps1`, which writes the release receipt from those runs, and `scripts/validate-release-facts.ps1`, which holds the README, `patches-bundle.json`, the CHANGELOG and the bug form to the generated patch list.
+- The advisory check inside the receipt script. It reads the SBOM `buildAndroid` writes beside the bundle and asks [OSV](https://osv.dev) about every library in it, and a high or critical advisory stops the release before anything gets patched. If one doesn't apply to what the bundle does with that library, accept it in `scripts/advisory-exceptions.txt` with the reason and a date at most 90 days out. With no network, `-SkipAdvisoryCheck` gets you a receipt anyway, and the index push asks OSV again.
 
 `scripts/install-hooks.ps1` installs a pre-push hook that runs the tests when a push changes `extensions/` or `patches/`, and the release check when it changes a published file. Set `HUSHFACEBOOK_SKIP_PRE_PUSH=1` to push without it.
 
-A release goes out in two commits. The first carries the new version with `patches-bundle.json` still naming the previous release. The bundle is built from that exact commit and published with its checksum, and the second commit points `patches-bundle.json` at it. Morphe Manager reads only `patches-bundle.json`, so a release isn't out until that second commit is pushed.
+A release goes out in two commits. The first carries the new version with `patches-bundle.json` still naming the previous release. The bundle is built from that exact commit and published with its SBOM and its receipt, all three listed in `SHA256SUMS.txt`, and the second commit points `patches-bundle.json` at it. Morphe Manager reads only `patches-bundle.json`, so a release isn't out until that second commit is pushed.
 
 ## Settings for your machine
 
