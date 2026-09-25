@@ -1,11 +1,12 @@
 [versions]
 # Align with morphe-patches-template (Compatibility / Manager display names). Hold the patcher
 # at the version the stable Morphe Manager bundles: a newer pin trips the manager's
-# Patcher-Version gate and it refuses the bundle. Stable Manager 1.31.x bundles 1.14.0.
-morphe-patcher = "1.14.0"
+# Patcher-Version gate and it refuses the bundle. Stable Manager 1.32.0 bundles 1.14.1, and so
+# does desktop CLI 1.17.0, which the fixture gates run. 1.15.0 is still a prerelease.
+morphe-patcher = "1.14.1"
 # First stable Manager release that bundled the patcher above. The release fact check holds the
 # README's stated floor to this value.
-manager-floor = "1.31.0"
+manager-floor = "1.32.0"
 # Read by the app.morphe.patches settings plugin, not by anything in this repo: remove it and
 # configuration fails with "Version with alias smali not found in version catalog". The commit
 # resolves as com.github.MorpheApp.smali through JitPack. It is not waiting on an official

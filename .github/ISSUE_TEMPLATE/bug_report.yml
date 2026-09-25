@@ -42,7 +42,7 @@ body:
     attributes:
       label: Its version
       description: Morphe Manager shows its version in its own settings. If you picked "Something else", name the program too.
-      placeholder: Morphe Manager 1.31.0
+      placeholder: Morphe Manager 1.32.0
     validations:
       required: true
   - type: dropdown
