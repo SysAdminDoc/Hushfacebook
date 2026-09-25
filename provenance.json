@@ -18,7 +18,7 @@
         "https://gitlab.com/ReVanced/revanced-patches"
       ],
       "license": "GPL-3.0-only with the Morphe section 7 notices",
-      "changes": "Facebook host and id names in DiagnosticRedactor, Facebook wording in user-facing messages, HushfeedPause renamed HushfacebookPause with its keys and marker file, the extension name BundleVerifier expects. L10n moved from Hushfeed's TikTok extension into the shared library, with the en-XA and ar-XB pseudo-locales, lists joined and sentences capitalized in the text's own language, and every message of the shared settings code read through it. Changed files carry a 'Modified for Hushfacebook' line."
+      "changes": "Facebook host and id names in DiagnosticRedactor, Facebook wording in user-facing messages, HushfeedPause renamed HushfacebookPause with its keys and marker file, the extension name BundleVerifier expects. L10n moved from Hushfeed's TikTok extension into the shared library, with the en-XA and ar-XB pseudo-locales, lists joined and sentences capitalized in the text's own language, and the messages the shared settings screen shows read through it (Logger's debug toast stays English, for whoever reads the report). Changed files carry a 'Modified for Hushfacebook' line."
     },
     {
       "paths": [

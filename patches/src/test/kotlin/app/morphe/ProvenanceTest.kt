@@ -53,17 +53,19 @@ class ProvenanceTest {
         val chain = rule.upstreams.map { repositoryOf(it) }.toSet()
         val named = REPOSITORY_URL.findAll(header).map { normalise(it.groupValues[1]) }.toSet()
         val outside = named - chain - OWN_REPOSITORY
-        val fork = FORKED_FROM.find(header)?.let { normalise(it.groupValues[1]) }
+        // Every "Forked from" line, not the first: a second one could name anything.
+        val forks = FORKED_FROM.findAll(header).map { normalise(it.groupValues[1]) }.toSet()
+        val strayFork = forks.firstOrNull { it !in chain }
         return when (rule.origin) {
             "ported" -> when {
-                fork != null && fork !in chain -> "$path says it was forked from $fork, which isn't in its rule's chain $chain"
-                fork == null && named.none { it in chain } ->
-                    "$path falls under a rule ported from ${chain.first()}, but its header names none of $chain"
+                strayFork != null -> "$path says it was forked from $strayFork, which isn't in its rule's chain $chain"
+                named.none { it in chain } ->
+                    "$path falls under a rule ported from ${chain.first()}, but its header names none of $chain by URL"
                 outside.isNotEmpty() -> "$path names $outside, which its rule's chain $chain doesn't include"
                 else -> null
             }
             "original" -> when {
-                fork != null || CAME_FROM.containsMatchIn(header) ->
+                CAME_FROM.containsMatchIn(header) ->
                     "$path falls under a rule for code written here, but its header says it came from elsewhere"
                 outside.isNotEmpty() -> "$path names $outside, which its rule's chain $chain doesn't include"
                 named.none { it in chain } -> "$path falls under a rule for code written here, but its header names none of $chain"
@@ -73,8 +75,7 @@ class ProvenanceTest {
         }
     }
 
-    private fun repositoryOf(url: String) =
-        normalise(url.removePrefix("https://github.com/").removePrefix("https://gitlab.com/"))
+    private fun repositoryOf(url: String) = normalise(REPOSITORY_URL.find(url)?.groupValues?.get(1) ?: url)
 
     /** owner/name as GitHub compares it: without case, a trailing .git or a full stop after it. */
     private fun normalise(repository: String) = repository.trimEnd('.').removeSuffix(".git").lowercase()
@@ -146,6 +147,43 @@ class ProvenanceTest {
         assertEquals("a rule naming the file wins over its folder's", "original",
             rulesFor("extensions/facebook/src/main/java/app/morphe/extension/facebook/download/MediaUrlPolicy.java")
                 .single().origin)
+
+        // A file written here that says where it came from in any of the ways a header does,
+        // with the rule's own repository linked so only the words give it away.
+        val ownLink = "\n * https://github.com/SysAdminDoc/Hushfacebook\n */"
+        for (claim in listOf("Forked from the old settings screen.", "Copied from:", "Ported from:", "From:",
+            "forked from SysAdminDoc/hushfeed", "Based on SysAdminDoc/hushfeed", "Adapted from the Hushfeed screen",
+            "Taken from SysAdminDoc/hushfeed", "Derived from SysAdminDoc/hushfeed")) {
+            assertTrue("\"$claim\" passed as written here", headerProblem("y/A.java", "/*\n * $claim$ownLink", original) != null)
+        }
+        assertEquals("\"Built on\" is how a file written here names its project", null,
+            headerProblem("y/A.java", "/*\n * Copyright 2026 Hushfacebook contributors$ownLink\n * Built on SysAdminDoc/hushfeed (GPL-3.0).", original))
+
+        // A repository outside the chain, linked however a header writes a link, beside the
+        // chain's own; and a second "Forked from" after one in the chain.
+        val chainLink = "\n * https://github.com/MorpheApp/morphe-patches\n */"
+        for (outsider in listOf("http://github.com/evil/other", "https://www.github.com/evil/other",
+            "https://GitHub.com/evil/other")) {
+            assertTrue("$outsider passed", headerProblem("z/A.java", "/*\n * Forked from:\n * $outsider$chainLink", morphe) != null)
+            assertTrue("$outsider named beside the chain passed",
+                headerProblem("z/A.java", "/*\n * $outsider$chainLink", morphe) != null)
+        }
+        assertTrue("a second fork outside the chain passed", headerProblem("z/A.java",
+            "/*\n * Forked from MorpheApp/morphe-patches.\n * Forked from evil/other.$chainLink", morphe) != null)
+        assertEquals("the chain's own link, written with www. and capitals, is still the chain", null,
+            headerProblem("z/A.java", "/*\n * Forked from:\n * https://www.GitHub.com/MorpheApp/morphe-patches\n */", morphe))
+    }
+
+    /** provenance.json's note says every rule states its licence, so every rule has to. */
+    @Test
+    fun everyRuleNamesItsLicence() {
+        val ledger = JsonParser.parseString(File(RepoFiles.root, "provenance.json").readText()).asJsonObject
+        val missing = ledger.getAsJsonArray("rules").mapNotNull { element ->
+            val rule = element.asJsonObject
+            val licence = rule.get("license")?.asString
+            if (licence.isNullOrBlank()) "the rule for ${rule.getAsJsonArray("paths")} names no licence" else null
+        }
+        if (missing.isNotEmpty()) fail(missing.joinToString("\n"))
     }
 
     @Test
@@ -168,10 +206,21 @@ class ProvenanceTest {
     private companion object {
         /** This repository, which a changed file may name beside where it came from. */
         val OWN_REPOSITORY = setOf("sysadmindoc/hushfacebook")
-        val REPOSITORY_URL = Regex("""https://(?:github|gitlab)\.com/([\w.-]+/[\w.-]+)""")
-        /** The source a "Forked from" line names, as a URL on its line or the next, or as owner/name. */
-        val FORKED_FROM = Regex("""Forked from:?[\s*]*(?:https://(?:github|gitlab)\.com/)?([\w.-]+/[\w.-]+)""")
-        /** A header line saying the file came from somewhere without the word "Forked". */
-        val CAME_FROM = Regex("""(?m)^\s*\*?\s*(?:From|Copied from|Ported from)\s+\S""")
+        /**
+         * A repository link on either host, however it's written: http or https, with or without
+         * www., the host in any case. Only the https lower-case form was read once, so the same
+         * repository written any other way wasn't seen at all.
+         */
+        val REPOSITORY_URL = Regex("""(?i)https?://(?:www\.)?(?:github|gitlab)\.com/([\w.-]+/[\w.-]+)""")
+        /** The source a "Forked from" line names, as a link on its line or the next, or as owner/name. */
+        val FORKED_FROM = Regex("""(?i)forked from:?[\s*]*(?:https?://(?:www\.)?(?:github|gitlab)\.com/)?([\w.-]+/[\w.-]+)""")
+        /**
+         * A header line saying the file came from somewhere, however it's worded and whatever
+         * follows it: prose, a colon, or a link on the next line. "Built on" isn't one: it's how a
+         * file written here names the project it's written against.
+         */
+        val CAME_FROM = Regex(
+            """(?im)^\s*\*?\s*(?:forked from|copied from|ported from|adapted from|taken from|derived from|based on|from)\b"""
+        )
     }
 }
