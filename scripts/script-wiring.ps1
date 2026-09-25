@@ -135,17 +135,45 @@ function Test-RunsScriptBlock {
     <#
     .SYNOPSIS
         Whether a script block runs where it's written: as the command itself, which only & or .
-        can make it, or as what ForEach-Object or Where-Object runs for each item, under any of
-        their names (Test-CommandIs). Stored, returned or handed to any other command it's a
-        value, and nothing here is known to run it.
+        can make it, or as what ForEach-Object or Where-Object runs, under any of their names
+        (Test-CommandIs), positionally or as -Process, -Begin, -End or -FilterScript. Stored,
+        returned, handed to any other command or to another parameter such as -ArgumentList, it's
+        a value, and nothing here is known to run it. Neither runs a block when a literal @() is
+        all that's piped in, which leaves them no item; that counts their -Begin and -End blocks
+        as not run too, which only ever drops code.
     #>
     param([System.Management.Automation.Language.ScriptBlockExpressionAst]$Expression)
 
     $command = $Expression.Parent
-    if ($command -is [System.Management.Automation.Language.CommandParameterAst]) { $command = $command.Parent }
+    $parameter = $null
+    if ($command -is [System.Management.Automation.Language.CommandParameterAst]) {
+        $parameter = $command.ParameterName
+        $command = $command.Parent
+    }
     if ($command -isnot [System.Management.Automation.Language.CommandAst]) { return $false }
     if ([object]::ReferenceEquals($command.CommandElements[0], $Expression)) { return $true }
-    return Test-CommandIs $command @('ForEach-Object', 'Where-Object')
+    if (-not (Test-CommandIs $command @('ForEach-Object', 'Where-Object'))) { return $false }
+    # Written after a parameter with a space, the block is that parameter's value.
+    if ($null -eq $parameter) {
+        $before = $command.CommandElements[$command.CommandElements.IndexOf($Expression) - 1]
+        if ($before -is [System.Management.Automation.Language.CommandParameterAst] -and $null -eq $before.Argument) {
+            $parameter = $before.ParameterName
+        }
+    }
+    if ($null -ne $parameter) {
+        $runs = $false
+        foreach ($name in 'Process', 'Begin', 'End', 'FilterScript') {
+            if ($parameter.Length -gt 0 -and $name.StartsWith($parameter, [System.StringComparison]::OrdinalIgnoreCase)) { $runs = $true }
+        }
+        if (-not $runs) { return $false }
+    }
+    $pipeline = $command.Parent
+    if ($pipeline -is [System.Management.Automation.Language.PipelineAst]) {
+        $position = $pipeline.PipelineElements.IndexOf($command)
+        $feed = if ($position -gt 0) { $pipeline.PipelineElements[$position - 1] } else { $null }
+        if ($feed -is [System.Management.Automation.Language.CommandExpressionAst] -and (Test-EmptyArray $feed.Expression)) { return $false }
+    }
+    return $true
 }
 
 function Test-StatementEnds {
