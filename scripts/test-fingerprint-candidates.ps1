@@ -300,6 +300,9 @@ try {
         "$($letter):\fingerprint-probe.json" = "$($letter):\: => $(Join-Path $fakePatches 'src')"
         # A subst drive for a folder on another subst drive.
         "$($outer):\fingerprint-probe.json" = "$($outer):\: => $($letter):\src`n$($letter):\: => $fakePatches"
+        # Windows drops a '..' at a drive's root, so these land where the drive stands for too.
+        "$($letter):\..\src\fingerprint-probe.json" = "$($letter):\: => $fakePatches"
+        "$($outer):\..\..\fingerprint-probe.json" = "$($outer):\: => $($letter):\src`n$($letter):\: => $fakePatches"
     }
     foreach ($through in $substCases.Keys) {
         $blocked = Invoke-Tool @('capture', $oldApk, $target, $through) -JavaOptions @("-Dhushfacebook.subst=$($substCases[$through])")

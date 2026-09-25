@@ -178,7 +178,15 @@ public final class FingerprintCandidates {
      * has no business in the patches tree or in a Kotlin or Java file.
      */
     static File output(String path) throws InputException {
-        File file = new File(path).getAbsoluteFile();
+        File file;
+        try {
+            // Normalized as Windows reads it, where a '..' at a drive's root stays at the root. Left
+            // as typed, W:\..\x would climb out of the folder a subst drive stands for on paper while
+            // the write lands inside it.
+            file = new File(path).toPath().toAbsolutePath().normalize().toFile();
+        } catch (java.nio.file.InvalidPathException e) {
+            throw new InputException("Refusing to write " + path + ": " + e.getMessage());
+        }
         // Windows drops the dots and spaces a name ends with, so Candidate.kt. is written as Candidate.kt.
         if (sourceName(file.getName().replaceAll("[. ]+$", ""))) {
             throw new InputException("Refusing to write " + file + ": it would be source, and this tool only reports.");
