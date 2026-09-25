@@ -1765,6 +1765,13 @@ try {
         $env:GITHUB_TOKEN = $savedScanToken
     }
 
+    # The scan hands git grep its commits a batch at a time. Batches of two over five commits
+    # reach the third batch, a short one, where the only commit naming the phone sits.
+    $batched = @(Find-MachineNames -Root $hookRoot -BatchSize 2 `
+        -Commit @($cleanCommit, $droppedSerial, $newBranchHead, $cancelledOut, $servedSerial))
+    Assert-True (($batched -join "`n") -like "*${servedSerial}:docs/phone.md:1:*") `
+        "The scan missed a commit past its first batch: $($batched -join '; ')"
+
     # The build branch, which runs the Gradle gates that hold the Bouncy Castle graphs to the
     # reviewed release. Starting a real build from a contract test would be absurd, so the case
     # reads the first thing that branch does instead: with no GitHub credentials and no gh on

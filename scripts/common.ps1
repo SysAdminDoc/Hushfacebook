@@ -313,14 +313,18 @@ function Find-MachineNames {
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Root,
-        [string[]]$Commit
+        [string[]]$Commit,
+        # A hundred commits to a git grep keeps its command line inside what Windows allows. The
+        # contract tests pass a smaller one, to reach every batch with a handful of commits.
+        [int]$BatchSize = 100
     )
 
-    # A hundred commits to a git grep keeps its command line inside what Windows allows.
     $commits = @($Commit | Where-Object { $_ })
     $batches = New-Object System.Collections.Generic.List[object]
     if ($commits.Count -eq 0) { $batches.Add(@()) }
-    for ($i = 0; $i -lt $commits.Count; $i += 100) { $batches.Add(@($commits | Select-Object -Skip $i -First 100)) }
+    for ($i = 0; $i -lt $commits.Count; $i += $BatchSize) {
+        $batches.Add(@($commits | Select-Object -Skip $i -First $BatchSize))
+    }
     $hits = New-Object System.Collections.Generic.List[string]
     $saved = @{}
     foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*' })) {
