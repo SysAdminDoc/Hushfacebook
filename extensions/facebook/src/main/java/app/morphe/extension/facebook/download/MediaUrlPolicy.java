@@ -81,7 +81,8 @@ class MediaUrlPolicy {
     }
 
     private final Resolver resolver;
-    private final Route route;
+    /** Package-visible so a test can ask a production policy about its route without a lookup. */
+    final Route route;
 
     MediaUrlPolicy(Resolver resolver) {
         this(resolver, DIRECT);
