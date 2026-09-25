@@ -10,7 +10,9 @@
     preparation mode lets the source commit reach GitHub while the public index still points
     at the previous working bundle. Published-asset verification remains strict, and it also
     fetches the release SBOM the receipt names, holds it to the bundle and puts the libraries it
-    lists to OSV (release-advisories.ps1).
+    lists to OSV (release-advisories.ps1). It also refuses a release whose Facebook-family source
+    census (sources/facebook-sources.json, refreshed by audit-facebook-sources.ps1) is more than
+    14 days old, breaks the ledger's rules, or lacks a listing or dated submission on an index.
 #>
 [CmdletBinding()]
 param(
@@ -74,6 +76,7 @@ if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'release-receipt.ps1')
 . (Join-Path $PSScriptRoot 'release-advisories.ps1')
 . (Join-Path $PSScriptRoot 'common.ps1')
+. (Join-Path $PSScriptRoot 'facebook-sources.ps1')
 
 function Read-JsonFile {
     param([string]$Path)
@@ -108,6 +111,21 @@ if ($ArtifactIsHosted -and -not $VerifyPublishedAsset) {
 if ($ArtifactIsHosted -and $ArtifactPath) {
     throw 'Pass -ArtifactPath for a bundle built here, or -ArtifactIsHosted to check the published asset on its own, not both.'
 }
+
+# The Facebook-family source census (sources/facebook-sources.json). A release is when Hushfacebook
+# tells people where its code came from, so it goes out only on a ledger that keeps every rule
+# facebook-sources.ps1 holds it to, a census from the last 14 days, and a listing or a dated
+# submission on every index. Checked first, since it needs no network and no build. Only the
+# published asset run, which is the release: the lenient pushes between releases change files the
+# census doesn't describe, and a README fix shouldn't wait on an audit.
+if ($VerifyPublishedAsset) {
+    $sourceGate = Test-SourceReleaseGate -Root $rootPath
+    if (-not $sourceGate.Valid) {
+        throw "The release can't go out on this source census: $($sourceGate.Reason)"
+    }
+    Write-Host "[release] $($sourceGate.Summary)"
+}
+
 $patchListPath = Join-Path $rootPath 'patches-list.json'
 $bundlePath = Join-Path $rootPath 'patches-bundle.json'
 $propertiesPath = Join-Path $rootPath 'gradle.properties'
