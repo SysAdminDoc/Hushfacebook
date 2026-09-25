@@ -95,7 +95,7 @@ The bundle lands in `patches/build/release/patches-<version>.mpp`, beside its SH
 
 Tests: `./gradlew :patches:test :extensions:facebook:testDebugUnitTest`. Set `HUSHFACEBOOK_FIXTURE_DIR` to a folder holding the Facebook bundles to run the tests that read real builds. Without it they skip and say so.
 
-To apply every patch to a real build and check the result, including its resource table, run `scripts/verify-all-patches.ps1 -Apk <facebook .apkm> -DesktopJar <morphe-desktop jar> -WorkDir <scratch folder>`. [CONTRIBUTING.md](CONTRIBUTING.md) has the rest.
+To apply every patch to a real build and check the result, run `scripts/verify-all-patches.ps1 -Apk <facebook .apkm> -DesktopJar <morphe-desktop jar> -WorkDir <scratch folder>`. It holds the patched resource table to Meta's, and the code the patches inject to the shapes Android's verifier rejects: branches into the middle of an instruction, calls with the wrong registers, values read at the wrong width, broken try ranges, and a second feed hook. [CONTRIBUTING.md](CONTRIBUTING.md) has the rest.
 
 ## License
 
