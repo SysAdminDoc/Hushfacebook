@@ -23,7 +23,9 @@
     real candidates, and that case has to fail closed.
 
     Through all of it, nothing under patches/ may change, and an output path there, or one ending in
-    .kt or .java, has to be refused by both the tool and the wrapper.
+    .kt or .java, has to be refused by both the tool and the wrapper. The tool has to refuse it
+    however the path spells or reaches it: in another case, with a trailing dot, or through a
+    junction.
 #>
 [CmdletBinding()]
 param(
@@ -132,9 +134,13 @@ if (-not (Test-Path -LiteralPath $javac -PathType Leaf)) { throw "Required tool 
 $patches = Join-Path $Root 'patches'
 $before = Get-TreeSnapshot $patches
 Assert-True ($before.Count -gt 0) "No files under $patches, so the no-write check would compare nothing."
+# The files a guard that failed would leave in patches/: gone again after the run, pass or fail.
+$patchProbes = @('fingerprint-probe.json', 'src\fingerprint-probe.json', 'fingerprint-report.txt' |
+    ForEach-Object { Join-Path $patches $_ } | Where-Object { -not (Test-Path -LiteralPath $_) })
 
 $tempBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
 $caseRoot = [System.IO.Path]::GetFullPath((Join-Path $tempBase ("hushfacebook-fingerprint-test-" + [guid]::NewGuid().ToString('N'))))
+$junction = Join-Path $caseRoot 'reports'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 try {
@@ -246,15 +252,29 @@ try {
     $refused = Invoke-Tool @('rank', $future, (Join-Path $caseRoot 'moved.apk'), (Join-Path $caseRoot 'future.txt'))
     Assert-True ($refused.ExitCode -eq 2 -and $refused.Text -match 'version 2') "A version 2 signature was read.`n$($refused.Text)"
 
-    # Nothing is ever written as patch source: not under patches/, and not as a .kt or .java file.
-    $intoPatches = Join-Path $patches 'fingerprint-probe.json'
-    $blocked = Invoke-Tool @('capture', $oldApk, $target, $intoPatches)
-    Assert-True ($blocked.ExitCode -eq 2 -and $blocked.Text -match 'never edits a patch' -and
-        -not (Test-Path -LiteralPath $intoPatches)) "The tool wrote under patches/.`n$($blocked.Text)"
-    $asSource = Join-Path $caseRoot 'Candidate.kt'
-    $blockedSource = Invoke-Tool @('rank', $signature, (Join-Path $caseRoot 'moved.apk'), $asSource)
-    Assert-True ($blockedSource.ExitCode -eq 2 -and -not (Test-Path -LiteralPath $asSource)) `
-        "The tool wrote a report as a Kotlin file.`n$($blockedSource.Text)"
+    # Nothing is ever written as patch source: not under patches/ however the path spells it, and not
+    # as a .kt or .java file. NTFS reads PATCHES and patches. as patches, and a junction reaches a
+    # patches/ under any name; this one leads into a copy of the layout in the temp folder.
+    $fakePatches = Join-Path $caseRoot 'checkout\patches'
+    New-Item -ItemType Directory -Path (Join-Path $fakePatches 'src') | Out-Null
+    New-Item -ItemType Junction -Path $junction -Target $fakePatches | Out-Null
+    $spellings = [ordered]@{
+        (Join-Path $patches 'fingerprint-probe.json') = Join-Path $patches 'fingerprint-probe.json'
+        (Join-Path $Root 'PATCHES\src\fingerprint-probe.json') = Join-Path $patches 'src\fingerprint-probe.json'
+        (Join-Path $Root 'Patches.\fingerprint-probe.json') = Join-Path $patches 'fingerprint-probe.json'
+        (Join-Path $junction 'fingerprint-probe.json') = Join-Path $fakePatches 'fingerprint-probe.json'
+    }
+    foreach ($spelling in $spellings.Keys) {
+        $blocked = Invoke-Tool @('capture', $oldApk, $target, $spelling)
+        Assert-True ($blocked.ExitCode -eq 2 -and $blocked.Text -match 'never edits a patch' -and
+            -not (Test-Path -LiteralPath $spellings[$spelling])) "The tool wrote under patches/ as $spelling.`n$($blocked.Text)"
+    }
+    foreach ($name in 'Candidate.kt', 'Candidate.JAVA', 'Candidate.kt.') {
+        $blockedSource = Invoke-Tool @('rank', $signature, (Join-Path $caseRoot 'moved.apk'), (Join-Path $caseRoot $name))
+        Assert-True ($blockedSource.ExitCode -eq 2 -and $blockedSource.Text -match 'only reports' -and
+            @(Get-ChildItem -LiteralPath $caseRoot -File -Filter 'Candidate.*').Count -eq 0) `
+            "The tool wrote a report as source, named '$name'.`n$($blockedSource.Text)"
+    }
     $wrapperIntoPatches = Join-Path $patches 'fingerprint-report.txt'
     $wrapperBlocked = Invoke-Wrapper @('-Signature', $signature, '-NewApk', (Join-Path $caseRoot 'moved.apk'),
         '-ReportPath', $wrapperIntoPatches, '-Java', $Java, '-DesktopJar', $DesktopJar, '-Root', $Root)
@@ -303,6 +323,11 @@ try {
     Assert-True (@(Compare-Object $before $after).Count -eq 0) `
         ("Something under patches/ changed while the tool ran:`n" + (@(Compare-Object $before $after) | Out-String))
 } finally {
+    foreach ($probe in $patchProbes) {
+        if (Test-Path -LiteralPath $probe) { Remove-Item -LiteralPath $probe -Force }
+    }
+    # The junction goes first, on its own: a recursive delete can follow it into its target.
+    if (Test-Path -LiteralPath $junction) { [System.IO.Directory]::Delete($junction) }
     if ($caseRoot.StartsWith($tempBase, [System.StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $caseRoot)) {
         Remove-Item -LiteralPath $caseRoot -Recurse -Force
     }

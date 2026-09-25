@@ -180,17 +180,34 @@ public final class FingerprintCandidates {
      */
     static File output(String path) throws InputException {
         File file = new File(path).getAbsoluteFile();
-        String name = file.getName().toLowerCase(Locale.ROOT);
-        if (name.endsWith(".kt") || name.endsWith(".kts") || name.endsWith(".java")) {
+        // Windows drops the dots and spaces a name ends with, so Candidate.kt. is written as Candidate.kt.
+        if (sourceName(file.getName().replaceAll("[. ]+$", ""))) {
             throw new InputException("Refusing to write " + file + ": it would be source, and this tool only reports.");
         }
-        for (File dir = file.getParentFile(); dir != null; dir = dir.getParentFile()) {
-            if (dir.getName().equals("patches") && new File(dir, "src").isDirectory()) {
+        // The path as the file system has it, from the nearest part that exists: NTFS takes PATCHES
+        // and patches. for patches, and a junction or a link reaches it under any name.
+        File real = file;
+        while (real != null && !real.exists()) real = real.getParentFile();
+        try {
+            if (real != null) real = real.toPath().toRealPath().toFile();
+        } catch (IOException | java.nio.file.InvalidPathException e) {
+            throw new InputException("Refusing to write " + file + ": " + e.getMessage());
+        }
+        if (real != null && real.isFile() && sourceName(real.getName())) {
+            throw new InputException("Refusing to write " + file + ": it leads to " + real + ", which is source, and this tool only reports.");
+        }
+        for (File dir = real; dir != null; dir = dir.getParentFile()) {
+            if (dir.getName().equalsIgnoreCase("patches") && new File(dir, "src").isDirectory()) {
                 throw new InputException("Refusing to write " + file + ": it is inside the patch sources at " + dir
                         + ", and this tool never edits a patch.");
             }
         }
         return file;
+    }
+
+    static boolean sourceName(String name) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".kt") || lower.endsWith(".kts") || lower.endsWith(".java");
     }
 
     // ---- names Redex keeps and names it makes up -------------------------------------------------
