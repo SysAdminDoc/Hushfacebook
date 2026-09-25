@@ -135,8 +135,9 @@ function Test-RunsScriptBlock {
     <#
     .SYNOPSIS
         Whether a script block runs where it's written: as the command itself, which only & or .
-        can make it, or as what ForEach-Object or Where-Object runs for each item. Stored, returned
-        or handed to any other command it's a value, and nothing here is known to run it.
+        can make it, or as what ForEach-Object or Where-Object runs for each item, under any of
+        their names (Test-CommandIs). Stored, returned or handed to any other command it's a
+        value, and nothing here is known to run it.
     #>
     param([System.Management.Automation.Language.ScriptBlockExpressionAst]$Expression)
 
@@ -144,11 +145,7 @@ function Test-RunsScriptBlock {
     if ($command -is [System.Management.Automation.Language.CommandParameterAst]) { $command = $command.Parent }
     if ($command -isnot [System.Management.Automation.Language.CommandAst]) { return $false }
     if ([object]::ReferenceEquals($command.CommandElements[0], $Expression)) { return $true }
-    $name = $command.GetCommandName()
-    foreach ($runner in 'ForEach-Object', 'Where-Object', '%', '?', 'foreach', 'where') {
-        if ([string]::Equals($name, $runner, [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
-    }
-    return $false
+    return Test-CommandIs $command @('ForEach-Object', 'Where-Object')
 }
 
 function Test-StatementEnds {

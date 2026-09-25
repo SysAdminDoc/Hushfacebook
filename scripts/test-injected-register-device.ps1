@@ -350,6 +350,10 @@ try {
                 Text = & $afterHelpers "Set-Item -Path function:Compare-VerifierTallies -Value { param(`$Clean, `$Patched) $approveAll }" }
             @{ Name = 'Invoke-AndroidVerifierTally replaced with New-Item function:'; Check = $talliesBothSides
                 Text = & $afterHelpers 'New-Item -Path function: -Name Invoke-AndroidVerifierTally -Value { @{} } -Force | Out-Null' }
+            @{ Name = 'Compare-VerifierTallies defined in the verifier as script:Compare-VerifierTallies'; Check = $talliesBothSides
+                Text = & $afterHelpers "function script:Compare-VerifierTallies { param(`$Clean, `$Patched) $approveAll }" }
+            @{ Name = 'the clean tally written over through $script:cleanTally'; Check = $talliesBothSides
+                Text = & $beforeCompare '$script:cleanTally = $patchedTally' }
             @{ Name = 'Compare-VerifierTallies made an alias of a function of the script'; Check = $talliesBothSides
                 Text = & $afterHelpers "function Approve-Tallies { param(`$Clean, `$Patched) $approveAll }`nSet-Alias -Name Compare-VerifierTallies -Value Approve-Tallies" }
             @{ Name = 'another variable set with Set-Variable before the compare'; Check = $talliesBothSides; Expect = $true

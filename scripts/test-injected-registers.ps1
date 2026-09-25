@@ -347,6 +347,29 @@ try {
         @{ Name = 'Invoke-DexDiff defined once, as script:Invoke-DexDiff'; Check = $runsDexDiff; Expect = $true
             Text = Edit-ScriptNode $verifierText $dexDiffFunction { param($Text)
                 $Text.Replace('function Invoke-DexDiff', 'function script:Invoke-DexDiff') } }
+        # The rules the copies above leave untried: every comparison the parser folds, $null as a
+        # constant, an ending call past the first element of a pipeline, a for with no condition
+        # at all, and the other ways ForEach-Object and Where-Object get written. The copies
+        # expected to pass keep a loop and an if to ending only when they certainly do.
+        foreach ($condition in '1 -ne 1', '0 -ge 1', '2 -lt 1', '1 -le 0', "'a' -ceq 'A'", "'a' -cne 'a'",
+                "'a' -cgt 'b'", "'a' -cge 'b'", "'b' -clt 'a'", "'b' -cle 'a'", '$null') {
+            @{ Name = "the contracts helper dot-sourced behind if ($condition)"; Check = $dotSourcesContracts
+                Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "if ($condition) { $Text }" } }
+        }
+        @{ Name = 'the DexDiff call after $null | Stop-Now, a function that exits'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "function Stop-Now { exit 0 }`n`$null | Stop-Now`n$Text" } }
+        @{ Name = 'the DexDiff call after for (;;) { exit 0 }'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "for (;;) { exit 0 }`n$Text" } }
+        @{ Name = 'the DexDiff function run through ForEach-Object -Process:{ }'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) '$diff = @(1) | ForEach-Object -Process:{ Invoke-DexDiff }' } }
+        @{ Name = 'the DexDiff function run through Where-Object'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) '$diff = @(1) | Where-Object { Invoke-DexDiff }' } }
+        @{ Name = 'the DexDiff function run through %'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) '$diff = @(1) | % { Invoke-DexDiff }' } }
+        @{ Name = 'the DexDiff call after while ($Serial) { exit 0 }'; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "while (`$Serial) { exit 0 }`n$Text" } }
+        @{ Name = "the DexDiff call after if (`$Serial) { 'x' } else { exit 0 }"; Check = $runsDexDiff; Expect = $true
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text) "if (`$Serial) { 'x' } else { exit 0 }`n$Text" } }
     )
     $wiringFailures = @()
     $copy = Join-Path $wiringCopies 'copy.ps1'
