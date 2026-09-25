@@ -283,6 +283,8 @@ function Test-SourceLedger {
     if ($selfKey) { $keys[$selfKey] = 'self' }
 
     $entriesByKey = @{}
+    # Recorded forks and mirrors carry their entry's code, so they carry its disposition too.
+    $copiesByKey = @{}
     $ids = @{}
     $entries = @(Get-SourceProperty $Ledger 'entries' | Where-Object { $null -ne $_ })
     if ($entries.Count -eq 0) { $problems.Add('The ledger has no entries.') }
@@ -385,6 +387,8 @@ function Test-SourceLedger {
         foreach ($fork in @(Get-SourceProperty $entry 'forks')) {
             if ($null -ne $fork -and "$fork" -notmatch '^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)+$') {
                 $problems.Add("$label fork '$fork' must be written owner/name.")
+            } elseif ($null -ne $fork -and $key) {
+                $copiesByKey["$(($key -split '/')[0])/$fork".ToLowerInvariant()] = [pscustomobject]@{ Entry = $entry; What = 'fork' }
             }
         }
         foreach ($hash in @(Get-SourceProperty $entry 'contentHashes')) {
@@ -392,7 +396,8 @@ function Test-SourceLedger {
         }
         foreach ($mirror in @(Get-SourceProperty $entry 'mirrors' | Where-Object { $null -ne $_ })) {
             $mirrorRepository = [string](Get-SourceProperty $mirror 'repository')
-            Add-Key $mirrorRepository "$label mirror" | Out-Null
+            $mirrorKey = Add-Key $mirrorRepository "$label mirror"
+            if ($mirrorKey) { $copiesByKey[$mirrorKey] = [pscustomobject]@{ Entry = $entry; What = 'mirror' } }
             if ([string]::IsNullOrWhiteSpace([string](Get-SourceProperty $mirror 'reason'))) {
                 $problems.Add("$label mirror $mirrorRepository gives no reason it is a copy.")
             }
@@ -485,13 +490,27 @@ function Test-SourceLedger {
                 $problems.Add(("provenance.json ports files from $(Get-SourceProperty $rule 'upstream'), which the ledger " +
                     "lists as $disposition, not adopted."))
             }
+        } elseif ($upstreamKey -and $copiesByKey.ContainsKey($upstreamKey) -and $origin -eq 'ported') {
+            # Only an entry is pinned, licensed and proved on two builds; its copies are none of those.
+            $copy = $copiesByKey[$upstreamKey]
+            $problems.Add(("provenance.json ports files from $(Get-SourceProperty $rule 'upstream'), which the ledger records " +
+                "only as a $($copy.What) of $(Get-SourceProperty $copy.Entry 'repository') " +
+                "($(Get-SourceProperty $copy.Entry 'disposition')). Port from an adopted entry."))
         }
         foreach ($via in @(Get-SourceProperty $rule 'via')) {
             $viaKey = ConvertTo-SourceKey $via
+            $viaEntry = $null
+            $through = ''
             if ($viaKey -and $entriesByKey.ContainsKey($viaKey)) {
-                $disposition = [string](Get-SourceProperty $entriesByKey[$viaKey] 'disposition')
+                $viaEntry = $entriesByKey[$viaKey]
+            } elseif ($viaKey -and $copiesByKey.ContainsKey($viaKey)) {
+                $viaEntry = $copiesByKey[$viaKey].Entry
+                $through = " as a $($copiesByKey[$viaKey].What) of $(Get-SourceProperty $viaEntry 'repository'),"
+            }
+            if ($null -ne $viaEntry) {
+                $disposition = [string](Get-SourceProperty $viaEntry 'disposition')
                 if ($disposition -notin @('adopted', 'candidate')) {
-                    $problems.Add("provenance.json credits $via for shipped files, but the ledger lists it as $disposition.")
+                    $problems.Add("provenance.json credits $via for shipped files, but the ledger lists it$through as $disposition.")
                 }
             }
         }
