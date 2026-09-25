@@ -1710,6 +1710,20 @@ try {
         $env:GITHUB_TOKEN = $savedScanToken
     }
 
+    # Commits that cancel each other out change no file, and each still goes out. The scan runs
+    # before the changed paths decide there's nothing to check.
+    New-Item -ItemType Directory -Path (Split-Path -Parent $phoneDoc) -Force | Out-Null
+    Set-Content -LiteralPath $phoneDoc -Encoding UTF8 -Value "adb -s $phoneSerial install app.apk"
+    & git -C $hookRoot add docs/phone.md
+    & git -C $hookRoot commit --quiet -m 'names the phone once more'
+    $namesAgain = (& git -C $hookRoot rev-parse HEAD).Trim()
+    & git -C $hookRoot rm --quiet docs/phone.md
+    & git -C $hookRoot commit --quiet -m 'takes it out again'
+    $cancelledOut = (& git -C $hookRoot rev-parse HEAD).Trim()
+    Assert-Throws { & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $cancelledOut refs/heads/main $droppedSerial" 6> $null } `
+        "*commit $namesAgain name*${namesAgain}:docs/phone.md:1:*" `
+        'A push whose commits cancel each other out went through with them unscanned.'
+
     # The build branch, which runs the Gradle gates that hold the Bouncy Castle graphs to the
     # reviewed release. Starting a real build from a contract test would be absurd, so the case
     # reads the first thing that branch does instead: with no GitHub credentials and no gh on

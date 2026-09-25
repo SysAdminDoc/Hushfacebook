@@ -280,27 +280,27 @@ try {
         $paths = Get-PushedPaths -Text $refs
     }
 
-    if ($paths.Count -eq 0) {
-        Write-Step 'nothing to check'
-        exit 0
-    }
-
     # Every push, whatever it moves: no tracked file may name the maintainer's working-notes folder
     # or a phone's serial. The contract tests hold the working tree to that, but they run for
     # script changes, and the files that once fell back to that folder were tests under patches/
     # and extensions/, which route to the Gradle gates alone. Every commit the push publishes is
     # read straight out of the object store, not only each ref's tip, since a serial one commit
     # adds and the next removes still goes out in the first. That needs no worktree and takes a
-    # moment. A run by hand reads the tracked files of this working tree.
+    # moment. It runs before the changed paths decide anything: commits that cancel each other out
+    # change no file and still go out. A push that publishes no commit, a deletion or a tag of a
+    # commit the remote has, has nothing to scan. A run by hand reads the tracked files of this
+    # working tree.
     if ($PSBoundParameters.ContainsKey('ChangedPaths')) {
         $scanned = @()
         $scope = 'the working tree'
     } else {
         $scanned = @(@($script:pushedCommits) + @($script:publishedCommits) | Select-Object -Unique)
-        if ($scanned.Count -eq 0) { $scanned = @('HEAD') }
         $scope = "the $($scanned.Count) commit(s) this push publishes"
     }
-    $named = @(Find-MachineNames -Root $Root -Commit $scanned)
+    $named = @()
+    if ($PSBoundParameters.ContainsKey('ChangedPaths') -or $scanned.Count -gt 0) {
+        $named = @(Find-MachineNames -Root $Root -Commit $scanned)
+    }
     if ($named.Count -gt 0) {
         if ($scanned.Count -eq 0) {
             throw ("Tracked files in the working tree name the maintainer's machine or phone, and a push " +
@@ -312,7 +312,16 @@ try {
             'and this push would publish them. A commit on top leaves them in the history it publishes, ' +
             'so rewrite the commit that added them: ' + (($named | Select-Object -First 5) -join '; '))
     }
-    Write-Step "no tracked file in $scope names a machine or phone"
+    if ($PSBoundParameters.ContainsKey('ChangedPaths') -or $scanned.Count -gt 0) {
+        Write-Step "no tracked file in $scope names a machine or phone"
+    } else {
+        Write-Step 'the push publishes no commit, so there is nothing to scan'
+    }
+
+    if ($paths.Count -eq 0) {
+        Write-Step 'nothing to check'
+        exit 0
+    }
 
     $touchesCode = @($paths | Where-Object {
         $_ -like 'extensions/*' -or $_ -like 'patches/*' -or
