@@ -104,6 +104,8 @@ public class DownloadDiagnosticsTest {
 
     @Test
     public void progressiveDashAndGalleryFailuresReachTheReport() throws Exception {
+        // Where Android put Facebook's native code: the ABI it was installed for.
+        context.getApplicationInfo().nativeLibraryDir = "/data/app/~~x/com.facebook.katana-y/lib/arm64";
         File folder = DashSave.workFolder(context);
 
         // A progressive save whose address the server no longer has.
@@ -128,9 +130,14 @@ public class DownloadDiagnosticsTest {
         assertTrue(report, report.contains("save finished: WRITE_ERROR (the gallery refused the file: IOException)"));
         assertTrue(report, report.contains("downloads |"));
 
-        // What a report carries about the phone, the host and this bundle.
-        assertTrue(report, report.matches("(?s).*\napp: \\S+ .* \\(-?\\d+\\)\n.*"));
-        assertTrue(report, report.matches("(?s).*\nabi: app \\S+, process \\S+, device \\S+\n.*"));
+        // What a report carries about the phone, the host and this bundle, and the real values:
+        // each part has a fallback (-1, "unknown") a shape check would pass.
+        long versionCode = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).getLongVersionCode();
+        assertTrue(report, report.contains("\napp: " + context.getPackageName() + " ")
+                && report.contains(" (" + versionCode + ")\n"));
+        assertTrue(report, report.contains("\nabi: app arm64, process "
+                + (android.os.Process.is64Bit() ? "64-bit" : "32-bit") + ", device "
+                + android.text.TextUtils.join(",", android.os.Build.SUPPORTED_ABIS) + "\n"));
         assertTrue(report, report.contains("\nmorphe: "));
 
         // And never where the file was fetched from.
