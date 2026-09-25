@@ -63,6 +63,16 @@ Assert-True (($three.PackageVersions -join ',') -eq '580.0.0.51.74,577.0.0.50.72
     $three.PackageVersion -eq '580.0.0.51.74') `
     "Declared builds were not ordered newest first by number: $($three.PackageVersions -join ', ')"
 
+$uneven = [pscustomobject]@{
+    patches = @(
+        [pscustomobject]@{ name = 'both builds'
+            compatiblePackages = [pscustomobject]@{ 'com.example.app' = @('580.0.0.51.74', '577.0.0.50.72') } },
+        [pscustomobject]@{ name = 'newest only'
+            compatiblePackages = [pscustomobject]@{ 'com.example.app' = @('580.0.0.51.74') } })
+}
+Assert-Throws { Get-PatchTarget -PatchList $uneven } '*newest only*' `
+    'A build only some patches declare was accepted as a target of the whole bundle.'
+
 # Both of Meta's signers, on every patch. Facebook rotated its key with a v3.1 lineage, so a
 # phone on Android 13 or newer reports the new signer and an older one the old signer, and Morphe
 # Manager refuses an APK whose signer the patch doesn't list.
@@ -514,7 +524,9 @@ try {
         'a declared-version run marked forced'  = { param($r) $r.targets[0].source.forced = $true }
         'only forced runs past the target'      = { param($r) $r.targets[0].source.versionName = '46.8.3'; $r.targets[0].source.forced = $true; $r.targets = @($r.targets[0]) }
         'a newer build patched without -f'      = { param($r) $r.targets[0].source.versionName = '46.8.3' }
+        'a run of the newest declared build only' = { param($r) $r.targets = @($r.targets[0]) }
         'the older declared build forced'       = { param($r) $r.targets[1].source.forced = $true }
+        'both runs at the newest declared build' = { param($r) $r.targets[1].source.versionName = '46.7.3' }
     }
     foreach ($description in $mutations.Keys) {
         $result = Test-TestReceipt -Receipt (New-TestReceipt -Mutate $mutations[$description])
@@ -527,6 +539,10 @@ try {
     $onlyForced = Test-TestReceipt -Receipt (New-TestReceipt -Mutate $mutations['only forced runs past the target'])
     Assert-True ($onlyForced.Reason -like '*No target*46.7.3*without -f*46.8.3*') `
         "A forced-only receipt was refused for the wrong reason: $($onlyForced.Reason)"
+    # A release that ran only the newest build names the declared build it never patched.
+    $newestOnly = Test-TestReceipt -Receipt (New-TestReceipt -Mutate $mutations['a run of the newest declared build only'])
+    Assert-True ($newestOnly.Reason -like '*No target*46.6.1*without -f*') `
+        "A receipt missing a declared build was refused for the wrong reason: $($newestOnly.Reason)"
     $secondTarget = New-TestReceipt -Mutate {
         param($r)
         $newer = $r.targets[0] | ConvertTo-Json -Depth 8 | ConvertFrom-Json

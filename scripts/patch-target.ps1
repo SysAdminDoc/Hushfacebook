@@ -16,6 +16,10 @@ function Get-PatchTarget {
     if ($patches.Count -eq 0) { throw 'patches-list.json contains no patches.' }
 
     $targets = @{}
+    # The first patch to name each package, and the builds it declared. Every other patch has to
+    # declare the same ones: a build only some patches support is one the bundle can't fully patch,
+    # and a union of them would hand the release scripts that build as a declared target.
+    $declaredBy = @{}
     foreach ($patch in $patches) {
         if ($null -eq $patch) { throw 'patches-list.json contains a null patch.' }
         $nameProperty = $patch.PSObject.Properties['name']
@@ -38,8 +42,15 @@ function Get-PatchTarget {
             if ($versions.Count -eq 0) {
                 throw "$patchName has no exact compatible version for $($property.Name)."
             }
-            if (-not $targets.ContainsKey($property.Name)) { $targets[$property.Name] = @() }
-            $targets[$property.Name] += $versions
+            $declared = @($versions | Sort-Object -Unique) -join ', '
+            if (-not $targets.ContainsKey($property.Name)) {
+                $targets[$property.Name] = $versions
+                $declaredBy[$property.Name] = @($patchName, $declared)
+            } elseif ($declaredBy[$property.Name][1] -ne $declared) {
+                throw ("Every patch has to declare the same $($property.Name) builds: " +
+                    "$($declaredBy[$property.Name][0]) declares $($declaredBy[$property.Name][1]), " +
+                    "but $patchName declares $declared.")
+            }
         }
     }
 
