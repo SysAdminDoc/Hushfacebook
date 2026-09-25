@@ -211,6 +211,11 @@ try {
                     $Node -is [System.Management.Automation.Language.CommandAst] -and
                     $Node.GetCommandName() -eq 'Invoke-AndroidVerifierTally' -and $Node.Extent.Text -like '*$cleanBase*'
                 } { param($Text) $Text.Replace('$cleanBase', '$PatchedApk') } }
+            @{ Name = 'both tallies taken into one variable'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.IfStatementAst] -and
+                    $Node.Clauses[0].Item1.Extent.Text -eq '$Serial' } { param($Text)
+                    $Text.Replace('$cleanTally', '$tally').Replace('$patchedTally', '$tally') } }
             @{ Name = 'the device half in a function nothing calls'; Check = $talliesBothSides
                 Text = Edit-ScriptNode $verifierText { param($Node)
                     $Node -is [System.Management.Automation.Language.IfStatementAst] -and

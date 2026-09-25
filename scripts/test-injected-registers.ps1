@@ -23,7 +23,7 @@
     allowlist, and the device tally comparison are held to what they did before.
     verify-injected-registers.ps1 also runs end to end with stand-in tools, and its wiring is read
     through the parser (script-wiring.ps1), with the wiring checks themselves tried on copies that
-    drop the calls but keep their text.
+    drop the calls but keep their text, at least one for each rule of what a script can't reach.
 #>
 [CmdletBinding()]
 param(
@@ -147,6 +147,26 @@ try {
     $talliesBothSides = { param($Path) Test-TalliesBothSides $Path }
     $verifiesPatched = { param($Path) Test-VerifiesWhatItPatched $Path }
     $gateRunsSuite = { param($Path) Test-PushGateRunsSuite $Path 'scripts/test-injected-registers.ps1' }
+    # The nodes the copies take the wiring out around: the & $Java DexDiff call in Invoke-DexDiff,
+    # the call to Invoke-DexDiff, the contracts helper's dot-source, verify-all-patches' verifier
+    # call, and the pre-push line that runs this suite.
+    $dexDiffCall = { param($Node)
+        $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Extent.Text -like '*DexDiff.java*' }
+    $dexDiffRun = { param($Node)
+        $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Extent.Text -eq '$diff = Invoke-DexDiff' }
+    $contractsDotSource = { param($Node)
+        $Node -is [System.Management.Automation.Language.CommandAst] -and
+        $Node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
+        $Node.Extent.Text -like '*injected-register-contracts.ps1*' }
+    $verifierCall = { param($Node)
+        $Node -is [System.Management.Automation.Language.CommandAst] -and
+        $Node.Extent.Text -like '*verify-injected-registers.ps1*' }
+    $suiteLine = { param($Node)
+        $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -eq '$suites' -and
+        $Node.Extent.Text -like "*'scripts/test-injected-registers.ps1'*" }
     $wiringCases = @(
         @{ Name = 'the untouched verifier'; Check = $runsDexDiff; Expect = $true; Text = $verifierText }
         @{ Name = 'the untouched verifier'; Check = $dotSourcesContracts; Expect = $true; Text = $verifierText }
@@ -163,34 +183,62 @@ try {
                 $Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -eq 'Invoke-DexDiff'
             } { param($Text) '[pscustomobject]@{ ExitCode = 0; Output = @() }' } }
         @{ Name = 'the DexDiff call behind a return'; Check = $runsDexDiff
-            Text = Edit-ScriptNode $verifierText { param($Node)
-                $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
-                $Node.Extent.Text -like '*DexDiff.java*' } { param($Text) "return`n    $Text" } }
+            Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text) "return`n    $Text" } }
         @{ Name = 'the contracts helper dot-sourced in a dead branch'; Check = $dotSourcesContracts
-            Text = Edit-ScriptNode $verifierText { param($Node)
-                $Node -is [System.Management.Automation.Language.CommandAst] -and
-                $Node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
-                $Node.Extent.Text -like '*injected-register-contracts.ps1*' } { param($Text) "if (`$false) { $Text }" } }
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "if (`$false) { $Text }" } }
         @{ Name = 'the patched tally compared with itself'; Check = $talliesBothSides
             Text = Edit-ScriptNode $verifierText { param($Node)
                 $Node -is [System.Management.Automation.Language.CommandAst] -and
                 $Node.GetCommandName() -eq 'Compare-VerifierTallies'
             } { param($Text) 'Compare-VerifierTallies -Clean $patchedTally -Patched $patchedTally' } }
         @{ Name = 'the verifier call replaced by a log line naming it'; Check = $verifiesPatched
-            Text = Edit-ScriptNode $allPatchesText { param($Node)
-                $Node -is [System.Management.Automation.Language.CommandAst] -and
-                $Node.Extent.Text -like '*verify-injected-registers.ps1*' } { param($Text)
+            Text = Edit-ScriptNode $allPatchesText $verifierCall { param($Text)
                 "Write-Host '[verify] skipped verify-injected-registers.ps1 -PatchedApk `$out'" } }
         @{ Name = 'the verifier run on the stock APK'; Check = $verifiesPatched
-            Text = Edit-ScriptNode $allPatchesText { param($Node)
-                $Node -is [System.Management.Automation.Language.CommandAst] -and
-                $Node.Extent.Text -like '*verify-injected-registers.ps1*' } { param($Text)
+            Text = Edit-ScriptNode $allPatchesText $verifierCall { param($Text)
                 $Text.Replace('-PatchedApk $out', '-PatchedApk $stockApk') } }
         @{ Name = 'the suite line in a block comment'; Check = $gateRunsSuite
-            Text = Edit-ScriptNode $prePushSource { param($Node)
+            Text = Edit-ScriptNode $prePushSource $suiteLine { param($Text) "<#`n$Text`n#>" } }
+        # One copy for each rule of what a script can't reach, each taking the wiring out by that
+        # rule alone, so none of them can be dropped without a copy here passing its check.
+        @{ Name = 'the contracts helper dot-sourced in a while ($false) body'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "while (`$false) { $Text }" } }
+        @{ Name = 'the contracts helper dot-sourced in the else of if ($true)'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "if (`$true) { } else { $Text }" } }
+        @{ Name = 'the contracts helper dot-sourced behind if (-not $true)'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "if (-not `$true) { $Text }" } }
+        @{ Name = 'the contracts helper dot-sourced behind if (0)'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text) "if (0) { $Text }" } }
+        @{ Name = 'the contracts helper dot-sourced inside a function the script calls'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText $contractsDotSource { param($Text)
+                "function Import-Contracts { $Text }`nImport-Contracts" } }
+        @{ Name = 'the DexDiff call behind exit'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text) "exit 0`n    $Text" } }
+        @{ Name = 'the DexDiff call behind throw'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text) "throw 'stopped'`n    $Text" } }
+        @{ Name = 'the DexDiff call behind break'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text) "break`n    $Text" } }
+        @{ Name = 'the DexDiff call behind continue'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text) "continue`n    $Text" } }
+        @{ Name = 'the DexDiff function called only in a dead branch'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffRun { param($Text)
+                "if (`$false) { $Text }`n`$diff = [pscustomobject]@{ ExitCode = 0; Output = @() }" } }
+        @{ Name = 'the patched APK moved off its place in the DexDiff call'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText $dexDiffCall { param($Text)
+                $Text.Replace('$cleanBase $PatchedApk', '$PatchedApk $cleanBase') } }
+        @{ Name = 'the verifier run on the stock APK, which follows -o only in a dead branch'; Check = $verifiesPatched
+            Text = Edit-ScriptNode (Edit-ScriptNode $allPatchesText $verifierCall { param($Text)
+                $Text.Replace('-PatchedApk $out', '-PatchedApk $stockApk') }) { param($Node)
                 $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
-                $Node.Left.Extent.Text -eq '$suites' -and
-                $Node.Extent.Text -like "*'scripts/test-injected-registers.ps1'*" } { param($Text) "<#`n$Text`n#>" } }
+                $Node.Extent.Text -like "`$arguments = @('patch'*" } { param($Text)
+                "$Text`nif (`$false) { `$arguments = @('-o', `$stockApk) }" } }
+        @{ Name = 'the suite line behind if ($false)'; Check = $gateRunsSuite
+            Text = Edit-ScriptNode $prePushSource $suiteLine { param($Text) "if (`$false) { $Text }" } }
+        @{ Name = 'the suite line in an elseif after if ($true)'; Check = $gateRunsSuite
+            Text = Edit-ScriptNode $prePushSource { param($Node)
+                $Node -is [System.Management.Automation.Language.IfStatementAst] -and
+                $Node.Clauses[0].Item1.Extent.Text -eq '$touchesInjectedRegisterVerifier' } { param($Text)
+                "if (`$true) { } else$Text" } }
     )
     $wiringFailures = @()
     $copy = Join-Path $wiringCopies 'copy.ps1'
