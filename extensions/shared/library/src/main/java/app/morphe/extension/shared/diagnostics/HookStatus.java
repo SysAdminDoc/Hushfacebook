@@ -190,6 +190,12 @@ public final class HookStatus {
      * happens" needs to know. A repeat costs one hash lookup and one increment.
      *
      * <p>Hooks call this first thing, often before their own guard, so it never throws.
+     *
+     * <p>The count is close rather than exact across a diagnostic clear. The increment runs
+     * outside the state lock, so a run counted in the instant of the clear can land on the family
+     * being cleared and be lost. The feed guard and the theme's colour hook come through here on
+     * every item they see, and they shouldn't wait on a lock for a number that only has to be
+     * close.
      */
     public static void invoked(String family) {
         try {
@@ -349,7 +355,9 @@ public final class HookStatus {
         if (ambiguous > 0) line.append(ambiguous).append(" ambiguous, ");
         line.append(missing).append(" missing");
         if (truncated) line.append(", and more it stopped counting");
-        if (firstMiss != null) line.append(". First missing: ").append(firstMiss);
+        // report() names a plain miss first when there is one, so with none missing it is an
+        // ambiguous lookup.
+        if (firstMiss != null) line.append(missing > 0 ? ". First missing: " : ". First ambiguous: ").append(firstMiss);
         return line.toString();
     };
 
@@ -376,6 +384,17 @@ public final class HookStatus {
                 if (entry == null) continue;
                 LineWriter writer = lineWriter;
                 int ambiguous = entry.ambiguousCount();
+                // The first plain miss is the one to name. An ambiguous lookup recorded before it
+                // used to take its place, so the line counted a miss it never named, and with no
+                // plain miss at all it said "0 missing. First missing".
+                Miss first = null;
+                for (Miss miss : entry.order) {
+                    if (!miss.ambiguous) {
+                        first = miss;
+                        break;
+                    }
+                    if (first == null) first = miss;
+                }
                 String line = (writer == null ? ENGLISH : writer).line(
                         name,
                         entry.invoked.get(),
@@ -383,7 +402,7 @@ public final class HookStatus {
                         ambiguous,
                         entry.order.size() - ambiguous,
                         entry.truncated || entry.boundTruncated,
-                        entry.order.isEmpty() ? null : entry.order.get(0).detail);
+                        first == null ? null : first.detail);
                 lines.add(pausedMark != null && !RUNS_WHILE_PAUSED.contains(name) ? line + pausedMark : line);
             }
             return lines;
@@ -472,7 +491,8 @@ public final class HookStatus {
                 }
                 current.truncated |= saved.truncated;
                 current.boundTruncated |= saved.boundTruncated;
-                // Runs since the clear happened as well as before it, so both are kept.
+                // Runs since the clear happened as well as before it, so both are kept, bar one
+                // counted in the instant of the clear itself (see invoked()).
                 current.invoked.addAndGet(saved.invoked);
             }
 

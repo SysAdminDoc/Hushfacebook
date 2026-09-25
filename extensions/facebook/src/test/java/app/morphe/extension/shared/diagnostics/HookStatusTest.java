@@ -44,10 +44,22 @@ public class HookStatusTest {
         HookStatus.ambiguous("Reels", "field", "X.abc", "source", 2);
         HookStatus.missingMember("Reels", "field", "X.def", "items");
 
+        // The miss that 'missing' counts is the one named, though the ambiguous lookup came first.
         assertEquals(Arrays.asList(
-                "Reels: invoked 3, 1 found, 1 ambiguous, 1 missing. First missing: a single field X.abc#source (found 2)"),
+                "Reels: invoked 3, 1 found, 1 ambiguous, 1 missing. First missing: field X.def#items"),
                 HookStatus.report());
         assertTrue("an ambiguous lookup is a finding a report has to carry", HookStatus.anyMissing());
+    }
+
+    /** With nothing missing, the lookup the line names is an ambiguous one, and it says so. */
+    @Test
+    public void aFamilyWhoseOnlyFindingIsAmbiguousDoesNotCallItMissing() {
+        HookStatus.invoked("Download any reel");
+        HookStatus.ambiguous("Download any reel", "field", "X.params", "com.facebook.video.engine.api.VideoDataSource", 2);
+
+        assertEquals(Arrays.asList("Download any reel: invoked 1, 0 found, 1 ambiguous, 0 missing. First ambiguous: "
+                        + "a single field X.params#com.facebook.video.engine.api.VideoDataSource (found 2)"),
+                HookStatus.report());
     }
 
     /** A family that only ran has a line too, and a line with nothing wrong in it is no finding. */
