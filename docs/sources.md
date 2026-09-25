@@ -59,7 +59,7 @@ The widest map of Facebook's ad and clutter code is in LSPosed modules, not patc
 
 ## Where Hushfacebook is listed
 
-The [Morphe Patch Tracker](https://drnx64.github.io/morphe-track-patches/#/bundle/sysadmindoc) and the [Morphe Archive](https://github.com/rushiforai/morphe-archive/tree/main/examplepatches/SysAdminDoc/Hushfacebook) list it. [Awesome Morphe](https://github.com/nvbangg/awesome-morphe) and [Jman's ReVanced Patch Bundles](https://github.com/Jman-Github/ReVanced-Patch-Bundles) didn't list it when we checked on 2026-09-25, and neither did the Morphe community directory. The ledger records each of these, and a release needs a listing or a dated submission on every one.
+The [Morphe Patch Tracker](https://drnx64.github.io/morphe-track-patches/#/bundle/sysadmindoc) and the [Morphe Archive](https://github.com/rushiforai/morphe-archive/tree/main/examplepatches/SysAdminDoc/Hushfacebook) list it. [Awesome Morphe](https://github.com/nvbangg/awesome-morphe) and [Jman's ReVanced Patch Bundles](https://github.com/Jman-Github/ReVanced-Patch-Bundles) didn't list it when we checked on 2026-09-25, and neither did the Morphe community directory. The ledger records each of these with the date it was checked, and a release names the ones that still don't list Hushfacebook.
 
 ## What we left out
 

@@ -114,8 +114,8 @@ if ($ArtifactIsHosted -and $ArtifactPath) {
 
 # The Facebook-family source census (sources/facebook-sources.json). A release is when Hushfacebook
 # tells people where its code came from, so it goes out only on a ledger that keeps every rule
-# facebook-sources.ps1 holds it to, a census from the last 14 days, and a listing or a dated
-# submission on every index. Checked first, since it needs no network and no build. Only the
+# facebook-sources.ps1 holds it to (a dated listing record for every index among them) and a census
+# from the last 14 days; an index that doesn't list Hushfacebook yet is named, not refused. Checked first, since it needs no network and no build. Only the
 # published asset run, which is the release: the lenient pushes between releases change files the
 # census doesn't describe, and a README fix shouldn't wait on an audit.
 if ($VerifyPublishedAsset) {

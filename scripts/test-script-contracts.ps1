@@ -3703,9 +3703,10 @@ try {
         Assert-True ($said -like '*the Facebook-family source census is 0 day(s) old*every index lists Hushfacebook or has its submission*') `
             "The index push was not held to the Facebook-family source census: $said"
 
-        # The census, one fact at a time. Fourteen days old is still a release; fifteen isn't, and
-        # neither is an index with no listing and no dated submission. The lenient check every
-        # other push runs reads none of it, so a README fix never waits on an audit.
+        # The census, one fact at a time. Fourteen days old is still a release; fifteen isn't. An
+        # index that doesn't list Hushfacebook yet is named in what the release says, not a refusal:
+        # a submission is a public request on someone else's project. The lenient check every other
+        # push runs reads none of it, so a README fix never waits on an audit.
         try {
             Save-ReleaseLedger -AgeDays 14
             $said = Invoke-IndexPushCheck $publishedRun
@@ -3720,8 +3721,9 @@ try {
                 throw "The lenient check an ordinary push runs refused a census 15 days old: $($_.Exception.Message)"
             }
             Save-ReleaseLedger -Pending
-            Assert-Throws { Invoke-IndexPushCheck $publishedRun } '*neither a listing nor a dated submission for Hushfacebook*' `
-                'A release went out with no listing and no submission on any index.'
+            $said = Invoke-IndexPushCheck $publishedRun
+            Assert-True ($said -like '*Hushfacebook is not listed on *yet and has no submission recorded there*') `
+                "A release with an index that doesn't list Hushfacebook didn't name it: $said"
         } finally {
             Save-ReleaseLedger
         }

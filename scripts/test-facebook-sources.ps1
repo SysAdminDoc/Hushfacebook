@@ -262,7 +262,9 @@ $gate = Test-SourceReleaseGate -Root $gateRoot -Today '2026-10-10'
 Assert-True (-not $gate.Valid -and $gate.Reason -like '*15 days old*audit-facebook-sources.ps1*') "The release gate accepted a stale census: $($gate.Reason)"
 Save-GateLedger -CheckedAt '2026-09-25' -Pending
 $gate = Test-SourceReleaseGate -Root $gateRoot -Today '2026-09-26'
-Assert-True (-not $gate.Valid -and $gate.Reason -like '*neither a listing nor a dated submission*') "The release gate accepted unlisted indexes: $($gate.Reason)"
+# An index that doesn't list Hushfacebook yet is named, not refused: a submission is a public
+# request on someone else's project, so a release can't be made to wait on it.
+Assert-True ($gate.Valid -and $gate.Summary -like '*Hushfacebook is not listed on *yet and has no submission recorded there*') "The release gate didn't name the indexes that don't list Hushfacebook: $($gate.Summary) $($gate.Reason)"
 Remove-Item -LiteralPath (Get-SourceLedgerPath -Root $gateRoot)
 $gate = Test-SourceReleaseGate -Root $gateRoot -Today '2026-09-26'
 Assert-True (-not $gate.Valid -and $gate.Reason -like '*ledger is missing*') "The release gate accepted a missing ledger: $($gate.Reason)"

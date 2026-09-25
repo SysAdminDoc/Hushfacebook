@@ -543,8 +543,10 @@ function Test-SourceListings {
 function Test-SourceReleaseGate {
     <#
     .SYNOPSIS
-        What a release is held to: a ledger that passes every rule, a census from the last two
-        weeks, and a listing or a dated submission on every index.
+        What a release is held to: a ledger that passes every rule, including a dated record of
+        whether each index lists Hushfacebook, and a census from the last two weeks. An index that
+        doesn't list it yet is named in the summary rather than holding the release: submitting
+        is a request made in public on someone else's project, and a release can't wait on it.
     #>
     param([Parameter(Mandatory = $true)][string]$Root, [string]$Today)
 
@@ -565,14 +567,13 @@ function Test-SourceReleaseGate {
             Reason = "$($census.Reason). Run scripts/audit-facebook-sources.ps1, settle what it reports, and commit the ledger it stamps." }
     }
     $listings = Test-SourceListings -Ledger $ledger
-    if (-not $listings.Valid) {
-        return [pscustomobject]@{ Valid = $false; Summary = $null
-            Reason = ("the ledger records neither a listing nor a dated submission for Hushfacebook on " +
-                ($listings.Pending -join ', ') + '. Submit it there and record the submission URL and date.') }
-    }
     $entries = @(Get-SourceProperty $ledger 'entries' | Where-Object { $null -ne $_ })
     $lineages = @($entries | ForEach-Object { [string](Get-SourceProperty $_ 'lineage') } | Sort-Object -Unique)
+    $indexes = if ($listings.Valid) { 'every index lists Hushfacebook or has its submission' } else {
+        'Hushfacebook is not listed on ' + ($listings.Pending -join ', ') +
+            ' yet and has no submission recorded there (submit it, then record the URL and date)'
+    }
     return [pscustomobject]@{ Valid = $true; Reason = $null
         Summary = ("the Facebook-family source census is $($census.AgeDays) day(s) old ($($census.CheckedAt)), " +
-            "$($entries.Count) sources in $($lineages.Count) lineages, and every index lists Hushfacebook or has its submission") }
+            "$($entries.Count) sources in $($lineages.Count) lineages, and $indexes") }
 }
