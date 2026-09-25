@@ -15,6 +15,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.media.MediaFormat;
 import android.net.Uri;
 import android.provider.MediaStore;
 
@@ -28,6 +29,8 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowContentResolver;
+import org.robolectric.shadows.ShadowMediaExtractor;
+import org.robolectric.shadows.util.DataSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -36,6 +39,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +80,9 @@ public class MediaSaveTest {
     @After
     public void tearDown() throws IOException {
         server.close();
+        // The join cases tell Robolectric's extractor about their work files, and it keeps that
+        // in a static map. Cleared here rather than left to Robolectric's own reset.
+        ShadowMediaExtractor.reset();
     }
 
     private void serve(String path, String type, byte[] body, long announced) {
@@ -200,8 +207,8 @@ public class MediaSaveTest {
     /**
      * The case above holds the share from above only: a sound given nothing, or a picture given
      * half the cap, refused it just as well. So a pair that fits has to get through both fetches
-     * (Robolectric can't join them, and the save ends there), and a picture that takes the whole
-     * cap leaves the sound none.
+     * (nothing describes them to Robolectric's extractor, so the join fails and the save ends
+     * there), and a picture that takes the whole cap leaves the sound none.
      */
     @Test
     public void aDashPairThatFitsTheCapIsFetchedWhole() {
@@ -217,7 +224,7 @@ public class MediaSaveTest {
 
         assertEquals("WRITE_ERROR (the tracks could not be joined)", result.toString());
         assertEquals("the sound track wasn't fetched", 1, server.hits("/a40.mp4"));
-        assertNothingWasCreated("a pair that fits, which Robolectric can't join", result);
+        assertNothingWasCreated("a pair that fits, with nothing described to join", result);
 
         byte[] whole = mp4(100_000);
         serve("/v100.mp4", "video/mp4", whole, whole.length);
@@ -227,6 +234,92 @@ public class MediaSaveTest {
         assertEquals(result.toString(), Downloader.Status.TOO_LARGE, result.status);
         assertTrue(result.toString(), result.reason.endsWith("more than 0"));
         assertNothingWasCreated("a picture that took the whole cap", result);
+    }
+
+    /**
+     * A 1,000-byte picture and a 1,000-byte sound, saved under a 10,000-byte cap so both fetches
+     * fit, and joined. Robolectric's extractor reads no file: it answers with the samples a test
+     * gives it for a path, and its muxer writes exactly those samples into the joined file, so the
+     * joined size is the test's to choose. The work files get random names, so they're described
+     * as the sound's address is checked. Both exist by then, and the join hasn't started.
+     */
+    private Downloader.Result saveAndJoin(byte[] pictureSample, byte[] soundSample) {
+        byte[] picture = mp4(1_000);
+        serve("/v.mp4", "video/mp4", picture, picture.length);
+        byte[] sound = mp4(1_000);
+        serve("/a.mp4", "audio/mp4", sound, sound.length);
+        DashManifest.Track video = new DashManifest.Track("video/mp4", "avc1.64001f", 1280, 720, 2_000_000,
+                origin + "/v.mp4");
+        DashManifest.Track audio = new DashManifest.Track("audio/mp4", "mp4a.40.2", 0, 0, 128_000, origin + "/a.mp4");
+        int port = server.port();
+        MediaUrlPolicy describing = new MediaUrlPolicy(host -> new InetAddress[] { InetAddress.getByName("10.9.8.7") }) {
+            @Override
+            Refusal refusal(URL url) {
+                if (url.getPath().equals("/a.mp4")) describeWorkFiles(pictureSample, soundSample);
+                if (url.getHost().equals("127.0.0.1") && url.getPort() == port) return null;
+                return super.refusal(url);
+            }
+        };
+        return DashSave.save(context, video, audio, new MediaStoreWriter(context, true), describing, 10_000);
+    }
+
+    /** Each work file, found by the name DashSave starts it with, gets its one sample. */
+    private void describeWorkFiles(byte[] pictureSample, byte[] soundSample) {
+        for (File file : DashSave.workFolder(context).listFiles()) {
+            DataSource path = DataSource.toDataSource(file.getPath());
+            if (file.getName().startsWith("video")) {
+                ShadowMediaExtractor.addTrack(path, MediaFormat.createVideoFormat("video/avc", 1280, 720), pictureSample);
+            } else if (file.getName().startsWith("audio")) {
+                ShadowMediaExtractor.addTrack(path, MediaFormat.createAudioFormat("audio/mp4a-latm", 44_100, 2),
+                        soundSample);
+            }
+        }
+    }
+
+    /** [size] bytes of [fill], so the joined file shows which track each byte came from. */
+    private static byte[] sample(int size, char fill) {
+        byte[] bytes = new byte[size];
+        Arrays.fill(bytes, (byte) fill);
+        return bytes;
+    }
+
+    /**
+     * Every DASH case above ends before the gallery, so nothing checked what a finished join
+     * publishes. This pair fits and is joined, and the gallery gets the joined file: the picture's
+     * sample, then the sound's. Robolectric puts every sample at time zero, and the join takes the
+     * picture on a tie.
+     */
+    @Test
+    public void aDashPairThatFitsTheCapIsJoinedAndPublished() {
+        byte[] picture = sample(1_000, 'v');
+        byte[] sound = sample(1_000, 'a');
+
+        Downloader.Result result = saveAndJoin(picture, sound);
+
+        assertEquals(result.toString(), Downloader.Status.OK, result.status);
+        assertEquals(1, gallery.inserts.size());
+        ContentValues row = gallery.rows.get(1L);
+        assertEquals("the row was left pending", Integer.valueOf(0), row.getAsInteger(MediaStore.MediaColumns.IS_PENDING));
+        assertEquals("video/mp4", row.getAsString(MediaStore.MediaColumns.MIME_TYPE));
+        ByteArrayOutputStream joined = new ByteArrayOutputStream();
+        joined.write(picture, 0, picture.length);
+        joined.write(sound, 0, sound.length);
+        assertArrayEquals("the gallery didn't get the joined file", joined.toByteArray(), published.toByteArray());
+        String[] left = DashSave.workFolder(context).list();
+        assertEquals(0, left == null ? 0 : left.length);
+    }
+
+    /**
+     * Joining writes boxes of its own, so a pair whose fetches fit the cap can join into a file
+     * over it. These are the fetches above, and their samples join into 12,000 bytes, which must
+     * not reach the gallery.
+     */
+    @Test
+    public void aDashPairWhoseJoinedFileRunsPastTheCapIsRefused() {
+        Downloader.Result result = saveAndJoin(sample(6_000, 'v'), sample(6_000, 'a'));
+
+        assertEquals("TOO_LARGE (the joined file is 12000 bytes, more than 10000)", result.toString());
+        assertNothingWasCreated("a pair whose joined file ran past the cap", result);
     }
 
     /**
