@@ -2200,6 +2200,60 @@ foreach ($name in @('build-release-receipt.ps1', 'verify-all-patches.ps1', 'veri
 
 Write-Host '[scripts] split bundle contracts passed'
 
+# --- relative paths ------------------------------------------------------------------------------
+#
+# .NET reads a relative path against the process directory, which Set-Location doesn't move, while
+# Test-Path and native commands use PowerShell's location. A path a script had just found could then
+# open as a file somewhere else, or not at all: a relative -DesktopJar reached DexDiff as a jar that
+# wasn't there. Every reader that hands a caller's path to .NET is asked here from a location the
+# process directory isn't. The scripts that take such paths are run the same way in the release
+# root below.
+
+$relativeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-relative-" + [guid]::NewGuid().ToString('N'))
+$savedProcessDirectory = [Environment]::CurrentDirectory
+$savedDesktopJar = $env:HUSHFACEBOOK_DESKTOP_JAR
+try {
+    $here = Join-Path $relativeRoot 'here'
+    $elsewhere = Join-Path $relativeRoot 'elsewhere'
+    New-Item -ItemType Directory -Path (Join-Path $here 'tools'), $elsewhere -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $here 'tools\morphe-desktop.jar') -Value 'jar' -Encoding ASCII
+    Set-Content -LiteralPath (Join-Path $here 'tools\d8.bat') -Value '@echo off' -Encoding ASCII
+    New-TestBundleArchive -Path (Join-Path $here 'patches.mpp') -Entries ([ordered]@{
+        'META-INF/MANIFEST.MF' = "Manifest-Version: 1.0`nVersion: 9.9.9`nTimestamp: 1000`nPatcher-Version: 1.14.1`n`n" })
+    New-TestBundleArchive -Path (Join-Path $here 'app.apk') -Entries ([ordered]@{
+        'AndroidManifest.xml' = 'manifest'; 'classes.dex' = "dex`n035" })
+    New-TestBundleArchive -Path (Join-Path $here 'app.apkm') -Entries ([ordered]@{ 'base.apk' = 'base' })
+
+    Push-Location -LiteralPath $here
+    try {
+        [Environment]::CurrentDirectory = $elsewhere
+        $jar = Resolve-DesktopCli -Explicit 'tools\morphe-desktop.jar'
+        Assert-True (Test-SamePath $jar (Join-Path $here 'tools\morphe-desktop.jar')) "A relative -DesktopJar came back as $jar."
+        $env:HUSHFACEBOOK_DESKTOP_JAR = 'tools\morphe-desktop.jar'
+        $jar = Resolve-DesktopCli
+        Assert-True (Test-SamePath $jar (Join-Path $here 'tools\morphe-desktop.jar')) "A relative HUSHFACEBOOK_DESKTOP_JAR came back as $jar."
+        $d8 = Resolve-D8 -Explicit 'tools\d8.bat' -Root $here
+        Assert-True (Test-SamePath $d8 (Join-Path $here 'tools\d8.bat')) "A relative -D8 came back as $d8."
+        $facts = Get-BundleManifestFacts -BundlePath 'patches.mpp'
+        Assert-True ($facts.patcherVersion -eq '1.14.1') "A relative bundle was read as $($facts.patcherVersion)."
+        Assert-True (Test-ApkFile -Path 'app.apk') 'A relative APK was not read as one.'
+        $base = Get-BaseApk -Apk 'app.apkm' -Destination 'out\base.apk'
+        Assert-True ((Test-SamePath $base (Join-Path $here 'out\base.apk')) -and (Test-Path -LiteralPath $base)) `
+            "A relative bundle's base APK went to $base."
+        Assert-True (@(Get-ChildItem -LiteralPath $elsewhere -Recurse -Force).Count -eq 0) `
+            'A relative path was written in the process directory instead.'
+    } finally {
+        [Environment]::CurrentDirectory = $savedProcessDirectory
+        Pop-Location
+    }
+} finally {
+    [Environment]::CurrentDirectory = $savedProcessDirectory
+    $env:HUSHFACEBOOK_DESKTOP_JAR = $savedDesktopJar
+    Remove-Item -LiteralPath $relativeRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Host '[scripts] relative path contracts passed'
+
 # --- a release root ------------------------------------------------------------------------------
 #
 # The release files of this checkout, copied into a fixture repository and committed, the way the
@@ -2463,7 +2517,8 @@ try {
 
     # The builder reads git with a plain `git -C`, which a GIT_DIR inherited from a hook would
     # override, so every GIT_* variable is cleared for the length of a run.
-    function Invoke-ReceiptBuilder([string[]]$Fixtures) {
+    function Invoke-ReceiptBuilder([string[]]$Fixtures, [string]$Bundle,
+            [string]$WorkDir = (Join-Path $releaseRoot 'work'), [string]$DesktopJar = $stubJar) {
         Remove-Item -LiteralPath $javaLog -Force -ErrorAction SilentlyContinue
         $saved = @{}
         foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*' })) {
@@ -2472,8 +2527,10 @@ try {
         }
         try {
             $global:LASTEXITCODE = 0
-            & (Join-Path $PSScriptRoot 'build-release-receipt.ps1') -Root $releaseRepo -Fixture $Fixtures `
-                -WorkDir (Join-Path $releaseRoot 'work') -DesktopJar $stubJar -Java $stubJava -Aapt2 $stubAapt2 6> $null
+            $arguments = @{ Root = $releaseRepo; Fixture = $Fixtures; WorkDir = $WorkDir; DesktopJar = $DesktopJar
+                Java = $stubJava; Aapt2 = $stubAapt2 }
+            if ($Bundle) { $arguments['Bundle'] = $Bundle }
+            & (Join-Path $PSScriptRoot 'build-release-receipt.ps1') @arguments 6> $null
             if ($LASTEXITCODE -ne 0) { throw "build-release-receipt.ps1 exited $LASTEXITCODE." }
         } finally {
             foreach ($name in $saved.Keys) { Set-Item -LiteralPath ('Env:\' + $name) -Value $saved[$name] }
@@ -2537,9 +2594,9 @@ try {
     # version now, the default fixture is still the newest build, and an undeclared build is
     # refused before the CLI starts. No -Serial, so nothing goes near adb.
     $deviceOut = Join-Path $releaseRoot 'device'
-    function Invoke-DeviceBuild([string]$Apk) {
+    function Invoke-DeviceBuild([string]$Apk, [string]$OutDir = $deviceOut, [string]$DesktopJar = $stubJar) {
         Remove-Item -LiteralPath $javaLog -Force -ErrorAction SilentlyContinue
-        $arguments = @{ Root = $releaseRepo; DesktopJar = $stubJar; Java = $stubJava; Aapt2 = $stubAapt2; OutDir = $deviceOut }
+        $arguments = @{ Root = $releaseRepo; DesktopJar = $DesktopJar; Java = $stubJava; Aapt2 = $stubAapt2; OutDir = $OutDir }
         if ($Apk) { $arguments['Apk'] = $Apk }
         & (Join-Path $PSScriptRoot 'patch-for-device.ps1') @arguments 6> $null
     }
@@ -2570,6 +2627,43 @@ try {
     Assert-Throws { Invoke-DeviceBuild -Apk $fixturePaths[$newerBuild] } "*$newerBuild, which the bundle does not declare*" `
         'patch-for-device.ps1 took a build the catalog does not declare.'
     Assert-True (-not (Test-Path -LiteralPath $javaLog)) 'patch-for-device.ps1 started the CLI on an undeclared build.'
+
+    # The builder, the release check and the device build given relative paths, from a location
+    # the process directory isn't. Each found its file with Test-Path, in PowerShell's location,
+    # and then opened or wrote it with .NET, which reads the process directory: the builder died
+    # on a relative -Bundle with "Could not find file", and the release check on -ArtifactPath.
+    $elsewhere = Join-Path $releaseRoot 'elsewhere'
+    New-Item -ItemType Directory -Path $elsewhere -Force | Out-Null
+    $inRoot = { param([string]$Path) $Path.Substring($releaseRoot.TrimEnd('\').Length + 1) }
+    $savedProcessDirectory = [Environment]::CurrentDirectory
+    Push-Location -LiteralPath $releaseRoot
+    try {
+        [Environment]::CurrentDirectory = $elsewhere
+        try {
+            Invoke-ReceiptBuilder -Fixtures @($allFixtures | ForEach-Object { & $inRoot $_ }) `
+                -Bundle (& $inRoot $releaseBundle) -WorkDir 'work-relative' -DesktopJar (& $inRoot $stubJar)
+        } catch {
+            throw "build-release-receipt.ps1 refused relative paths: $($_.Exception.Message)"
+        }
+        $global:LASTEXITCODE = 0
+        & $factsScript -Root $releaseRepo -SkipDescriptionTestCount -AllowPublishedIndexLag -SkipUrlCheck `
+            -ArtifactPath (& $inRoot $releaseBundle) 6> $null
+        Assert-True ($LASTEXITCODE -eq 0) "The release check exited $LASTEXITCODE on a relative -ArtifactPath."
+        try {
+            Invoke-DeviceBuild -Apk (& $inRoot $fixturePaths[$releaseTarget.PackageVersion]) -OutDir 'device-relative' `
+                -DesktopJar (& $inRoot $stubJar)
+        } catch {
+            throw "patch-for-device.ps1 refused relative paths: $($_.Exception.Message)"
+        }
+        Assert-True (Test-Path -LiteralPath (Join-Path $releaseRoot "device-relative\hushfacebook-$releaseVersionHere-signed.apk")) `
+            'patch-for-device.ps1 given a relative -OutDir left no APK there.'
+        Assert-True (@(Get-ChildItem -LiteralPath $elsewhere -Recurse -Force).Count -eq 0) `
+            ("A relative path was written in the process directory instead: " +
+                ((Get-ChildItem -LiteralPath $elsewhere -Recurse -Force | Select-Object -First 3 | ForEach-Object { $_.Name }) -join ', '))
+    } finally {
+        [Environment]::CurrentDirectory = $savedProcessDirectory
+        Pop-Location
+    }
 } finally {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue
 }

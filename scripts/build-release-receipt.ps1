@@ -65,6 +65,8 @@ if (-not $Bundle) { $Bundle = Get-ReleaseBundlePath -Root $Root -Version $releas
 if (-not (Test-Path -LiteralPath $Bundle -PathType Leaf)) {
     throw "No bundle for version ${releaseVersion}: $Bundle. Run :patches:generatePatchesList then :patches:buildAndroid."
 }
+# Found in PowerShell's location; the ZipFile reads below would look in the process directory.
+$Bundle = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Bundle)
 if (-not $PatchList) { $PatchList = Join-Path $Root 'patches-list.json' }
 if (-not $OutputPath) { $OutputPath = Join-Path $Root "release-receipt-$releaseVersion.json" }
 

@@ -53,6 +53,9 @@ $ErrorActionPreference = 'Stop'
 # Not a parameter default: Windows PowerShell leaves $PSScriptRoot empty while it evaluates the
 # defaults of an advanced script started with -File. $root below is this same variable.
 if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
+# The argument file is written with [IO.File], which reads a relative path against the process
+# directory, while java is handed the same path from PowerShell's location. Absolute, they agree.
+$OutDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutDir)
 . (Join-Path $PSScriptRoot 'patch-target.ps1')
 . (Join-Path $PSScriptRoot 'patch-report.ps1')
 . (Join-Path $PSScriptRoot 'common.ps1')

@@ -10,7 +10,8 @@ function Resolve-D8 {
     param([string]$Explicit, [string]$Root)
 
     if ($Explicit -and (Test-Path -LiteralPath $Explicit -PathType Leaf)) {
-        return [System.IO.Path]::GetFullPath($Explicit)
+        # Through PowerShell's location, as Test-Path read it, not the process directory.
+        return $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Explicit)
     }
     $properties = Join-Path $Root 'local.properties'
     $sdkLine = Get-Content -LiteralPath $properties -ErrorAction SilentlyContinue |

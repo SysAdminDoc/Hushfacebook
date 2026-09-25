@@ -57,6 +57,8 @@ function Get-BundleManifestFacts {
     #>
     param([Parameter(Mandatory = $true)][string]$BundlePath)
 
+    # ZipFile reads a relative path against the process directory, not PowerShell's location.
+    $BundlePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($BundlePath)
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $text = $null
     $archive = [System.IO.Compression.ZipFile]::OpenRead($BundlePath)

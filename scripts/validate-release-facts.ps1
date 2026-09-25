@@ -87,6 +87,9 @@ function Require-Match {
 }
 
 $rootPath = (Resolve-Path -LiteralPath $Root).Path
+# The ZipFile reads below would take a relative -ArtifactPath from the process directory, which
+# Set-Location doesn't move, after Test-Path had found it in PowerShell's location.
+if ($ArtifactPath) { $ArtifactPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ArtifactPath) }
 $patchListPath = Join-Path $rootPath 'patches-list.json'
 $bundlePath = Join-Path $rootPath 'patches-bundle.json'
 $propertiesPath = Join-Path $rootPath 'gradle.properties'

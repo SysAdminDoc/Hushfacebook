@@ -178,15 +178,18 @@ function Resolve-DesktopCli {
     #>
     param([string]$Explicit, [string]$Root, [switch]$Required)
 
+    # Made absolute through PowerShell's location, the one Test-Path looked in. [IO.Path]::GetFullPath
+    # reads the process directory, which Set-Location doesn't move: a relative -DesktopJar that
+    # Test-Path found came back as a jar somewhere else, and DexDiff compiled without dexlib2.
     $found = $null
     if ($Explicit -and (Test-Path -LiteralPath $Explicit -PathType Leaf)) {
-        $found = [System.IO.Path]::GetFullPath($Explicit)
+        $found = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Explicit)
     } elseif ($Explicit) {
         # Named and not there: say so rather than quietly searching somewhere else.
         throw "No Morphe desktop CLI at the path given: $Explicit"
     } elseif ($env:HUSHFACEBOOK_DESKTOP_JAR -and
             (Test-Path -LiteralPath $env:HUSHFACEBOOK_DESKTOP_JAR -PathType Leaf)) {
-        $found = [System.IO.Path]::GetFullPath($env:HUSHFACEBOOK_DESKTOP_JAR)
+        $found = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($env:HUSHFACEBOOK_DESKTOP_JAR)
     } else {
         $directories = @($env:HUSHFACEBOOK_WORKDIR)
         if ($Root) { $directories += (Join-Path $Root 'build/morphe-tools') }
