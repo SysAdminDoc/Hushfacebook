@@ -84,7 +84,9 @@ final class DashSave {
      */
     static File workFolder(Context application) {
         File folder = new File(application.getCacheDir(), CACHE_FOLDER);
-        if (!folder.isDirectory() && !folder.mkdirs()) return null;
+        // mkdirs() answers false when another save made the folder a moment ago, so it only
+        // failed if the folder still isn't there.
+        if (!folder.mkdirs() && !folder.isDirectory()) return null;
         removeStale(folder);
         return folder;
     }

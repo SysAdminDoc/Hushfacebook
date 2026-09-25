@@ -197,6 +197,38 @@ public class MediaSaveTest {
         assertNothingWasCreated("a DASH pair over the cap", result);
     }
 
+    /**
+     * Two saves that start together both find no work folder yet, and the one whose mkdirs()
+     * comes second is told false because the other just made it. That save used to end "no cache
+     * folder". Each round removes the folder and lets several saves ask for it at once.
+     */
+    @Test
+    public void savesStartingTogetherAllGetTheWorkFolder() throws Exception {
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(6);
+        try {
+            for (int round = 0; round < 300; round++) {
+                File folder = DashSave.workFolder(context);
+                assertNotNull(folder);
+                assertTrue("round " + round + " couldn't clear the folder", folder.delete());
+
+                java.util.concurrent.CountDownLatch go = new java.util.concurrent.CountDownLatch(1);
+                List<java.util.concurrent.Future<File>> asked = new ArrayList<>();
+                for (int i = 0; i < 6; i++) {
+                    asked.add(pool.submit(() -> {
+                        go.await();
+                        return DashSave.workFolder(context);
+                    }));
+                }
+                go.countDown();
+                for (java.util.concurrent.Future<File> answer : asked) {
+                    assertNotNull("a save in round " + round + " got no work folder", answer.get());
+                }
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
     /** MediaStore's video and image tables, as much of them as a save touches. */
     public static final class Gallery extends ContentProvider {
         final Map<Long, ContentValues> rows = new HashMap<>();
