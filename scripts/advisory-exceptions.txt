@@ -1,0 +1,18 @@
+# Advisories accepted for what the release bundle carries. scripts/release-advisories.ps1 reads
+# this when build-release-receipt.ps1 prepares a release and when the pre-push hook checks an
+# index push, after asking OSV about every library the bundle's SBOM lists.
+#
+# One per line:
+#
+#   <advisory> <group>:<name> <yyyy-MM-dd> <reason>
+#
+# The advisory is OSV's id (GHSA-...) or one of its aliases (CVE-...). The package is the library
+# as the SBOM names it, without a version. The date is the last day the exception holds, at most
+# 90 days out, so an accepted advisory gets read again at least that often. The reason says why
+# the advisory doesn't apply to what the bundle does with the library, in three words at least.
+# An exception past its date covers nothing, and one that matches no advisory any more fails the
+# run until it's taken out.
+#
+# The shape, with made-up names:
+#
+#   GHSA-aaaa-bbbb-cccc com.example:parser 2026-12-01 The bundle never hands the parser outside input.

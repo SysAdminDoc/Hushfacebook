@@ -915,6 +915,234 @@ try {
 
 Write-Host '[scripts] release receipt schema, manifest reading and validation contracts passed'
 
+# --- release-advisories.ps1 ------------------------------------------------------------------
+#
+# The gate that asks OSV about the libraries a release's SBOM lists and refuses a release carrying
+# a high or critical advisory. OSV's answers are recorded here as it gave them on 2026-09-25,
+# trimmed to the fields the gate reads, and a stand-in for Invoke-RestMethod answers from them by
+# package URL, so no case needs the network. A package URL it has no answer for fails the way an
+# OSV this machine can't reach does. gson 2.8.8 is the deliberately vulnerable library:
+# GHSA-4jrv-ppp4-jm57 (CVE-2022-25647), which OSV and GitHub rate HIGH.
+
+. (Join-Path $PSScriptRoot 'release-advisories.ps1')
+
+$gsonAdvisory = '{"id":"GHSA-4jrv-ppp4-jm57","summary":"Deserialization of Untrusted Data in Gson","aliases":["CVE-2022-25647"],"modified":"2026-09-10T03:49:19.710819205Z","database_specific":{"severity":"HIGH"},"severity":[{"type":"CVSS_V3","score":"CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:H/A:H"}]}'
+$log4jCritical = '{"id":"GHSA-jfh8-c2jp-5v3q","summary":"Remote code injection in Log4j","aliases":["CVE-2021-44228"],"modified":"2025-10-22T19:37:02.616807Z","database_specific":{"severity":"CRITICAL"},"severity":[{"type":"CVSS_V3","score":"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H/E:H"}]}'
+$log4jModerate = '{"id":"GHSA-8489-44mv-ggj8","summary":"Improper Input Validation and Injection in Apache Log4j2","aliases":["CVE-2021-44832"],"modified":"2026-06-09T10:45:14.253296471Z","database_specific":{"severity":"MODERATE"},"severity":[{"type":"CVSS_V3","score":"CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:H/A:H"}]}'
+# Rated only by a CVSS 4 vector once OSV's label is taken out, which this gate can't score.
+$log4jVectorFour = '{"id":"GHSA-3pxv-7cmr-fjr4","summary":"Apache Log4j Core: Silent log event loss in XmlLayout due to unescaped XML 1.0 forbidden characters","aliases":["CVE-2026-34480"],"modified":"2026-09-10T03:50:42.492278990Z","severity":[{"type":"CVSS_V4","score":"CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:L/SA:N"}]}'
+$guavaModerate = '{"id":"GHSA-7g45-4rm6-3mm3","summary":"Guava vulnerable to insecure use of temporary directory","aliases":["CVE-2023-2976"],"modified":"2026-09-10T03:49:53.859811124Z","database_specific":{"severity":"MODERATE"},"severity":[{"type":"CVSS_V3","score":"CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N"}]}'
+$guavaLow = '{"id":"GHSA-5mg8-w23w-74h3","summary":"Information Disclosure in Guava","aliases":["CVE-2020-8908"],"modified":"2026-09-10T03:49:26.651391253Z","database_specific":{"severity":"LOW"},"severity":[{"type":"CVSS_V3","score":"CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N"}]}'
+$gsonPurl = 'pkg:maven/com.google.code.gson/gson@2.8.8'
+$cleanPurl = 'pkg:maven/com.google.code.gson/gson@2.14.0'
+$osvRecorded = @{
+    $gsonPurl = "{`"vulns`":[$gsonAdvisory]}"
+    'pkg:maven/org.apache.logging.log4j/log4j-core@2.14.1' = "{`"vulns`":[$log4jCritical,$log4jModerate]}"
+    'pkg:maven/com.google.guava/guava@31.1-jre' = "{`"vulns`":[$guavaModerate,$guavaLow]}"
+    $cleanPurl = '{}'
+}
+# What the stand-in serves, which a case replaces to try another shape, and what it was asked.
+$osvAnswers = $osvRecorded
+$osvAsked = New-Object System.Collections.Generic.List[string]
+$osvStandIn = {
+    function Invoke-RestMethod {
+        param($Uri, $Method, $ContentType, $Body, $TimeoutSec)
+        $query = $Body | ConvertFrom-Json
+        $key = [string]$query.package.purl
+        if ($query.page_token) { $key += " page $($query.page_token)" }
+        $osvAsked.Add($key)
+        if (-not $osvAnswers.ContainsKey($key)) {
+            throw "Unable to connect to the remote server (a stand-in for api.osv.dev with no answer for $key)"
+        }
+        $answer = $osvAnswers[$key]
+        if ($answer -is [string] -and $answer.StartsWith('{')) { return ($answer | ConvertFrom-Json) }
+        return $answer
+    }
+}
+$advisoryRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-advisories-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $advisoryRoot -Force | Out-Null
+try {
+    $today = [datetime]'2026-09-25'
+    # What Read-ReleaseSbom hands the gate, for the libraries named.
+    function New-GateSbom([string[]]$Purls) {
+        $libraries = @(foreach ($purl in @($Purls | Where-Object { $_ })) {
+            $parts = [regex]::Match($purl, '^pkg:maven/([^/]+)/([^@]+)@(.+)$')
+            [pscustomobject]@{ Ref = $purl; Type = 'library'; Group = $parts.Groups[1].Value; Name = $parts.Groups[2].Value
+                Version = $parts.Groups[3].Value; Purl = $purl }
+        })
+        return [pscustomobject]@{ Path = (Join-Path $advisoryRoot 'patches-9.9.9.cdx.json'); Libraries = $libraries }
+    }
+    # The gate on an SBOM of these libraries with these exception lines, and everything it said,
+    # warnings included.
+    function Invoke-Gate([string[]]$Purls, [string[]]$Exceptions = @(), [switch]$Skip) {
+        $list = Join-Path $advisoryRoot 'advisory-exceptions.txt'
+        Set-Content -LiteralPath $list -Encoding ASCII -Value (@('# exceptions for this case') + @($Exceptions))
+        . $osvStandIn
+        $osvAsked.Clear()
+        return (@(Invoke-ReleaseAdvisoryGate -Sbom (New-GateSbom $Purls) -ExceptionsPath $list -Today $today `
+            -SkipAdvisoryCheck:$Skip 3>&1 6>&1 | ForEach-Object { "$_" }) -join "`n")
+    }
+    $later = $today.AddDays(30).ToString('yyyy-MM-dd')
+    $why = 'Only the build reads JSON with it, never input from outside.'
+
+    # CVSS 3 base scores, against the numbers NVD and the specification's calculator give. The guava
+    # vectors are the two that plain rounding gets wrong (5.4 and 3.2), and the one scored 8.6
+    # rounds down to 8.5 that way; roundup as 3.1 defines it is the difference.
+    foreach ($known in @(
+            @{ Vector = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'; Score = 9.8 },
+            @{ Vector = 'CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:H/A:H'; Score = 7.7 },
+            @{ Vector = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H/E:H'; Score = 10.0 },
+            @{ Vector = 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:N/I:N/A:H'; Score = 8.6 },
+            @{ Vector = 'CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:H/A:H'; Score = 6.6 },
+            @{ Vector = 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N'; Score = 5.5 },
+            @{ Vector = 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N'; Score = 3.3 },
+            @{ Vector = 'CVSS:3.0/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N'; Score = 5.4 },
+            @{ Vector = 'CVSS:3.1/AV:P/AC:H/PR:H/UI:R/S:U/C:N/I:N/A:N'; Score = 0.0 })) {
+        $scored = Get-Cvss3BaseScore -Vector $known.Vector
+        Assert-True ($null -ne $scored -and [Math]::Abs($scored - $known.Score) -lt 0.001) `
+            "$($known.Vector) scored $scored, not $($known.Score)."
+    }
+    foreach ($unscored in @('CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N',
+            'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H', 'CVSS:3.1/AV:X/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
+            'CVSS:3.1/AV:n/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:u/C:H/I:H/A:H')) {
+        Assert-True ($null -eq (Get-Cvss3BaseScore -Vector $unscored)) "$unscored was given a CVSS 3 score."
+    }
+
+    # How serious each recorded advisory is: OSV's label and the vector's score, whichever is worse,
+    # and unrated when neither can be read.
+    foreach ($rated in @(
+            @{ Name = 'the gson advisory'; Json = $gsonAdvisory; Level = 'HIGH'; Serious = $true; Why = 'OSV rates it HIGH' },
+            @{ Name = 'the gson advisory with no vector'; Json = $gsonAdvisory.Replace(',"severity":[{"type":"CVSS_V3","score":"CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:H/A:H"}]', '')
+                Level = 'HIGH'; Serious = $true; Why = 'OSV rates it HIGH' },
+            @{ Name = 'the gson advisory with no label'; Json = $gsonAdvisory.Replace('"database_specific":{"severity":"HIGH"},', '')
+                Level = 'HIGH'; Serious = $true; Why = 'its CVSS 3 vector scores 7.7' },
+            @{ Name = 'the gson advisory labelled LOW'; Json = $gsonAdvisory.Replace('"severity":"HIGH"', '"severity":"LOW"')
+                Level = 'HIGH'; Serious = $true; Why = 'its CVSS 3 vector scores 7.7' },
+            @{ Name = 'the log4j advisory'; Json = $log4jCritical; Level = 'CRITICAL'; Serious = $true; Why = 'OSV rates it CRITICAL' },
+            @{ Name = 'a CVSS 4 vector alone'; Json = $log4jVectorFour; Level = 'UNRATED'; Serious = $true; Why = '*no severity*' },
+            @{ Name = 'the guava temporary directory advisory'; Json = $guavaModerate; Level = 'MODERATE'; Serious = $false; Why = 'OSV rates it MODERATE' },
+            @{ Name = 'a MEDIUM label'; Json = $guavaModerate.Replace('"MODERATE"', '"MEDIUM"'); Level = 'MODERATE'; Serious = $false; Why = 'OSV rates it MODERATE' },
+            @{ Name = 'the guava disclosure advisory'; Json = $guavaLow; Level = 'LOW'; Serious = $false; Why = 'OSV rates it LOW' })) {
+        $severity = Get-AdvisorySeverity -Advisory ($rated.Json | ConvertFrom-Json)
+        Assert-True ($severity.Level -eq $rated.Level -and $severity.Serious -eq $rated.Serious -and $severity.Why -like $rated.Why) `
+            "$($rated.Name) was rated $($severity.Level), serious $($severity.Serious), because $($severity.Why)."
+    }
+
+    # The exception list. Each broken line stops the read and names itself.
+    $exceptionList = Join-Path $advisoryRoot 'read.txt'
+    Set-Content -LiteralPath $exceptionList -Encoding ASCII -Value @('# accepted', '',
+        "GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson $later $why",
+        "CVE-2021-44228 org.apache.logging.log4j:log4j-core 2026-09-24 $why")
+    $read = @(Read-AdvisoryExceptions -Path $exceptionList -Today $today)
+    Assert-True ($read.Count -eq 2 -and $read[0].Advisory -eq 'GHSA-4jrv-ppp4-jm57' -and $read[0].Package -eq 'com.google.code.gson:gson' -and
+        -not $read[0].Expired -and $read[1].Expired -and $read[0].Reason -eq $why -and $read[0].Line -eq 3) `
+        "The exception list was misread: $(@($read | ForEach-Object { "$($_.Advisory) $($_.Package) $($_.Until) expired=$($_.Expired)" }) -join '; ')"
+    Assert-True (@(Read-AdvisoryExceptions -Path $exceptionList -Today $today.AddDays(-60)).Count -eq 2) `
+        'An exception 90 days out on the day it was read was refused.'
+    foreach ($broken in @(
+            @{ Name = 'no date'; Line = "GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson $why"; Pattern = '*isn''t a yyyy-MM-dd date*' },
+            @{ Name = 'no package'; Line = "GHSA-4jrv-ppp4-jm57 $later $why"; Pattern = '*is not "<advisory> <group>:<name>*' },
+            @{ Name = 'a date that does not exist'; Line = "GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson 2026-02-30 $why"; Pattern = '*isn''t a yyyy-MM-dd date*' },
+            @{ Name = 'a date 91 days out'; Line = "GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson $($today.AddDays(91).ToString('yyyy-MM-dd')) $why"
+                Pattern = '*more than 90 days out*' },
+            @{ Name = 'a two-word reason'; Line = "GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson $later Not reachable."; Pattern = '*without saying why*' },
+            @{ Name = 'the same advisory twice'; Line = "GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson $later $why"; Twice = $true; Pattern = '*a second time*' })) {
+        $lines = @($broken.Line)
+        if ($broken.Twice) { $lines += $broken.Line }
+        Set-Content -LiteralPath $exceptionList -Encoding ASCII -Value $lines
+        Assert-Throws { Read-AdvisoryExceptions -Path $exceptionList -Today $today } $broken.Pattern `
+            "An exception list with $($broken.Name) was read without complaint."
+    }
+    Assert-Throws { Read-AdvisoryExceptions -Path (Join-Path $advisoryRoot 'absent.txt') -Today $today } '*list is missing*' `
+        'A missing exception list was read as an empty one.'
+    $checkedIn = Join-Path $PSScriptRoot 'advisory-exceptions.txt'
+    try {
+        $null = @(Read-AdvisoryExceptions -Path $checkedIn)
+    } catch {
+        throw "The checked-in scripts/advisory-exceptions.txt does not read: $($_.Exception.Message)"
+    }
+
+    # The gate. A clean library is asked about once and passes.
+    $said = Invoke-Gate @($cleanPurl)
+    Assert-True ($said -like '*OSV has no advisory for the libraries patches-9.9.9.cdx.json lists: gson 2.14.0*' -and
+        ($osvAsked -join ', ') -eq $cleanPurl) "The gate did not ask OSV about the clean library, or did not say so: $said"
+
+    # The deliberately vulnerable library is refused, naming the advisory, its alias and the version.
+    Assert-Throws { Invoke-Gate @($cleanPurl, $gsonPurl) } `
+        '*high or critical*GHSA-4jrv-ppp4-jm57 (HIGH, CVE-2022-25647) in com.google.code.gson:gson 2.8.8*' `
+        'The gate let a release carry gson 2.8.8.'
+    Assert-Throws { Invoke-Gate @('pkg:maven/org.apache.logging.log4j/log4j-core@2.14.1') } '*GHSA-jfh8-c2jp-5v3q (CRITICAL*' `
+        'The gate let a release carry log4j-core 2.14.1.'
+    # Moderate and low go through, and say so.
+    $said = Invoke-Gate @('pkg:maven/com.google.guava/guava@31.1-jre')
+    Assert-True ($said -like '*below high, let through: GHSA-7g45-4rm6-3mm3 (MODERATE*' -and
+        $said -like '*below high, let through: GHSA-5mg8-w23w-74h3 (LOW*' -and $said -like '*2 advisories, none refused*') `
+        "The gate refused, or said nothing of, moderate and low advisories: $said"
+    # An advisory rated only by a vector this gate can't score counts as serious.
+    $osvAnswers = @{ 'pkg:maven/org.apache.logging.log4j/log4j-core@2.26.0' = "{`"vulns`":[$log4jVectorFour]}" }
+    try {
+        Assert-Throws { Invoke-Gate @('pkg:maven/org.apache.logging.log4j/log4j-core@2.26.0') } '*GHSA-3pxv-7cmr-fjr4 (UNRATED*' `
+            'The gate let an advisory through that no severity it can read describes.'
+    } finally {
+        $osvAnswers = $osvRecorded
+    }
+
+    # Exceptions: by OSV's id or an alias, for the one package, until the date.
+    foreach ($named in @('GHSA-4jrv-ppp4-jm57', 'CVE-2022-25647', 'ghsa-4jrv-ppp4-jm57')) {
+        $said = Invoke-Gate @($gsonPurl) @("$named com.google.code.gson:gson $later $why")
+        Assert-True ($said -like "*accepted: GHSA-4jrv-ppp4-jm57 (HIGH*accepted until $later`: $why*") `
+            "An exception naming $named did not accept the gson advisory: $said"
+    }
+    Assert-Throws { Invoke-Gate @($gsonPurl) @("GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson-extras $later $why") } `
+        '*high or critical*GHSA-4jrv-ppp4-jm57*no longer reports*GHSA-4jrv-ppp4-jm57 for com.google.code.gson:gson-extras*' `
+        'An exception for another package accepted the gson advisory, or was not called stale.'
+    Assert-Throws { Invoke-Gate @($gsonPurl) @("GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson 2026-09-24 $why") } `
+        '*GHSA-4jrv-ppp4-jm57 (HIGH*its exception ran out on 2026-09-24*' 'An exception past its date still accepted the gson advisory.'
+    Assert-Throws { Invoke-Gate @($cleanPurl) @("GHSA-4jrv-ppp4-jm57 com.google.code.gson:gson $later $why") } `
+        '*no longer reports*GHSA-4jrv-ppp4-jm57 for com.google.code.gson:gson (line 2)*' 'An exception nothing matches any more went unnoticed.'
+
+    # OSV has to answer, and answer with something the gate can read.
+    Assert-Throws { Invoke-Gate @('pkg:maven/com.example/unknown@1.0') } '*could not be asked about pkg:maven/com.example/unknown@1.0*fails closed*' `
+        'The gate read an OSV it could not reach as no advisories.'
+    $unreadable = @(
+        @{ Name = 'a page of HTML'; Answer = '<html>Service Unavailable</html>'; Pattern = '*isn''t a query result*' },
+        @{ Name = 'an advisory with no id'; Answer = '{"vulns":[{"summary":"no id"}]}'; Pattern = '*has no id*' })
+    foreach ($odd in $unreadable) {
+        $osvAnswers = @{ $cleanPurl = $odd.Answer }
+        try {
+            Assert-Throws { Invoke-Gate @($cleanPurl) } $odd.Pattern "The gate took $($odd.Name) from OSV for an answer."
+        } finally {
+            $osvAnswers = $osvRecorded
+        }
+    }
+    # The second page of an answer is read, and an advisory OSV withdrew is not one.
+    $osvAnswers = @{ $gsonPurl = '{"next_page_token":"p2"}'; "$gsonPurl page p2" = "{`"vulns`":[$gsonAdvisory]}" }
+    try {
+        Assert-Throws { Invoke-Gate @($gsonPurl) } '*GHSA-4jrv-ppp4-jm57 (HIGH*' 'The gate stopped at the first page of an answer.'
+        Assert-True (($osvAsked -join ', ') -eq "$gsonPurl, $gsonPurl page p2") "The gate did not ask for the second page: $($osvAsked -join ', ')"
+        $osvAnswers = @{ $gsonPurl = "{`"vulns`":[$($gsonAdvisory.Replace('{"id"', '{"withdrawn":"2026-09-01T00:00:00Z","id"'))]}" }
+        $said = Invoke-Gate @($gsonPurl)
+        Assert-True ($said -like '*OSV has no advisory*') "A withdrawn advisory refused the release: $said"
+    } finally {
+        $osvAnswers = $osvRecorded
+    }
+
+    # Offline work: the check is skipped with a warning and OSV isn't asked, but the exception list
+    # is still read. And an SBOM with no library has nothing to ask about.
+    $said = Invoke-Gate @('pkg:maven/com.example/unknown@1.0') -Skip
+    Assert-True ($said -like '*-SkipAdvisoryCheck: OSV was not asked about the libraries patches-9.9.9.cdx.json lists*' -and
+        $osvAsked.Count -eq 0) "The skipped check asked OSV, or did not say it was skipped: $said"
+    Assert-Throws { Invoke-Gate @($cleanPurl) @('GHSA-4jrv-ppp4-jm57 soon') -Skip } '*is not "<advisory>*' `
+        'A skipped check left a broken exception list unread.'
+    $said = Invoke-Gate @()
+    Assert-True ($said -like '*lists no library to ask OSV about*' -and $osvAsked.Count -eq 0) `
+        "An SBOM with no library was not passed as one: $said"
+} finally {
+    Remove-Item -LiteralPath $advisoryRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Host '[scripts] advisory gate contracts passed'
+
 # --- validate-release-facts.ps1 -------------------------------------------------------------
 #
 # The gate the pre-push hook runs on every push that touches a published file, and the one a
