@@ -335,6 +335,19 @@ public class SettingsL10nTest {
         for (SettingsBackup.Reason reason : SettingsBackup.Reason.values()) {
             shown.add(SettingsBackupPreference.refusal(reason));
         }
+
+        // A phone with nothing to answer the picker.
+        org.robolectric.shadows.ShadowApplication application =
+                org.robolectric.Shadows.shadowOf(RuntimeEnvironment.getApplication());
+        application.checkActivities(true);
+        try {
+            Preference importRow = find(rows, "action_import_settings");
+            importRow.getOnPreferenceClickListener().onPreferenceClick(importRow);
+            ShadowLooper.idleMainLooper();
+            addToast(shown);
+        } finally {
+            application.checkActivities(false);
+        }
     }
 
     private static AlertDialog importPreview(Activity activity, List<Preference> rows, String file) throws Exception {

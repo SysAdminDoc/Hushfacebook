@@ -519,6 +519,56 @@ public class SettingsBackupTest {
         }
     }
 
+    /** What Export writes is what Import takes back, through both pickers, every switch included. */
+    @Test
+    public void aFileExportedThroughThePickerImportsBackThroughIt() throws Exception {
+        Settings.HIDE_SUGGESTED_POSTS.save(false);
+        Settings.OPEN_LINKS_EXTERNALLY.save(false);
+        Map<BooleanSetting, Boolean> exported = new LinkedHashMap<>();
+        for (BooleanSetting setting : SettingsBackup.ALLOWLIST) exported.put(setting, setting.savedValue());
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            HushfacebookPreferenceFragment page = SettingsL10nTest.pageOf(SettingsL10nTest.show(activity));
+            Uri uri = Uri.parse("content://settings-test/round-trip.json");
+            ByteArrayOutputStream written = new ByteArrayOutputStream();
+            shadowOf(RuntimeEnvironment.getApplication().getContentResolver()).registerOutputStream(uri, written);
+            shadowOf(activity).receiveResult(tap(activity, page, EXPORT_ROW).intent, Activity.RESULT_OK,
+                    new Intent().setData(uri));
+            settle();
+
+            for (BooleanSetting setting : SettingsBackup.ALLOWLIST) setting.save(!setting.savedValue());
+            deliver(activity, tap(activity, page, IMPORT_ROW), new String(written.toByteArray(), StandardCharsets.UTF_8));
+            AlertDialog preview = shownPreview();
+            assertEquals(SettingsBackup.ALLOWLIST.size() + " switches will change.",
+                    String.valueOf(shadowOf(preview).getMessage()));
+            preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            settle();
+            for (Map.Entry<BooleanSetting, Boolean> entry : exported.entrySet()) {
+                assertEquals(entry.getKey().key, entry.getValue(), entry.getKey().savedValue());
+            }
+        }
+    }
+
+    /** With nothing on the phone to answer either picker, both rows say so and stay usable. */
+    @Test
+    public void aPhoneWithNoFilePickerSaysSo() throws Exception {
+        org.robolectric.shadows.ShadowApplication application = shadowOf(RuntimeEnvironment.getApplication());
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            HushfacebookPreferenceFragment page = SettingsL10nTest.pageOf(SettingsL10nTest.show(controller.get()));
+            application.checkActivities(true);
+            for (String row : new String[]{EXPORT_ROW, IMPORT_ROW}) {
+                ShadowToast.reset();
+                click(page.findPreference(row));
+                ShadowLooper.idleMainLooper();
+                assertEquals(row, "This phone has no file picker, so there's no way to choose a file here.",
+                        ShadowToast.getTextOfLatestToast());
+                assertTrue(row + " stayed out of reach", page.findPreference(row).isEnabled());
+            }
+        } finally {
+            application.checkActivities(false);
+        }
+    }
+
     @Test
     public void importShowsHowManySwitchesChangeAndWritesThemOnImport() throws Exception {
         JSONObject file = new JSONObject(fileWith(Settings.HIDE_SPONSORED_POSTS, false,
