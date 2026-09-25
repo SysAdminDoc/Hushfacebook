@@ -894,24 +894,41 @@ try {
     # tree is not a release tree then, and holding it to the lagging index failed the control
     # for a reason that had nothing to do with the check (2026-09-17, 0.40.0 being prepared over
     # the 0.39.0 index). The copied index is written up to the catalog it sits beside, its
-    # version strings and its patch count, so every case below still moves exactly one fact
-    # and is judged on the strict path.
+    # version strings, its patch count and the Facebook build it names, so every case below
+    # still moves exactly one fact and is judged on the strict path.
     # A release hold is the same lag with the version standing still: patches join the catalog
     # while the index keeps the published count (2026-09-23, 93 against 0.58.0's 91), so the count
     # is synced even when the version already matches.
+    # The build moves the same way. Facebook ships weekly, the catalog takes the new build before
+    # the release that publishes it, and the index keeps naming the build it was released on
+    # until then. Syncing only the version and the count left the description on the old build,
+    # so the control failed on every tree the gate accepted in that window (2026-09-25 review).
     function Sync-FixtureIndex {
         $fixtureVersion = ((Get-Content -LiteralPath (Join-Path $factsRoot 'gradle.properties')) `
             -match '^version\s*=' | Select-Object -First 1) -replace '^version\s*=\s*', ''
         $indexPath = Join-Path $factsRoot 'patches-bundle.json'
         $indexText = Get-Content -LiteralPath $indexPath -Raw
-        $indexVersion = "$(($indexText | ConvertFrom-Json).version)"
-        $count = @((Get-Content -LiteralPath (Join-Path $factsRoot 'patches-list.json') -Raw | ConvertFrom-Json).patches).Count
+        $index = $indexText | ConvertFrom-Json
+        $indexVersion = "$($index.version)"
+        $fixtureCatalog = Get-Content -LiteralPath (Join-Path $factsRoot 'patches-list.json') -Raw | ConvertFrom-Json
+        $count = @($fixtureCatalog.patches).Count
         $synced = $indexText
-        if ($indexVersion -ne $fixtureVersion) { $synced = $synced -replace [regex]::Escape($indexVersion), $fixtureVersion }
+        # Bounded by digits, and by a dot on the left, so a version never rewrites part of a build
+        # number: 0.10.1 is inside 583.0.0.10.10.
+        if ($indexVersion -ne $fixtureVersion) {
+            $synced = $synced -replace ('(?<![\d.])' + [regex]::Escape($indexVersion) + '(?!\d)'), $fixtureVersion
+        }
         # (?<!\d) and not \b, here and in the count cases below: the raw JSON writes a line break
         # as \n, so a count that opens a paragraph follows the letter n, where \b finds no edge,
         # and an edit that missed it left the description saying the old count.
         $synced = $synced -replace '(?<!\d)\d+ patches\b', "$count patches"
+        # The build the description names first is the one the check reads as the published
+        # target, so that is the one moved to the catalog's newest, everywhere it appears.
+        $fixtureBuild = (Get-PatchTarget -PatchList $fixtureCatalog).PackageVersion
+        $indexBuild = [regex]::Match([string]$index.description, 'Facebook\s+(\d+(?:\.\d+)+)')
+        if ($indexBuild.Success -and $indexBuild.Groups[1].Value -ne $fixtureBuild) {
+            $synced = $synced -replace ('(?<![\d.])' + [regex]::Escape($indexBuild.Groups[1].Value) + '(?!\d)'), $fixtureBuild
+        }
         if ($synced -ceq $indexText) { return }
         Set-FactsFile 'patches-bundle.json' { param($text) $synced }
     }
@@ -945,6 +962,60 @@ try {
 
     $catalogVersion = ((Get-Content -LiteralPath (Join-Path $factsRoot 'gradle.properties')) `
         -match '^version\s*=' | Select-Object -First 1) -replace '^version\s*=\s*', ''
+
+    # The windows the sync above exists for, built the way CONTRIBUTING's "When Facebook updates"
+    # builds them: the catalog and the README move to a newer Facebook build while the index
+    # still describes the last release. Prepared, the version is bumped and the CHANGELOG has
+    # its entry; held, the version stays. The gate's own lenient run accepts both, and the
+    # control built from the same tree has to as well, or every script push in that window stops.
+    $newestBuild = (Get-PatchTarget -PatchList (Get-Content -LiteralPath (Join-Path $factsRoot 'patches-list.json') -Raw |
+        ConvertFrom-Json)).PackageVersion
+    $movedBuild = "$([int]($newestBuild -split '\.')[0] + 3).0.0.10.10"
+    $current = [version]$catalogVersion
+    $nextVersion = "$($current.Major).$($current.Minor).$($current.Build + 1)"
+    foreach ($window in @('prepared', 'held')) {
+        if ($window -eq 'prepared') {
+            Set-FactsFile 'gradle.properties' {
+                param($text) $text -replace '(?m)^(\s*version\s*=\s*)\S+', "`${1}$nextVersion"
+            }
+            Set-FactsFile 'patches-list.json' {
+                param($text) $text.Replace('"v' + $catalogVersion + '"', '"v' + $nextVersion + '"')
+            }
+            Set-FactsFile 'CHANGELOG.md' {
+                param($text) ([regex]'(?m)^## ').Replace($text,
+                    "## $nextVersion (2026-09-26)`n`n* **Facebook:** Moves the patches to Facebook $movedBuild.`n`n## ", 1)
+            }
+        }
+        Set-FactsFile 'patches-list.json' { param($text) $text.Replace($newestBuild, $movedBuild) }
+        Set-FactsFile 'README.md' { param($text) $text.Replace($newestBuild, $movedBuild) }
+        # What the maintainer's tree holds: the published index and form as they were, the form's
+        # build moved with the catalog.
+        Copy-Item -LiteralPath (Join-Path $Root 'patches-bundle.json') -Destination (Join-Path $factsRoot 'patches-bundle.json') -Force
+        Copy-Item -LiteralPath (Join-Path $Root $bugFormRelative) -Destination (Join-Path $factsRoot $bugFormRelative) -Force
+        Set-FactsFile $bugFormRelative {
+            param($text) $text -replace ('(placeholder:\s*Version \S+ for Facebook )' + [regex]::Escape($newestBuild)), "`${1}$movedBuild"
+        }
+        $global:LASTEXITCODE = 0
+        & $factsScript -Root $factsRoot -SkipDescriptionTestCount -AllowPublishedIndexLag -SkipUrlCheck 6> $null
+        Assert-True ($LASTEXITCODE -eq 0) "The gate refused the $window tree this case is built on, so it proves nothing."
+        Sync-FixtureIndex
+        Sync-FixtureBugForm
+        try {
+            Invoke-Facts
+        } catch {
+            throw "The release facts check refused the $window tree the gate accepts: $($_.Exception.Message)"
+        }
+        Assert-True ($LASTEXITCODE -eq 0 -or $null -eq $LASTEXITCODE) `
+            "The release facts check refused the $window tree the gate accepts."
+        $syncedDescription = [string](Get-Content -LiteralPath (Join-Path $factsRoot 'patches-bundle.json') -Raw | ConvertFrom-Json).description
+        Assert-True ($syncedDescription -match "Facebook $([regex]::Escape($movedBuild))(?!\d)" -and
+            $syncedDescription -notmatch [regex]::Escape($newestBuild)) `
+            "The $window index was not synced to the catalog's build: $syncedDescription"
+        foreach ($name in @('gradle.properties', 'patches-list.json', 'README.md', 'CHANGELOG.md',
+                'patches-bundle.json', $bugFormRelative)) {
+            Reset-FactsFile $name
+        }
+    }
 
     # Manager decodes created_at as kotlinx.datetime.LocalDateTime, not Instant.
     # A trailing Z produces its generic "remote metadata file is unavailable" error,
