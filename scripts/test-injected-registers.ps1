@@ -8,11 +8,14 @@
     a branch to itself, a switch case into an instruction, an invoke with too few registers, a
     wide argument split across two registers, the static off-by-one, the upper half of a wide
     parameter read as an object, a narrow constant read as a long and the reverse (the AMOLED
-    sweep's bug on 580), a move-result the patch separated from its invoke, three bad try ranges
-    or handlers, and the one feed guard doubled, moved or missing. Each bad build has to
-    fail with findings of its own category only, so a check that fires for the wrong reason fails
-    here too. Removed methods and DEX entries, the removal allowlist, and the device tally
-    comparison are held to what they did before.
+    sweep's bug on 580), either half of a live long overwritten and the other half still read, a
+    broken pair or a narrow constant on one arm of a branch or on a loop's back edge, a move-result
+    the patch separated from its invoke, three bad try ranges or handlers, and the one feed guard
+    doubled, moved or missing. The good build carries the joins ART accepts, so a check made
+    stricter still has to pass them. Each bad build has to fail with findings of its own category
+    only, so a check that fires for the wrong reason fails here too. Removed methods and DEX
+    entries, the removal allowlist, and the device tally comparison are held to what they did
+    before.
 #>
 [CmdletBinding()]
 param(
@@ -205,11 +208,16 @@ try {
         'bad-goto-to-handler' = 'branch'
         'bad-fallthrough-handler' = 'try'
         'bad-wide-high-clobber' = 'width'
+        'bad-wide-high-clobber-branch' = 'width'
+        'bad-wide-high-clobber-loop' = 'width'
+        'bad-wide-low-clobber' = 'width'
+        'bad-wide-below-pair' = 'width'
         'bad-invoke-count' = 'invoke'
         'bad-wide-split' = 'invoke'
         'bad-static-parameter' = 'parameter'
         'bad-wide-parameter' = 'parameter'
         'bad-narrow-for-wide' = 'width'
+        'bad-narrow-for-wide-branch' = 'width'
         'bad-narrow-shift' = 'width'
         'bad-wide-for-narrow' = 'width'
         'bad-move-result' = 'result'

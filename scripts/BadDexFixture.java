@@ -218,7 +218,10 @@ public class BadDexFixture {
      * path through a const-string wrote an object into it, and that write sits after the use in
      * the file: a check that walked the body top to bottom instead of along its branches would
      * call a valid method wrong. nulls, longs and ints are the valid widths: a zero constant
-     * passed as an object, a const-wide/32 passed as a long, a const passed as an int.
+     * passed as an object, a const-wide/32 passed as a long, a const passed as an int. joins and
+     * caught are where paths meet the way ART allows: a zero that is an object on one arm and a
+     * zero that is an int on the other, a conflict that is only copied, and a handler that reads
+     * what its register held before the instruction that threw.
      */
     private static ClassDef filter() {
         List<Method> methods = Arrays.asList(
@@ -241,7 +244,32 @@ public class BadDexFixture {
                         op(Opcode.RETURN_VOID))),
                 define(FILTER, "ints", "V", true, body(1,
                         new ImmutableInstruction31i(Opcode.CONST, 0, BLACK), invoke(REUSE, 0), op(Opcode.RETURN_VOID))),
-                define(FILTER, "packs", "V", true, body(3, packColor(Opcode.CONST_WIDE_32, FILTER))));
+                define(FILTER, "packs", "V", true, body(3, packColor(Opcode.CONST_WIDE_32, FILTER))),
+                // v0 is null on one arm and the object on the other, v1 zero or one: each is still
+                // its kind where the arms meet. v2 is an object on one arm and an int on the
+                // other, which only a use of it would fail, and a move only copies it.
+                define(FILTER, "joins", "V", true, body(5,
+                        new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),                      // 0
+                        new ImmutableInstruction11n(Opcode.CONST_4, 1, 0),                      // 1
+                        new ImmutableInstruction21c(Opcode.CONST_STRING, 2, new ImmutableStringReference("edge")), // 2
+                        ifEqz(4, 5),                                                             // 4 -> 9
+                        new ImmutableInstruction12x(Opcode.MOVE_OBJECT, 0, 4),                  // 6
+                        new ImmutableInstruction11n(Opcode.CONST_4, 1, 1),                      // 7
+                        new ImmutableInstruction11n(Opcode.CONST_4, 2, 1),                      // 8
+                        invoke(INSPECT, 0, 0),                                                   // 9
+                        invoke(REUSE, 1),                                                        // 12
+                        new ImmutableInstruction12x(Opcode.MOVE_OBJECT, 3, 2),                  // 15
+                        op(Opcode.RETURN_VOID)), OBJECT),                                        // 16
+                // The const-string can throw, and its handler reads v0 as the int it held before
+                // the const-string wrote an object there, which is all ART's handler sees.
+                define(FILTER, "caught", "V", true, body(2, Collections.singletonList(tryBlock(1, 2, 7)),
+                        new ImmutableInstruction12x(Opcode.MOVE, 0, 1),                         // 0
+                        new ImmutableInstruction21c(Opcode.CONST_STRING, 0, new ImmutableStringReference("edge")), // 1
+                        invoke(INSPECT, 0, 0),                                                   // 3
+                        op(Opcode.RETURN_VOID),                                                  // 6
+                        op(Opcode.MOVE_EXCEPTION, 1),                                            // 7
+                        invoke(REUSE, 0),                                                        // 8
+                        op(Opcode.RETURN_VOID)), "I"));                                          // 11
         return new ImmutableClassDef(FILTER, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(),
                 OBJECT, null, null, null, packedField(FILTER), methods);
     }
@@ -313,6 +341,30 @@ public class BadDexFixture {
         dexes.put("bad-wide-high-clobber", withStaticHost(body(3,
                 new ImmutableInstruction11n(Opcode.CONST_4, 2, 0), invoke(INSPECT, 0, 0), invoke(WIDE, 1, 2),
                 op(Opcode.RETURN_VOID))));
+        // width: the same borrow on one arm of a branch only, and the long read where the arms
+        // meet. ART merges the upper half with the zero into a conflict there.
+        dexes.put("bad-wide-high-clobber-branch", withStaticHost(body(3,
+                ifEqz(0, 3),                                        // 0 -> 3
+                new ImmutableInstruction11n(Opcode.CONST_4, 2, 0),  // 2
+                invoke(INSPECT, 0, 0),                              // 3
+                invoke(WIDE, 1, 2),                                 // 6
+                op(Opcode.RETURN_VOID))));                          // 9
+        // width: the long read at a loop's head, and the borrow on the edge back to it.
+        dexes.put("bad-wide-high-clobber-loop", withStaticHost(body(3,
+                invoke(WIDE, 1, 2),                                 // 0
+                ifEqz(0, 4),                                        // 3 -> 7
+                new ImmutableInstruction11n(Opcode.CONST_4, 2, 0),  // 5
+                new ImmutableInstruction10t(Opcode.GOTO, -6),       // 6 -> 0
+                op(Opcode.RETURN_VOID))));                          // 7
+        // width: a patch borrows v1, the lower half of the long argument, and passes the upper
+        // half on as an int.
+        dexes.put("bad-wide-low-clobber", withStaticHost(body(3,
+                new ImmutableInstruction11n(Opcode.CONST_4, 1, 0), invoke(REUSE, 2), op(Opcode.RETURN_VOID))));
+        // width: a const-wide lands one register below the long argument, on v1 and v2, which
+        // leaves v3 the upper half of a pair that no longer has a lower half. v1 is the object
+        // argument here, and the long sits in v2 and v3.
+        dexes.put("bad-wide-below-pair", withStaticHost(body(4,
+                new ImmutableInstruction21s(Opcode.CONST_WIDE_16, 1, 0), invoke(REUSE, 3), op(Opcode.RETURN_VOID))));
         // branch: case 1 lands inside the packed-switch instruction itself.
         dexes.put("bad-switch-case", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 switchHost(2), tryHost(CLEAN_TRY)));
@@ -335,6 +387,14 @@ public class BadDexFixture {
         // parameter layout.
         dexes.put("bad-narrow-for-wide", withStaticHost(body(5,
                 new ImmutableInstruction31i(Opcode.CONST, 0, BLACK), invoke(WIDE, 0, 1), op(Opcode.RETURN_VOID))));
+        // width: the same narrow const on one arm of a branch only. Where the arms meet, v0 is a
+        // long on one path and an int on the other, which ART merges into a conflict.
+        dexes.put("bad-narrow-for-wide-branch", withStaticHost(body(5,
+                new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK), // 0
+                ifEqz(2, 5),                                                 // 3 -> 8
+                new ImmutableInstruction31i(Opcode.CONST, 0, BLACK),         // 5
+                invoke(WIDE, 0, 1),                                          // 8
+                op(Opcode.RETURN_VOID))));                                   // 11
         // width: 580's own static initializer, a narrow const shifted as a long and stored.
         // v0 to v2 are locals, the arguments sit in v3 to v5.
         dexes.put("bad-narrow-shift", withStaticHost(body(6, packColor(Opcode.CONST, HOST))));

@@ -298,11 +298,14 @@ public class DexDiff {
     /**
      * The kind each register holds before each instruction, along every path from the entry, or
      * null where no path reaches it: L an object, I a narrow value, Z a zero constant (narrow or
-     * null), W and w the halves of a wide value, T unknown. The parameters start with their
-     * declared kinds; constants, moves, move-results and the plain object producers set theirs;
-     * a wide result sets a pair; anything else, or two paths that disagree, leaves T, which no
-     * check reads. An exception edge carries the kinds from before and after the throwing
-     * instruction, merged, so it can only add doubt.
+     * null), W and w the halves of a wide value, B and b the halves of one whose other half was
+     * overwritten, C a register the paths that meet there disagree about, T unknown. The
+     * parameters start with their declared kinds; constants, moves, move-results and the plain
+     * object producers set theirs; a wide result sets a pair; anything else leaves T, which no
+     * check reads. Where paths meet, the kinds join the way ART merges them (see join), so a pair
+     * broken or a width changed on one arm of a branch is still a finding after the arms rejoin.
+     * An exception edge carries the kinds from before the throwing instruction, as ART's does: the
+     * exception leaves before the instruction writes anything.
      */
     private static char[][] registerKinds(MethodImplementation impl, Layout layout,
             Map<Integer, Character> parameterKind) {
@@ -352,10 +355,7 @@ public class DexDiff {
                 }
             }
             for (int address : next) flow(before, indexAt, work, address, after);
-            for (int address : handlers) {
-                flow(before, indexAt, work, address, before[k]);
-                flow(before, indexAt, work, address, after);
-            }
+            for (int address : handlers) flow(before, indexAt, work, address, before[k]);
         }
         return before;
     }
@@ -372,12 +372,40 @@ public class DexDiff {
         boolean changed = false;
         char[] into = before[successor];
         for (int r = 0; r < into.length; r++) {
-            if (into[r] != state[r] && into[r] != 'T') {
-                into[r] = 'T';
+            char joined = join(into[r], state[r]);
+            if (joined != into[r]) {
+                into[r] = joined;
                 changed = true;
             }
         }
         if (changed) work.add(successor);
+    }
+
+    /**
+     * One register's kind where two paths meet, as ART merges it. A zero is a null or a zero, so it
+     * takes the other side's object or narrow kind, and a pair broken on one path is broken. Any
+     * other two known kinds make C, a conflict: ART lets a move copy one, and fails every other
+     * read of it. T stays T, since a register this doesn't know is never judged.
+     */
+    private static char join(char a, char b) {
+        if (a == b) return a;
+        if (a == 'T' || b == 'T') return 'T';
+        if (a == 'Z' && (b == 'L' || b == 'I')) return b;
+        if (b == 'Z' && (a == 'L' || a == 'I')) return a;
+        if ((a == 'W' && b == 'B') || (a == 'B' && b == 'W')) return 'B';
+        if ((a == 'w' && b == 'b') || (a == 'b' && b == 'w')) return 'b';
+        return 'C';
+    }
+
+    /** A narrow or object move: ART lets one copy a conflict, which fails only where it's used. */
+    private static boolean copiesConflict(Opcode opcode) {
+        switch (opcode) {
+            case MOVE: case MOVE_FROM16: case MOVE_16:
+            case MOVE_OBJECT: case MOVE_OBJECT_FROM16: case MOVE_OBJECT_16:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /** The kinds after one instruction. */
@@ -386,8 +414,9 @@ public class DexDiff {
         if (!opcode.setsRegister() || !(i instanceof OneRegisterInstruction)) return in;
         char[] out = in.clone();
         int a = ((OneRegisterInstruction) i).getRegisterA();
-        // A move copies its source's kind, unless the read is already a finding: then what it
-        // wrote is unknown, and the one mistake is reported once rather than at every later use.
+        // A move copies its source's kind, a conflict included, unless the read is already a
+        // finding: then what it wrote is unknown, and the one mistake is reported once rather
+        // than at every later use.
         if (opcode.setsWideRegister()) {
             char low = 'W', high = 'w';
             if (opcode == Opcode.MOVE_WIDE || opcode == Opcode.MOVE_WIDE_FROM16 || opcode == Opcode.MOVE_WIDE_16) {
@@ -409,13 +438,13 @@ public class DexDiff {
             case MOVE: case MOVE_FROM16: case MOVE_16: {
                 int b = ((TwoRegisterInstruction) i).getRegisterB();
                 char source = b < in.length ? in[b] : 'T';
-                kind = source != 'T' && readableAs(source, 'I') ? source : 'T';
+                kind = source == 'C' || (source != 'T' && readableAs(source, 'I')) ? source : 'T';
                 break;
             }
             case MOVE_OBJECT: case MOVE_OBJECT_FROM16: case MOVE_OBJECT_16: {
                 int b = ((TwoRegisterInstruction) i).getRegisterB();
                 char source = b < in.length ? in[b] : 'T';
-                kind = source != 'T' && readableAs(source, 'L') ? source : 'T';
+                kind = source == 'C' || (source != 'T' && readableAs(source, 'L')) ? source : 'T';
                 break;
             }
             case MOVE_RESULT: case INSTANCE_OF: case ARRAY_LENGTH:
@@ -438,15 +467,17 @@ public class DexDiff {
     }
 
     /**
-     * One register's new kind, and the wide pair it breaks if it was half of one. Writing over the
-     * upper half leaves the lower half as B, a broken pair: ART makes that register undefined,
-     * and every later read of it is a finding. A patch that borrows the upper half of a live long
-     * as a free local does exactly this.
+     * One register's new kind, and the wide pair it breaks if it was half of one. ART keeps the
+     * half that wasn't written as it was and checks the pair where it's read, so the half left
+     * behind can't be read as anything: writing over the upper half leaves the lower half as B,
+     * and writing over the lower half leaves the upper half as b. A patch that borrows either half
+     * of a live long as a free local does this, and so does a wide write that lands one register
+     * below a live pair.
      */
     private static void write(char[] out, int register, char kind) {
         if (register >= out.length) return;
         if (out[register] == 'W' && register + 1 < out.length && out[register + 1] == 'w' && kind != 'W') {
-            out[register + 1] = 'T';
+            out[register + 1] = 'b';
         }
         if (out[register] == 'w' && register > 0 && out[register - 1] == 'W' && kind != 'w') {
             out[register - 1] = 'B';
@@ -454,7 +485,10 @@ public class DexDiff {
         out[register] = kind;
     }
 
-    /** Whether a register of this kind can be read as that kind. T is never in doubt here. */
+    /**
+     * Whether a register of this kind can be read as that kind. T is never in doubt here; B, b, w
+     * and C can't be read as anything, and W only as the pair it starts.
+     */
     private static boolean readableAs(char have, char want) {
         if (have == 'T') return true;
         if (have == 'B') return false;
@@ -724,9 +758,11 @@ public class DexDiff {
             int at = layout.addresses.get(k);
 
             for (int[] read : valueReads(i)) {
-                if (read[0] >= kinds[k].length || readableAs(kinds[k][read[0]], (char) read[1])) continue;
-                findings.add(origin(read[0], firstParameter, writes[k], kinds[k][read[0]]) + opcode.name + " at " + at
-                        + " reads v" + read[0] + ", which holds " + describe(kinds[k][read[0]])
+                if (read[0] >= kinds[k].length) continue;
+                char have = kinds[k][read[0]];
+                if (readableAs(have, (char) read[1]) || (have == 'C' && copiesConflict(opcode))) continue;
+                findings.add(origin(read[0], firstParameter, writes[k], have) + opcode.name + " at " + at
+                        + " reads v" + read[0] + ", which holds " + describe(have)
                         + ", as " + describe((char) read[1]));
             }
 
@@ -763,10 +799,10 @@ public class DexDiff {
 
     /**
      * "parameter" for a register that still holds its argument on every path, else "width". A
-     * broken pair is always the body's doing, even on an argument's register.
+     * broken pair or a conflict is always the body's doing, even on an argument's register.
      */
     private static String origin(int register, int firstParameter, BitSet written, char have) {
-        if (have == 'B') return "width: ";
+        if (have == 'B' || have == 'b' || have == 'C') return "width: ";
         boolean argument = register >= firstParameter && !written.get(register - firstParameter);
         return argument ? "parameter: " : "width: ";
     }
@@ -797,6 +833,8 @@ public class DexDiff {
             case 'W': return "a wide value";
             case 'w': return "the upper half of a wide value";
             case 'B': return "the lower half of a wide value whose upper half was overwritten";
+            case 'b': return "the upper half of a wide value whose lower half was overwritten";
+            case 'C': return "a different kind depending on the path taken";
             case 'Z': return "a zero constant";
             default: return "a narrow value";
         }
