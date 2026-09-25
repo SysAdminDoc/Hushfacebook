@@ -14,7 +14,7 @@
       Hushfacebook's own listing;
     - GitHub code search for the three package names in patch lists, patch code and Xposed hooks,
       with the two archive mirrors mapped back to the repositories they copied, and GitLab code
-      search when GITLAB_TOKEN is set;
+      search when GITLAB_TOKEN is set and -SkipGitLabCodeSearch isn't passed;
     - every ledger source's repository, licence, branches and forks. A source with watchPaths is
       read through the newest commit that touched those paths, so a busy multi-app repository only
       counts as moved when its Facebook-family code did.
@@ -169,6 +169,8 @@ if (-not $GitLabToken -and -not $SkipGitLabCodeSearch) {
     throw ('GitLab code search needs a token. Set GITLAB_TOKEN, or pass -SkipGitLabCodeSearch and the ' +
         'census records that GitLab code was not searched.')
 }
+# The switch wins over a token in the environment, which still authenticates the ledger's GitLab reads.
+$searchGitLab = [bool]$GitLabToken -and -not $SkipGitLabCodeSearch
 
 # --- requests --------------------------------------------------------------------------------
 
@@ -546,7 +548,7 @@ Invoke-Source 'GitHub code search' {
     "$($queries.Count) queries, $hits hits outside the indexes"
 }
 
-if ($GitLabToken) {
+if ($searchGitLab) {
     Invoke-Source 'GitLab code search' {
         $projects = @{}
         $hits = 0
@@ -570,9 +572,9 @@ if ($GitLabToken) {
         "$hits hits in $(@($projects.Values | Where-Object { $_ } | Sort-Object -Unique).Count) projects"
     }
 } else {
-    $notes.Add('GitLab code search was skipped (-SkipGitLabCodeSearch, no GITLAB_TOKEN); the census records it. GitLab sources in the ledger were still read.')
-    $sourceStatus.Add([pscustomobject][ordered]@{ source = 'GitLab code search'; status = 'skipped'; detail = 'no GITLAB_TOKEN' })
-    Write-Step 'GitLab code search: skipped, no GITLAB_TOKEN'
+    $notes.Add('GitLab code search was skipped (-SkipGitLabCodeSearch); the census records it. GitLab sources in the ledger were still read.')
+    $sourceStatus.Add([pscustomobject][ordered]@{ source = 'GitLab code search'; status = 'skipped'; detail = '-SkipGitLabCodeSearch' })
+    Write-Step 'GitLab code search: skipped (-SkipGitLabCodeSearch)'
 }
 
 # --- what the discovery found that the ledger doesn't know --------------------------------------
@@ -907,7 +909,7 @@ if ($NoStamp) {
     Write-Step 'nothing moved; -NoStamp left the ledger as it was'
     exit 0
 }
-$skipped = if ($GitLabToken) { @() } else { @('gitlab-code-search') }
+$skipped = if ($searchGitLab) { @() } else { @('gitlab-code-search') }
 $text = [IO.File]::ReadAllText($ledgerPath)
 $stamped = $text -replace '("(?:lastChecked|checked|checkedAt)"\s*:\s*")\d{4}-\d{2}-\d{2}(")', ('${1}' + $todayText + '${2}')
 # Only rewritten when it changes, so the file keeps the layout it was written with.

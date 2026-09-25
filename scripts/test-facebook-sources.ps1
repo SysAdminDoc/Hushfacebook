@@ -61,6 +61,8 @@ function Get-Sha256Text {
 $caseRoot = Join-Path ([IO.Path]::GetTempPath()) ("hushfacebook-sources-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $caseRoot -Force | Out-Null
 $savedGitLabToken = $env:GITLAB_TOKEN
+# A maintainer's own token never reaches the stand-ins; the cases that need one set their own.
+$env:GITLAB_TOKEN = $null
 try {
 
 # --- the checked-in ledger ------------------------------------------------------------------------
@@ -513,6 +515,17 @@ $fakeForge = @{ Answers = (New-FakeAnswers); Requests = (New-Object System.Colle
     Assert-True (@($fakeForge.Requests | Where-Object { $_.Uri -like 'https://api.github.com/*' -and $_.Authorization -ne "Bearer $fakeToken" }).Count -eq 0) `
         'A GitHub API request went out without the token.'
     Assert-True ($clean.ReportText.IndexOf($fakeToken) -lt 0 -and $stamped.IndexOf($fakeToken) -lt 0) 'The token was written to the report or the ledger.'
+    Reset-FixtureLedger
+
+    # -SkipGitLabCodeSearch holds with GITLAB_TOKEN set, as the audit's help tells a maintainer to
+    # set it: no GitLab search goes out and the census keeps recording the skip.
+    $env:GITLAB_TOKEN = 'fixture-gitlab-' + [guid]::NewGuid().ToString('N')
+    try { $withToken = Invoke-Audit } finally { $env:GITLAB_TOKEN = $null }
+    Assert-True ($withToken.ExitCode -eq 0) "The audit refused a clean fixture once GITLAB_TOKEN was set with -SkipGitLabCodeSearch: $($withToken.Said)"
+    Assert-True (@($fakeForge.Requests | Where-Object { $_.Uri -like 'https://gitlab.com/api/v4/search*' }).Count -eq 0) `
+        'GitLab code search ran although -SkipGitLabCodeSearch was passed.'
+    Assert-True (@(([IO.File]::ReadAllText($fixtureLedgerPath) | ConvertFrom-Json).census.skipped) -contains 'gitlab-code-search') `
+        'The census stopped recording the GitLab skip because a token was set.'
     Reset-FixtureLedger
 
     # -ValidateOnly and an invalid ledger never reach the network.
