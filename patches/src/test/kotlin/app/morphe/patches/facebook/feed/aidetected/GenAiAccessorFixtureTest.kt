@@ -5,6 +5,11 @@
 package app.morphe.patches.facebook.feed.aidetected
 
 import app.morphe.Fixtures
+import app.morphe.patches.facebook.feed.BASE_MODEL_WITH_TREE
+import app.morphe.patches.facebook.feed.GRAPHQL_STORY
+import app.morphe.patches.facebook.feed.TREE_JNI
+import app.morphe.patches.facebook.feed.hasPublicBooleanReader
+import app.morphe.patches.facebook.feed.hasPublicTypeTag
 import app.morphe.patches.shared.compat.AppCompatibilities
 import com.android.tools.smali.dexlib2.Opcodes
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile

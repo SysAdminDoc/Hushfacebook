@@ -117,8 +117,9 @@ public final class FeedFilter {
 
     /** The guard with the GenAI rule's flag and accessor, and no Stories tray. */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
-            boolean aiPatched, GenAiLabel.Accessor aiAccessor) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, aiPatched, aiAccessor);    }
+            boolean aiPatched, StoryFlag.Accessor aiAccessor) {
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, aiPatched, aiAccessor);
+    }
 
     /**
      * The guard, with the four patch-time flags passed in so a test can stand in for the patches,
@@ -133,7 +134,7 @@ public final class FeedFilter {
      * Hushfacebook paused it reads nothing of the post and Facebook's own path is all that runs.
      */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
-            boolean storiesTrayPatched, boolean aiPatched, GenAiLabel.Accessor aiAccessor) {
+            boolean storiesTrayPatched, boolean aiPatched, StoryFlag.Accessor aiAccessor) {
         try {
             if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
             if (suggestedPatched) {
@@ -143,7 +144,7 @@ public final class FeedFilter {
             if (storiesTrayPatched) HookStatus.invoked(FamilyNames.STORIES_TRAY);
             if (aiPatched) {
                 HookStatus.invoked(FamilyNames.AI_DETECTED_POSTS);
-                GenAiLabel.reader();
+                GenAiLabel.FLAG.report();
             }
             FeedFilterCounters.sawList(FEED_ROUTE, 1);
             String categoryName = category instanceof Enum ? ((Enum<?>) category).name() : null;
@@ -173,7 +174,7 @@ public final class FeedFilter {
                 reason = STORIES_TRAY_TYPE;
             }
             if (reason == null && aiPatched && Settings.HIDE_AI_DETECTED_POSTS.get()) {
-                reason = aiDetectedReason(feedUnit, aiAccessor);
+                reason = flagReason(GenAiLabel.FLAG, AI_ROUTE, feedUnit, aiAccessor);
             }
             if (reason == null) return false;
 
@@ -192,17 +193,18 @@ public final class FeedFilter {
     }
 
     /**
-     * The GenAI rule: the flag's name when Facebook's detection marked this unit as made with AI,
-     * otherwise null. Every unit it reads is counted on its own route under what the read found,
-     * so a kept post always has a reason in the report.
+     * A rule built on a story flag: the flag's name when it reads a definite true for this unit,
+     * otherwise null. Every unit it reads is counted on the rule's own route under what the read
+     * found, so a kept post always has a reason in the report.
      */
-    private static String aiDetectedReason(Object feedUnit, GenAiLabel.Accessor accessor) {
-        GenAiLabel.Outcome outcome = GenAiLabel.read(feedUnit, accessor);
-        FeedFilterCounters.sawList(AI_ROUTE, 1);
-        FeedFilterCounters.sawKind(AI_ROUTE, outcome.reason);
+    private static String flagReason(StoryFlag flag, String route, Object feedUnit, StoryFlag.Accessor accessor) {
+        StoryFlag.Outcome outcome = flag.read(feedUnit, accessor);
+        String why = flag.reason(outcome);
+        FeedFilterCounters.sawList(route, 1);
+        FeedFilterCounters.sawKind(route, why);
         if (!outcome.hides) return null;
-        FeedFilterCounters.removed(AI_ROUTE, 1, outcome.reason);
-        return GenAiLabel.DETECTED_FLAG;
+        FeedFilterCounters.removed(route, 1, why);
+        return flag.flag;
     }
 
     /** Which Hook status row the suggested unit classes were last reported into. */

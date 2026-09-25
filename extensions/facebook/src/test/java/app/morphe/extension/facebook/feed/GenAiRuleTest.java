@@ -43,7 +43,7 @@ public class GenAiRuleTest {
     enum Category { ORGANIC, SPONSORED }
 
     /** Stands in for the accessor the patch fills in, and counts how often the guard asked it. */
-    private static final class Answer implements GenAiLabel.Accessor {
+    private static final class Answer implements StoryFlag.Accessor {
         private final Object info;
         int calls;
 
@@ -52,7 +52,7 @@ public class GenAiRuleTest {
         }
 
         @Override
-        public Object detectedInfo(Object story) {
+        public Object model(Object story) {
             calls++;
             if (info instanceof RuntimeException) throw (RuntimeException) info;
             return info;
@@ -65,12 +65,12 @@ public class GenAiRuleTest {
         Settings.HIDE_AI_DETECTED_POSTS.resetToDefault();
         Settings.HIDE_SPONSORED_POSTS.resetToDefault();
         Settings.HIDE_SUGGESTED_POSTS.resetToDefault();
-        GenAiLabel.cachedReader = null;
+        StoryFlag.cachedMembers = null;
         FeedFilterCounters.clear();
         HookStatus.clear();
     }
 
-    private static boolean guard(Object category, Object unit, GenAiLabel.Accessor accessor) {
+    private static boolean guard(Object category, Object unit, StoryFlag.Accessor accessor) {
         return FeedFilter.hideEdge(category, unit, true, true, true, accessor);
     }
 
@@ -95,7 +95,7 @@ public class GenAiRuleTest {
         assertEquals(0x723ea5fe, GenAiLabel.DETECTED_FLAG_KEY);
         assertEquals(0x70da9d19, GenAiLabel.DETECTED_INFO_TYPE_TAG);
         // The self-disclosure model's tag, a different type, must not collide with it.
-        assertEquals(0x9213d34e, GenAiLabel.typeTag("XFBAIGeneratedSelfDisclosureInfo"));
+        assertEquals(0x9213d34e, StoryFlag.typeTag("XFBAIGeneratedSelfDisclosureInfo"));
     }
 
     @Test
@@ -135,7 +135,7 @@ public class GenAiRuleTest {
         assertFalse("not a story", guard(Category.ORGANIC, new Object(), new Answer(null)));
         assertFalse("no feed unit", guard(Category.ORGANIC, null, new Answer(null)));
         assertFalse("the accessor was never filled in", guard(Category.ORGANIC, story, GenAiLabel.PATCHED));
-        BaseModelWithTree selfDisclosed = new BaseModelWithTree(GenAiLabel.typeTag("XFBAIGeneratedSelfDisclosureInfo"))
+        BaseModelWithTree selfDisclosed = new BaseModelWithTree(StoryFlag.typeTag("XFBAIGeneratedSelfDisclosureInfo"))
                 .with(GenAiLabel.DETECTED_FLAG, true);
         assertFalse("info of another GraphQL type, even with a true flag at the same key",
                 guard(Category.ORGANIC, story, new Answer(selfDisclosed)));
@@ -223,8 +223,8 @@ public class GenAiRuleTest {
 
         HookStatus.clear();
         FeedFilterCounters.clear();
-        GenAiLabel.Reader complete = GenAiLabel.Reader.lookUp(GenAiLabel.class.getClassLoader());
-        GenAiLabel.cachedReader = new GenAiLabel.Reader(complete.story, complete.treeModel, null, complete.typeTag);
+        StoryFlag.Members complete = StoryFlag.Members.lookUp(StoryFlag.class.getClassLoader());
+        StoryFlag.cachedMembers = new StoryFlag.Members(complete.story, complete.treeModel, null, complete.typeTag);
         assertFalse(guard(Category.ORGANIC, new GraphQLStory(), new Answer(FeedGuardForTests.detectedInfo(true))));
         String report = String.join("\n", HookStatus.report());
         assertTrue(report, report.contains(FamilyNames.AI_DETECTED_POSTS + ": invoked 1, 2 found, 1 missing. "

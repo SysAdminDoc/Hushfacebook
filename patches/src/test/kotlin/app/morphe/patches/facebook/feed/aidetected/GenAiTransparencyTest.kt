@@ -5,6 +5,13 @@
 package app.morphe.patches.facebook.feed.aidetected
 
 import app.morphe.RepoFiles
+import app.morphe.patches.facebook.feed.BASE_MODEL_WITH_TREE
+import app.morphe.patches.facebook.feed.GRAPHQL_STORY
+import app.morphe.patches.facebook.feed.TREE_JNI
+import app.morphe.patches.facebook.feed.hasPublicBooleanReader
+import app.morphe.patches.facebook.feed.hasPublicTypeTag
+import app.morphe.patches.facebook.feed.treeFieldKey
+import app.morphe.patches.facebook.feed.treeTypeTag
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.Method
@@ -180,7 +187,8 @@ class GenAiTransparencyTest {
 
     /**
      * The patch and the extension name the same GraphQL flag and type, and the stub the patch
-     * fills in is the one the extension declares. Read as text, so nothing loads a patch class.
+     * fills in is the one the extension declares. The kept classes are looked up by the reader
+     * every story flag shares. Read as text, so nothing loads a patch class.
      */
     @Test
     fun `the patch and the extension read the same flag through the same stub`() {
@@ -192,9 +200,10 @@ class GenAiTransparencyTest {
         assertTrue("the extension checks another type", text.contains("\"$DETECTED_INFO_TYPE\""))
         assertTrue("the extension has no public static Object $DETECTED_INFO_STUB(Object)",
             Regex("""public static Object $DETECTED_INFO_STUB\(Object \w+\)""").containsMatchIn(text))
+        val reader = File(java.parentFile, "StoryFlag.java").readText()
         for (kept in listOf(GRAPHQL_STORY, BASE_MODEL_WITH_TREE, TREE_JNI)) {
             val binary = kept.removePrefix("L").removeSuffix(";").replace('/', '.')
-            assertTrue("the extension doesn't look $binary up", text.contains("\"$binary\""))
+            assertTrue("the extension doesn't look $binary up", reader.contains("\"$binary\""))
         }
     }
 }
