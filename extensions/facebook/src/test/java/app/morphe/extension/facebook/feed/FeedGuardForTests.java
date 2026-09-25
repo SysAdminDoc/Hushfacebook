@@ -20,14 +20,25 @@ public final class FeedGuardForTests {
 
     /**
      * The guard with the GenAI patch in as well. A test JVM has no patched accessor either, so any
-     * story's GenAI info is {@code detectedInfo}.
+     * story's GenAI info is {@code detectedInfo}, and no story has a recommendation context.
      */
     public static boolean hides(Object category, Object feedUnit, Object detectedInfo) {
-        return FeedFilter.hideEdge(category, feedUnit, true, true, true, story -> detectedInfo);
+        return FeedFilter.hideEdge(category, feedUnit, true, true, story -> null, true, true, story -> detectedInfo);
+    }
+
+    /** The guard with both feed patches in, where any story's recommendation context is {@code context}. */
+    public static boolean hidesRecommended(Object category, Object feedUnit, Object context) {
+        return FeedFilter.hideEdge(category, feedUnit, true, true, story -> context, true, false, GenAiLabel.PATCHED);
     }
 
     /** GenAI info of the type Facebook's detection writes, with its flag set to [flagged]. */
     public static BaseModelWithTree detectedInfo(boolean flagged) {
         return new BaseModelWithTree(GenAiLabel.DETECTED_INFO_TYPE_TAG).with(GenAiLabel.DETECTED_FLAG, flagged);
+    }
+
+    /** A story's recommendation context, with Facebook's recommendation flag set to [recommended]. */
+    public static BaseModelWithTree recommendationContext(boolean recommended) {
+        return new BaseModelWithTree(RecommendationLabel.FLAG.modelTypeTag)
+                .with(RecommendationLabel.RECOMMENDED_FLAG, recommended);
     }
 }

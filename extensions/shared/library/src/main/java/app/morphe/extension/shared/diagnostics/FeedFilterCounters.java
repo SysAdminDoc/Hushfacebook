@@ -1,4 +1,5 @@
 /*
+ * Modified for Hushfacebook (Facebook), 2026.
  * Copyright 2026 Hushfeed contributors
  * https://github.com/SysAdminDoc/hushfeed
  */
@@ -52,6 +53,11 @@ public final class FeedFilterCounters {
         final AtomicLong suspectLists = new AtomicLong();
         /** How many elements of each shape this route was handed, for routes that name them. */
         final ConcurrentHashMap<String, AtomicLong> kinds = new ConcurrentHashMap<>();
+        /**
+         * How many elements each reason took out. One route can run several rules, and a total
+         * with only the last reason beside it can't say which of them did the removing.
+         */
+        final ConcurrentHashMap<String, AtomicLong> removedBy = new ConcurrentHashMap<>();
     }
 
     private static final ConcurrentHashMap<String, Counter> COUNTERS = new ConcurrentHashMap<>();
@@ -80,6 +86,7 @@ public final class FeedFilterCounters {
         final long lists, itemsIn, removed, unreadable, emptied, suspectLists;
         final String lastReason, suspect;
         final java.util.Map<String, Long> kinds = new java.util.HashMap<>();
+        final java.util.Map<String, Long> removedBy = new java.util.HashMap<>();
 
         Line(String source, Counter counter) {
             this.source = source;
@@ -93,6 +100,9 @@ public final class FeedFilterCounters {
             this.suspectLists = counter.suspectLists.get();
             for (java.util.Map.Entry<String, AtomicLong> kind : counter.kinds.entrySet()) {
                 kinds.put(kind.getKey(), kind.getValue().get());
+            }
+            for (java.util.Map.Entry<String, AtomicLong> reason : counter.removedBy.entrySet()) {
+                removedBy.put(reason.getKey(), reason.getValue().get());
             }
         }
     }
@@ -197,13 +207,19 @@ public final class FeedFilterCounters {
         tally.addAndGet(add);
     }
 
-    /** What this route took out of the list it was just handed. */
+    /**
+     * What this route took out of the list it was just handed, and why. Each reason keeps its own
+     * tally, capped the way kinds are, so the report says how much each rule removed.
+     */
     public static void removed(String source, int count, String reason) {
         if (count <= 0) return;
         Counter counter = counter(source);
         if (counter == null) return;
         counter.removed.addAndGet(count);
-        if (reason != null) counter.lastReason = reason;
+        if (reason != null) {
+            counter.lastReason = reason;
+            count(counter.removedBy, reason, count);
+        }
     }
 
     private static Counter counter(String source) {
@@ -243,6 +259,7 @@ public final class FeedFilterCounters {
                 }
                 String reason = counter.lastReason;
                 if (reason != null) line.append(". Last reason: ").append(reason);
+                if (!counter.removedBy.isEmpty()) line.append(". Removed: ").append(kindsOf(counter.removedBy));
                 if (!counter.kinds.isEmpty()) line.append(". Kinds: ").append(kindsOf(counter.kinds));
                 lines.add(line.toString());
             }
@@ -311,20 +328,8 @@ public final class FeedFilterCounters {
                 counter.unreadable.addAndGet(saved.unreadable);
                 counter.emptied.addAndGet(saved.emptied);
                 if (counter.lastReason == null) counter.lastReason = saved.lastReason;
-                // The named kinds go back first, most counted first, and the overflow last, so
-                // an undo with nothing counted in between gives back the same Kinds line. In
-                // hash order, "other" could take a slot and push a named kind into it.
-                List<java.util.Map.Entry<String, Long>> savedKinds = new ArrayList<>(saved.kinds.entrySet());
-                java.util.Collections.sort(savedKinds, (a, b) -> {
-                    boolean otherA = OTHER_KINDS.equals(a.getKey());
-                    boolean otherB = OTHER_KINDS.equals(b.getKey());
-                    if (otherA != otherB) return otherA ? 1 : -1;
-                    int byCount = Long.compare(b.getValue(), a.getValue());
-                    return byCount != 0 ? byCount : a.getKey().compareTo(b.getKey());
-                });
-                for (java.util.Map.Entry<String, Long> kind : savedKinds) {
-                    count(counter.kinds, kind.getKey(), kind.getValue());
-                }
+                restoreTally(counter.kinds, saved.kinds);
+                restoreTally(counter.removedBy, saved.removedBy);
                 // The longest run wins, whichever side of the clear it was on.
                 if (saved.suspect != null && saved.suspectLists >= counter.suspectLists.get()) {
                     counter.suspect = saved.suspect;
@@ -342,6 +347,25 @@ public final class FeedFilterCounters {
             for (String source : countedSince) {
                 if (!SEEN.contains(source)) SEEN.add(source);
             }
+        }
+    }
+
+    /**
+     * Adds a saved tally back. The named entries go back first, most counted first, and the
+     * overflow last, so an undo with nothing counted in between gives back the same line. In hash
+     * order, "other" could take a slot and push a named entry into it.
+     */
+    private static void restoreTally(ConcurrentHashMap<String, AtomicLong> target, java.util.Map<String, Long> saved) {
+        List<java.util.Map.Entry<String, Long>> entries = new ArrayList<>(saved.entrySet());
+        java.util.Collections.sort(entries, (a, b) -> {
+            boolean otherA = OTHER_KINDS.equals(a.getKey());
+            boolean otherB = OTHER_KINDS.equals(b.getKey());
+            if (otherA != otherB) return otherA ? 1 : -1;
+            int byCount = Long.compare(b.getValue(), a.getValue());
+            return byCount != 0 ? byCount : a.getKey().compareTo(b.getKey());
+        });
+        for (java.util.Map.Entry<String, Long> entry : entries) {
+            count(target, entry.getKey(), entry.getValue());
         }
     }
 

@@ -113,9 +113,51 @@ public class FeedFilterKindsTest {
         }
     }
 
+    /** A route that names no kinds has no Kinds part, and its one reason still gets a count. */
     @Test public void aRouteThatNamesNoKindsKeepsItsLine() {
         FeedFilterCounters.sawList("Plain", 3);
         FeedFilterCounters.removed("Plain", 1, "AdsFilter");
-        assertEquals("Plain: 1 lists, 3 items, 1 removed. Last reason: AdsFilter", lineFor("Plain"));
+        assertEquals("Plain: 1 lists, 3 items, 1 removed. Last reason: AdsFilter. Removed: AdsFilter 1",
+                lineFor("Plain"));
+    }
+
+    /**
+     * One route can run several rules. The total and the last reason alone couldn't say which rule
+     * removed how much, so each reason keeps its own count, most first, capped the way kinds are.
+     */
+    @Test public void eachReasonCountsWhatItRemoved() {
+        FeedFilterCounters.sawList("Feed", 9);
+        FeedFilterCounters.removed("Feed", 1, "Suggested");
+        FeedFilterCounters.removed("Feed", 2, "PaginatedPeopleYouMayKnowFeedUnit");
+        FeedFilterCounters.removed("Feed", 1, "Suggested");
+        FeedFilterCounters.removed("Feed", 1, "Suggested");
+        FeedFilterCounters.removed("Feed", 1, null);
+        FeedFilterCounters.removed("Feed", 0, "never");
+        assertEquals("Feed: 1 lists, 9 items, 6 removed. Last reason: Suggested. "
+                + "Removed: Suggested 3, PaginatedPeopleYouMayKnowFeedUnit 2", lineFor("Feed"));
+
+        FeedFilterCounters.clear();
+        for (int i = 0; i < FeedFilterCounters.MAX_KINDS; i++) FeedFilterCounters.removed("Capped", 1, "reason " + (char) ('a' + i));
+        FeedFilterCounters.removed("Capped", 1, "one too many");
+        String line = lineFor("Capped");
+        String tally = line.substring(line.indexOf("Removed: "));
+        assertTrue(line, tally.contains(FeedFilterCounters.OTHER_KINDS + " 1"));
+        assertFalse("a reason past the cap was named in the tally: " + line, tally.contains("too many"));
+    }
+
+    @Test public void reasonCountsGoWithAClearAndComeBackWithItsUndo() {
+        FeedFilterCounters.sawList("Feed", 2);
+        FeedFilterCounters.removed("Feed", 1, "SPONSORED");
+        FeedFilterCounters.removed("Feed", 1, "Suggested");
+        FeedFilterCounters.Snapshot cleared = FeedFilterCounters.snapshotAndClear();
+        assertEquals(List.of(), FeedFilterCounters.report());
+
+        // Removed between the clear and the undo, and kept by it.
+        FeedFilterCounters.sawList("Feed", 1);
+        FeedFilterCounters.removed("Feed", 1, "Suggested");
+        FeedFilterCounters.restore(cleared);
+
+        assertEquals("Feed: 2 lists, 3 items, 3 removed. Last reason: Suggested. Removed: Suggested 2, SPONSORED 1",
+                lineFor("Feed"));
     }
 }

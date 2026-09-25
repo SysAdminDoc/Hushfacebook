@@ -67,7 +67,7 @@ public class PausedHooksTest {
     @Rule public final SettingsContextRule settingsContext = new SettingsContextRule();
 
     /** Stands in for GraphQLFeedStoryCategory: only the constant names matter to the guard. */
-    enum Category { ORGANIC, SPONSORED, PROMOTION, INJECTED_STORY }
+    enum Category { ORGANIC, SPONSORED, PROMOTION }
 
     /** Stands in for the obfuscated ad item base class; the patch passes its binary name. */
     public static class AdBase {
@@ -122,7 +122,9 @@ public class PausedHooksTest {
                 () -> FeedGuardForTests.hides(Category.PROMOTION, new Object())));
         probes.put(PatchFamily.SUGGESTED_POSTS, Arrays.asList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit()),
-                () -> FeedGuardForTests.hides(Category.INJECTED_STORY, new Object()),
+                // A story Facebook's own recommendation flag marks as suggested for you.
+                () -> FeedGuardForTests.hidesRecommended(Category.ORGANIC, new GraphQLStory(),
+                        FeedGuardForTests.recommendationContext(true)),
                 () -> FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow())));
         probes.put(PatchFamily.STORIES_TRAY, Collections.singletonList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.storiesTray())));

@@ -115,7 +115,8 @@ public class GenAiRuleTest {
         assertEquals("the flag was read once", 1, info.reads);
         assertTrue(counters(), counters().contains(FeedFilter.FEED_ROUTE + ": 1 lists, 1 items, 1 removed. "
                 + "Last reason: was_detected_as_ai_generated"));
-        assertEquals(FeedFilter.AI_ROUTE + ": 1 lists, 1 items, 1 removed. Last reason: flag true. Kinds: flag true 1",
+        assertEquals(FeedFilter.AI_ROUTE + ": 1 lists, 1 items, 1 removed. Last reason: flag true. Removed: flag true 1. "
+                        + "Kinds: flag true 1",
                 aiLine());
     }
 

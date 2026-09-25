@@ -52,7 +52,9 @@ import java.util.Map;
  *
  * <p>The host stands in for Facebook's feed collection: {@code addNewEdgeToCollection} is where
  * the one feed guard goes, and the bundle's {@code FeedFilter.hideEdge} is the guard, under the
- * same names the contract file holds the real APK to.
+ * same names the contract file holds the real APK to. The bundle's two story-flag stubs are there
+ * under their real names too, filled the way the patches fill them: a call to GraphQLStory's
+ * accessor before anything returns.
  *
  *   java -cp &lt;cli jar&gt; BadDexFixture.java &lt;outDir&gt;
  */
@@ -68,6 +70,13 @@ public class BadDexFixture {
             method(FILTER, "inspect", "V", OBJECT, OBJECT);
     private static final ImmutableMethodReference WIDE = method(FILTER, "wide", "V", "J");
     private static final ImmutableMethodReference RISKY = method(HOST, "risky", "I");
+
+    private static final String GENAI_LABEL = "Lapp/morphe/extension/facebook/feed/GenAiLabel;";
+    private static final String RECOMMENDATION_LABEL = "Lapp/morphe/extension/facebook/feed/RecommendationLabel;";
+    private static final String STORY = "Lcom/facebook/graphql/model/GraphQLStory;";
+    /** What the story's renamed accessor answers, a model class Redex renamed. */
+    private static final String MODEL = "Lfixture/Model;";
+    private static final ImmutableMethodReference STORY_ACCESSOR = method(STORY, "A0X", MODEL);
 
     private static final ImmutableTypeReference STRING_TYPE = new ImmutableTypeReference("Ljava/lang/String;");
     private static final ImmutableTypeReference INT_ARRAY = new ImmutableTypeReference("[I");
@@ -447,8 +456,39 @@ public class BadDexFixture {
     }
 
     private static List<ClassDef> patched(Method feedEdge, Method staticHost, Method switchHost, Method tryHost) {
-        return Arrays.asList(host(feedEdge, staticHost, switchHost, tryHost, true), filter());
+        return bundle(host(feedEdge, staticHost, switchHost, tryHost, true));
     }
+
+    /** A patched build: [host] and the bundle's own classes, both stubs filled. */
+    private static List<ClassDef> bundle(ClassDef host) {
+        return bundle(host, stub(GENAI_LABEL, "detectedInfo", FILLED_STUB),
+                stub(RECOMMENDATION_LABEL, "recommendationContext", FILLED_STUB));
+    }
+
+    private static List<ClassDef> bundle(ClassDef host, ClassDef genAiLabel, ClassDef recommendationLabel) {
+        return Arrays.asList(host, filter(), genAiLabel, recommendationLabel);
+    }
+
+    /**
+     * An extension stub, {@code static Object name(Object)}: v0 free, v1 the story. The patch fills
+     * it by putting a call to the story's accessor first.
+     */
+    private static ClassDef stub(String owner, String name, ImmutableMethodImplementation implementation) {
+        return new ImmutableClassDef(owner, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(), OBJECT,
+                null, null, null, null,
+                Collections.singletonList(define(owner, name, OBJECT, true, implementation, OBJECT)));
+    }
+
+    /** What the patches write: the story cast, its accessor called, its answer returned. */
+    private static final ImmutableMethodImplementation FILLED_STUB = body(2,
+            new ImmutableInstruction21c(Opcode.CHECK_CAST, 1, new ImmutableTypeReference(STORY)),
+            new ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 1, 1, 0, 0, 0, 0, STORY_ACCESSOR),
+            op(Opcode.MOVE_RESULT_OBJECT, 1),
+            op(Opcode.RETURN_OBJECT, 1));
+
+    /** The stub as the extension ships it: a marker answered, no call. */
+    private static final ImmutableMethodImplementation UNFILLED_STUB = body(2,
+            new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN_OBJECT, 0));
 
     private static List<ClassDef> good() {
         return patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST), switchHost(7), tryHost(CLEAN_TRY));
@@ -499,8 +539,8 @@ public class BadDexFixture {
         List<ClassDef> goodWithSecondary = new ArrayList<>(good());
         goodWithSecondary.add(secondary());
         dexes.put("good-with-secondary", goodWithSecondary);
-        dexes.put("removed-method", Arrays.asList(host(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
-                switchHost(7), tryHost(CLEAN_TRY), false), filter()));
+        dexes.put("removed-method", bundle(host(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchHost(7), tryHost(CLEAN_TRY), false)));
 
         // branch: the guard's if-eqz jumps back into the middle of its own invoke.
         dexes.put("bad-branch", withFeedEdge(body(4,
@@ -768,6 +808,27 @@ public class BadDexFixture {
         // contract: no guard at all.
         dexes.put("bad-no-guard", patched(feedEdge(CLEAN_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 switchHost(7), tryHost(CLEAN_TRY)));
+        ClassDef goodHost = host(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST), switchHost(7),
+                tryHost(CLEAN_TRY), true);
+        ClassDef filledRecommendation = stub(RECOMMENDATION_LABEL, "recommendationContext", FILLED_STUB);
+        // contract: the GenAI stub left as the extension ships it, answering its marker.
+        dexes.put("bad-stub-not-filled", bundle(goodHost, stub(GENAI_LABEL, "detectedInfo", UNFILLED_STUB),
+                filledRecommendation));
+        // contract: the recommendation stub calling a no-argument method, but not the story's.
+        dexes.put("bad-stub-other-class", bundle(goodHost, stub(GENAI_LABEL, "detectedInfo", FILLED_STUB),
+                stub(RECOMMENDATION_LABEL, "recommendationContext", body(2,
+                        new ImmutableInstruction35c(Opcode.INVOKE_STATIC, 0, 0, 0, 0, 0, 0, method(MODEL, "A0X", MODEL)),
+                        op(Opcode.MOVE_RESULT_OBJECT, 1),
+                        op(Opcode.RETURN_OBJECT, 1)))));
+        // contract: the story's accessor called only after the stub has already returned.
+        dexes.put("bad-stub-call-after-return", bundle(goodHost, stub(GENAI_LABEL, "detectedInfo", body(2,
+                        new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),
+                        op(Opcode.RETURN_OBJECT, 0),
+                        new ImmutableInstruction21c(Opcode.CHECK_CAST, 1, new ImmutableTypeReference(STORY)),
+                        new ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 1, 1, 0, 0, 0, 0, STORY_ACCESSOR),
+                        op(Opcode.MOVE_RESULT_OBJECT, 1),
+                        op(Opcode.RETURN_OBJECT, 1))),
+                filledRecommendation));
 
         for (Map.Entry<String, List<ClassDef>> e : dexes.entrySet()) {
             File dex = new File(out, e.getKey() + ".dex");

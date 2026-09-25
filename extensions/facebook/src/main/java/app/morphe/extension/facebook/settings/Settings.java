@@ -37,7 +37,10 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting HIDE_SUGGESTED_POSTS =
             new BooleanSetting("hushfacebook_hide_suggested_posts", TRUE);
 
-    /** Posts marked "Suggested for you", which Facebook files under the INJECTED_STORY category. */
+    /**
+     * Posts Facebook recommends from people, pages and groups you don't follow, which its own
+     * recommendation flag marks: the one Facebook's "hide suggested posts" filter reads.
+     */
     public static final BooleanSetting HIDE_SUGGESTED_FOR_YOU =
             new BooleanSetting("hushfacebook_hide_suggested_for_you", TRUE);
 

@@ -543,6 +543,11 @@ try {
         "The good build's guard was not reported at its one call site.`n$($good.Output -join "`n")"
     Assert-True (($good.Output -join "`n") -match 'structural findings: 0') `
         "The good build did not report its structural count.`n$($good.Output -join "`n")"
+    foreach ($stub in 'GenAiLabel;->detectedInfo', 'RecommendationLabel;->recommendationContext') {
+        Assert-True (($good.Output -join "`n") -match ([regex]::Escape("$stub(Ljava/lang/Object;)Ljava/lang/Object;: calls " +
+            'Lcom/facebook/graphql/model/GraphQLStory;->A0X()Lfixture/Model; before its first return'))) `
+            "The good build's $stub was not reported calling the story's accessor.`n$($good.Output -join "`n")"
+    }
 
     $bad = [ordered]@{
         'bad-branch' = 'branch'
@@ -615,6 +620,9 @@ try {
         'bad-double-guard' = 'contract'
         'bad-guard-elsewhere' = 'contract'
         'bad-no-guard' = 'contract'
+        'bad-stub-not-filled' = 'contract'
+        'bad-stub-other-class' = 'contract'
+        'bad-stub-call-after-return' = 'contract'
     }
     $failures = @()
     foreach ($case in $bad.GetEnumerator()) {
@@ -649,6 +657,17 @@ try {
         -Allowlist $emptyAllowlist -Name 'bad-contract' -Contracts $badContract
     Assert-True ($unreadable.ExitCode -ne 0 -and ($unreadable.Output -join "`n") -match 'Invalid contract line 1') `
         "A malformed contract line was accepted.`n$($unreadable.Output -join "`n")"
+    # A first-call rule needs its method, "on" and a class descriptor.
+    foreach ($line in @(
+            'first-call Lapp/morphe/extension/facebook/feed/GenAiLabel;->detectedInfo(Ljava/lang/Object;)Ljava/lang/Object; on GraphQLStory',
+            'first-call Lapp/morphe/extension/facebook/feed/GenAiLabel;->detectedInfo(Ljava/lang/Object;)Ljava/lang/Object; in Lcom/facebook/graphql/model/GraphQLStory;',
+            'first-call detectedInfo on Lcom/facebook/graphql/model/GraphQLStory;')) {
+        [System.IO.File]::WriteAllText($badContract, "# a comment line first`n$line`n")
+        $unreadableFirstCall = Invoke-DexDiff -Clean $cleanApk -Patched (Join-Path $caseRoot 'good.apk') `
+            -Allowlist $emptyAllowlist -Name 'bad-first-call-contract' -Contracts $badContract
+        Assert-True ($unreadableFirstCall.ExitCode -ne 0 -and ($unreadableFirstCall.Output -join "`n") -match 'Invalid contract line 2') `
+            "A malformed first-call line was accepted: $line`n$($unreadableFirstCall.Output -join "`n")"
+    }
 
     $removedMethodApk = New-DexApk -Name 'removed-method' -Entries ([ordered]@{ 'classes.dex' = (Get-Dex 'removed-method') })
     $methodResult = Invoke-DexDiff -Clean $cleanApk -Patched $removedMethodApk `

@@ -34,9 +34,6 @@ public final class FeedFilter {
     private static final String SPONSORED = "SPONSORED";
     private static final String PROMOTION = "PROMOTION";
 
-    /** The category of a post Facebook adds as "Suggested for you" from someone you don't follow. */
-    static final String INJECTED_STORY = "INJECTED_STORY";
-
     /**
      * The GraphQL type the "People you may know" row answers {@code getTypeName()} with. Its class
      * is renamed on every release, but the type name is a literal in the method, in 577 and 580.
@@ -54,6 +51,11 @@ public final class FeedFilter {
      * read found, so a report shows why the posts it kept were kept.
      */
     static final String AI_ROUTE = "GenAI flag";
+    /**
+     * The stories the "Suggested for you" rule read, counted only while its switch is on, with what
+     * each read of Facebook's recommendation flag found as the kind.
+     */
+    static final String RECOMMENDATION_ROUTE = "Recommendation flag";
 
     /**
      * Units Facebook injects into the feed that are not posts from anyone you follow. Every one
@@ -100,46 +102,53 @@ public final class FeedFilter {
      */
     public static boolean hideEdge(Object category, Object feedUnit) {
         return hideEdge(category, feedUnit, SettingsStatus.sponsoredPosts(), SettingsStatus.suggestedPosts(),
-                SettingsStatus.storiesTray(), SettingsStatus.aiDetectedPosts(), GenAiLabel.PATCHED);
+                RecommendationLabel.PATCHED, SettingsStatus.storiesTray(), SettingsStatus.aiDetectedPosts(),
+                GenAiLabel.PATCHED);
     }
 
     /** The guard with the sponsored and suggested patch-time flags passed in, and neither the tray nor GenAI. */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, false, GenAiLabel.PATCHED);
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, RecommendationLabel.PATCHED, false,
+                false, GenAiLabel.PATCHED);
     }
 
     /** The guard with the Stories tray's flag too, and no GenAI rule. */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
             boolean storiesTrayPatched) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, storiesTrayPatched, false,
-                GenAiLabel.PATCHED);
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, RecommendationLabel.PATCHED,
+                storiesTrayPatched, false, GenAiLabel.PATCHED);
     }
 
     /** The guard with the GenAI rule's flag and accessor, and no Stories tray. */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
             boolean aiPatched, StoryFlag.Accessor aiAccessor) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, false, aiPatched, aiAccessor);
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, RecommendationLabel.PATCHED, false,
+                aiPatched, aiAccessor);
     }
 
     /**
      * The guard, with the four patch-time flags passed in so a test can stand in for the patches,
-     * and the GenAI accessor passed in so a test can stand in for the one the patch fills in.
+     * and the recommendation and GenAI accessors passed in so a test can stand in for the stubs the
+     * patches fill in.
      *
      * <p>Every edge is counted before any rule runs, and every hidden one records why, so a
      * diagnostic report shows the guard is alive and what it took out without anyone having to
      * turn debug logging on first. The category name is an enum constant and the reason is a
      * kept class name or a GraphQL field name; none of them is content.
      *
-     * <p>The GenAI rule runs last and only while its switch is on, so with the switch off or
-     * Hushfacebook paused it reads nothing of the post and Facebook's own path is all that runs.
+     * <p>The two rules built on a story flag, "Suggested for you" and GenAI, read a story only while
+     * their switch is on, so with the switch off or Hushfacebook paused they read nothing of the post
+     * and Facebook's own path is all that runs.
      */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
-            boolean storiesTrayPatched, boolean aiPatched, StoryFlag.Accessor aiAccessor) {
+            StoryFlag.Accessor recommendationAccessor, boolean storiesTrayPatched, boolean aiPatched,
+            StoryFlag.Accessor aiAccessor) {
         try {
             if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
             if (suggestedPatched) {
                 HookStatus.invoked(FamilyNames.SUGGESTED_POSTS);
                 reportSuggestedClasses();
+                RecommendationLabel.FLAG.report();
             }
             if (storiesTrayPatched) HookStatus.invoked(FamilyNames.STORIES_TRAY);
             if (aiPatched) {
@@ -161,8 +170,8 @@ public final class FeedFilter {
             }
             if (reason == null && suggestedPatched) {
                 if (Settings.HIDE_SUGGESTED_POSTS.get()) reason = suggestedUnitName(feedUnit);
-                if (reason == null && Settings.HIDE_SUGGESTED_FOR_YOU.get() && INJECTED_STORY.equals(categoryName)) {
-                    reason = INJECTED_STORY;
+                if (reason == null && Settings.HIDE_SUGGESTED_FOR_YOU.get()) {
+                    reason = flagReason(RecommendationLabel.FLAG, RECOMMENDATION_ROUTE, feedUnit, recommendationAccessor);
                 }
                 if (reason == null && Settings.HIDE_PEOPLE_YOU_MAY_KNOW.get()
                         && PEOPLE_YOU_MAY_KNOW_TYPE.equals(typeName(feedUnit))) {

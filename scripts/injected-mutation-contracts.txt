@@ -1,5 +1,10 @@
 # Call sites a patched Facebook must have, checked across every dex of the APK by DexDiff.java.
 #   single-call <method reference> in <caller method name>
+#   first-call <method reference> on <class>
 # Two feed guards stacked on addNewEdgeToCollection is the shape that broke builds before, and a
 # guard anywhere else filters nothing.
 single-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideEdge(Ljava/lang/Object;Ljava/lang/Object;)Z in addNewEdgeToCollection
+# Each story-flag stub has to call GraphQLStory's renamed accessor before it returns. A patch that
+# stops filling one leaves the stub answering its marker, and the rule keeps every post.
+first-call Lapp/morphe/extension/facebook/feed/GenAiLabel;->detectedInfo(Ljava/lang/Object;)Ljava/lang/Object; on Lcom/facebook/graphql/model/GraphQLStory;
+first-call Lapp/morphe/extension/facebook/feed/RecommendationLabel;->recommendationContext(Ljava/lang/Object;)Ljava/lang/Object; on Lcom/facebook/graphql/model/GraphQLStory;

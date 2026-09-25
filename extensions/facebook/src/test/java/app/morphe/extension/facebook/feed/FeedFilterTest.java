@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.facebook.graphql.model.GraphQLPagesYouMayLikeFeedUnit;
+import com.facebook.graphql.model.GraphQLStory;
 
 import org.junit.After;
 import org.junit.Rule;
@@ -129,7 +130,8 @@ public class FeedFilterTest {
             cache.set(null, new Class<?>[0]);
             assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true, false));
             String report = LogBufferManager.buildExportText();
-            assertTrue(report, report.contains("Hide suggested and promoted posts: invoked 1, 0 found, 1 missing. "
+            // The three found are the members the recommendation flag is read through.
+            assertTrue(report, report.contains("Hide suggested and promoted posts: invoked 1, 3 found, 1 missing. "
                     + "First missing: class com.facebook.graphql.model#any suggested feed unit"));
             assertTrue(report, report.contains("Hide sponsored posts: invoked 1, 0 found, 0 missing"));
 
@@ -137,7 +139,7 @@ public class FeedFilterTest {
             LogBufferManager.clearLogBuffer();
             assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true, false));
             assertTrue(String.join("\n", HookStatus.report()),
-                    HookStatus.report().contains("Hide suggested and promoted posts: invoked 1, 1 found, 0 missing"));
+                    HookStatus.report().contains("Hide suggested and promoted posts: invoked 1, 4 found, 0 missing"));
         } finally {
             cache.set(null, null);
             LogBufferManager.clearLogBuffer();
@@ -145,17 +147,16 @@ public class FeedFilterTest {
     }
 
     /**
-     * A "Suggested for you" post is an ordinary story that Facebook files under INJECTED_STORY. It
-     * goes under its own switch, and posts from people you follow (ORGANIC) stay.
+     * On a signed-in feed, posts from accounts nobody there followed arrived as ENGAGEMENT stories,
+     * like posts from friends, and no INJECTED_STORY edge ever came. The "Suggested for you" switch
+     * reads Facebook's own recommendation flag now (RecommendationRuleTest), and the category on its
+     * own hides nothing.
      */
     @Test
-    public void aSuggestedForYouPostGoesByItsCategory() {
-        assertTrue(FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), false, true, false));
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), false, true, false));
-        assertFalse("the rule belongs to the suggested patch",
-                FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), true, false, true));
-        Settings.HIDE_SUGGESTED_FOR_YOU.save(false);
-        assertFalse(FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), false, true, false));
+    public void theStoryCategoryAloneNoLongerMarksASuggestedPost() {
+        assertFalse(FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), false, true));
+        assertFalse(FeedFilter.hideEdge(Category.INJECTED_STORY, new GraphQLStory(), false, true,
+                story -> FeedGuardForTests.recommendationContext(false), false, false, GenAiLabel.PATCHED));
     }
 
     /**
@@ -193,18 +194,30 @@ public class FeedFilterTest {
         assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit.Unreadable(), true, true, true));
     }
 
-    /** Each new rule leaves its own reason, so the report can tell them apart. */
+    /**
+     * Every rule that hides counts under its own reason, so a report says how many posts each one
+     * took out: the total and whichever rule fired last couldn't. Rules run several times each, in
+     * a mixed order, and a kept post adds nothing to any of them.
+     */
     @Test
-    public void eachNewRuleCountsUnderItsOwnReason() {
+    public void eachRuleCountsWhatItHid() {
         FeedFilterCounters.clear();
-        FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), true, true, true);
-        assertTrue(String.join("\n", FeedFilterCounters.report()).contains("Last reason: INJECTED_STORY"));
-        FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), true, true, true);
-        assertTrue(String.join("\n", FeedFilterCounters.report()).contains(
-                "Last reason: PaginatedPeopleYouMayKnowFeedUnit"));
-        FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), true, true, true);
+        StoryFlag.Accessor recommended = story -> FeedGuardForTests.recommendationContext(true);
+        for (int i = 0; i < 3; i++) {
+            FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, true);
+            FeedFilter.hideEdge(Category.ORGANIC, new GraphQLStory(), true, true, recommended, false, false,
+                    GenAiLabel.PATCHED);
+        }
+        FeedFilter.hideEdge(Category.PROMOTION, new Object(), true, true);
+        FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), true, true);
+        FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true);
+        FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), true, true);
+        FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true);
+
         String report = String.join("\n", FeedFilterCounters.report());
-        assertTrue(report, report.contains(FeedFilter.FEED_ROUTE + ": 3 lists, 3 items, 3 removed"));
-        assertTrue(report, report.contains("Last reason: StoriesTrayFeedUnit"));
+        assertTrue(report, report.contains(FeedFilter.FEED_ROUTE + ": 11 lists, 11 items, 10 removed. "
+                + "Last reason: PaginatedPeopleYouMayKnowFeedUnit. Removed: SPONSORED 3, "
+                + "is_in_feed_recommendation_story 3, PaginatedPeopleYouMayKnowFeedUnit 2, "
+                + "GraphQLPagesYouMayLikeFeedUnit 1, PROMOTION 1. Kinds: ORGANIC 7, SPONSORED 3, PROMOTION 1"));
     }
 }

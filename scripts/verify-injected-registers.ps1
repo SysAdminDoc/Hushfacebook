@@ -16,7 +16,8 @@
     line of the bundle's own added methods, to that method's register count. Every changed and
     added method is also checked for branch and switch targets, invoke registers, the static and
     wide parameter layout, move-result placement and try ranges, and the whole APK is held to
-    scripts/injected-mutation-contracts.txt: one feed guard, in addNewEdgeToCollection.
+    scripts/injected-mutation-contracts.txt: one feed guard, in addNewEdgeToCollection, and each
+    story-flag stub calling GraphQLStory's accessor before it returns.
 
     On a device. The Android runtime's own verifier is the authority, so with -Serial the
     clean APK and the patched APK are both put through dex2oat with the verify filter and the

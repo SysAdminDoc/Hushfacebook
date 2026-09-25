@@ -79,7 +79,10 @@ import java.util.TreeSet;
  * try range or handler off an instruction boundary. A contract file adds
  * rules about the whole APK: the feed filter's guard has exactly one call site, in
  * addNewEdgeToCollection, because two guards stacked on that method is what broke Froggo's
- * builds. The device verifier stays the authority; these catch the known shapes without a phone.
+ * builds; and each extension stub a patch fills in with one of Facebook's renamed accessors calls
+ * it before it returns, so a patch that stopped filling one fails here instead of shipping a stub
+ * that answers its marker forever. The device verifier stays the authority; these catch the known
+ * shapes without a phone.
  *
  *   java -cp &lt;cli jar&gt; DexDiff.java &lt;cleanApk&gt; &lt;patchedApk&gt; &lt;reportFile&gt;
  *       &lt;removalAllowlist&gt; [&lt;contracts&gt;]
@@ -122,14 +125,26 @@ public class DexDiff {
         return allowlist;
     }
 
-    /** "single-call &lt;method reference&gt; in &lt;caller method name&gt;": exactly one call site, there. */
+    /**
+     * One rule about the whole APK.
+     *
+     * <ul>
+     *   <li>"single-call &lt;method reference&gt; in &lt;caller method name&gt;": exactly one call
+     *       site, there.
+     *   <li>"first-call &lt;method reference&gt; on &lt;class&gt;": the method calls a method of
+     *       &lt;class&gt; that takes no arguments before its first return or throw. A stub the
+     *       patch filled does; one still answering its marker doesn't.
+     * </ul>
+     */
     private static final class Contract {
+        final String kind;
         final String callee;
-        final String callerName;
+        final String target;
 
-        Contract(String callee, String callerName) {
+        Contract(String kind, String callee, String target) {
+            this.kind = kind;
             this.callee = callee;
-            this.callerName = callerName;
+            this.target = target;
         }
     }
 
@@ -143,12 +158,15 @@ public class DexDiff {
             String line = raw.trim();
             if (line.isEmpty() || line.startsWith("#")) continue;
             String[] parts = line.split("\\s+");
-            if (parts.length != 4 || !parts[0].equals("single-call") || !parts[2].equals("in")
-                    || !parts[1].contains("->")) {
+            boolean singleCall = parts.length == 4 && parts[0].equals("single-call") && parts[2].equals("in");
+            boolean firstCall = parts.length == 4 && parts[0].equals("first-call") && parts[2].equals("on")
+                    && parts[3].startsWith("L") && parts[3].endsWith(";");
+            if ((!singleCall && !firstCall) || !parts[1].contains("->")) {
                 throw new IllegalArgumentException("Invalid contract line " + lineNumber
-                        + ": expected single-call <method reference> in <caller method name>");
+                        + ": expected single-call <method reference> in <caller method name>,"
+                        + " or first-call <method reference> on <class>");
             }
-            contracts.add(new Contract(parts[1], parts[3]));
+            contracts.add(new Contract(parts[0], parts[1], parts[3]));
         }
         return contracts;
     }
@@ -957,7 +975,14 @@ public class DexDiff {
             List<Contract> contracts) throws Exception {
         Map<String, List<String>> out = new TreeMap<>();
         Map<String, List<String>> callSites = new LinkedHashMap<>();
-        for (Contract contract : contracts) callSites.put(contract.callee, new ArrayList<>());
+        // first-call: the method, and the first call it makes on the class before it returns, or
+        // an empty string when it makes none there.
+        Map<String, String> firstCalls = new HashMap<>();
+        Map<String, String> firstCallTargets = new HashMap<>();
+        for (Contract contract : contracts) {
+            if (contract.kind.equals("single-call")) callSites.put(contract.callee, new ArrayList<>());
+            else firstCallTargets.put(contract.callee, contract.target);
+        }
         MultiDexContainer<? extends DexFile> container =
                 DexFileFactory.loadDexContainer(apk, Opcodes.getDefault());
         for (String entry : container.getDexEntryNames()) {
@@ -968,6 +993,8 @@ public class DexDiff {
                         List<String> findings = structuralFindings(cd, m);
                         if (!findings.isEmpty()) out.put(s, findings);
                     }
+                    String firstCallOn = firstCallTargets.get(s);
+                    if (firstCallOn != null) firstCalls.put(s, firstCallBeforeReturn(m, firstCallOn));
                     if (callSites.isEmpty() || m.getImplementation() == null) continue;
                     for (Instruction i : m.getImplementation().getInstructions()) {
                         if (!(i instanceof ReferenceInstruction)) continue;
@@ -981,20 +1008,56 @@ public class DexDiff {
         }
         List<String> contractFindings = new ArrayList<>();
         for (Contract contract : contracts) {
+            if (contract.kind.equals("first-call")) {
+                String call = firstCalls.get(contract.callee);
+                String rule = "contract first-call " + contract.callee;
+                if (call == null) {
+                    System.out.println("[diff] " + rule + ": not in the APK");
+                    contractFindings.add("contract: " + contract.callee + " is not in the APK, so nothing calls "
+                            + contract.target + " from it");
+                } else if (call.isEmpty()) {
+                    System.out.println("[diff] " + rule + ": no call on " + contract.target + " before its first return");
+                    contractFindings.add("contract: " + contract.callee + " returns before it calls a method of "
+                            + contract.target + " that takes no arguments, so the patch didn't fill it");
+                } else {
+                    System.out.println("[diff] " + rule + ": calls " + call + " before its first return");
+                }
+                continue;
+            }
             List<String> sites = callSites.get(contract.callee);
             System.out.println("[diff] contract " + contract.callee + ": " + sites.size() + " call site"
                     + (sites.size() == 1 ? "" : "s") + (sites.isEmpty() ? "" : ", in " + String.join(", ", sites)));
             if (sites.size() != 1) {
                 contractFindings.add("contract: " + contract.callee + " has " + sites.size()
-                        + " call sites, and must have exactly one, in " + contract.callerName
+                        + " call sites, and must have exactly one, in " + contract.target
                         + (sites.isEmpty() ? "" : ": " + String.join(", ", sites)));
-            } else if (!sites.get(0).contains("->" + contract.callerName + "(")) {
+            } else if (!sites.get(0).contains("->" + contract.target + "(")) {
                 contractFindings.add("contract: " + contract.callee + " is called from " + sites.get(0)
-                        + ", not from " + contract.callerName);
+                        + ", not from " + contract.target);
             }
         }
         if (!contractFindings.isEmpty()) out.put("contract", contractFindings);
         return out;
+    }
+
+    /**
+     * The first call [m] makes, before any return or throw in its instruction order, to a method of
+     * [owner] that takes no arguments, or an empty string when there is none. A filled stub makes
+     * that call first thing; the stub's own body, left after it, only answers a marker.
+     */
+    private static String firstCallBeforeReturn(Method m, String owner) {
+        if (m.getImplementation() == null) return "";
+        for (Instruction i : m.getImplementation().getInstructions()) {
+            String name = i.getOpcode().name;
+            if (name.startsWith("return") || name.equals("throw")) return "";
+            if (!(i instanceof ReferenceInstruction) || !name.startsWith("invoke")) continue;
+            Reference r = ((ReferenceInstruction) i).getReference();
+            if (r instanceof MethodReference && ((MethodReference) r).getDefiningClass().equals(owner)
+                    && ((MethodReference) r).getParameterTypes().isEmpty()) {
+                return r.toString();
+            }
+        }
+        return "";
     }
 
     private static Set<String> dexEntries(File apk) throws Exception {

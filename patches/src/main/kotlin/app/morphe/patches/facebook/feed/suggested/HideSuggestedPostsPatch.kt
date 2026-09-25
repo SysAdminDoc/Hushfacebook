@@ -5,17 +5,30 @@
  *
  * Modified for Hushfacebook (Facebook), 2026: the instance-of chain moved into the extension's
  * feed filter, behind the shared feed hook. The patch still refuses a build that carries none of
- * the unit classes, so a rename fails at patch time instead of filtering nothing. It also needs the
- * INJECTED_STORY category and the People you may know type name, which two new switches read.
+ * the unit classes, so a rename fails at patch time instead of filtering nothing. It also finds the
+ * story's recommendation flag, held to Facebook's own filter, and the People you may know type
+ * name, which two more switches read.
  */
 package app.morphe.patches.facebook.feed.suggested
 
-import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.StringComparisonType
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patches.facebook.feed.GRAPHQL_STORY
+import app.morphe.patches.facebook.feed.HIDE_RECOMMENDATIONS_VALIDATOR
+import app.morphe.patches.facebook.feed.RECOMMENDATION_CONTEXT_FIELD
+import app.morphe.patches.facebook.feed.RECOMMENDATION_CONTEXT_TYPE
+import app.morphe.patches.facebook.feed.RECOMMENDED_FLAG
+import app.morphe.patches.facebook.feed.edgePredicateCalls
+import app.morphe.patches.facebook.feed.fillStoryModelStub
 import app.morphe.patches.facebook.feed.hook.feedFilterHookPatch
+import app.morphe.patches.facebook.feed.methodsHolding
+import app.morphe.patches.facebook.feed.readsRecommendedFlag
+import app.morphe.patches.facebook.feed.recommendationContextAccessors
 import app.morphe.patches.facebook.feed.requireFeedTypeName
-import app.morphe.patches.facebook.shared.FEED_STORY_CATEGORY
+import app.morphe.patches.facebook.feed.requireStoryFlagReaders
+import app.morphe.patches.facebook.feed.resolveStatic
+import app.morphe.patches.facebook.misc.extension.EXTENSION_PACKAGE
 import app.morphe.patches.facebook.misc.extension.enableStatus
 import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.patches.facebook.misc.settings.settingsPatch
@@ -52,16 +65,9 @@ internal val SUGGESTED_FEED_UNITS = listOf(
  */
 internal const val PEOPLE_YOU_MAY_KNOW_TYPE = "PaginatedPeopleYouMayKnowFeedUnit"
 
-/**
- * The story category's constant list, which names INJECTED_STORY: the category Facebook files a
- * "Suggested for you" post under. The extension compares the constant's name, so the literal in
- * `<clinit>` is the evidence.
- */
-internal object InjectedStoryCategoryFingerprint : Fingerprint(
-    definingClass = FEED_STORY_CATEGORY,
-    name = "<clinit>",
-    strings = listOf("INJECTED_STORY"),
-)
+/** The extension class that reads the recommendation flag, and its accessor this patch fills in. */
+internal const val RECOMMENDATION_LABEL = "$EXTENSION_PACKAGE/feed/RecommendationLabel;"
+internal const val RECOMMENDATION_CONTEXT_STUB = "recommendationContext"
 
 @Suppress("unused")
 val hideSuggestedPostsPatch = bytecodePatch(
@@ -82,10 +88,36 @@ val hideSuggestedPostsPatch = bytecodePatch(
                 "None of the suggested feed unit classes is in this APK; the model package was renamed or moved",
             )
         }
-        if (InjectedStoryCategoryFingerprint.methodOrNull == null) {
-            throw PatchException("The story category enum no longer names INJECTED_STORY")
-        }
         requireFeedTypeName(PEOPLE_YOU_MAY_KNOW_TYPE)
+
+        // A "Suggested for you" post is an ordinary story on the wire (ENGAGEMENT, like a friend's),
+        // so the rule reads the story's recommendation flag through GraphQLStory's accessor.
+        val accessors = recommendationContextAccessors(classDefBy(GRAPHQL_STORY))
+        val accessor = accessors.singleOrNull() ?: throw PatchException(
+            "GraphQLStory has ${accessors.size} accessors of $RECOMMENDATION_CONTEXT_FIELD as " +
+                "$RECOMMENDATION_CONTEXT_TYPE, expected one: ${accessors.joinToString { it.name }}",
+        )
+
+        // Facebook's own "hide suggested posts" filter reads the flag through that accessor. If it
+        // stops doing that, the flag may have moved or changed meaning, and the rule stops here.
+        val validators = classDefByStrings(HIDE_RECOMMENDATIONS_VALIDATOR, StringComparisonType.EQUALS)
+            .flatMap { methodsHolding(it, HIDE_RECOMMENDATIONS_VALIDATOR) }
+        if (validators.isEmpty()) {
+            throw PatchException("No method holds \"$HIDE_RECOMMENDATIONS_VALIDATOR\" any more")
+        }
+        val predicates = validators.flatMap(::edgePredicateCalls).mapNotNull { call ->
+            classDefByOrNull(call.definingClass)?.let { resolveStatic(it, call) }
+        }
+        if (predicates.none { readsRecommendedFlag(it, accessor) }) {
+            throw PatchException(
+                "Facebook's own recommendation filter no longer reads $RECOMMENDED_FLAG through " +
+                    "GraphQLStory.${accessor.name}()",
+            )
+        }
+
+        // The extension reads the flag and the model's type tag through these, by reflection.
+        requireStoryFlagReaders()
+        fillStoryModelStub(RECOMMENDATION_LABEL, RECOMMENDATION_CONTEXT_STUB, accessor)
         enableStatus("suggestedPosts")
     }
 }
