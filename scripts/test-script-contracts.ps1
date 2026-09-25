@@ -833,12 +833,14 @@ try {
     Assert-True ($atNoCommit.PatchList -eq $workingList -and $null -eq $atNoCommit.Note) `
         'A receipt naming no commit did not fall back quietly to the working patch list.'
     # And the release check hands the receipt that list, names and target both, rather than the
-    # working one. A helper nothing calls would pass every case above.
+    # working one. A helper nothing calls would pass every case above. Anchored at the end, since
+    # the unanchored pattern also matched PackageVersions[0], the newest build alone; the release
+    # root section below runs the check on a receipt of its own as well.
     $factsSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'validate-release-facts.ps1') -Raw
     Assert-True ($factsSource -match '-ExpectedPatchNames @\(\$resolvedList\.PatchList\.patches' -and
         $factsSource -match '\$receiptTarget = Get-PatchTarget -PatchList \$resolvedList\.PatchList' -and
         $factsSource -match '-ExpectedPackageName \$receiptTarget\.PackageName' -and
-        $factsSource -match '-ExpectedPackageVersions \$receiptTarget\.PackageVersions') `
+        $factsSource -match '-ExpectedPackageVersions \$receiptTarget\.PackageVersions(?![\w.\[])') `
         ('validate-release-facts.ps1 no longer holds the receipt to the patch list its own commit ' +
             'carried, or to every build that list declares.')
 
@@ -2119,6 +2121,115 @@ foreach ($name in @('build-release-receipt.ps1', 'verify-all-patches.ps1', 'veri
 }
 
 Write-Host '[scripts] split bundle contracts passed'
+
+# --- a release root ------------------------------------------------------------------------------
+#
+# The release files of this checkout, copied into a fixture repository and committed, the way the
+# tree looks at a release commit. The release check reads the commit a receipt names out of git,
+# so a copied tree that is not a repository never reaches the receipt, and the facts fixture above
+# holds none: every case there took the "no receipt" exit, and the receipt half was covered only
+# by a pattern over the script's text, which also matched a mutation that held the receipt to the
+# newest build alone.
+
+$releaseRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-release-" + [guid]::NewGuid().ToString('N'))
+try {
+    $releaseRepo = Join-Path $releaseRoot 'repo'
+    $releaseFiles = @('patches-list.json', 'patches-bundle.json', 'gradle.properties', 'README.md', 'CHANGELOG.md',
+        'gradle/libs.versions.toml', '.github/ISSUE_TEMPLATE/bug_report.yml', '.gitignore')
+    foreach ($relative in $releaseFiles) {
+        $destination = Join-Path $releaseRepo $relative
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $Root $relative) -Destination $destination
+    }
+    # Through Invoke-FixtureGit, with the git directory proved before anything is written, for
+    # the reason the toolchain fixture above gives.
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('init', '--quiet') | Out-Null
+    $releaseGitDir = "$(Invoke-FixtureGit -Root $releaseRepo -Arguments @('rev-parse', '--absolute-git-dir') |
+        Select-Object -First 1)".Trim()
+    Assert-True ($releaseGitDir -and ([IO.Path]::GetFullPath($releaseGitDir).TrimEnd('\', '/') -ieq
+            [IO.Path]::GetFullPath((Join-Path $releaseRepo '.git')).TrimEnd('\', '/'))) `
+        "The release fixture resolved to $releaseGitDir, not its own repository. Refusing to write."
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('config', 'user.email', 'contracts@example.invalid') | Out-Null
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('config', 'user.name', 'Contracts') | Out-Null
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('add', '-A') | Out-Null
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('commit', '-m', 'release', '--quiet') | Out-Null
+    $releaseCommitted = @(Invoke-FixtureGit -Root $releaseRepo -Arguments @('show', '--name-only', '--format=', 'HEAD') |
+        Where-Object { "$_".Trim() })
+    Assert-True ($releaseCommitted.Count -eq $releaseFiles.Count) `
+        ("The release fixture's commit touched $($releaseCommitted.Count) files, not the $($releaseFiles.Count) " +
+            'copied: ' + (($releaseCommitted | Select-Object -First 5) -join ', '))
+    $releaseCommit = "$(Invoke-FixtureGit -Root $releaseRepo -Arguments @('rev-parse', 'HEAD') | Select-Object -First 1)".Trim()
+    $releaseSeconds = [long]"$(Invoke-FixtureGit -Root $releaseRepo -Arguments @('log', '-1', '--format=%ct') |
+        Select-Object -First 1)".Trim()
+
+    $releaseVersionHere = Get-BundleVersion -Root $releaseRepo
+    $releaseCatalog = Get-Content -LiteralPath (Join-Path $releaseRepo 'patches-list.json') -Raw | ConvertFrom-Json
+    $releaseTarget = Get-PatchTarget -PatchList $releaseCatalog
+    $releaseNames = @($releaseCatalog.patches | ForEach-Object { [string]$_.name })
+    $releaseToolchain = Read-CatalogToolchain -Source 'the release fixture catalog' `
+        -Text (Get-Content -LiteralPath (Join-Path $releaseRepo 'gradle/libs.versions.toml') -Raw)
+    $releaseReceipt = Join-Path $releaseRepo "release-receipt-$releaseVersionHere.json"
+
+    # A receipt for this commit with a run of each build given, every patch applied and no
+    # manifest change, written where the release check looks for it.
+    function Save-ReleaseReceipt([string[]]$Builds) {
+        $targets = @(for ($i = 0; $i -lt $Builds.Count; $i++) {
+            [ordered]@{
+                source        = [ordered]@{ file = "facebook-$($Builds[$i])-arm64-v8a.apkm"
+                    package = $releaseTarget.PackageName; versionName = $Builds[$i]; versionCode = "47500000$i"
+                    sha256 = ([string]'ABCDEF'[$i % 6] * 64); forced = $false }
+                patches       = @($releaseNames | ForEach-Object { [ordered]@{ name = $_; applied = $true; reason = $null } })
+                manifestDelta = [ordered]@{ permissionsAdded = @(); permissionsRemoved = @()
+                    exportedComponentsAdded = @(); exportedComponentsRemoved = @() }
+            }
+        })
+        $document = [ordered]@{
+            schemaVersion = Get-ReleaseReceiptSchemaVersion
+            release   = [ordered]@{ version = $releaseVersionHere; tag = "v$releaseVersionHere"; commit = $releaseCommit
+                commitTimestamp = $releaseSeconds; patchCount = $releaseNames.Count }
+            bundle    = [ordered]@{ file = "patches-$releaseVersionHere.mpp"; sizeBytes = 10; sha256 = ('E' * 64)
+                timestamp = $releaseSeconds * 1000 }
+            toolchain = [ordered]@{ patcherVersion = $releaseToolchain.PatcherVersion; managerFloor = $releaseToolchain.ManagerFloor }
+            extension = [ordered]@{ dexPayloads = @([ordered]@{ name = 'extensions/facebook.mpe'; sizeBytes = 10; sha256 = ('F' * 64) }) }
+            targets   = $targets
+        }
+        Set-Content -LiteralPath $releaseReceipt -Encoding UTF8 -Value ($document | ConvertTo-Json -Depth 12)
+    }
+    # The run the hook makes for a push that carries a receipt: lenient, since the index may lag
+    # the source, and with no network. What it says is kept, to tell a receipt it compared from
+    # one it never found.
+    function Invoke-ReleaseCheck {
+        $global:LASTEXITCODE = 0
+        $said = @(& $factsScript -Root $releaseRepo -SkipDescriptionTestCount -AllowPublishedIndexLag -SkipUrlCheck 6>&1 |
+            ForEach-Object { "$_" }) -join "`n"
+        if ($LASTEXITCODE -ne 0) { throw "The release check exited $LASTEXITCODE on the release root: $said" }
+        return $said
+    }
+
+    # A run of every declared build, which is what a release needs, compared rather than skipped.
+    Save-ReleaseReceipt -Builds $releaseTarget.PackageVersions
+    try {
+        $said = Invoke-ReleaseCheck
+    } catch {
+        throw "The release check refused a receipt with a run of every declared build: $($_.Exception.Message)"
+    }
+    $proved = "the receipt proves $($releaseNames.Count) patches on $($releaseTarget.PackageVersions -join ', ') " +
+        "from commit $($releaseCommit.Substring(0, 8))"
+    Assert-True ($said -like "*$proved*") "The release check did not compare the receipt it was given: $said"
+
+    # A run of the newest build alone, the receipt a release that skipped the older fixture would
+    # write. Refused, naming the build it never ran.
+    Save-ReleaseReceipt -Builds @($releaseTarget.PackageVersions[0])
+    $unproved = @($releaseTarget.PackageVersions | Select-Object -Skip 1)
+    Assert-True ($unproved.Count -gt 0) 'The catalog declares one build, so the case below would prove nothing.'
+    Assert-Throws { Invoke-ReleaseCheck } ("*No target in the receipt is the declared $($releaseTarget.PackageName) " +
+            "$($unproved -join ', ') patched without -f*") `
+        'The release check accepted a receipt with no run of an older declared build.'
+} finally {
+    Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Host '[scripts] release root contracts passed'
 
 # --- release bundle path ---------------------------------------------------------------------
 #
