@@ -183,6 +183,9 @@ public class LogBufferManagerClipboardTest {
             assertTrue(target + ": " + copy, copy.startsWith("MORPHE DIAGNOSTIC REPORT\n"));
             if (head.length() + allLeftOut.length() <= limit) {
                 assertTrue("a head of " + head.length() + " was not kept whole", timeless(copy).startsWith(timeless(head)));
+                // Twenty events never fit beside these heads, so the copy has to say they went.
+                assertTrue("a head of " + head.length() + " lost the events with no count: " + copy,
+                        copy.contains(" events left out; use Save full report for everything"));
             }
         }
     }
@@ -202,6 +205,8 @@ public class LogBufferManagerClipboardTest {
 
         String copy = LogBufferManager.clipboardText(1_000);
         assertTrue(copy, copy.endsWith(CUT_AT_1000));
+        // Stepping forward over the character would keep it whole too, one over the limit.
+        assertTrue(copy.length() + " characters", copy.length() <= 1_000);
         assertEquals("the copy holds half a character",
                 copy, new String(copy.getBytes(java.nio.charset.StandardCharsets.UTF_8), java.nio.charset.StandardCharsets.UTF_8));
     }

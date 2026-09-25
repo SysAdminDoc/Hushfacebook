@@ -331,8 +331,8 @@ public final class LogBufferManager {
      * [maxChars]. Past that the oldest events go first, so the header and every fixed section
      * arrive whole. Which build, which switches, what stayed in and whether the process ran
      * paused are what a pasted report is read for, and they come before the events. Only a
-     * report whose fixed part alone is too long, which takes a long crash trace, is cut, and
-     * then at its end.
+     * report whose fixed part doesn't fit beside even the shortest note, which takes a long crash
+     * trace, is cut, and then at its end.
      */
     static String clipboardText(int maxChars) {
         Export export = buildExport();
@@ -361,8 +361,8 @@ public final class LogBufferManager {
         String allLeftOut = "\nclipboard_note: " + total + " events left out; use Save full report for everything\n";
         if (total > 0 && export.head.length() + allLeftOut.length() <= maxChars) return export.head + allLeftOut;
 
-        // Only a head too long on its own is cut, at its end, and never between the two halves
-        // of a character.
+        // Only a head too long to fit beside that line is cut, at its end, and never between the
+        // two halves of a character.
         String cut = "\nclipboard_note: cut at " + maxChars + " characters; use Save full report for everything\n";
         int end = Math.max(0, Math.min(export.head.length(), maxChars - cut.length()));
         if (end > 0 && Character.isHighSurrogate(export.head.charAt(end - 1))) end--;

@@ -52,6 +52,30 @@ public class PlayerSourcesTest {
                 HookStatus.report());
     }
 
+    /**
+     * A build that moved the source out of the player's params. The miss belongs to the recorder,
+     * on its own line, and not to a story save that never ran (9199cd6 moved it there).
+     */
+    @Test
+    public void aMissTheRecorderFindsIsOnItsOwnLine() {
+        HookStatus.clear();
+        Settings.DOWNLOAD_STORIES.save(true);
+        PlayerSources.remember(new ParamsWithoutSource("123456789012"), "videoId", "hd", "manifest");
+
+        assertEquals(Collections.singletonList("Download any story (player sources): invoked 1, 0 found, 1 missing. "
+                + "First missing: field " + ParamsWithoutSource.class.getName()
+                + "#com.facebook.video.engine.api.VideoDataSource"), HookStatus.report());
+    }
+
+    /** Player params with the video's id and no field for its source. */
+    static final class ParamsWithoutSource {
+        final String videoId;
+
+        ParamsWithoutSource(String videoId) {
+            this.videoId = videoId;
+        }
+    }
+
     @Test
     public void aPlayerIsRecordedOnlyWhileStorySavesAreOn() {
         Settings.DOWNLOAD_STORIES.save(true);
