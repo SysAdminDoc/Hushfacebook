@@ -27,6 +27,7 @@ import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstructio
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction31t;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction35c;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutablePackedSwitchPayload;
+import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableSparseSwitchPayload;
 import com.android.tools.smali.dexlib2.immutable.instruction.ImmutableSwitchElement;
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableFieldReference;
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference;
@@ -202,6 +203,42 @@ public class BadDexFixture {
                 op(Opcode.NOP),                                            // 9, aligns the payload
                 new ImmutablePackedSwitchPayload(Collections.singletonList( // 10
                         new ImmutableSwitchElement(0, 4)))));
+    }
+
+    /**
+     * switchHost filling an int array, whose fill-array-data payload sits at 10, with case 0 sent
+     * to that payload instead of an instruction.
+     */
+    private static Method switchToArrayPayload() {
+        return define(HOST, "switchHost", "I", true, body(2,
+                new ImmutableInstruction31t(Opcode.PACKED_SWITCH, 1, 16),         // 0 -> 16
+                new ImmutableInstruction22c(Opcode.NEW_ARRAY, 0, 1, INT_ARRAY),    // 3
+                new ImmutableInstruction31t(Opcode.FILL_ARRAY_DATA, 0, 5),         // 5 -> 10
+                op(Opcode.RETURN, 1),                                              // 8
+                op(Opcode.NOP),                                                    // 9, aligns the payloads
+                oneInt(),                                                          // 10
+                new ImmutablePackedSwitchPayload(Collections.singletonList(        // 16
+                        new ImmutableSwitchElement(0, 10)))), "I");
+    }
+
+    /** switchHost as a sparse switch, its one case sent to its own payload at 4. */
+    private static Method sparseSwitchToOwnPayload() {
+        return define(HOST, "switchHost", "I", true, body(2,
+                new ImmutableInstruction31t(Opcode.SPARSE_SWITCH, 1, 4),           // 0 -> 4
+                op(Opcode.RETURN, 1),                                              // 3
+                new ImmutableSparseSwitchPayload(Collections.singletonList(        // 4
+                        new ImmutableSwitchElement(7, 4)))), "I");
+    }
+
+    /** tryHost filling an int array, with the handler at its fill-array-data payload at 10. */
+    private static Method tryHandlerAtArrayPayload() {
+        return define(HOST, "tryHost", "V", true, body(1, Collections.singletonList(tryBlock(0, 3, 10)),
+                invoke(RISKY),                                                     // 0
+                op(Opcode.MOVE_RESULT, 0),                                         // 3
+                new ImmutableInstruction22c(Opcode.NEW_ARRAY, 0, 0, INT_ARRAY),    // 4
+                new ImmutableInstruction31t(Opcode.FILL_ARRAY_DATA, 0, 4),         // 6 -> 10
+                op(Opcode.RETURN_VOID),                                            // 9
+                oneInt()));                                                        // 10
     }
 
     /** tryHost with its handler moved to the top: the move-exception is the method's first instruction. */
@@ -484,6 +521,20 @@ public class BadDexFixture {
         // branch: the no-case path jumps into the switch's payload.
         dexes.put("bad-goto-to-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
                 switchHost(7, new ImmutableInstruction10t(Opcode.GOTO, 6)), tryHost(CLEAN_TRY)));
+        // branch: a goto sent to a fill-array-data payload instead of the return before it.
+        dexes.put("bad-goto-to-array-payload", withStaticHost(body(5,
+                new ImmutableInstruction11n(Opcode.CONST_4, 1, 1),                                 // 0
+                new ImmutableInstruction22c(Opcode.NEW_ARRAY, 0, 1, INT_ARRAY),                    // 1
+                new ImmutableInstruction31t(Opcode.FILL_ARRAY_DATA, 0, 5),                         // 3 -> 8
+                new ImmutableInstruction10t(Opcode.GOTO, 2),                                       // 6 -> 8
+                op(Opcode.RETURN_VOID),                                                            // 7
+                oneInt())));                                                                       // 8
+        // branch: a switch case sent to a fill-array-data payload.
+        dexes.put("bad-switch-to-array-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                switchToArrayPayload(), tryHost(CLEAN_TRY)));
+        // branch: a sparse switch's case sent to its own payload.
+        dexes.put("bad-sparse-case-to-payload", patched(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST),
+                sparseSwitchToOwnPayload(), tryHost(CLEAN_TRY)));
         // invoke: one register for a callee that takes two.
         dexes.put("bad-invoke-count", withStaticHost(body(3,
                 invoke(INSPECT, 0), invoke(WIDE, 1, 2), op(Opcode.RETURN_VOID))));
@@ -605,6 +656,8 @@ public class BadDexFixture {
         dexes.put("bad-try-handler-result", withTry(tryBlock(0, 3, 3)));
         // try: the handler starts at a switch payload.
         dexes.put("bad-try-handler-payload", withTryHost(tryHandlerAtPayload()));
+        // try: the handler starts at a fill-array-data payload.
+        dexes.put("bad-try-handler-array-payload", withTryHost(tryHandlerAtArrayPayload()));
         // try: the handler's move-exception is the method's first instruction, which the entry reaches.
         dexes.put("bad-move-exception-entry", withTryHost(moveExceptionAtEntry()));
         // contract: two guards stacked on the feed method.
