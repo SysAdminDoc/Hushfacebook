@@ -6,9 +6,14 @@ package app.morphe.extension.facebook.settings;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.view.View;
+import android.widget.TextView;
+
+import java.util.ArrayList;
 
 import app.morphe.extension.shared.SettingsContextRule;
 
@@ -64,9 +69,10 @@ public class SettingsEntryTest {
     }
 
     /**
-     * The two ways a person leaves the screen have to tell the entry so, or the screen follows its
-     * host to the next Facebook screen as if nobody had closed it. The request is still inside its
-     * window here, so a close the entry didn't hear about would reopen it.
+     * The three ways a person leaves the screen (the title bar's arrow, the Back key and Back on the
+     * recovery page) have to tell the entry so, or the screen follows its host to the next Facebook
+     * screen as if nobody had closed it. The request is still inside its window here, so a close
+     * the entry didn't hear about would reopen it.
      */
     @Test public void backOnTheRecoveryPageKeepsTheScreenClosedWhenItsHostGoesAway() {
         HushfacebookPreferenceFragment.failNextInitialization = new IllegalStateException("injected");
@@ -91,6 +97,26 @@ public class SettingsEntryTest {
         ActivityController<Activity> loggedOut = replace(login);
 
         assertNull("the screen came back after the person closed it with the Back key", dialogOver(loggedOut.get()));
+    }
+
+    /** The arrow dismisses rather than cancels, so it has to tell the entry itself. */
+    @Test public void theTitleBarArrowKeepsTheScreenClosedWhenItsHostGoesAway() {
+        ActivityController<Activity> login = openedOverNewActivity();
+        SettingsDialog dialog = (SettingsDialog) dialogOver(login.get());
+        ArrayList<View> labelled = new ArrayList<>();
+        dialog.getView().findViewsWithText(labelled, "Back", View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION);
+        View arrow = null;
+        for (View view : labelled) {
+            if (view instanceof TextView && "←".contentEquals(((TextView) view).getText())) arrow = view;
+        }
+        assertNotNull("no arrow in the title bar among " + labelled, arrow);
+
+        assertTrue("the arrow didn't take the tap", arrow.performClick());
+        ShadowLooper.idleMainLooper();
+        assertNull("the arrow left the screen open", dialogOver(login.get()));
+        ActivityController<Activity> loggedOut = replace(login);
+
+        assertNull("the screen came back after the person closed it with the arrow", dialogOver(loggedOut.get()));
     }
 
     @SuppressWarnings("deprecation")
