@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/SysAdminDoc/Hushfacebook/blob/main/scripts/fingerprint-signature.schema.json",
+  "title": "Hushfacebook fingerprint signature",
+  "description": "What scripts/FingerprintCandidates.java captures about one method of a Facebook build, so it can rank the methods of a later build as that method's replacement. Everything here survives a Redex rebuild or is marked as a name that doesn't. The tool writes exactly these properties and refuses a file of another schema or version.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "source", "method", "strings", "literals", "references", "context", "opcodes", "callers"],
+  "properties": {
+    "schema": {
+      "const": "hushfacebook-fingerprint-signature"
+    },
+    "version": {
+      "description": "Bumped when a property's meaning changes. A signature of another version is refused rather than read the new way.",
+      "const": 1
+    },
+    "source": {
+      "description": "The build the method was captured from.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["apk", "sha256"],
+      "properties": {
+        "apk": { "type": "string" },
+        "sha256": {
+          "description": "The APK's SHA-256. Empty when the signature was captured in memory, as calibration does.",
+          "type": "string",
+          "pattern": "^([0-9a-f]{64})?$"
+        }
+      }
+    },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["descriptor", "definingClass", "name", "classKept", "nameKept", "access", "prototype", "returnType", "parameters", "instructions", "registers"],
+      "properties": {
+        "descriptor": {
+          "description": "The method as that build names it, obfuscated names and all. Kept for the report; it is never matched.",
+          "type": "string",
+          "pattern": "^\\[*L[^;]+;->[^(]+\\(.*\\).+$"
+        },
+        "definingClass": { "type": "string" },
+        "name": { "type": "string" },
+        "classKept": {
+          "description": "False when Redex renamed the class into package X.",
+          "type": "boolean"
+        },
+        "nameKept": {
+          "description": "False when the name has the shape Redex gives, an upper-case letter and two more.",
+          "type": "boolean"
+        },
+        "access": {
+          "description": "The dex access flags.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "prototype": {
+          "description": "Parameter and return types with every obfuscated class written LX;, as (LX;I)J.",
+          "type": "string",
+          "pattern": "^\\(.*\\).+$"
+        },
+        "returnType": { "type": "string" },
+        "parameters": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "instructions": { "type": "integer", "minimum": 0 },
+        "registers": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "strings": {
+      "description": "Every string the method loads, once each.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "literals": {
+      "description": "N: a narrow literal of 256 or more, resource ids left out. W: a wide literal. WA: and WB: the two MobileConfig id families with their version and slot bytes masked.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^(N|W|WA|WB):" }
+    },
+    "references": {
+      "description": "M: a method call and F: a field access, obfuscated classes written X and obfuscated names ?. T: a kept type the method names. C: a kept class it touches.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^(M|F|T|C):" }
+    },
+    "context": {
+      "description": "The defining class. K: its name when kept. KR: the name Redex left in its __redex_internal_original_name. KS: its nearest kept superclass. KI: a kept interface. KC: a stable sample of its strings.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^(K|KR|KS|KI|KC):" }
+    },
+    "opcodes": {
+      "description": "Each instruction's opcode family, in order, with the width suffix taken off (const/4 is const).",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "callers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "tokens"],
+      "properties": {
+        "count": {
+          "description": "Methods calling this one, directly or through a supertype.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "tokens": {
+          "description": "What the first 400 callers hold: their strings (S:), class context tokens, kept names (NM:) and prototypes (PR:).",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

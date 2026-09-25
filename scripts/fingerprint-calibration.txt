@@ -1,0 +1,277 @@
+# Calibration cases for FingerprintCandidates.java: where each patch's target went between
+# Facebook 577.0.0.50.72 and 580.0.0.51.74 (arm64-v8a, base.apk of each APKMirror bundle).
+#
+# Every case is a transition the patches already resolve on both builds. "old" is the method on 577
+# and "new" the one on 580, as the patcher resolved them. Where a patch changes the method, the pair
+# comes from DexDiff over verify-all-patches' output for each build (the method whose body gained
+# the patch's code). Where a patch only reads the method, the pair comes from the fingerprint's own
+# rule, applied to each build. test-fingerprint-candidates.ps1 holds the tool to ranking every
+# "new" method in the top five, given only the "old" one.
+#
+# These names are one build's inventions, written down as calibration data. A patch never names one:
+# ObfuscatedIdentityTest fails on that.
+#
+# One block per case: case <id>, then patch, role, old, new and one or more evidence lines.
+
+case feed-add-new-edge
+  patch Hide sponsored posts
+  role The feed collection's add method, where the one feed guard goes. Its name is kept; its class isn't.
+  old LX/1lD;->addNewEdgeToCollection(Lcom/google/common/collect/ImmutableList$Builder;Lcom/facebook/graphql/model/GraphQLFeedUnitEdge;LX/1lR;)Z
+  new LX/1oG;->addNewEdgeToCollection(Lcom/google/common/collect/ImmutableList$Builder;Lcom/facebook/graphql/model/GraphQLFeedUnitEdge;LX/1SO;)Z
+  evidence DexDiff on both patched builds: the only method calling FeedFilter.hideEdge (the mutation contract's one call site).
+
+case feed-story-category
+  patch Hide sponsored posts
+  role The edge's story-category getter, which the feed guard calls.
+  old Lcom/facebook/graphql/model/GraphQLFeedUnitEdge;->B8f()Lcom/crossapp/graphql/facebook/enums/GraphQLFeedStoryCategory;
+  new Lcom/facebook/graphql/model/GraphQLFeedUnitEdge;->B6W()Lcom/crossapp/graphql/facebook/enums/GraphQLFeedStoryCategory;
+  evidence DexDiff on both patched builds: the guard injected into addNewEdgeToCollection invokes it.
+
+case feed-unit-inflate
+  patch Hide sponsored posts
+  role The edge's feed-unit getter that inflates the unit, picked by its inflateFeedUnit literal.
+  old Lcom/facebook/graphql/model/GraphQLFeedUnitEdge;->BQd()LX/2LO;
+  new Lcom/facebook/graphql/model/GraphQLFeedUnitEdge;->BOq()LX/3Te;
+  evidence DexDiff on both patched builds: the guard injected into addNewEdgeToCollection invokes it.
+  evidence On each build it is the one zero-argument edge method holding "inflateFeedUnit".
+
+case reels-insert-ads
+  patch Hide sponsored reels
+  role VideoHomeDataControllerImpl.maybeInsertAds, which splices a page of ads in.
+  old LX/50Q;->Cwp(LX/9aJ;I)V
+  new LX/4VK;->CxV(LX/6iZ;I)V
+  evidence DexDiff on both patched builds: return-void at its start.
+  evidence On each build the one method holding "VideoHomeDataControllerImpl.maybeInsertAds".
+
+case reels-realtime-insert
+  patch Hide sponsored reels
+  role The realtime-intent ad insert.
+  old LX/54e;->A02(LX/BBT;LX/5LS;LX/54e;LX/53B;LX/BCS;IZ)V
+  new LX/4ZQ;->A03(LX/APi;LX/5PU;LX/4ZQ;LX/4Xt;LX/BDI;IZ)V
+  evidence DexDiff on both patched builds: return-void at its start.
+  evidence On each build the one method holding "VideoHomeDataControllerAdsUtil.maybeInsertFbShortsRealtimeIntentItem".
+
+case reels-sfd-insert
+  patch Hide sponsored reels
+  role The task that inserts an SFD ad.
+  old LX/6S7;->run()V
+  new LX/6Xp;->run()V
+  evidence DexDiff on both patched builds: return-void at its start.
+  evidence On each build the one method holding "VideoHomeDataControllerSfdAdsUtil".
+
+case reels-poe-render
+  patch Hide sponsored reels
+  role The task that renders a POE ad, known only by the name Redex left on its class.
+  old LX/6SZ;->run()V
+  new LX/6YI;->run()V
+  evidence DexDiff on both patched builds: return-void at its start.
+  evidence On each build the run() of the class whose __redex_internal_original_name is VideoHomeDataControllerPoeAdsUtil$renderPoeItemToUiBuffer$1.
+
+case reels-insert-page
+  patch Hide sponsored reels
+  role The item collection's method that puts a page into the backing list.
+  old LX/53B;->A04(ILjava/util/Collection;)Z
+  new LX/4Xt;->A04(ILjava/util/Collection;)Z
+  evidence DexDiff on both patched builds: its page goes through ReelsAdFilter.withoutAds.
+
+case reels-announce-page
+  patch Hide sponsored reels
+  role The item collection's listener walk over a new page.
+  old LX/53B;->A03(LX/53B;Ljava/util/Collection;)V
+  new LX/4Xt;->A03(LX/4Xt;Ljava/util/Collection;)V
+  evidence DexDiff on both patched builds: its page goes through ReelsAdFilter.withoutAds.
+
+case reels-add-page
+  patch Hide sponsored reels
+  role The controller's method taking a page of fetched sections.
+  old LX/50Q;->A0J(Ljava/util/List;)Z
+  new LX/4VK;->A0O(Ljava/util/List;)Z
+  evidence DexDiff on both patched builds: its sections go through ReelsAdFilter.withoutAdSections.
+
+case reels-ad-break-fetch
+  patch Hide sponsored reels
+  role The shared ad-break fetch. The patch only reads it, for the two calls before its log literals.
+  old LX/SQq;->A02(LX/SRC;LX/3zW;LX/V9M;LX/7ej;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIJZZZ)V
+  new LX/i3d;->A02(LX/jA8;LX/3zh;LX/Uxs;LX/6uh;Ljava/lang/Boolean;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIJZZZ)V
+  evidence On each build the one method holding both "Kicking off banner ads fetch" and "Kicking off video ad fetch".
+
+case reels-banner-helper
+  patch Hide sponsored reels
+  role The banner ad query helper: the last future-returning call before the banner log literal.
+  old LX/9ft;->A07(LX/6i0;Lcom/facebook/auth/usersession/FbUserSession;LX/1vP;Lcom/facebook/video/common/playerorigin/PlayerOrigin;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Double;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/google/common/util/concurrent/ListenableFuture;
+  new LX/70z;->A07(LX/6vA;Lcom/facebook/auth/usersession/FbUserSession;LX/1Vh;Lcom/facebook/video/common/playerorigin/PlayerOrigin;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Double;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/google/common/util/concurrent/ListenableFuture;
+  evidence DexDiff on both patched builds: it returns the patch's failedAdFetch future first.
+
+case reels-video-ad-query
+  patch Hide sponsored reels
+  role The ad-break server API's query that takes the long list of flags and timestamps.
+  old LX/6lf;->A02(LX/6i0;LX/6hy;LX/6lh;Lcom/facebook/auth/usersession/FbUserSession;LX/1vP;Lcom/facebook/video/common/playerorigin/PlayerOrigin;LX/56N;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;IIIJJJJJJJZZZZZZZ)Lcom/google/common/util/concurrent/ListenableFuture;
+  new LX/74K;->A02(LX/6vA;LX/6v8;LX/74M;Lcom/facebook/auth/usersession/FbUserSession;LX/1Vh;Lcom/facebook/video/common/playerorigin/PlayerOrigin;LX/5CF;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;IIIJJJJJJJZZZZZZZ)Lcom/google/common/util/concurrent/ListenableFuture;
+  evidence DexDiff on both patched builds: it returns the patch's failedAdFetch future first.
+
+case reels-video-ad-query-short
+  patch Hide sponsored reels
+  role The ad-break server API's other query, with the shorter parameter list.
+  old LX/6lf;->A03(LX/6lh;Lcom/facebook/auth/usersession/FbUserSession;Lcom/facebook/video/common/playerorigin/PlayerOrigin;LX/56N;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIIIIZZZ)Lcom/google/common/util/concurrent/ListenableFuture;
+  new LX/74K;->A03(LX/74M;Lcom/facebook/auth/usersession/FbUserSession;Lcom/facebook/video/common/playerorigin/PlayerOrigin;LX/5CF;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIIIIZZZ)Lcom/google/common/util/concurrent/ListenableFuture;
+  evidence DexDiff on both patched builds: it returns the patch's failedAdFetch future first.
+
+case reels-idle-video-query
+  patch Hide sponsored reels
+  role The idle ad state's own video ad query, whose executor call the patch replaces.
+  old LX/7ez;->A0B(Lcom/facebook/auth/usersession/FbUserSession;LX/7ej;I)V
+  new LX/7z3;->A0A(Lcom/facebook/auth/usersession/FbUserSession;LX/6uh;I)V
+  evidence DexDiff on both patched builds: its executor call became a call to failedAdFetch.
+  evidence On each build the one void method holding "FBFetchReelsVideoAdsQuery".
+
+case reels-state-name
+  patch Hide sponsored reels
+  role The method naming the ad-break states. It moved up: on 577 it sits in the deferred-card state's parent and names three states; on 580 it sits in the abstract base and names every one.
+  old LX/7f5;->A0k()Ljava/lang/String;
+  new LX/9IF;->A0e()Ljava/lang/String;
+  evidence On each build the one no-argument method returning String that holds "UnresolvedWithDeferredCardState".
+
+case reels-ad-break-tick
+  patch Hide sponsored reels
+  role The ad-break lookup's poller tick, in the parent the deferred-card state shares with its siblings.
+  old LX/7f5;->A0g(LX/7ej;I)J
+  new LX/7z9;->A0a(LX/6uh;I)J
+  evidence DexDiff on both patched builds: it gained the instance-of guard answering -1 for the deferred-card state (LX/7fD; on 577, LX/7zI; on 580).
+
+case stories-clash-resolver
+  patch Hide sponsored stories
+  role The inorganic clash resolver among the story bucket sources.
+  old LX/awi;->B5t(Lcom/facebook/auth/usersession/FbUserSession;LX/9uu;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  new LX/XE5;->B3k(Lcom/facebook/auth/usersession/FbUserSession;LX/AjB;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  evidence DexDiff on both patched builds: it asks FeedFilter.hideSponsoredStories first.
+  evidence On each build the one ImmutableList method holding "handling_inorganic_clash".
+
+case stories-ad-bucket-source
+  patch Hide sponsored stories
+  role The main ad bucket source.
+  old LX/Apf;->B5t(Lcom/facebook/auth/usersession/FbUserSession;LX/9uu;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  new LX/APR;->B3k(Lcom/facebook/auth/usersession/FbUserSession;LX/AjB;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  evidence DexDiff on both patched builds: it asks FeedFilter.hideSponsoredStories first.
+  evidence On each build the one ImmutableList method holding "uninsertedMainAdsQueue".
+
+case stories-paginating-inserter
+  patch Hide sponsored stories
+  role The paginating static ad bucket inserter.
+  old LX/gq4;->B5t(Lcom/facebook/auth/usersession/FbUserSession;LX/9uu;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  new LX/XM1;->B3k(Lcom/facebook/auth/usersession/FbUserSession;LX/AjB;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  evidence DexDiff on both patched builds: it asks FeedFilter.hideSponsoredStories first.
+  evidence On each build the one method holding "AdPaginatingBucketStaticInsertionDataSource.getBuckets".
+
+case stories-mid-card
+  patch Hide sponsored stories
+  role The story viewer's mid-card ad source.
+  old LX/A2v;->B5t(Lcom/facebook/auth/usersession/FbUserSession;LX/9uu;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  new LX/Amr;->B3k(Lcom/facebook/auth/usersession/FbUserSession;LX/AjB;Lcom/google/common/collect/ImmutableList;)Lcom/google/common/collect/ImmutableList;
+  evidence DexDiff on both patched builds: it asks FeedFilter.hideSponsoredStories first.
+  evidence On each build the one method holding "StoryViewerMidCardDataSource.getBuckets".
+
+case story-save-action
+  patch Download any story
+  role The tap handler of the story menu's save action, found by the event it reports.
+  old LX/agk;->Dy7(LX/a9v;)V
+  new LX/X5S;->E0G(LX/Wkb;)V
+  evidence DexDiff on both patched builds: it calls MediaDownload.saveStory first.
+  evidence On each build the one-parameter void method holding "save_story_attempted".
+
+case story-menu-builder
+  patch Download any story
+  role The story viewer's More menu builder that creates the save action.
+  old Lcom/facebook/stories/viewer/ui/buckets/regular/topbar/menu/StoryViewerMoreButtonCallback;->A0A(Lcom/facebook/auth/usersession/FbUserSession;LX/3Ht;LX/V6F;Lcom/google/common/collect/ImmutableList$Builder;)V
+  new Lcom/facebook/stories/viewer/ui/buckets/regular/topbar/menu/StoryViewerMoreButtonCallback;->A09(Lcom/facebook/auth/usersession/FbUserSession;LX/3MF;LX/CtQ;Lcom/google/common/collect/ImmutableList$Builder;)V
+  evidence DexDiff on both patched builds: its capability check's answer goes through MediaDownload.offersSave.
+
+case story-source-dump
+  patch Download any story
+  role The player source's debug dump, which gives the real field names.
+  old Lcom/facebook/video/engine/api/VideoDataSource;->EVr(LX/2O4;)V
+  new Lcom/facebook/video/engine/api/VideoDataSource;->EYb(LX/2NS;)V
+  evidence On each build the one VideoDataSource method holding "videoHdUri".
+
+case story-params-dump
+  patch Download any story
+  role The player params' debug dump, which gives the video id field's name.
+  old Lcom/facebook/video/engine/api/VideoPlayerParams;->EVr(LX/2O4;)V
+  new Lcom/facebook/video/engine/api/VideoPlayerParams;->EYb(LX/2NS;)V
+  evidence On each build the one VideoPlayerParams method holding "videoId".
+
+case story-player-params-init
+  patch Download any story
+  role A player params constructor taking a builder, where each player's source is recorded. A control: its class and name are kept.
+  old Lcom/facebook/video/engine/api/VideoPlayerParams;-><init>(LX/4pL;)V
+  new Lcom/facebook/video/engine/api/VideoPlayerParams;-><init>(LX/520;)V
+  evidence DexDiff on both patched builds: its return goes through hushfacebookRememberSource.
+
+case reel-sidebar-builder
+  patch Download any reel
+  role The reel sidebar builder, which names UDDSideBarComponent and builds its buttons.
+  old LX/AyH;->A1N(LX/3Sr;)LX/3S3;
+  new LX/AwH;->A1F(LX/3Qd;)LX/3Q5;
+  evidence DexDiff on both patched builds: the only method calling the patch's hushfacebookDownloadButton.
+
+case reel-button-factory
+  patch Download any reel
+  role The sidebar's button factory. 580 takes one more boolean than 577, a trailing experiment flag.
+  old LX/2Ui;->A00(Lcom/facebook/auth/usersession/FbUserSession;LX/22J;LX/2wz;LX/2Rb;LX/2Rb;LX/Ca5;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;IZZZ)LX/B2s;
+  new LX/2Vv;->A00(Lcom/facebook/auth/usersession/FbUserSession;LX/1YI;LX/2qH;LX/2lk;LX/2lk;LX/CZJ;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;IZZZZ)LX/Azi;
+  evidence The patched builds: the added hushfacebookDownloadButton helper calls it with invoke-static/range, 19 registers on 577 and 20 on 580.
+
+case amoled-dark-scheme
+  patch AMOLED black theme
+  role The Mig dark scheme's colour resolver.
+  old Lcom/facebook/mig/scheme/schemes/DarkColorScheme;->EYJ(LX/G4l;)I
+  new Lcom/facebook/mig/scheme/schemes/DarkColorScheme;->Eb2(LX/GIc;)I
+  evidence DexDiff on both patched builds: its return goes through AmoledTheme.apply.
+
+case amoled-fds-context-resolver
+  patch AMOLED black theme
+  role The FDSColors resolver taking a Context, unchanged in shape.
+  old Lcom/facebook/fds/core/theme/component/FDSColors;->A0A(Landroid/content/Context;LX/1s9;LX/279;)I
+  new Lcom/facebook/fds/core/theme/component/FDSColors;->A0A(Landroid/content/Context;LX/1zN;LX/25I;)I
+  evidence DexDiff on both patched builds: its returns go through AmoledTheme.apply.
+
+case amoled-fds-litho-resolver
+  patch AMOLED black theme
+  role The FDSColors resolver for Litho, which split in two on 580: A0C(token, LX/3Qd;)I keeps its shape as a thin wrapper, and the colour work moved into a second resolver taking a Context. The patch hooks that one.
+  old Lcom/facebook/fds/core/theme/component/FDSColors;->A0B(LX/1s9;LX/3Sr;)I
+  new Lcom/facebook/fds/core/theme/component/FDSColors;->A0B(Landroid/content/Context;LX/1zN;LX/25G;)I
+  evidence DexDiff on both patched builds: its returns go through AmoledTheme.apply (577's A0B, 580's new A0B).
+
+case amoled-fds-scheme-wrapper
+  patch AMOLED black theme
+  role FdsColorScheme's step to the view resolver. The patch only reads it, for the resolver's descriptor.
+  old Lcom/facebook/mig/scheme/schemes/fds/FdsColorScheme;->A00(LX/Djq;)I
+  new Lcom/facebook/mig/scheme/schemes/fds/FdsColorScheme;->A00(LX/Dqx;)I
+  evidence On each build the one FdsColorScheme method returning int from one parameter that reads its Context field and calls a static int resolver.
+
+case amoled-view-resolver
+  patch AMOLED black theme
+  role The FDS colour resolver for the view code, which has a Redex name and no literal.
+  old LX/1tK;->A01(Landroid/content/Context;LX/1s9;)I
+  new LX/20h;->A01(Landroid/content/Context;LX/1zN;)I
+  evidence DexDiff on both patched builds: its returns go through AmoledTheme.apply.
+
+case trust-package-signers
+  patch Restore screens on re-signed builds
+  role The method handing Facebook's security code a package's signers.
+  old LX/0Hj;->A00()LX/0Hr;
+  new LX/0Ll;->A00()LX/0H8;
+  evidence DexDiff on both patched builds: it asks FacebookSignature.originalSigners first.
+
+case extension-application-oncreate
+  patch Hushfacebook settings
+  role The application's onCreate. A control: its class and name are kept.
+  old Lcom/facebook/katana/app/FacebookApplication;->onCreate()V
+  new Lcom/facebook/katana/app/FacebookApplication;->onCreate()V
+  evidence DexDiff on both patched builds: it calls the extension's setContext and SettingsEntry.onApplicationCreate.
+
+case browser-lite-oncreate
+  patch Open links in external browser
+  role The newer in-app browser's onCreate. A control: its class and name are kept.
+  old Lcom/facebook/browser/litev2/lite/BrowserLiteDIActivity;->onCreate(Landroid/os/Bundle;)V
+  new Lcom/facebook/browser/litev2/lite/BrowserLiteDIActivity;->onCreate(Landroid/os/Bundle;)V
+  evidence DexDiff on both patched builds: it calls ExternalBrowser.redirect after its super call.
