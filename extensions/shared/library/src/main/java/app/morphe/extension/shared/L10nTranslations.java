@@ -243,8 +243,8 @@ public final class L10nTranslations {
                 "Hushfacebook pausieren");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Beitr\u00e4ge, die Facebook als beworben statt als Anzeige einstuft.");
-        table.put("Posts from people and pages you don't follow that Facebook slips into your feed.",
-                "Beitr\u00e4ge von Personen und Seiten, denen du nicht folgst, die Facebook in deinen Feed schiebt.");
+        table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
+                "Beitr\u00e4ge von Personen und Seiten, denen du nicht folgst, und aus Gruppen, denen du nicht beigetreten bist, die Facebook in deinen Feed schiebt.");
         table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
                 "Beitr\u00e4ge, die Facebooks eigene Erkennung als mit KI erstellt markiert hat. Hat nur die Person, die einen Beitrag geteilt hat, ihn als KI gekennzeichnet, bleibt er sichtbar. Dieser Schalter ist anfangs aus, weil er noch nicht in einem echten Feed ausprobiert wurde.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
@@ -578,8 +578,8 @@ public final class L10nTranslations {
                 "Pausar Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Publicaciones que Facebook clasifica como promociones y no como anuncios.");
-        table.put("Posts from people and pages you don't follow that Facebook slips into your feed.",
-                "Publicaciones de personas y p\u00e1ginas que no sigues que Facebook mete en tu feed.");
+        table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
+                "Publicaciones de personas y p\u00e1ginas que no sigues y de grupos a los que no te has unido que Facebook mete en tu feed.");
         table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
                 "Publicaciones que la propia detecci\u00f3n de Facebook marc\u00f3 como creadas con IA. Las que solo etiquet\u00f3 como IA quien las comparti\u00f3 se quedan. Este interruptor empieza desactivado porque todav\u00eda no se ha probado en un feed real.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
@@ -913,8 +913,8 @@ public final class L10nTranslations {
                 "Jeda Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.");
-        table.put("Posts from people and pages you don't follow that Facebook slips into your feed.",
-                "Postingan dari orang dan Halaman yang tidak Anda ikuti yang diselipkan Facebook ke Kabar Beranda Anda.");
+        table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
+                "Postingan dari orang dan Halaman yang tidak Anda ikuti serta dari grup tempat Anda belum bergabung, yang diselipkan Facebook ke Kabar Beranda Anda.");
         table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
                 "Postingan yang ditandai oleh deteksi Facebook sendiri sebagai buatan AI. Postingan yang diberi label AI hanya oleh orang yang membagikannya tetap ditampilkan. Sakelar ini awalnya nonaktif karena belum pernah dicoba di Kabar Beranda sungguhan.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
@@ -1248,8 +1248,8 @@ public final class L10nTranslations {
                 "Pausar o Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Posts que o Facebook classifica como promo\u00e7\u00f5es, e n\u00e3o como an\u00fancios.");
-        table.put("Posts from people and pages you don't follow that Facebook slips into your feed.",
-                "Publica\u00e7\u00f5es de pessoas e P\u00e1ginas que voc\u00ea n\u00e3o segue e que o Facebook coloca no seu feed.");
+        table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
+                "Publica\u00e7\u00f5es de pessoas e P\u00e1ginas que voc\u00ea n\u00e3o segue e de grupos dos quais voc\u00ea n\u00e3o participa, que o Facebook coloca no seu feed.");
         table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
                 "Posts que a pr\u00f3pria detec\u00e7\u00e3o do Facebook marcou como feitos com IA. Um post que s\u00f3 quem compartilhou marcou como IA continua aparecendo. Esta op\u00e7\u00e3o come\u00e7a desligada porque ainda n\u00e3o foi testada em um feed de verdade.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
@@ -1583,8 +1583,8 @@ public final class L10nTranslations {
                 "Hushfacebook'u duraklat");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Facebook'un reklam yerine tan\u0131t\u0131m olarak sayd\u0131\u011f\u0131 g\u00f6nderiler.");
-        table.put("Posts from people and pages you don't follow that Facebook slips into your feed.",
-                "Takip etmedi\u011fin ki\u015fi ve sayfalardan Facebook'un ak\u0131\u015f\u0131na katt\u0131\u011f\u0131 g\u00f6nderiler.");
+        table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
+                "Takip etmedi\u011fin ki\u015fi ve sayfalardan ve kat\u0131lmad\u0131\u011f\u0131n gruplardan Facebook'un ak\u0131\u015f\u0131na katt\u0131\u011f\u0131 g\u00f6nderiler.");
         table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
                 "Facebook'un kendi tespitinin yapay zek\u00e2 ile \u00fcretilmi\u015f diye i\u015faretledi\u011fi g\u00f6nderiler. Yapay zek\u00e2 etiketini yaln\u0131zca payla\u015fan ki\u015finin ekledi\u011fi g\u00f6nderiler kal\u0131r. Bu anahtar hen\u00fcz ger\u00e7ek bir ak\u0131\u015fta denenmedi\u011fi i\u00e7in kapal\u0131 ba\u015flar.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",

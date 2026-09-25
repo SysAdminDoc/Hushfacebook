@@ -156,7 +156,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                         L10n.t("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.")));
                 feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_FOR_YOU,
                         L10n.t("Hide \"Suggested for you\" posts"),
-                        L10n.t("Posts from people and pages you don't follow that Facebook slips into your feed.")));
+                        L10n.t("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.")));
                 feed.addPreference(toggle(context, Settings.HIDE_PEOPLE_YOU_MAY_KNOW,
                         L10n.t("Hide \"People you may know\""),
                         L10n.t("The row of friend suggestions between posts.")));
