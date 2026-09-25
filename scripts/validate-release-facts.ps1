@@ -622,9 +622,40 @@ $catalogText = Get-Content -LiteralPath $catalogPath -Raw
 $workingToolchain = Read-CatalogToolchain -Text $catalogText -Source 'gradle/libs.versions.toml'
 $pinnedPatcher = $workingToolchain.PatcherVersion
 $managerFloor = $workingToolchain.ManagerFloor
-$managerFloorPattern = "\bMorphe Manager\s+$([regex]::Escape($managerFloor))\s+or newer\b"
-Require-Match -Text $readme -Pattern $managerFloorPattern -Description 'README Manager floor'
+# The README names the floor three times: the badge's picture, its alt text, and the install step,
+# where a link sits between "Morphe Manager" and the version. A pattern over the words alone was
+# satisfied by the alt text, so an install step still naming the old floor passed. Every copy has
+# to name this floor, and none of the three may go missing.
+$floorText = [regex]::Escape($managerFloor)
+$staleFloors = @([regex]::Matches($readme, '\bMorphe Manager(?:\]\([^)\s]*\))?\s+(\d+(?:\.\d+)+)\s+or newer\b') |
+    ForEach-Object { $_.Groups[1].Value } | Where-Object { $_ -ne $managerFloor } | Select-Object -Unique)
+if ($staleFloors.Count -gt 0) {
+    throw ("README names Morphe Manager $($staleFloors -join ', ') or newer, but patcher $pinnedPatcher " +
+        "needs $managerFloor, which the catalog pins.")
+}
+Require-Match -Text $readme -Pattern "alt=`"For Morphe Manager $floorText or newer`"" -Description 'README badge alt Manager floor'
+Require-Match -Text $readme -Pattern "Morphe%20Manager%20$floorText%2B" -Description 'README badge Manager floor'
+Require-Match -Text $readme -Pattern "(?m)^\d+\.\s+Install \[Morphe Manager\]\([^)\s]+\)\s+$floorText\s+or newer\b" `
+    -Description 'README install step Manager floor'
 Write-Host "[release] README requires Morphe Manager $managerFloor or newer for patcher $pinnedPatcher"
+
+# The index description names a floor too, and it's what Manager users read before they install.
+# It describes the published release, which needs the floor that release's own commit pinned, not
+# the one pinned since, so it's held to the catalog at the release tag. Nothing read it before.
+$descriptionFloorMatch = [regex]::Match([string]$bundle.description, '\bMorphe Manager\s+(\d+(?:\.\d+)+)\s+or newer\b')
+if (-not $descriptionFloorMatch.Success) {
+    throw 'The bundle description does not say which Morphe Manager it needs ("Morphe Manager X or newer").'
+}
+$descriptionFloor = $descriptionFloorMatch.Groups[1].Value
+$indexFloor = Resolve-IndexManagerFloor -Root $rootPath -Version $publishedVersion
+if ($null -eq $indexFloor.Floor) {
+    Write-Host "[release] $($indexFloor.Note)"
+} elseif ($descriptionFloor -ne $indexFloor.Floor) {
+    throw ("The bundle description asks for Morphe Manager $descriptionFloor or newer, but $($indexFloor.Source) " +
+        "pins $($indexFloor.Floor), so Manager users would be told the wrong version.")
+} else {
+    Write-Host "[release] the index asks for Morphe Manager $descriptionFloor or newer, as $($indexFloor.Source) pins"
+}
 
 # The bug form's placeholders are what a reporter copies when unsure what to write, and they had
 # drifted a long way on Hushfeed, where this check comes from (TikTok 46.2.3, Manager 1.29.0 and

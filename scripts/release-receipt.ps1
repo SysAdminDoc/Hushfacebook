@@ -595,6 +595,42 @@ function Resolve-ReceiptToolchain {
     }
 }
 
+function Resolve-IndexManagerFloor {
+    <#
+    .SYNOPSIS
+        The Manager floor the index description has to name: the one the published release's own
+        commit pinned, found through its tag.
+    .DESCRIPTION
+        The index describes a release that has shipped, and that release needs the Manager its own
+        commit pinned, whatever the catalog pins since. 0.1.1 was stamped by patcher 1.14.0 and
+        needs Manager 1.31.0 after the catalog moved on to 1.14.1 and 1.32.0 for the next release,
+        so neither the working catalog nor the index version alone gives the answer. The tag
+        v<version> says which commit it was. A clone without that tag, or a tag whose commit has no
+        catalog, can't tell, and answers Floor $null with a Note saying the check didn't run.
+
+        Answers @{ Floor; Source; Note }.
+    #>
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string]$Version
+    )
+
+    $tag = "v$Version"
+    $commit = "$(Invoke-RepoGit -Root $Root -Arguments @('rev-parse', '--verify', '--quiet', "refs/tags/$tag^{commit}") |
+        Select-Object -First 1)".Trim()
+    if ($commit -notmatch '^[0-9a-f]{40}$') {
+        return [pscustomobject]@{ Floor = $null; Source = $null
+            Note = "tag $tag isn't in this clone, so the Manager floor the index names wasn't checked" }
+    }
+    $catalogAtTag = (Invoke-RepoGit -Root $Root -Arguments @('show', "${commit}:gradle/libs.versions.toml")) -join "`n"
+    if ([string]::IsNullOrWhiteSpace($catalogAtTag)) {
+        return [pscustomobject]@{ Floor = $null; Source = $null
+            Note = "tag $tag has no version catalog, so the Manager floor the index names wasn't checked" }
+    }
+    $atTag = Read-CatalogToolchain -Text $catalogAtTag -Source "gradle/libs.versions.toml at $tag"
+    return [pscustomobject]@{ Floor = $atTag.ManagerFloor; Source = "tag $tag"; Note = $null }
+}
+
 function Resolve-ReceiptCatalog {
     <#
     .SYNOPSIS

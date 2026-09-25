@@ -790,6 +790,16 @@ try {
         "A receipt at the released commit was not held to that commit's catalog: $($atHead.Toolchain.PatcherVersion)"
     Assert-True ($null -eq $atHead.Note) "An unchanged catalog still reported a difference: $($atHead.Note)"
 
+    # The floor the index description is held to: the published release's own, through its tag,
+    # while the working catalog already pins the next one. An untagged version isn't guessed at.
+    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('tag', 'v0.0.9', $releaseCommitSha) | Out-Null
+    $indexFloor = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.9'
+    Assert-True ($indexFloor.Floor -eq '1.29.0' -and $indexFloor.Source -eq 'tag v0.0.9') `
+        "The index floor was not read at the release tag: $($indexFloor.Floor) from $($indexFloor.Source)"
+    $untagged = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.10'
+    Assert-True ($null -eq $untagged.Floor -and $untagged.Note -like "*v0.0.10 isn't in this clone*") `
+        "An untagged release was given a floor: $($untagged.Floor), $($untagged.Note)"
+
     # A commit with no catalog in it, and a receipt naming no commit at all. Both fall back to
     # the working catalog rather than throwing, and the first says so.
     Invoke-FixtureGit -Root $toolchainRoot -Arguments @('rm', '--quiet', '--', 'gradle/libs.versions.toml') | Out-Null
@@ -801,6 +811,11 @@ try {
         'A commit with no catalog did not fall back to the working one.'
     Assert-True ($atBare.Note -like '*no version catalog*') `
         "The fallback was not reported: $($atBare.Note)"
+    # The index floor doesn't fall back: the working catalog is the wrong answer for a release.
+    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('tag', 'v0.0.11', $bare) | Out-Null
+    $bareFloor = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.11'
+    Assert-True ($null -eq $bareFloor.Floor -and $bareFloor.Note -like '*no version catalog*') `
+        "A tag with no catalog was given a floor: $($bareFloor.Floor), $($bareFloor.Note)"
 
     $noCommit = Resolve-ReceiptToolchain -Root $toolchainRoot -Commit '' -WorkingToolchain $workingToolchain
     Assert-True ($noCommit.Toolchain.PatcherVersion -eq '1.13.0' -and $null -eq $noCommit.Note) `
@@ -1095,6 +1110,22 @@ try {
             'Morphe Manager 1.20.0 or newer'
     }
     Assert-Throws { Invoke-Facts } '*' 'A README naming a Manager older than the patcher needs was accepted.'
+    Reset-FactsFile 'README.md'
+
+    # The same floor in the install step, where a link sits between the name and the version, so
+    # the pattern above never reached it and a stale step passed while the badge was right. And in
+    # the badge's picture, which carries it URL-encoded.
+    Set-FactsFile 'README.md' {
+        param($text) $text -replace ('(\[Morphe Manager\]\([^)\s]+\)\s+)' + [regex]::Escape($fixtureFloor) + ' or newer'),
+            '${1}1.20.0 or newer'
+    }
+    Assert-Throws { Invoke-Facts } '*Morphe Manager 1.20.0 or newer*' `
+        'A README whose install step names an older Manager was accepted.'
+    Reset-FactsFile 'README.md'
+    Set-FactsFile 'README.md' {
+        param($text) $text.Replace("Morphe%20Manager%20$fixtureFloor%2B", 'Morphe%20Manager%201.20.0%2B')
+    }
+    Assert-Throws { Invoke-Facts } '*README badge Manager floor*' 'A README badge showing an older Manager was accepted.'
     Reset-FactsFile 'README.md'
 
     # The heading that says this version shipped. Renaming it is what happened on 2026-09-14,
@@ -2190,6 +2221,14 @@ try {
         New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $Root $relative) -Destination $destination
     }
+    # The index names the floor its own release needed, and the copied catalog may already pin the
+    # next one. Here the copied tree is the release, so the index is written up to its catalog.
+    $releaseFloor = (Read-CatalogToolchain -Source 'the copied catalog' `
+        -Text (Get-Content -LiteralPath (Join-Path $releaseRepo 'gradle/libs.versions.toml') -Raw)).ManagerFloor
+    $releaseIndexPath = Join-Path $releaseRepo 'patches-bundle.json'
+    $releaseIndexText = (Get-Content -LiteralPath $releaseIndexPath -Raw) -replace
+        '(Morphe Manager )\d+(?:\.\d+)+( or newer)', "`${1}$releaseFloor`${2}"
+    Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value $releaseIndexText
     # Through Invoke-FixtureGit, with the git directory proved before anything is written, for
     # the reason the toolchain fixture above gives.
     Invoke-FixtureGit -Root $releaseRepo -Arguments @('init', '--quiet') | Out-Null
@@ -2218,6 +2257,9 @@ try {
     $releaseToolchain = Read-CatalogToolchain -Source 'the release fixture catalog' `
         -Text (Get-Content -LiteralPath (Join-Path $releaseRepo 'gradle/libs.versions.toml') -Raw)
     $releaseReceipt = Join-Path $releaseRepo "release-receipt-$releaseVersionHere.json"
+    # The tag the check reads the index's floor through, named for the version the index publishes.
+    $indexVersionHere = [string]($releaseIndexText | ConvertFrom-Json).version
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('tag', "v$indexVersionHere", $releaseCommit) | Out-Null
 
     # A receipt for this commit with a run of each build given, every patch applied and no
     # manifest change, written where the release check looks for it.
@@ -2265,6 +2307,19 @@ try {
     $proved = "the receipt proves $($releaseNames.Count) patches on $($releaseTarget.PackageVersions -join ', ') " +
         "from commit $($releaseCommit.Substring(0, 8))"
     Assert-True ($said -like "*$proved*") "The release check did not compare the receipt it was given: $said"
+    Assert-True ($said -like "*the index asks for Morphe Manager $releaseFloor or newer, as tag v$indexVersionHere pins*") `
+        "The release check did not hold the index's Manager floor to the release tag: $said"
+
+    # An index still naming the floor of the release before it, which is what reusing its text
+    # does. Nothing read the description's floor until 2026-09-25.
+    Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value (
+        $releaseIndexText -replace '(Morphe Manager )\d+(?:\.\d+)+( or newer)', '${1}1.20.0${2}')
+    try {
+        Assert-Throws { Invoke-ReleaseCheck } '*Morphe Manager 1.20.0 or newer*' `
+            'An index naming another Manager floor than its release tag pins was accepted.'
+    } finally {
+        Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value $releaseIndexText
+    }
 
     # A run of the newest build alone, the receipt a release that skipped the older fixture would
     # write. Refused, naming the build it never ran.
