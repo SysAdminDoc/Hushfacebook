@@ -43,16 +43,16 @@ private const val MAX_SPREAD = 8
 private const val BLACK = -0x1000000
 
 /** Gets the resolved colour and its token. Gives the colour to draw. */
-private const val APPLY = "Lapp/morphe/extension/facebook/theme/AmoledTheme;->apply(ILjava/lang/Object;)I"
+internal const val APPLY = "Lapp/morphe/extension/facebook/theme/AmoledTheme;->apply(ILjava/lang/Object;)I"
 
 /** The framework call that turns a colour string, such as `"#FF252728"`, into a colour. */
-private const val PARSE_COLOR = "Landroid/graphics/Color;->parseColor(Ljava/lang/String;)I"
+internal const val PARSE_COLOR = "Landroid/graphics/Color;->parseColor(Ljava/lang/String;)I"
 
 /** The extension call that replaces it. It has the same signature. */
-private const val PARSE_COLOR_DARK = "Lapp/morphe/extension/facebook/theme/AmoledTheme;->parseColor(Ljava/lang/String;)I"
+internal const val PARSE_COLOR_DARK = "Lapp/morphe/extension/facebook/theme/AmoledTheme;->parseColor(Ljava/lang/String;)I"
 
 /** The classes of the extension. Route four skips them, because the replacement calls the original. */
-private const val EXTENSION_PACKAGE = "Lapp/morphe/extension/"
+internal const val EXTENSION_PACKAGE = "Lapp/morphe/extension/"
 
 /**
  * True for a dark grey, which is what a background uses. False for a dark colour with a hue, which
@@ -135,25 +135,9 @@ val amoledThemePatch = bytecodePatch(
     execute {
         // Route one. Four methods and six returns. Each hook keeps the body of the method and
         // sends the value through the extension before the method returns it.
-        DarkSchemeResolveFingerprint.method.hookColorReturns(tokenParameterIndex = 0)
-        hookFdsColorsResolvers()
-
-        // The resolver of the view code has a Redex name, thus its descriptor comes from the
-        // wrapper that calls it.
-        val resolverCall = FdsSchemeResolveFingerprint.instructionMatches[1].instruction
-        val resolver = (resolverCall as ReferenceInstruction).reference as MethodReference
-
-        // If Facebook moves the resolver into the wrapper, this reaches 1 caller and not 894.
-        check(resolver.definingClass.toString() != FDS_COLOR_SCHEME) {
-            "The FDS colour resolver is now inside FdsColorScheme. Find the seam again."
-        }
-
-        mutableClassDefBy(resolver.definingClass.toString()).methods.single {
-            it.name == resolver.name &&
-                it.returnType == "I" &&
-                it.parameterTypes.map(CharSequence::toString) ==
-                resolver.parameterTypes.map(CharSequence::toString)
-        }.hookColorReturns(tokenParameterIndex = 1)
+        DarkSchemeResolveFingerprint.method.hookColorReturns(tokenParameterIndex = 0, target = APPLY)
+        hookFdsColorsResolvers(target = APPLY)
+        fdsViewResolver().hookColorReturns(tokenParameterIndex = 1, target = APPLY)
 
         // Route three. The palette tables, the top bar of the feed, the system bars and each Litho
         // component that draws its own chrome all write a colour instead of asking for one, so no
@@ -187,6 +171,27 @@ val amoledThemePatch = bytecodePatch(
 }
 
 /**
+ * The resolver of the view code, which takes a Context and the FDS token. It has a Redex name, thus
+ * its descriptor comes from the wrapper in `FdsColorScheme` that calls it.
+ */
+internal fun BytecodePatchContext.fdsViewResolver(): MutableMethod {
+    val resolverCall = FdsSchemeResolveFingerprint.instructionMatches[1].instruction
+    val resolver = (resolverCall as ReferenceInstruction).reference as MethodReference
+
+    // If Facebook moves the resolver into the wrapper, this reaches 1 caller and not 894.
+    check(resolver.definingClass.toString() != FDS_COLOR_SCHEME) {
+        "The FDS colour resolver is now inside FdsColorScheme. Find the seam again."
+    }
+
+    return mutableClassDefBy(resolver.definingClass.toString()).methods.single {
+        it.name == resolver.name &&
+            it.returnType == "I" &&
+            it.parameterTypes.map(CharSequence::toString) ==
+            resolver.parameterTypes.map(CharSequence::toString)
+    }
+}
+
+/**
  * Hooks every FDS colour resolver on `FDSColors`: each instance method answering an int that takes
  * the colour token and asks the Integer-answering source itself.
  *
@@ -195,7 +200,7 @@ val amoledThemePatch = bytecodePatch(
  * or none. The token type is read off the source's own signature, the one static method answering
  * `Integer` from a Context, the token and a palette.
  */
-private fun BytecodePatchContext.hookFdsColorsResolvers() {
+internal fun BytecodePatchContext.hookFdsColorsResolvers(target: String) {
     val colors = mutableClassDefBy(FDS_COLORS)
     val source = colors.methods.singleOrNull { method ->
         AccessFlags.STATIC.isSet(method.accessFlags) && method.returnType == "Ljava/lang/Integer;" &&
@@ -215,6 +220,7 @@ private fun BytecodePatchContext.hookFdsColorsResolvers() {
     resolvers.forEach { method ->
         method.hookColorReturns(
             tokenParameterIndex = method.parameterTypes.indexOfFirst { it.toString() == tokenType },
+            target = target,
         )
     }
 }
@@ -231,7 +237,7 @@ private fun Instruction.isDarkColor(): Boolean {
 }
 
 /** True when this instruction calls `Color.parseColor`. */
-private fun Instruction.isParseColorCall(): Boolean =
+internal fun Instruction.isParseColorCall(): Boolean =
     (this as? ReferenceInstruction)?.reference?.toString() == PARSE_COLOR
 
 /** True when this method calls `Color.parseColor`. It only reads, thus it needs no proxy. */
@@ -290,8 +296,9 @@ internal fun MutableMethod.blackenDarkColors(): Int {
 }
 
 /**
- * Sends each `int` that this method returns through the extension, with the colour token in
- * parameter [tokenParameterIndex]. The first declared parameter is index 0.
+ * Sends each `int` that this method returns through the extension method [target], which takes
+ * the colour and the colour token and returns a colour. The token is in parameter
+ * [tokenParameterIndex]; the first declared parameter is index 0.
  *
  * The hooks go in from last to first, because an insert moves every later index.
  *
@@ -301,7 +308,7 @@ internal fun MutableMethod.blackenDarkColors(): Int {
  * A `return` must not be a branch target. The new instructions go in before it, thus a jump onto
  * the `return` would miss them and lose a colour without an error.
  */
-private fun MutableMethod.hookColorReturns(tokenParameterIndex: Int) {
+internal fun MutableMethod.hookColorReturns(tokenParameterIndex: Int, target: String) {
     val implementation = checkNotNull(implementation) { "$definingClass->$name has no body" }
     val instructions = implementation.instructions.toList()
 
@@ -338,7 +345,7 @@ private fun MutableMethod.hookColorReturns(tokenParameterIndex: Int) {
         addInstructions(
             index,
             """
-                invoke-static { v$register, v$tokenRegister }, $APPLY
+                invoke-static { v$register, v$tokenRegister }, $target
                 move-result v$register
             """,
         )
