@@ -405,6 +405,8 @@ final class Downloader {
             connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
             connection.setReadTimeout(readTimeoutMs);
             connection.setUseCaches(false);
+            // disconnect(), never the stream's close(): over HTTPS on Android only disconnect()
+            // ends a read that's waiting (SaveControl.Save.cancel has the measurements).
             progress.reading(connection::disconnect);
 
             int code = connection.getResponseCode();
