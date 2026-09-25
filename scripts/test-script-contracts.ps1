@@ -1541,6 +1541,41 @@ try {
     & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $cleanCommit refs/heads/main $namingCommit" 6> $null
     Assert-True ($LASTEXITCODE -eq 0) 'A push whose files name nothing, .gitignore aside, was stopped.'
 
+    # Every commit the push publishes, not only each ref's tip: a serial one commit adds and the
+    # next removes still goes out in the first, and the refusal names that commit by the prefix git
+    # grep gives a hit read out of it. Pushed as an update of a branch, and as a new branch beside a
+    # remote-tracking ref that already holds the clean commit.
+    Set-Content -LiteralPath $phoneDoc -Encoding UTF8 -Value "adb -s $phoneSerial install app.apk"
+    & git -C $hookRoot add docs/phone.md
+    & git -C $hookRoot commit --quiet -m 'names the phone again'
+    $servedSerial = (& git -C $hookRoot rev-parse HEAD).Trim()
+    & git -C $hookRoot rm --quiet docs/phone.md
+    Set-Content -LiteralPath (Join-Path $hookRoot 'CONTRIBUTING.md') -Encoding UTF8 -Value 'Fixtures live in HUSHFACEBOOK_FIXTURE_DIR, not in docs.'
+    & git -C $hookRoot add CONTRIBUTING.md
+    & git -C $hookRoot commit --quiet -m 'drops the doc'
+    $droppedSerial = (& git -C $hookRoot rev-parse HEAD).Trim()
+    & git -C $hookRoot update-ref refs/remotes/origin/main $cleanCommit
+    # A new branch is checked from its whole tree, code included, so a scan that let it through
+    # would reach the build gates. With no credentials and no gh they refuse by name instead.
+    $savedScanPath = $env:PATH
+    $savedScanActor = $env:GITHUB_ACTOR
+    $savedScanToken = $env:GITHUB_TOKEN
+    try {
+        $env:PATH = $pathWithoutGh
+        $env:GITHUB_ACTOR = $null
+        $env:GITHUB_TOKEN = $null
+        foreach ($refs in @("refs/heads/main $droppedSerial refs/heads/main $cleanCommit",
+                "refs/heads/topic $droppedSerial refs/heads/topic $('0' * 40)")) {
+            Assert-Throws { & $prePushScript -Root $hookRoot -PushedRefs $refs 6> $null } `
+                "*commit $servedSerial name*${servedSerial}:docs/phone.md:1:*" `
+                "A push went through with a phone serial in an earlier commit than its tip: $refs"
+        }
+    } finally {
+        $env:PATH = $savedScanPath
+        $env:GITHUB_ACTOR = $savedScanActor
+        $env:GITHUB_TOKEN = $savedScanToken
+    }
+
     # The build branch, which runs the Gradle gates that hold the Bouncy Castle graphs to the
     # reviewed release. Starting a real build from a contract test would be absurd, so the case
     # reads the first thing that branch does instead: with no GitHub credentials and no gh on
@@ -2880,7 +2915,7 @@ Write-Host '[scripts] release bundle path contracts passed'
 # layout, and five scripts carried the test phone's serial. .gitignore is the one exception: it
 # has to name what it keeps out. Find-MachineNames in common.ps1 holds both patterns, built from
 # parts so neither file can match itself, and the pre-push hook runs the same scan on every
-# pushed commit, whatever the push touches; the routing section above plants a hit for it.
+# commit a push publishes, whatever the push touches; the routing section above plants hits for it.
 
 $machineNames = @(Find-MachineNames -Root $Root)
 Assert-True ($machineNames.Count -eq 0) `

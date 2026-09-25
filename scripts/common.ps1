@@ -304,17 +304,23 @@ function Find-MachineNames {
         carried the test phone's serial. .gitignore is the one file allowed to name what it keeps
         out. Both patterns are built from parts, so the file holding them can't match itself.
 
-        With -Commit the files are read out of that commit, which is what a push publishes, and
-        no worktree is needed. Without it, the tracked files as they stand in the working tree.
-        GIT_* variables are cleared for the search, so it reads the repository -Root names, and
-        a search that doesn't run throws rather than reading as a clean tree. Every hit comes
-        back as git grep prints it; none at all comes back as nothing, so callers wrap it in @().
+        With -Commit the files are read out of those commits, which is what a push publishes, and
+        no worktree is needed: git grep reads them all in one pass and puts the commit in front of
+        each hit, <commit>:<path>:<line>:<text>. Without it, the tracked files as they stand in the
+        working tree. GIT_* variables are cleared for the search, so it reads the repository -Root
+        names, and a search that doesn't run throws rather than reading as a clean tree. Every hit
+        comes back as git grep prints it; none at all comes back as nothing, so callers wrap it in @().
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Root,
-        [string]$Commit
+        [string[]]$Commit
     )
 
+    # A hundred commits to a git grep keeps its command line inside what Windows allows.
+    $commits = @($Commit | Where-Object { $_ })
+    $batches = New-Object System.Collections.Generic.List[object]
+    if ($commits.Count -eq 0) { $batches.Add(@()) }
+    for ($i = 0; $i -lt $commits.Count; $i += 100) { $batches.Add(@($commits | Select-Object -Skip $i -First 100)) }
     $hits = New-Object System.Collections.Generic.List[string]
     $saved = @{}
     foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*' })) {
@@ -327,16 +333,17 @@ function Find-MachineNames {
     try {
         $ErrorActionPreference = 'Continue'
         foreach ($scan in @(@('-i', ('cla' + 'ude')), @('-E', ('R5' + 'C[A-Z0-9]{8}')))) {
-            $arguments = @('-C', $Root, 'grep', '-n', '-a', $scan[0], '-e', $scan[1])
-            if ($Commit) { $arguments += $Commit }
-            $arguments += @('--', '.', ':!.gitignore')
-            $found = @(& git @arguments 2>$null)
-            # 1 is git grep's "no match". Anything above it means the search did not run.
-            if ($LASTEXITCODE -gt 1) {
-                $what = if ($Commit) { "commit $Commit" } else { 'the tracked files' }
-                throw "git grep could not search $what in $Root for $($scan[1])."
+            foreach ($batch in $batches) {
+                $arguments = @('-C', $Root, 'grep', '-n', '-a', $scan[0], '-e', $scan[1]) + @($batch) +
+                    @('--', '.', ':!.gitignore')
+                $found = @(& git @arguments 2>$null)
+                # 1 is git grep's "no match". Anything above it means the search did not run.
+                if ($LASTEXITCODE -gt 1) {
+                    $what = if ($batch.Count -gt 0) { "commit $($batch -join ', ')" } else { 'the tracked files' }
+                    throw "git grep could not search $what in $Root for $($scan[1])."
+                }
+                foreach ($line in $found) { $hits.Add([string]$line) }
             }
-            foreach ($line in $found) { $hits.Add([string]$line) }
         }
     } finally {
         $ErrorActionPreference = $preference

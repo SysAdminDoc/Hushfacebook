@@ -11,8 +11,8 @@
     standard input the way git supplies them. Run scripts/install-hooks.ps1 once to wire it up.
 
     Only what changed is checked: runtime tests when extension or patch sources move, and the
-    release facts when a published file moves. The one check every push gets is a scan of the
-    pushed commits for tracked files that name the maintainer's machine or a phone. Set
+    release facts when a published file moves. The one check every push gets is a scan of every
+    commit it publishes for tracked files that name the maintainer's machine or a phone. Set
     HUSHFACEBOOK_SKIP_PRE_PUSH=1 to push anyway.
 #>
 [CmdletBinding()]
@@ -50,9 +50,11 @@ foreach ($envName in @('HUSHFACEBOOK_DESKTOP_JAR', 'HUSHFACEBOOK_FIXTURE_DIR',
 }
 
 $zeroObject = '0' * 40
-# The commits this push carries, peeled, filled in by Get-PushedPaths. The build gate builds each
-# of these, and never whatever else the working tree holds.
+# The tip of each pushed ref, peeled, filled in by Get-PushedPaths. The build gate builds each of
+# these, and never whatever else the working tree holds.
 $script:pushedCommits = New-Object System.Collections.Generic.List[string]
+# Every commit the push publishes, also filled in by Get-PushedPaths, for the machine-name scan.
+$script:publishedCommits = New-Object System.Collections.Generic.List[string]
 
 function Write-Step {
     param([string]$Message)
@@ -113,6 +115,21 @@ function Get-PushedPaths {
         $commit = Invoke-GitQuietly @('rev-parse', '--verify', "$localSha^{commit}")
         if ($LASTEXITCODE -eq 0 -and $commit -and -not $script:pushedCommits.Contains(([string]$commit).Trim())) {
             $script:pushedCommits.Add(([string]$commit).Trim())
+        }
+        # Every commit the ref publishes, not only its tip: a file one commit adds and the next
+        # deletes still goes out in the first. A new branch publishes what no remote-tracking ref
+        # already holds.
+        $published = if ($remoteSha -eq $zeroObject) {
+            Invoke-GitQuietly @('rev-list', $localSha, '--not', '--remotes')
+        } else {
+            Invoke-GitQuietly @('rev-list', "$remoteSha..$localSha")
+        }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not list the commits a push of $($parts[0]) publishes. Fetch the remote and try again."
+        }
+        foreach ($sha in @($published)) {
+            $sha = ([string]$sha).Trim()
+            if ($sha -and -not $script:publishedCommits.Contains($sha)) { $script:publishedCommits.Add($sha) }
         }
     }
     return $paths
@@ -269,24 +286,31 @@ try {
     # Every push, whatever it moves: no tracked file may name the maintainer's working-notes folder
     # or a phone's serial. The contract tests hold the working tree to that, but they run for
     # script changes, and the files that once fell back to that folder were tests under patches/
-    # and extensions/, which route to the Gradle gates alone. Each pushed commit is read straight
-    # out of the object store, so this needs no worktree and takes a moment. A run by hand reads
-    # the tracked files of this working tree.
+    # and extensions/, which route to the Gradle gates alone. Every commit the push publishes is
+    # read straight out of the object store, not only each ref's tip, since a serial one commit
+    # adds and the next removes still goes out in the first. That needs no worktree and takes a
+    # moment. A run by hand reads the tracked files of this working tree.
     if ($PSBoundParameters.ContainsKey('ChangedPaths')) {
-        $scanned = @('')
+        $scanned = @()
+        $scope = 'the working tree'
     } else {
-        $scanned = @($script:pushedCommits)
+        $scanned = @(@($script:pushedCommits) + @($script:publishedCommits) | Select-Object -Unique)
         if ($scanned.Count -eq 0) { $scanned = @('HEAD') }
+        $scope = "the $($scanned.Count) commit(s) this push publishes"
     }
-    foreach ($scanCommit in $scanned) {
-        $named = @(Find-MachineNames -Root $Root -Commit $scanCommit)
-        if ($named.Count -gt 0) {
-            $where = if ($scanCommit) { $scanCommit } else { 'the working tree' }
-            throw ("Tracked files in $where name the maintainer's machine or phone, and a push would " +
-                'publish them: ' + (($named | Select-Object -First 5) -join '; '))
+    $named = @(Find-MachineNames -Root $Root -Commit $scanned)
+    if ($named.Count -gt 0) {
+        if ($scanned.Count -eq 0) {
+            throw ("Tracked files in the working tree name the maintainer's machine or phone, and a push " +
+                'would publish them: ' + (($named | Select-Object -First 5) -join '; '))
         }
+        # git grep puts the commit a hit came from in front of it.
+        $carriers = @($named | ForEach-Object { ([string]$_).Split(':')[0] } | Select-Object -Unique)
+        throw ("Tracked files in commit $($carriers -join ', ') name the maintainer's machine or phone, " +
+            'and this push would publish them. A commit on top leaves them in the history it publishes, ' +
+            'so rewrite the commit that added them: ' + (($named | Select-Object -First 5) -join '; '))
     }
-    Write-Step 'no tracked file names a machine or phone'
+    Write-Step "no tracked file in $scope names a machine or phone"
 
     $touchesCode = @($paths | Where-Object {
         $_ -like 'extensions/*' -or $_ -like 'patches/*' -or
@@ -355,8 +379,8 @@ try {
         $_ -eq '.github/ISSUE_TEMPLATE/bug_report.yml'
     }).Count -gt 0
 
-    # Every gate below checks each pushed commit, and checks it in place only when it is HEAD and
-    # nothing in the working tree differs from it. Everything else goes to a clean worktree of the
+    # Every gate below checks the tip of each pushed ref, and checks it in place only when it is HEAD
+    # and nothing in the working tree differs from it. Everything else goes to a clean worktree of the
     # commit. Uncommitted work that isn't in the push can fail it (another agent's did, twice on
     # 2026-09-21) or pass it, and a push of anything but HEAD would otherwise have HEAD checked in
     # its place. The whole tree counts: the tests read README.md, patches-list.json, the artwork
@@ -374,7 +398,7 @@ try {
         if ($gateCommits.Count -eq 0) { $gateCommits = @($head) }
         if ($dirty.Count -gt 0) {
             $shown = @($dirty | Select-Object -First 5 | ForEach-Object { $_.Trim() }) -join '; '
-            Write-Step ("uncommitted changes in the working tree ($shown), so each pushed commit is " +
+            Write-Step ("uncommitted changes in the working tree ($shown), so each pushed ref's tip is " +
                 'checked in a clean worktree instead of this working tree')
         }
     }
