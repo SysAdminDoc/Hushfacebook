@@ -171,8 +171,10 @@ try {
         $resourceOutput | ForEach-Object { Write-Host "[verify] $_" }
         Write-Host "[verify] resource report: $resourceReport"
         if ($resourceExitCode -eq 0) {
-            # The injected code against Meta's: registers, branches, invokes, parameters, try
-            # ranges and the one feed guard, the shapes that pass the CLI and fail on a device.
+            # The injected code against Meta's: registers, branches, invokes, parameters and try
+            # ranges, the shapes that pass the CLI and fail on a device. The one-feed-guard rule
+            # rides along from injected-mutation-contracts.txt; it's a project contract, which
+            # the device verifier doesn't check.
             $registerReport = Resolve-WithinRoot -Path (Join-Path $workRoot "verify-all-registers-$runId.txt") -Root $workRoot
             $global:LASTEXITCODE = 0
             & (Join-Path $PSScriptRoot 'verify-injected-registers.ps1') -CleanApk $stockApk -PatchedApk $out `

@@ -37,14 +37,14 @@ Morphe's own guide is [Backup and keystore](https://github.com/MorpheApp/morphe-
 
 ## Android developer verification
 
-Google is starting to require that Android apps come from registered developers. From September 30, 2026 the check runs in Brazil, Indonesia, Singapore and Thailand, and only on installs from seven app stores: Google Play, HONOR App Market, OPPO App Market, Galaxy Store, Palm Store, V-Appstore and GetApps ([Google's overview](https://developer.android.com/developer-verification)). Google's [FAQ](https://developer.android.com/developer-verification/guides/faq) says apps that are sideloaded aren't covered yet, and an install from Morphe Manager is a sideload. A rollout to every install source is planned for 2027.
+Google is starting to require that Android apps come from registered developers. From September 30, 2026 the check runs in Brazil, Indonesia, Singapore and Thailand, and only on installs from seven app stores: Google Play, HONOR App Market, OPPO App Market, Galaxy Store, Palm Store, V-Appstore and GetApps ([Google's overview](https://developer.android.com/developer-verification)). Google's [FAQ](https://developer.android.com/developer-verification/guides/faq) says apps that are sideloaded aren't covered yet, and an install from Morphe Manager is a sideload. A rollout to every install source, in every country, is planned for 2027.
 
 Once it does reach sideloads, a patched Facebook won't count as registered. It keeps Meta's package name but carries your key, and for a package name someone else already holds, Google's answer is to use a different name or to file a request that goes through extra review, with no promised outcome. Two ways in stay open:
 
 - **The advanced flow.** For people who accept the risk, Google added a setting to allow apps from unverified developers, under Settings → System → Developer options → Allow apps from unverified developers ([Google's help page](https://support.google.com/android/answer/17588095)). Turning it on takes a one-time 24-hour wait, and each install afterwards still shows a warning with an Install anyway button. Google's pages describe the steps a little differently, so follow what your phone shows. Updates to an unregistered app need this setting on too.
 - **ADB from a computer.** Google says apps installed with `adb install` don't need verification and the 24-hour wait doesn't apply to them. In Morphe Manager, turn on Keep patched APKs under Settings → System, export the patched copy, and install it with `adb install -r <file>.apk`. The same-key rule above still applies.
 
-Neither path has been tried here on a certified phone in one of those four countries yet. If you try one, please open an issue saying what happened.
+Neither path can be tried against a real block until the check reaches sideloads, so neither has been tested here. If you get to try one, please open an issue saying what happened.
 
 ## Patches
 
@@ -127,7 +127,7 @@ The bundle lands in `patches/build/release/patches-<version>.mpp`, beside its SH
 
 Tests: `./gradlew :patches:test :extensions:facebook:testDebugUnitTest`. Set `HUSHFACEBOOK_FIXTURE_DIR` to a folder holding the Facebook bundles to run the tests that read real builds. Without it they skip and say so.
 
-To apply every patch to a real build and check the result, run `scripts/verify-all-patches.ps1 -Apk <facebook .apkm> -DesktopJar <morphe-desktop jar> -WorkDir <scratch folder>`. It holds the patched resource table to Meta's, and the code the patches inject to the shapes Android's verifier rejects: branches into the middle of an instruction, calls with the wrong registers, values read at the wrong width, broken try ranges, and a second feed hook. [CONTRIBUTING.md](CONTRIBUTING.md) has the rest.
+To apply every patch to a real build and check the result, run `scripts/verify-all-patches.ps1 -Apk <facebook .apkm> -DesktopJar <morphe-desktop jar> -WorkDir <scratch folder>`. It holds the patched resource table to Meta's. It also checks the code the patches inject for the shapes Android's verifier rejects, such as branches into the middle of an instruction, calls with the wrong registers, values read at the wrong width and broken try ranges. And it requires exactly one feed guard, in `addNewEdgeToCollection`, because a guard anywhere else filters nothing. That last rule is this project's, not the verifier's. [CONTRIBUTING.md](CONTRIBUTING.md) has the rest.
 
 ## License
 
