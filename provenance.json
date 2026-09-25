@@ -1,5 +1,5 @@
 {
-  "note": "Where every shipped source file under patches/ and extensions/ came from. A rule naming a single file wins over the directory rule around it; otherwise each file matches exactly one rule. A ported rule names the upstream repository, the commit it was copied from, the repositories it came through and its licence, and every file's header names a repository of its rule, by URL. Every upstream named here must also appear in NOTICE. ProvenanceTest checks all of it.",
+  "note": "Where every shipped source file under patches/ and extensions/ came from. A rule naming a single file wins over the directory rule around it; otherwise each file matches exactly one rule. A ported rule names the upstream repository, the commit it was copied from, the repositories it came through and its licence, and every file's header names a repository of its rule, by URL. Every upstream named here must also appear in NOTICE. ProvenanceTest checks all of it. A Facebook-family repository named here also has to be allowed by sources/facebook-sources.json: one files are ported from has to be adopted there, with this rule's commit, and one a rule credits has to be adopted or a candidate. scripts/test-facebook-sources.ps1 checks that side.",
   "rules": [
     {
       "paths": [

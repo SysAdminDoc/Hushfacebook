@@ -1,0 +1,2088 @@
+{
+  "schemaVersion": 1,
+  "note": "Every public source found for com.facebook.katana, com.facebook.orca and com.facebook.lite, with the branches and commits it was last read at, its licence and what Hushfacebook may take from it. scripts/facebook-sources.ps1 holds it to its rules, scripts/audit-facebook-sources.ps1 refreshes it, and a local release needs a census from the last 14 days. docs/sources.md is the readable version.",
+  "census": {
+    "checkedAt": "2026-09-25",
+    "skipped": [
+      "gitlab-code-search"
+    ]
+  },
+  "self": {
+    "repository": "https://github.com/SysAdminDoc/Hushfacebook"
+  },
+  "officialBundle": {
+    "repository": "https://github.com/MorpheApp/morphe-patches",
+    "branch": "main",
+    "list": "patches-list.json",
+    "packages": []
+  },
+  "indexes": [
+    {
+      "id": "morphe-directory",
+      "name": "Morphe community directory",
+      "url": "https://morphe-patches.software",
+      "hushfacebook": {
+        "status": "not-listed",
+        "checked": "2026-09-25"
+      }
+    },
+    {
+      "id": "awesome-morphe",
+      "name": "Awesome Morphe",
+      "url": "https://github.com/nvbangg/awesome-morphe",
+      "hushfacebook": {
+        "status": "not-listed",
+        "checked": "2026-09-25",
+        "submitVia": "https://github.com/nvbangg/awesome-morphe/issues/new?template=bundle-request.yml"
+      }
+    },
+    {
+      "id": "morphe-patch-tracker",
+      "name": "Morphe Patch Tracker",
+      "url": "https://drnx64.github.io/morphe-track-patches/",
+      "hushfacebook": {
+        "status": "listed",
+        "url": "https://drnx64.github.io/morphe-track-patches/#/bundle/sysadmindoc",
+        "checked": "2026-09-25"
+      }
+    },
+    {
+      "id": "jman-bundles",
+      "name": "Jman's ReVanced Patch Bundles",
+      "url": "https://github.com/Jman-Github/ReVanced-Patch-Bundles",
+      "hushfacebook": {
+        "status": "not-listed",
+        "checked": "2026-09-25",
+        "submitVia": "https://github.com/Jman-Github/ReVanced-Patch-Bundles/issues"
+      }
+    },
+    {
+      "id": "morphe-archive",
+      "name": "Morphe Archive",
+      "url": "https://rushiforai.github.io/morphe-archive/",
+      "hushfacebook": {
+        "status": "listed",
+        "url": "https://github.com/rushiforai/morphe-archive/tree/main/examplepatches/SysAdminDoc/Hushfacebook",
+        "checked": "2026-09-25"
+      }
+    }
+  ],
+  "entries": [
+    {
+      "id": "andrewliang25",
+      "repository": "https://github.com/andrewliang25/morphe-patches",
+      "lineage": "andrewliang25",
+      "upstream": null,
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "577.0.0.50.72"
+        ]
+      },
+      "features": [
+        "[Ad] Block ad telemetry",
+        "[Ad] Block background ad prefetch",
+        "[Ad] Disable Audience Network",
+        "[Feed] Hide sponsored posts",
+        "[Feed] Hide suggested and promoted posts",
+        "[Fix] Restore screens on re-signed builds",
+        "[General] AMOLED black theme",
+        "[General] Open links in external browser",
+        "[Reels] Download any reel",
+        "[Reels] Hide sponsored reels",
+        "[Stories] Download any story",
+        "[Stories] Hide sponsored stories"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "d725ae3f1f3be9f5b37e7f8a24fc09755f5550c5"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/andrewliang/patches/facebook",
+        "patches/src/main/kotlin/app/andrewliang/patches/shared",
+        "extensions/extension/src/main/java/app/andrewliang/extension"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/andrewliang25/morphe-patches/blob/3ceead08b651138019f9cb290d57dfae4bb22f19/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "adopted",
+      "adopted": {
+        "commit": "5db2e57e133aede5297c48b419168cf30fd89953",
+        "fixtures": {
+          "receipt": "https://github.com/SysAdminDoc/Hushfacebook/releases/download/v0.1.2/release-receipt-0.1.2.json",
+          "builds": [
+            "580.0.0.51.74",
+            "577.0.0.50.72"
+          ]
+        }
+      },
+      "reason": "The maintained Facebook source and Hushfacebook's primary upstream. Its anchors hold across Facebook's renames, its patches fail loudly at patch time, and most of the shipped patches were rewritten from its commit 5db2e57e. The bundle also patches LINE, so only its Facebook, shared and extension code is watched.",
+      "archived": false,
+      "forks": [
+        "shunyungwang/morphe-patches-LINE",
+        "siftorsquare/morphe-patches",
+        "watatatata810/morphe-patches",
+        "YuzuMikan404/morphe-patches"
+      ],
+      "contentHashes": [
+        "274ba79ed6cbd9fd11ac5a35aade72a3e775226a",
+        "45c4ac7df021b93577bf0ecb90d2df55f675c320"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "froggo",
+      "repository": "https://github.com/SapitoSucio/FroggoMorphePatches",
+      "lineage": "froggo",
+      "upstream": null,
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "573.0.0.37.74"
+        ]
+      },
+      "features": [
+        "Block Facebook Feed ads (573)",
+        "Block Facebook Reels ads (573)",
+        "Block Facebook Story ads (573)",
+        "Block Facebook automatic refresh (573)",
+        "Download Facebook Media (573)",
+        "Change Facebook app theme (573)",
+        "Clone app",
+        "Facebook 573 AI content diagnostics",
+        "Facebook 573 AI filter + recommendation diagnostics",
+        "Facebook 573 Feed recommendation diagnostics",
+        "Hide Facebook AI content (573)",
+        "Stop Facebook Story auto-advance (573)"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "9c00395c4a1869e03a7f22f35c134ee97c2b80d5"
+        },
+        {
+          "name": "dev",
+          "commit": "f021fcf4d5da4f3955be0184039b2c089832beb3"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/froggo/patches"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/SapitoSucio/FroggoMorphePatches/blob/fcada9f102f7afe9f71989a94411d50f3bf54d81/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "GPL-3.0 and the most features for Facebook 573, several only on its dev branch. It hardcodes 573's obfuscated names, so its ideas and anchors are what carries over. The feed filter credits its PROMOTION rule.",
+      "archived": false,
+      "forks": [
+        "anemia004/xD-MorphePatches",
+        "ArunTS96/FroggoMorphePatches",
+        "vayon1901-lab/FroggoMorphePatches"
+      ],
+      "contentHashes": [
+        "6ad43cc9a59f0b906b51e0cfbd4dd650f83c22e0"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "froggo-arun",
+      "repository": "https://github.com/ArunTS96/FroggoMorphePatches",
+      "lineage": "froggo",
+      "upstream": "https://github.com/SapitoSucio/FroggoMorphePatches",
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "573.0.0.37.74"
+        ]
+      },
+      "features": [
+        "Block Facebook Feed ads (573)",
+        "Block Facebook Reels ads (573)",
+        "Block Facebook Story ads (573)",
+        "Block Facebook automatic refresh (573)",
+        "Change Facebook app theme (573)",
+        "Download Facebook Media (573)",
+        "Facebook 573 AI content diagnostics",
+        "Facebook 573 AI filter + recommendation diagnostics",
+        "Facebook 573 Feed recommendation diagnostics",
+        "Hide Facebook AI content (573)",
+        "Hide Facebook suggested posts (573)",
+        "Stop Facebook Story auto-advance (573)"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "b3edaafb7c8d57c9c926c6fd497424417b8fadaa"
+        },
+        {
+          "name": "codex/algorithmic-hide-follow",
+          "commit": "4097025f65fa1de07f2f98acd331b3a4a6a75147"
+        },
+        {
+          "name": "codex/hide-suggested-posts",
+          "commit": "9803eb28d39aba9d77628792ea6bd30a153b433e"
+        },
+        {
+          "name": "fix/facebook-suggested-posts-crash",
+          "commit": "d78ecd8396f9bd56177c5e95f043b7244a60bc63"
+        },
+        {
+          "name": "fix/following-feed-home",
+          "commit": "319cde236e373ff8feb66fa30e99028e3d9dff6e"
+        },
+        {
+          "name": "fix/hide-follow-recommendations",
+          "commit": "012b5af8e630999b9bc8213fe394ea08af241e77"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/froggo/patches"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/ArunTS96/FroggoMorphePatches/blob/133c82fd88e1e091356e4056d7b6b4f6882d2395/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "A GPL-3.0 fork of Froggo that adds suggested-post filtering and a Following-feed home for 573.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "froggo-mben",
+      "repository": "https://github.com/mben25/morphe-patches",
+      "lineage": "froggo",
+      "upstream": "https://github.com/SapitoSucio/FroggoMorphePatches",
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "573.0.0.37.74"
+        ]
+      },
+      "features": [
+        "Block Facebook Feed ads (573)",
+        "Block Facebook Reels ads (573)",
+        "Block Facebook Story ads (573)",
+        "Block Facebook automatic refresh (573)",
+        "Change Facebook app theme (573)",
+        "Download Facebook Media (573)",
+        "Facebook 573 AI content diagnostics",
+        "Facebook 573 AI filter + recommendation diagnostics",
+        "Facebook 573 Feed recommendation diagnostics",
+        "Hide Facebook AI content (573)",
+        "Stop Facebook Story auto-advance (573)"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "5323b8a03667dcf9b18f7fb88153f85c2a0fb3b1"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/facebook"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/mben25/morphe-patches/blob/b0995bbca5d9b3b5e4f8fed410c1a9118ff24f14/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "A GPL-3.0 copy of Froggo's Facebook 573 patches inside a multi-app bundle, with the clearest current 11-patch source and a Material You resource map. Only its Facebook folder is watched.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "froggo-anemia",
+      "repository": "https://github.com/anemia004/xD-MorphePatches",
+      "lineage": "froggo",
+      "upstream": "https://github.com/SapitoSucio/FroggoMorphePatches",
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "573.0.0.37.74"
+        ]
+      },
+      "features": [
+        "Block Facebook Feed ads (573)",
+        "Block Facebook Reels ads (573)",
+        "Block Facebook Story ads (573)",
+        "Block Facebook automatic refresh (573)",
+        "Download Facebook Media (573)"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "2c212de4fc35f039067523e4c4685025bbbecd46"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/froggo/patches"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/anemia004/xD-MorphePatches/blob/2c212de4fc35f039067523e4c4685025bbbecd46/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "An archived GPL-3.0 fork of Froggo that records a reworked downloader for 573.",
+      "archived": true,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "nambara",
+      "repository": "https://github.com/nambara4-debug/Nambara-Facebook-Patches",
+      "lineage": "froggo",
+      "upstream": "https://github.com/SapitoSucio/FroggoMorphePatches",
+      "kind": "source-archive",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "573.0.0.37.74"
+        ]
+      },
+      "features": [
+        "Facebook 573 media download (SAFE variant, source ZIP)",
+        "Facebook 573 media download through YTDLnis (source ZIP)"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "cd879aae77be2f0311eeebd1d46ed281b8264c71"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "Two ZIP archives of Facebook 573 download sources and no licence at the root. Useful only to compare downloader behavior, and nothing in it can be ported.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "revanced",
+      "repository": "https://gitlab.com/ReVanced/revanced-patches",
+      "lineage": "revanced",
+      "upstream": null,
+      "kind": "revanced-patches",
+      "packages": [
+        "com.facebook.katana",
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "490.0.0.63.82"
+        ],
+        "com.facebook.orca": []
+      },
+      "features": [
+        "Hide 'Sponsored Stories'",
+        "Hide story ads",
+        "Hide inbox ads",
+        "Hide inbox subtabs",
+        "Hide Facebook button",
+        "Remove Meta AI"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "7517f57ac7a54e1c914e8dd8cc3e1aa908e28e54"
+        },
+        {
+          "name": "feat/messenger/restore-old-emoji-layout",
+          "commit": "dc1c538fa03d5dfc5fc56759b90b29c3ea51a765"
+        },
+        {
+          "name": "feat/music-announcements",
+          "commit": "7c4e3fe97e8cbbb8cf16a2fb95f64223ca2bd7ef"
+        },
+        {
+          "name": "feat/universal-icon-patch",
+          "commit": "7c4e3fe97e8cbbb8cf16a2fb95f64223ca2bd7ef"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/revanced/patches/facebook",
+        "patches/src/main/kotlin/app/revanced/patches/messenger",
+        "extensions/messenger"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://gitlab.com/ReVanced/revanced-patches/-/blob/015fe10a23ea5b919a3fda6e7da2c176517ae75d/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "The original GPL-3.0 Facebook pair, still pinned to 490, and the four Messenger patches most Messenger work descends from. Its GitHub home is blocked by a DMCA notice, so GitLab holds it for now. It's ancestry and regression evidence for Facebook, and the likely base for a Messenger sibling.",
+      "archived": false,
+      "forks": [
+        "Aiedevsm/revanced-patches-1",
+        "ALSchwalm/revanced-patches",
+        "anto426/revanced-patches",
+        "arrrnmp/revanced-patches",
+        "asd56yu/revanced-patches",
+        "belgradebc/revanced-patches",
+        "blaxor1/revanced-patches",
+        "brskt/revanced-patches",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-85813480",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-86014315",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-86126979",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-86179411",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-86217480",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-86259657",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-86577065",
+        "chandler.bing/ecoscan-80488462-deletion_scheduled-86675967",
+        "Crafter-Y/revanced-patches",
+        "culpen0/revanced-patches",
+        "dariovinci200217/revanced-patches",
+        "darkensyde/revanced-patches",
+        "delath/revanced-patches",
+        "drunkbatya/revanced-patches",
+        "dtricks/revanced-patches",
+        "dwismath/revanced-patches",
+        "eathtespagheti/revanced-patches",
+        "elia_vandi/revanced-patches",
+        "francescograzioso1995/revanced-patches",
+        "gajgaje2000/revanced-patches",
+        "gh3ttokill4/revanced-patches",
+        "hank722089/revanced-patches",
+        "hashworks/revanced-patches",
+        "hxreborn/revanced-patches",
+        "Indranil012/revanced-patches",
+        "isdzjfs/revanced-patches",
+        "jakahudoklin/revanced-patches",
+        "joshi33/revanced-patches",
+        "kadirtml01/revanced-patches",
+        "kamilstyrna047/revanced-patches",
+        "kenw2255/revanced-patches",
+        "Leandro-734/revanced-patches",
+        "lfnincao/revanced-patches",
+        "lucas-martinati/revanced-patches",
+        "LulzRose/revanced-patches",
+        "meowtochondria/revanced-patches",
+        "mostafaNazari702/revanced-patches",
+        "munzur63/revanced-patches",
+        "nguyenhoaivan1997/revanced-patches",
+        "nic.silver/revanced-patches",
+        "niftiest/revanced-patches",
+        "nijave/revanced-patches",
+        "nyraa/revanced-patches",
+        "patrickvanc/revanced-patches",
+        "pengleixinkuzi/revanced-patches",
+        "PhateValleyman/revanced-patches",
+        "proivan1711/revanced-patches",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-85849636",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-85878807",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-85897960",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-85950944",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86093532",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86146681",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86347573",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86383433",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86411624",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86447130",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86488202",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86533980",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86653713",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86707754",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86783510",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86849772",
+        "rachel.green.r/ecoscan-80488462-deletion_scheduled-86892377",
+        "RikoDEV/revanced-patches",
+        "rosset.nocpes/revanced-patches",
+        "samolego/revanced-patches",
+        "SayanthD/revanced-patches",
+        "Super_dude/revanced-patches",
+        "THE-M0P/revanced-patches",
+        "ToyVo/revanced-patches",
+        "tristan23612/revanced-patches",
+        "tuanhasan1124/revanced-patches",
+        "Ushie/revanced-patches",
+        "Vic-41148/revanced-patches",
+        "xat.king6969/revanced-patches",
+        "XCossale/revanced-patches",
+        "yonggamer/revanced-patches",
+        "zappybiby/revanced-patches"
+      ],
+      "contentHashes": [
+        "002638f8f6f0681dc0903a439ccf7c2cf2234a3f",
+        "21cba5880b7a0b31294a2b7f6a096b56355c57d2",
+        "2e13946d92fd573d7451d6718fc662f77cc0734b",
+        "36b080b27bdda628b6554bfdb29a348acd9f0524",
+        "7b0d74908a924008ede42ec3dde73f08a9cfdeac",
+        "88e44efc79a9f2f9a5aac737d6265733dbf9d22d",
+        "8a2647eb524f5e08718301dde95931e38445c6cc",
+        "9a06e21840b5c95875221222a1dc510ba4a7bbf5",
+        "9b65eb06cff68464b3002060558a2ffb482f343c",
+        "9c2160d040304cc24c790cca966b163f5babafa6",
+        "b6ce2a032c0d9f9bf7e33b64eac44b6a72b301dc",
+        "c09fe7edc91bd1bf1c640693bde3cca61f20c094",
+        "cb2a47316d04a8bf4d87ed759f564274a6c2e0cb",
+        "cca30b51b160081d1a659253b5a4f3647c0de243",
+        "d0cce5ef00539eddd530e782258c2cbb5074bb36",
+        "dd9994ae706264163f17f99682fc3329f441cdd6"
+      ],
+      "mirrors": [
+        {
+          "repository": "https://github.com/AbdalrahmanHafez/revanced-patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from the old patch layout, before the Morphe split.",
+          "blobs": [
+            "7aa77e12d6e39b1b1c52825cf5fa72432bbea28e",
+            "bb75cc1e65c6b1ca030d5d8b12426dd1f6c62941",
+            "e2d272125c5430d30a56e6dbc673e31a13d0eb99"
+          ]
+        },
+        {
+          "repository": "https://github.com/dzuypadora92/revanced-patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from the old patch layout, before the Morphe split.",
+          "blobs": [
+            "3d577a33965b85c83af447197eb56087068896ef",
+            "d25d46ed945c158ae34513b60baabdeb1e3faa7d",
+            "f18a78d5fa9052091ac176ce695260224488d265"
+          ]
+        },
+        {
+          "repository": "https://github.com/error-reporting/revanced-android-studio-client-bump-test",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "49d54c2b3fc63095160946243b321e7b8ce601f8",
+            "9e003d8710c70d72e0fc126245b4c8b1fe6a7db9",
+            "adee83a308d7dee73a65602f579a4616eb48fe42",
+            "b9e301725c57f7242eb11f4a2766a12efcc7df34",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        },
+        {
+          "repository": "https://github.com/GHD95/revanced-patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from the old patch layout, before the Morphe split.",
+          "blobs": [
+            "25618ccee4fea9324945eb42d20c889249e10b68",
+            "bcfd58c725a669e687314c73d6d92461e4fc2a65",
+            "e115a281a27a5214ffb49759d72ae0207fa0ce73"
+          ]
+        },
+        {
+          "repository": "https://github.com/hajs110208/test123",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "49d54c2b3fc63095160946243b321e7b8ce601f8",
+            "9e003d8710c70d72e0fc126245b4c8b1fe6a7db9",
+            "adee83a308d7dee73a65602f579a4616eb48fe42",
+            "b9e301725c57f7242eb11f4a2766a12efcc7df34",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        },
+        {
+          "repository": "https://github.com/israelterry/Patch33",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "49d54c2b3fc63095160946243b321e7b8ce601f8",
+            "9e003d8710c70d72e0fc126245b4c8b1fe6a7db9",
+            "adee83a308d7dee73a65602f579a4616eb48fe42",
+            "b9e301725c57f7242eb11f4a2766a12efcc7df34",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        },
+        {
+          "repository": "https://github.com/itsmartashub/rvplus",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from the old patch layout, before the Morphe split.",
+          "blobs": [
+            "25618ccee4fea9324945eb42d20c889249e10b68",
+            "bcfd58c725a669e687314c73d6d92461e4fc2a65",
+            "e115a281a27a5214ffb49759d72ae0207fa0ce73"
+          ]
+        },
+        {
+          "repository": "https://github.com/kairusds/yt-revanced-icon",
+          "reason": "Lists ReVanced's patches, Facebook's and Messenger's among them, in its README and patches.json. No patch code of its own.",
+          "blobs": [
+            "b83ba4638910d4af972f4c0d9556fdb941a7fdec",
+            "bcc0b26f64d22386279b22357f7b5bf061e218c9"
+          ]
+        },
+        {
+          "repository": "https://github.com/Lightdm/custom-revanced-patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from the old patch layout, before the Morphe split.",
+          "blobs": [
+            "19e445fdad9ca86993222b73568e96e297e2c98a",
+            "5bdbb50c12a733bf29cfee74baa9f2ee453ee8f0",
+            "c512ca9806cffba231f0126e36a41438d1f09120",
+            "f34b7465df17fce99f40120b0d96a5f249786056"
+          ]
+        },
+        {
+          "repository": "https://github.com/LOrhun/Revanced-Patches.5.51.0",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "49d54c2b3fc63095160946243b321e7b8ce601f8",
+            "9e003d8710c70d72e0fc126245b4c8b1fe6a7db9",
+            "adee83a308d7dee73a65602f579a4616eb48fe42",
+            "b9e301725c57f7242eb11f4a2766a12efcc7df34",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        },
+        {
+          "repository": "https://github.com/Mafiadoener36/revanced-patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from the old patch layout, before the Morphe split.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "19e445fdad9ca86993222b73568e96e297e2c98a",
+            "19f5c125151496c030281fe943c11fe2fc48a18c",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "3ce2f74b11cf625e37d451bf31d1abf85fc4dc65",
+            "5bdbb50c12a733bf29cfee74baa9f2ee453ee8f0",
+            "5da83e8760d65c8aec45cd4081c436714c0ad38d",
+            "85c744fabc51dcf49684a798d2d2fd7b76652bc3",
+            "a5a596d3ee5076c7317a3c20f0b6926792c1c365",
+            "cfd852dad580244aa6c046ebd04ac4613089f2ac",
+            "dee26e289be087651fb2892fb8db650ec1e6a393",
+            "ec811fc3c34a0119af4c07f376805091dd09429d",
+            "f18a78d5fa9052091ac176ce695260224488d265",
+            "f34b7465df17fce99f40120b0d96a5f249786056",
+            "f9fa2846efb4388481129836a167d23aea620a0b"
+          ]
+        },
+        {
+          "repository": "https://github.com/phit/revanced-patch",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "49d54c2b3fc63095160946243b321e7b8ce601f8",
+            "9e003d8710c70d72e0fc126245b4c8b1fe6a7db9",
+            "adee83a308d7dee73a65602f579a4616eb48fe42",
+            "b9e301725c57f7242eb11f4a2766a12efcc7df34",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        },
+        {
+          "repository": "https://github.com/ReVanced/revanced-patches",
+          "reason": "ReVanced's original GitHub home, blocked by a DMCA notice (HTTP 451) since 2026-03-24. Jman's index still points at it.",
+          "blobs": []
+        },
+        {
+          "repository": "https://github.com/rishigarg786/revanced-patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from the old patch layout, before the Morphe split.",
+          "blobs": [
+            "f18a78d5fa9052091ac176ce695260224488d265"
+          ]
+        },
+        {
+          "repository": "https://github.com/rotatordisk92/ifunny-patch",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "19f5c125151496c030281fe943c11fe2fc48a18c",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "a5a596d3ee5076c7317a3c20f0b6926792c1c365",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        },
+        {
+          "repository": "https://github.com/TheMaskedGuardian/revanced-patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "49d54c2b3fc63095160946243b321e7b8ce601f8",
+            "9e003d8710c70d72e0fc126245b4c8b1fe6a7db9",
+            "adee83a308d7dee73a65602f579a4616eb48fe42",
+            "b9e301725c57f7242eb11f4a2766a12efcc7df34",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        },
+        {
+          "repository": "https://github.com/timschneeb/girl-alone-revival",
+          "reason": "A patch project for another app that vendors a copy of ReVanced's patches, Facebook's and Messenger's with them.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "716b40e1d7d749f5bbe4025c65d4d15e51e4aa29",
+            "e8a4065879b5cdcffa298e47491e3838bb02771a",
+            "ec811fc3c34a0119af4c07f376805091dd09429d",
+            "f3f06144883f204a6f5ca59ee5f224e439eda2fd"
+          ]
+        },
+        {
+          "repository": "https://github.com/vinh2201/rv-NEW-patch22",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches with some files changed or from another release.",
+          "blobs": [
+            "06055b4f1a340896fdfecc53d960a0d1286d4a09",
+            "0648db7e57f4ed78e7a206030d065d5b2774ae4a",
+            "7b0d74908a924008ede42ec3dde73f08a9cfdeac",
+            "88e44efc79a9f2f9a5aac737d6265733dbf9d22d",
+            "8a2647eb524f5e08718301dde95931e38445c6cc",
+            "cb2a47316d04a8bf4d87ed759f564274a6c2e0cb",
+            "cca30b51b160081d1a659253b5a4f3647c0de243"
+          ]
+        },
+        {
+          "repository": "https://github.com/vomw/patches",
+          "reason": "A copy of ReVanced's Facebook and Messenger patches from an earlier release than the one ReVanced ships now.",
+          "blobs": [
+            "090ffd9f82fd5ee0b1b1e61431eaedb74480bfbb",
+            "0d5bfd58cd16322685115b33916f189a20fd1c5d",
+            "2d190615f33b48668854205833d5d19de899c9f4",
+            "49d54c2b3fc63095160946243b321e7b8ce601f8",
+            "9e003d8710c70d72e0fc126245b4c8b1fe6a7db9",
+            "adee83a308d7dee73a65602f579a4616eb48fe42",
+            "b9e301725c57f7242eb11f4a2766a12efcc7df34",
+            "ec811fc3c34a0119af4c07f376805091dd09429d"
+          ]
+        }
+      ],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "revanced-brskt",
+      "repository": "https://gitlab.com/brskt/revanced-patches",
+      "lineage": "revanced",
+      "upstream": "https://gitlab.com/ReVanced/revanced-patches",
+      "kind": "revanced-patches",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": []
+      },
+      "features": [
+        "Remove Meta AI from the inbox, notifications and search",
+        "Hide inbox ads",
+        "Hide inbox subtabs",
+        "Hide Facebook button"
+      ],
+      "branches": [
+        {
+          "name": "dev",
+          "commit": "4dd3d7cf526d1b8b0999b55c415693d460a8bde7"
+        },
+        {
+          "name": "main",
+          "commit": "7517f57ac7a54e1c914e8dd8cc3e1aa908e28e54"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/revanced/patches/messenger",
+        "extensions/messenger"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://gitlab.com/brskt/revanced-patches/-/blob/0419dbc668599a0847710f8a4554b3a218ec2e19/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "A personal ReVanced copy whose main is ReVanced's main commit for commit. Its dev branch carries unmerged Messenger Meta AI work and the finding that Messenger 564 moved onCreate into an obfuscated superclass.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "meridian",
+      "repository": "https://github.com/meridianfresco/morphe-meta-patches",
+      "lineage": "revanced",
+      "upstream": "https://gitlab.com/ReVanced/revanced-patches",
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "490.0.0.63.82"
+        ]
+      },
+      "features": [
+        "Hide 'Sponsored Stories'",
+        "Hide story ads"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "7c950b94f204b2b2e19b4f2891d922c6c9712e85"
+        },
+        {
+          "name": "dev",
+          "commit": "39a97f3cf450b90592c82ee5b46fd75baf140a5e"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/morphe/patches/facebook"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/meridianfresco/morphe-meta-patches/blob/412d03687b85bf56ecb23f8d2d150705bd442c81/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "A GPL-3.0 Morphe port of ReVanced's Facebook pair inside a Meta-apps bundle. Nothing beyond the pair.",
+      "archived": false,
+      "forks": [
+        "fromansal/morphe-487-test",
+        "Laitinlok/morphe-meta-patches",
+        "SA-SUJON/Meta-Patches",
+        "scb043/morphe-meta-patches"
+      ],
+      "contentHashes": [
+        "941a9697b3629f7374a1f98c5a81c724cf95da6c"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "devanced",
+      "repository": "https://github.com/RookieEnough/De-Vanced",
+      "lineage": "revanced",
+      "upstream": "https://gitlab.com/ReVanced/revanced-patches",
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana",
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "490.0.0.63.82"
+        ],
+        "com.facebook.orca": [
+          "573.0.0.44.88"
+        ]
+      },
+      "features": [
+        "Hide 'Sponsored Stories'",
+        "Hide story ads",
+        "Disable typing indicator",
+        "Hide Facebook buttons",
+        "Hide inbox ads",
+        "Hide inbox stories and notes tray",
+        "Hide inbox subtabs",
+        "Open links externally",
+        "Remove Meta AI",
+        "Spoof package version"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "12d6cd17cd497d0647fe3f4f5c3a07b75bee4a4a"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/morphe/patches/facebook",
+        "patches/src/main/kotlin/app/morphe/patches/messenger",
+        "extensions/messenger"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/RookieEnough/De-Vanced/blob/0d01e3dd5ec82b6796b28b82c33fc6af4944b2e6/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "The ReVanced Facebook pair and eight GPL-3.0 Messenger patches with exact-version pins, in a multi-app bundle. A base for the Messenger sibling.",
+      "archived": false,
+      "forks": [
+        "aisgbnok/De-Vanced",
+        "Amsal1/De-Vanced",
+        "bapirex/De-ReVanced",
+        "diestinkvinger/De-Vanced",
+        "Dr4w/De-Vanced",
+        "EncryptedCicada/De-ReVanced",
+        "Epikaigle/De-Vanced",
+        "ethanm6/De-Vanced",
+        "etherealNest/De-ReVanced",
+        "fireph/De-Vanced",
+        "hassan1395/De-Vanced-Forks",
+        "iamnotbobby/De-Vanced",
+        "iamsubingyawali/De-Vanced",
+        "imjustbackup/De-Vanced",
+        "Kyujiwara/De-Vanced",
+        "Logiquo/De-ReVanced",
+        "lucas-martinati/De-Vanced",
+        "man-with-scars/De-Vanced",
+        "maxcodl/De-ReVanced",
+        "MrHuaweiFan/GmsCore-Patches",
+        "ninjatall12/De-Vanced",
+        "partment/De-ReVanced",
+        "Runteryaa/De-ReVanced",
+        "SA-SUJON/De-Vanced",
+        "ShredRum/De-Vanced",
+        "sosmedreceh6/De-ReVanced",
+        "sujunmin/De-Vanced",
+        "TheBeaconCrafter/De-ReVanced",
+        "twistios/De-Vanced",
+        "Untet01/Twee4-De-Vanced",
+        "vancedto/De-ReVanced",
+        "Z1xus/De-ReVanced"
+      ],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "rushiranpise",
+      "repository": "https://github.com/rushiranpise/morphe-patches",
+      "lineage": "revanced",
+      "upstream": "https://gitlab.com/ReVanced/revanced-patches",
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": [
+          "576.0.0.47.92"
+        ]
+      },
+      "features": [
+        "Allow screen capture",
+        "Block screenshot detection",
+        "Change package name",
+        "Disable media transcoding",
+        "Disable typing indicator",
+        "Enable chat heads",
+        "Hide Facebook buttons",
+        "Hide inbox ads",
+        "Hide inbox stories and notes tray",
+        "Hide inbox subtabs",
+        "Open links externally",
+        "Remove Meta AI",
+        "Spoof package version"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "19f790360286cb34bfbac68cc6e5f896185e92ec"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/template/patches/messenger"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/rushiranpise/morphe-patches/blob/55ca6a05ea3559e95a0876316dcb7caad1f3c9cf/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "The largest GPL-3.0 Messenger set, inside a 278-patch multi-app bundle. Screen capture in encrypted chats and the screenshot-detection bypass change what other people are told, so they would not ship by default.",
+      "archived": false,
+      "forks": [
+        "ahyat786/morphe-patches",
+        "allexwin50/morphe-patches",
+        "ameyamg/morphe-patches",
+        "Andruxzz/metin2blackfree",
+        "andylollypop/morphe-patches",
+        "ccmoradia/morphe-patches",
+        "cnpatric/morphe-patches",
+        "cyberphunk27/morphe-patches",
+        "DanGLVK/morphe-patches",
+        "dawidd612/dudeks-morphe-patches",
+        "defaultsq/morphe-patches",
+        "donny110/morphe-patches",
+        "drmiladmohseniniaradio-afk/morphe-patches",
+        "ek0ajahy0/morphe-patches-DramaBox",
+        "Eldeerly/morphe-patches",
+        "fakeoomblues/morphe-patches",
+        "ferivoq/morphe-patches",
+        "firstlynx-sys/rushi-morphe-patches",
+        "gnorbsl/morphe-patches",
+        "gnorcchi/morphe-patches",
+        "i2332/telegraph-morphe-patches",
+        "itsmartashub/rushi-morphe-patches",
+        "Jacob26502/morphe-patches",
+        "JanManfreda/morphe-patches",
+        "kanaminusaena/morphe-patches",
+        "lanadilan/morphe-patches",
+        "liyinanch/morphe-patches",
+        "Maege79/morphe-patches",
+        "mian196/morphe-patches",
+        "moram225/morphe-patches",
+        "MrKristofere/morphe-patches",
+        "nilofari700/morphe-patches",
+        "Not-Your-Baby-Father/morphe-patches",
+        "Nyxaeo/morphe-patches",
+        "Pyropop/morphe-patches",
+        "rahul9999xda/morphe-patches",
+        "ReaperSWAT/morphe-patches",
+        "robbirizaldi/morphe-patches",
+        "sadicii/morphe-patches-rushiran",
+        "SafwanVin/Rushi-morphe-patches",
+        "sam-reza/Rushi-s-morphe-patches",
+        "saqie1393/morphe-patches",
+        "Sc00tz/morphe-patches",
+        "Sisyphusean/morphe-patches",
+        "tarura41/morphe-patches",
+        "urroxyz/morphe-patches",
+        "vonxbailey/morphe-patches",
+        "xypherose/morphe-patches",
+        "zqtmx/morphe-patches",
+        "ZwehtetA/morphe-patches"
+      ],
+      "contentHashes": [
+        "188138d4dbcd77fd9877e2e321787a7b5b068660",
+        "1cc78763d5365704bfbad0ff6471ee490704885b",
+        "2db41038c33d40be44a62f0b9ea04b2ad45bc264",
+        "660a6680de5fdcb21b88c824b07b84a460a15b8e",
+        "76631720e74cdb322ea0ee285a862b061f425814",
+        "81a602da184e8b5fd06a6844c9dd304b28271068",
+        "a5336a06881d31ad7547eddabd147542c7277531",
+        "abc8b8bc4170c5cd3a7d14fff30f7fdc686c6a6c",
+        "b39ed878ebe1901d5c82e06e6ed9d22a2648c35d",
+        "b8338987142978bd16f423a009a937c3472e3ec1",
+        "cfe570fb8f1250ce6896a4d27aedb87862b37145",
+        "dff4159e5ed2787678acccc3f76f3c1836f1b05c",
+        "e29a5f700820cd8221123b94e91907be9d81f0ef",
+        "e38c306f619ebf66f524481866007e11ed9a254e",
+        "f8756468b8adbac2f08e06c865c38d513c956b8b"
+      ],
+      "mirrors": [
+        {
+          "repository": "https://github.com/vomw/morphe-patches",
+          "reason": "An older copy of rushiranpise's Messenger patches, pinned to Messenger 573. The Morphe Patch Tracker lists it under the vomw name with rushiranpise's address.",
+          "blobs": [
+            "188138d4dbcd77fd9877e2e321787a7b5b068660",
+            "2db41038c33d40be44a62f0b9ea04b2ad45bc264",
+            "660a6680de5fdcb21b88c824b07b84a460a15b8e",
+            "76631720e74cdb322ea0ee285a862b061f425814",
+            "81a602da184e8b5fd06a6844c9dd304b28271068",
+            "a5336a06881d31ad7547eddabd147542c7277531",
+            "abc8b8bc4170c5cd3a7d14fff30f7fdc686c6a6c",
+            "b39ed878ebe1901d5c82e06e6ed9d22a2648c35d",
+            "b8338987142978bd16f423a009a937c3472e3ec1",
+            "ca4f77da7870bd161523409599490928f52c3ba5",
+            "cfe570fb8f1250ce6896a4d27aedb87862b37145",
+            "dff4159e5ed2787678acccc3f76f3c1836f1b05c",
+            "e29a5f700820cd8221123b94e91907be9d81f0ef",
+            "e38c306f619ebf66f524481866007e11ed9a254e",
+            "f8756468b8adbac2f08e06c865c38d513c956b8b"
+          ]
+        }
+      ],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "chirag127",
+      "repository": "https://github.com/chirag127/morphe-patches",
+      "lineage": "chirag127",
+      "upstream": null,
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": []
+      },
+      "features": [
+        "FacebookRemoveSponsoredPosts (STUB)"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "a48e524f7c87be388492c3b4213a1170f68de6a2"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/chirag127/morphe/patches/targets/facebook"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/chirag127/morphe-patches/blob/85cdca127fb282562f4c49c9a256e6532adb109b/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "rejected",
+      "reason": "Its only Facebook patch is labelled STUB and does nothing.",
+      "archived": false,
+      "forks": [
+        "webbrain-one/morphe-patches"
+      ],
+      "contentHashes": [
+        "7b145b371a5d1b5f2735268fd0426674a48695ba",
+        "8030a1f93a2043d33683c56a0cd5037854da2a26",
+        "999a5f925d66e32779b32a7592fd77756fb863f4"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "astronaut10",
+      "repository": "https://github.com/Astronaut10/facebook-morphe-patches",
+      "lineage": "astronaut10",
+      "upstream": null,
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": []
+      },
+      "features": [
+        "The Morphe template's example patch, no Facebook code"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "cdb7a655fafda44461618d5e1f9361f3a3d102df"
+        }
+      ],
+      "watchPaths": [],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/Astronaut10/facebook-morphe-patches/blob/cdb7a655fafda44461618d5e1f9361f3a3d102df/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "rejected",
+      "reason": "Named for Facebook but still the unmodified Morphe patches template.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "loukious",
+      "repository": "https://github.com/Loukious/FacebookAppAdsRemover",
+      "lineage": "loukious",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": []
+      },
+      "features": [
+        "Block ads (feed sponsored units, video ads, banners)",
+        "Block marketplace ads",
+        "Block game ads",
+        "Feed ad guard (CSR experiment)",
+        "Block reels shopping cards",
+        "Story ads",
+        "Reels ads",
+        "Session export and import"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "be51ed2858ef33e0df812d6385b6b609e64be0ec"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "The widest map of Facebook's ad pipelines, with no licence. Its README is read for ideas and stable strings, and its code never is. Session export and the ad-free session spoof are out anyway.",
+      "archived": false,
+      "forks": [
+        "congpeka/FacebookAppAdsRemover",
+        "hohojia886/FacebookAppAdsRemover",
+        "jiro28/FacebookAppAdsRemover",
+        "nguoirungne/FacebookAppAdsRemover",
+        "peerkaiser8-create/FacebookAppAdsRemover",
+        "SadmanFahad/FacebookAppAdsRemover",
+        "SapitoSucio/FacebookAppAdsRemover",
+        "sxtufs/FBAdsRemover"
+      ],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "loukious-gamer765",
+      "repository": "https://github.com/gamer765/FacebookAppAdsRemover-Patched",
+      "lineage": "loukious",
+      "upstream": "https://github.com/Loukious/FacebookAppAdsRemover",
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [
+          "577.0.0.50.72"
+        ]
+      },
+      "features": [
+        "Sponsored Reels fetch blocking",
+        "Commercial-break and Watch pre-roll blocking",
+        "Profile Reels ad requests",
+        "Reels ad prefetch blocking"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "7dae64b1e015a38bed2c5abc4d7db3d5af35d628"
+        },
+        {
+          "name": "experiment/obfuscation-resistant-hooks",
+          "commit": "95025c4f84450e7948619fa5dbbab2f9b2bb0bdb"
+        },
+        {
+          "name": "experiment/obfuscation-resistant-hooks-579-fix",
+          "commit": "dd42977acd13965d288d925fdbbe9d22bfe93274"
+        },
+        {
+          "name": "experiment/obfuscation-resistant-hooks-579-fix2",
+          "commit": "0011985224b8c5e98a5179d3e0c3e03b300c4e0f"
+        },
+        {
+          "name": "experiment/obfuscation-resistant-hooks-579",
+          "commit": "dd42977acd13965d288d925fdbbe9d22bfe93274"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "A copy of FacebookAppAdsRemover with Facebook 577 Reels and commercial-break paths written down. No licence, so its notes are hypotheses for fixture work and nothing more.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [
+        "921478b4426176fafe40da970334ce53d9796824"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "nexalloy",
+      "repository": "https://github.com/gnadgnaoh/NexAlloy-XES",
+      "lineage": "loukious",
+      "upstream": "https://github.com/NexAlloy/NexAlloy",
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": []
+      },
+      "features": [
+        "Hide Facebook ads",
+        "Hide in-stream ad breaks",
+        "Hide profile timeline ads",
+        "Hide search ads",
+        "Spoof ad-free session",
+        "Hide Reels shopping",
+        "Aggressive ad blocking",
+        "Hide seen story",
+        "Allow screen capture",
+        "Block screen capture detection",
+        "Clean links"
+      ],
+      "branches": [
+        {
+          "name": "root",
+          "commit": "36e2e5c225b43cab1a2b8fd8f835cf40a8e0a854"
+        }
+      ],
+      "watchPaths": [
+        "app/src/main/java/io/github/nexalloy/revanced/facebook",
+        "app/src/main/java/io/github/nexalloy/KatanaDexGate.kt"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/gnadgnaoh/NexAlloy-XES/blob/7333cd8c93be223a8ec2804938449de4777be685/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": {
+        "source": "https://github.com/Loukious/FacebookAppAdsRemover",
+        "evidence": "https://github.com/gnadgnaoh/NexAlloy-XES/blob/7333cd8c93be223a8ec2804938449de4777be685/app/src/main/java/io/github/nexalloy/revanced/facebook/ad/HideFacebookAdsPatch.kt"
+      },
+      "disposition": "behavior-only",
+      "reason": "GPL-3.0 at the repository level, but its Facebook master patch says it ports every FacebookAppAdsRemover hook, and that code has no licence. The Facebook subtree is behavior-only until Loukious licenses it.",
+      "archived": false,
+      "forks": [
+        "49ronind/NexAlloy",
+        "asizon/SexAlloy",
+        "dotarma/Armalloy",
+        "FiorenMas/NexAlloy",
+        "peerkaiser8-create/NexAlloy",
+        "Rainy-PlayGround/SexAlloy",
+        "siritami/SexAlloy",
+        "thinhzero/NexAlloy",
+        "wszmx332650748/SexAlloy"
+      ],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "byrafael",
+      "repository": "https://github.com/ByRafaelSystem/FBadsRemoverPro",
+      "lineage": "byrafael",
+      "upstream": null,
+      "kind": "readme-only",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": []
+      },
+      "features": [
+        "Feed ads",
+        "Story ads",
+        "Reels ads",
+        "Game ads"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "2184eb14fc146b0e3ac20fc47d80bfbb2caeef36"
+        }
+      ],
+      "watchPaths": [],
+      "license": {
+        "spdx": "Apache-2.0",
+        "url": "https://github.com/ByRafaelSystem/FBadsRemoverPro/blob/2184eb14fc146b0e3ac20fc47d80bfbb2caeef36/LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      "contaminatedBy": null,
+      "disposition": "rejected",
+      "reason": "Claims buildable source, but holds only a README and a licence. Its list of ad surfaces corroborates demand and nothing else.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "messengerex",
+      "repository": "https://github.com/C10udburst/MessengerEx",
+      "lineage": "messengerex",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": []
+      },
+      "features": [
+        "Kill inbox ads",
+        "Chrome Custom Tabs for links",
+        "Remove Meta AI"
+      ],
+      "branches": [
+        {
+          "name": "master",
+          "commit": "e79cff80c1fa3b22902c88630558ed6846905e0a"
+        }
+      ],
+      "watchPaths": [],
+      "license": {
+        "spdx": "MIT",
+        "url": "https://github.com/C10udburst/MessengerEx/blob/e79cff80c1fa3b22902c88630558ed6846905e0a/LICENSE",
+        "sha256": "2705f0d03bf7b16f10f0f8f97ec720443291ef2d78db2bde512b7092e39b4f75"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "MIT-licensed Messenger hooks for inbox ads, Meta AI and the browser. A reference for the Messenger sibling, though Xposed itself is not coming here.",
+      "archived": false,
+      "forks": [
+        "Barybht/MessengerEx",
+        "vip5t7/MessengerEx"
+      ],
+      "contentHashes": [
+        "5a3b82b13b9db90538e5cb8248b9f6aa1a574fcb"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "messenger-cleaner",
+      "repository": "https://github.com/N01-r0/messenger-cleaner-lsposed",
+      "lineage": "messengerex",
+      "upstream": "https://github.com/C10udburst/MessengerEx",
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": []
+      },
+      "features": [
+        "Remove Meta AI entry points",
+        "Remove inbox ads",
+        "Remove AI, Reels, Events and Chat moments menu surfaces",
+        "Precheck a Messenger build"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "b235eec406f2abd49ac7db20136e3dd11bb11dc3"
+        }
+      ],
+      "watchPaths": [],
+      "license": {
+        "spdx": "MIT",
+        "url": "https://github.com/N01-r0/messenger-cleaner-lsposed/blob/b235eec406f2abd49ac7db20136e3dd11bb11dc3/LICENSE",
+        "sha256": "52f629c82ae5bc47236fa78668a8bad8cf31daccea6bd0b2b4638e0f2b6a9ddf"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "An MIT update of MessengerEx for April 2026 Messenger, with a structural precheck report worth copying into a fixture-first sibling.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "messenger-z",
+      "repository": "https://github.com/hyowonbernabe/Messenger-Z",
+      "lineage": "messenger-z",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": []
+      },
+      "features": [
+        "No seen receipts",
+        "No typing indicator",
+        "Unsent message logger",
+        "Spoof version",
+        "Coexist with Facebook"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "87bf7ebfa052c51b04d30aa5bcce6c87f98f1735"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "No licence. Its notes on rewriting the two signature permissions so Messenger installs beside Facebook are useful evidence. Anti-seen and the unsent-message logger are out.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [
+        "bae07f6440d95c13d4c4b5924ade2fc469dcf1c9",
+        "c85ae41f36a62ea0aaea66c2fdb12e57ae7ff4c9",
+        "f3d80ddc2f77b8b48be055b8db95c4afcf869adf"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "messengerpro",
+      "repository": "https://github.com/Mino260806/MessengerPro",
+      "lineage": "messengerpro",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": []
+      },
+      "features": [
+        "Prevent seen indicator",
+        "Prevent typing indicator",
+        "Message formatting",
+        "Commands",
+        "Attach any file",
+        "Conversation lock",
+        "Default camera",
+        "Tasker plugin"
+      ],
+      "branches": [
+        {
+          "name": "master",
+          "commit": "7d8dec01656c3b9a1ddfef0bbd802590170e118a"
+        },
+        {
+          "name": "alpha",
+          "commit": "86f5d00f1b469dcbf021805335dd1288fe6875d7"
+        },
+        {
+          "name": "dev",
+          "commit": "711bed3fdc481399e54094209d5fb884e14bb496"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "No licence, and unchanged since January 2024. Demand evidence for file handling and conversation lock.",
+      "archived": false,
+      "forks": [
+        "AndresNorm/MessengerPro",
+        "AskAlice/MessengerPro",
+        "BenFredjSkander/MessengerPro",
+        "borderpeople/MessengerPro",
+        "Buffalo-716/MessengerPro",
+        "candeyman75/MessengerPro",
+        "casusejoe/MessengerPro",
+        "Ccrane9784/MessengerPro",
+        "cimon-bkr/MessengerPro",
+        "cwsale/MessengerPro",
+        "DeeShawna84/MessengerPro",
+        "djtonupspy/MessengerPro",
+        "eaustin6/MessengerPro",
+        "Edwinsente/MessengerPro",
+        "GetGian/MessengerPro",
+        "Gustavonnc/MessengerPro",
+        "HackAtok/MessengerPro",
+        "hatori999/MessengerPro",
+        "iCodeIN/MessengerPro",
+        "Ifaz2611/MessengerPro",
+        "Josh747247/MessengerPro",
+        "Krystalenterpriseshq/MessengerPro",
+        "linhok2005a-star/MessengerPro",
+        "Loukious/MessengerPro",
+        "Marlena2307/MessengerPro",
+        "masteruni/MessengerPro",
+        "maxbotmd/MessengerPro",
+        "Mn0001983/MessengerPro",
+        "nbstudiopk/MessengerPro",
+        "NeonOrbit/MessengerPro",
+        "Nirzhor69/MessengerPro",
+        "Oliullah260/MessengerPro",
+        "Peachstar8/MessengerPro",
+        "Playmore00/MessengerPro",
+        "Salemx254/MessengerPro",
+        "Sheena82/MessengerPro",
+        "Sircozah/MessengerPro",
+        "StarfishCocoa/MessengerPro",
+        "superbikebig/MessengerPro",
+        "Taofiq-Anam/MessengerPro",
+        "TDOhex/MessengerPro",
+        "Toohai/MessengerPro",
+        "Uegou/MessengerProcus",
+        "Ujwal321/MessengerPro33",
+        "vaginessa/MessengerPro",
+        "vaimalaviya1233/MessengerPro",
+        "xXBatman13Xx/MessengerPro",
+        "yuIlariy/MessengerPro",
+        "yuno2l/MessengerPro",
+        "Zetsurenn/MessengerPro"
+      ],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "messengerpro-pedguedes",
+      "repository": "https://github.com/pedguedes090/Messenger-Pro",
+      "lineage": "messengerpro",
+      "upstream": "https://github.com/Mino260806/MessengerPro",
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": []
+      },
+      "features": [
+        "Block seen",
+        "Block typing",
+        "Attach any file",
+        "Conversation lock",
+        "Video download from links",
+        "Allow screenshots",
+        "Block screenshot detection",
+        "External browser",
+        "Message history",
+        "Block story seen",
+        "Block feed ads"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "08d1404001719e0c5968efdf89643468e2c301b6"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "No licence, and it hands out patched Messenger and Facebook APKs. Nothing to take.",
+      "archived": false,
+      "forks": [
+        "linhok2005a-star/Messenger-Pro"
+      ],
+      "contentHashes": [
+        "2d15f57263e931364cd96190b8c62344b308fc95",
+        "2dd758339ed48a3eff1672159390fde0a8340a6e",
+        "4f23e4b36a054d740fb7ad1101d2f6a5ff5855ac",
+        "e2935628a7f9a85ee1957c4a0a0487d308523250"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "shuhaib",
+      "repository": "https://github.com/ShuhaibNC/morphe-patches",
+      "lineage": "shuhaib",
+      "upstream": null,
+      "kind": "morphe-patches",
+      "packages": [
+        "com.facebook.lite"
+      ],
+      "targetVersions": {
+        "com.facebook.lite": []
+      },
+      "features": [
+        "Disable In-Built Browser"
+      ],
+      "branches": [
+        {
+          "name": "dev",
+          "commit": "e44441d556026a876d70fc588c8df594888d770f"
+        }
+      ],
+      "watchPaths": [
+        "patches/src/main/kotlin/app/template/patches/facebooklite"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/ShuhaibNC/morphe-patches/blob/0390a4484af892e285426678238693bbefd069d4/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "contaminatedBy": null,
+      "disposition": "candidate",
+      "reason": "The only Facebook Lite Morphe patch found. It opens links in your own browser, on any version. It lives on the dev branch of a multi-app bundle, so only its Lite folder is watched.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "fblitepro",
+      "repository": "https://github.com/BERTO-bid/FBLitePro",
+      "lineage": "fblitepro",
+      "upstream": null,
+      "kind": "apk-distribution",
+      "packages": [
+        "com.facebook.lite"
+      ],
+      "targetVersions": {
+        "com.facebook.lite": []
+      },
+      "features": [
+        "Injected overlay into a rebuilt Facebook Lite APK",
+        "Cookie extraction",
+        "Automated profile photo upload"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "9743b2abf0b157e8c2b697b0c6df6ee37da01709"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "Publishes a rebuilt Meta APK with cookie extraction and account automation, and has no licence. Nothing here fits Hushfacebook.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "onetapvideodownload",
+      "repository": "https://github.com/Ashish-Bansal/OneTapVideoDownload",
+      "lineage": "onetapvideodownload",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.katana",
+        "com.facebook.lite"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": [],
+        "com.facebook.lite": []
+      },
+      "features": [
+        "One-tap video download from Facebook",
+        "One-tap video download from Facebook Lite"
+      ],
+      "branches": [
+        {
+          "name": "master",
+          "commit": "718a78ed0752ea0242568c67c0ce846028c7f64f"
+        }
+      ],
+      "watchPaths": [
+        "app/src/main/java/com/phantom/onetapfacebookmodule"
+      ],
+      "license": {
+        "spdx": "GPL-3.0",
+        "url": "https://github.com/Ashish-Bansal/OneTapVideoDownload/blob/8db0f11b5ba41c48ca320c4643a002baf86fda66/LICENSE",
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+      },
+      "contaminatedBy": null,
+      "disposition": "rejected",
+      "reason": "A GPL-3.0 multi-app video downloader whose Facebook and Facebook Lite hooks date from 2018, far too old to anchor anything in 577 or 580. Only its Facebook module is watched.",
+      "archived": false,
+      "forks": [
+        "ahmed-ais/OneTapVideoDownload",
+        "amirlanesman/OneTapVideoDownload",
+        "automation-daemon/OneTapVideoDownload",
+        "bra1nb3am3r/OneTapVideoDownload",
+        "chichero2/OneTapVideoDownload",
+        "galenzhao/onetap-video-download",
+        "Idan1985/OneTapVideoDownload",
+        "kyx114/OneTapVideoDownload",
+        "luvmdy/OneTapVideoDownload",
+        "mackerone/OneTapVideoDownload",
+        "nomiscientist/OneTapVideoDownload",
+        "Numss/OneTapVideoDownload",
+        "pangpangcc/OneTapVideoDownload",
+        "rendyramon/OneTapVideoDownload",
+        "rockz5555/OneTapVideoDownload",
+        "SagarDep/OneTapVideoDownload",
+        "Scaven9er/OneTapVideoDownload",
+        "snbk97/OneTapVideoDownload",
+        "truthjunkie/OneTapVideoDownload",
+        "umairjabbar555/OneTapVideoDownload",
+        "vaginessa/OneTapVideoDownload",
+        "vinayhvaghamshi/OneTapVideoDownload"
+      ],
+      "contentHashes": [
+        "6af72c63ca26c655873776d238fc3009d28729e1",
+        "e14a8cb96f828fac33b7c9a96f79549dd1bf5c2f"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "metaplusxposed",
+      "repository": "https://github.com/rushiranpise/MetaPlusXposed",
+      "lineage": "metaplusxposed",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": []
+      },
+      "features": [
+        "Unlock Meta Plus benefits and custom app icons"
+      ],
+      "branches": [
+        {
+          "name": "dev",
+          "commit": "a501383292d005f90f81ce3b9244758eae59fbc2"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "Unlocks the paid Meta Plus subscription, which Hushfacebook leaves out as a paywall bypass, and has no licence.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [
+        "161acbab4e391eba322f7913bbb9a9434793b175"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "xposedbase",
+      "repository": "https://github.com/ssyss501/XposedBase",
+      "lineage": "xposedbase",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.katana": []
+      },
+      "features": [
+        "A sample Facebook hook in an Xposed starter project"
+      ],
+      "branches": [
+        {
+          "name": "master",
+          "commit": "18a6f0eac79523103a43201aea7aa9d4f1df1cb1"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "An Xposed starter project with one Facebook hook function, untouched since 2021, and no licence.",
+      "archived": false,
+      "forks": [
+        "zickieloox/XposedBase"
+      ],
+      "contentHashes": [
+        "0a296e233b82039b948e3d0f53daac687c545220"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "glitchdraft",
+      "repository": "https://github.com/FahadBinHussain/glitchdraft",
+      "lineage": "glitchdraft",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca",
+        "com.facebook.katana"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": [],
+        "com.facebook.katana": []
+      },
+      "features": [
+        "Save and sync chat drafts through a browser extension, an LSPosed module and a backend"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "118bd358da6ad45d5026e9bddd6662422caea67c"
+        }
+      ],
+      "watchPaths": [
+        "android/app/src/main/java/com/fahad/glitchdraft/lsposed"
+      ],
+      "license": {
+        "spdx": "MIT",
+        "url": "https://github.com/FahadBinHussain/glitchdraft/blob/b08a1bab09b2785506459365f5157f249b49d465/LICENSE",
+        "sha256": "374705cc88b4ada3c91ddbcab125daf6780ad9ed542ab7eb4498169e61bf0614"
+      },
+      "contaminatedBy": null,
+      "disposition": "rejected",
+      "reason": "MIT-licensed, but it syncs chat drafts through a server, which has nothing to do with decluttering Facebook. Only its Android module is watched.",
+      "archived": false,
+      "forks": [],
+      "contentHashes": [
+        "03ed03d4419127ba57f994dc7f350ba2bebf588e"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "chatheadenabler",
+      "repository": "https://github.com/NeonOrbit/ChatHeadEnabler",
+      "lineage": "chatheadenabler",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": []
+      },
+      "features": [
+        "Choose between chat heads and bubbles"
+      ],
+      "branches": [
+        {
+          "name": "main",
+          "commit": "c163a1cc357bb1954041e39d8a50cc28644f78f9"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "The chat-head switch Messenger Pro installs beside itself. No licence, so only its behavior is evidence.",
+      "archived": false,
+      "forks": [
+        "Alexander0402/ChatHeadEnabler",
+        "bimallochan/ChatHeadEnabler",
+        "KhanhNguyen9872/ChatHeadEnablerFork",
+        "masteruni/ChatHeadEnabler",
+        "Playmore00/ChatHeadEnabler",
+        "Quyenf/ChatHeadEnabler",
+        "SuphanatSuanset/ChatHeadEnabler"
+      ],
+      "contentHashes": [
+        "8444abcffc0439bd3fc99e692b0d17c712c13d41"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "id": "messengerpeep",
+      "repository": "https://github.com/TheRoughy/MessengerPeep",
+      "lineage": "messengerpeep",
+      "upstream": null,
+      "kind": "xposed-module",
+      "packages": [
+        "com.facebook.orca"
+      ],
+      "targetVersions": {
+        "com.facebook.orca": [
+          "239.1.0.17.119"
+        ]
+      },
+      "features": [
+        "Log sent and received MQTT messages"
+      ],
+      "branches": [
+        {
+          "name": "master",
+          "commit": "609e4bec2f9a3b4706af9c296ac1caabb7b0f025"
+        }
+      ],
+      "watchPaths": [],
+      "license": null,
+      "contaminatedBy": null,
+      "disposition": "behavior-only",
+      "reason": "A 2019 research module that logs Messenger's MQTT traffic for Messenger 239. No licence, and nothing a patch would use.",
+      "archived": false,
+      "forks": [
+        "zickieloox/MessengerPeep"
+      ],
+      "contentHashes": [
+        "1c79a7145de83aeeb074fa5888e7d4eea6d0c8e2"
+      ],
+      "mirrors": [],
+      "lastChecked": "2026-09-25"
+    }
+  ],
+  "outOfScope": [
+    {
+      "repository": "https://github.com/ycngmn/Nobook",
+      "reason": "A WebView wrapper around facebook.com, archived. It patches no Facebook package, though it shows demand for a low-data client.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/NoMore201/materialbook",
+      "reason": "A WebView wrapper around facebook.com. It patches no Facebook package, and the repository is gone.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/Arc157/Virtualapp",
+      "reason": "An app-virtualization project whose sample app list names Facebook's package. No Facebook patch.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/Cross2pro/VirtualApp",
+      "reason": "An app-virtualization project whose sample app list names Facebook's package. No Facebook patch.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/D4vRAM369/WhatsMicFix-LSPosed",
+      "reason": "An LSPosed microphone fix for WhatsApp voice notes that names Messenger's package. Nothing to do with Messenger's clutter.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/Firefds/FirefdsKit",
+      "reason": "A Samsung system tweak module that names Facebook's package in a list.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/LeeHDsniper/APKAnalyserModules",
+      "reason": "A captured logcat that mentions Facebook's package. No code for it.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/life2015/OPAmbientMod",
+      "reason": "A OnePlus ambient display module that names Facebook and Messenger for their notifications.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/MinaMichita/MiuiEULocalizationToolsBox",
+      "reason": "A MIUI localization module that names Facebook's package in a list.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/peter9811/ReVanced-APKs-output",
+      "reason": "Build output that lists ReVanced's patches. No patch code.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/rhe91709-netizen/HyperOS3EULocalization",
+      "reason": "A HyperOS localization module that names Facebook's package in a list.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/SodaWithoutSparkles/revanced-troubleshooting-guide",
+      "reason": "A troubleshooting guide that keeps copies of ReVanced's patch lists.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/townbull/XposedExp",
+      "reason": "A 2015 Samsung contacts experiment that names Facebook's package.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/TR-TECH-GUIDE/VirtualApp",
+      "reason": "An app-virtualization project whose sample app list names Facebook's package. No Facebook patch.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/user2user1/rvmm-config-gen",
+      "reason": "A build configuration generator that keeps a copy of ReVanced's patch list.",
+      "lastChecked": "2026-09-25"
+    },
+    {
+      "repository": "https://github.com/xbyl1234/instagram_lite_bot",
+      "reason": "An Instagram Lite account bot whose analysis hook names Facebook's packages.",
+      "lastChecked": "2026-09-25"
+    }
+  ]
+}

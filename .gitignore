@@ -51,8 +51,10 @@ release-receipt-*.json
 # Facebook APK fixtures stay local: they are Meta's binaries and never go in the repo
 fixtures/
 
-# Local clones of the patch sources this bundle was assembled from (read, never committed)
-sources/
+# Local clones of the patch sources this bundle was assembled from (read, never committed).
+# The ledger of those sources is the one file in there that is tracked.
+/sources/*
+!/sources/facebook-sources.json
 
 # Local working notes
 CLAUDE.md
