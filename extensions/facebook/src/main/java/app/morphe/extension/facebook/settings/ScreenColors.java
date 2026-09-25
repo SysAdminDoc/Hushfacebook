@@ -10,6 +10,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
@@ -138,8 +139,9 @@ final class ScreenColors {
         int titleId = dialog.getContext().getResources().getIdentifier("alertTitle", "id", "android");
         TextView title = titleId == 0 ? null : dialog.findViewById(titleId);
         if (title != null) title.setTextColor(this.title);
-        TextView message = dialog.findViewById(android.R.id.message);
-        if (message != null) message.setTextColor(summary);
+        // AlertDialog's own message, and the one a preference's dialog layout brings, which is the
+        // one on show there: AlertDialog's own sits GONE above it, and findViewById finds that first.
+        if (window != null) paintMessages(window.getDecorView());
         for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL}) {
             Button button = dialog.getButton(which);
             if (button != null) button.setTextColor(accent);
@@ -153,6 +155,7 @@ final class ScreenColors {
      * Facebook's teal, whatever the wallpaper, so they take the accent the buttons have.
      */
     void paintField(EditText field) {
+        field.setHintTextColor(summary);
         field.setBackgroundTintList(ColorStateList.valueOf(accent));
         field.setHighlightColor(half(accent));
         Drawable cursor = field.getTextCursorDrawable();
@@ -178,6 +181,14 @@ final class ScreenColors {
             right = right.mutate();
             right.setTint(accent);
             field.setTextSelectHandleRight(right);
+        }
+    }
+
+    private void paintMessages(View view) {
+        if (view instanceof TextView && view.getId() == android.R.id.message) ((TextView) view).setTextColor(summary);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int index = 0; index < group.getChildCount(); index++) paintMessages(group.getChildAt(index));
         }
     }
 

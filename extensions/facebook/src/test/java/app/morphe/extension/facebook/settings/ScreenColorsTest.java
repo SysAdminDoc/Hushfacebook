@@ -268,9 +268,27 @@ public class ScreenColorsTest {
                 assertEquals(colors.accent, field.getBackgroundTintList().getDefaultColor());
                 assertEquals(ScreenColors.half(colors.accent), field.getHighlightColor());
                 assertTrue(contrast(colors.accent, colors.dialog) >= NON_TEXT);
+                // The message on show is the preference layout's own, below a GONE one of AlertDialog's.
+                List<TextView> shownMessages = new ArrayList<>();
+                collectMessages(row.getDialog().getWindow().getDecorView(), shownMessages);
+                assertFalse("no message on show in the dialog", shownMessages.isEmpty());
+                for (TextView message : shownMessages) {
+                    assertEquals("\"" + message.getText() + "\" keeps the theme's colour", colors.summary, message.getCurrentTextColor());
+                    assertTrue(contrast(message.getCurrentTextColor(), colors.dialog) >= TEXT);
+                }
+                assertEquals(colors.summary, field.getCurrentHintTextColor());
+                assertTrue(contrast(field.getCurrentHintTextColor(), colors.dialog) >= TEXT);
             } finally {
                 row.getDialog().dismiss();
             }
+        }
+    }
+
+    private static void collectMessages(View view, List<TextView> shown) {
+        if (view instanceof TextView && view.getId() == android.R.id.message && view.isShown()) shown.add((TextView) view);
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int index = 0; index < group.getChildCount(); index++) collectMessages(group.getChildAt(index), shown);
         }
     }
 
