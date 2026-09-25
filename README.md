@@ -60,7 +60,7 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Hide sponsored reels` | Removes ads from Reels and Watch, including product banners over a reel and ads inside a video. |
 | `Hide sponsored stories` | Removes ad cards from the story viewer, so swiping through stories only shows stories people posted. |
 | `Hide suggested and promoted posts` | Removes posts that Facebook adds to the feed, such as "Pages you may like" and its own upsells. In-feed surveys go too. |
-| `Hushfacebook settings` | Adds Hushfacebook settings to Facebook's launcher icon. Long-press the icon to turn features on or off, pause Hushfacebook, export diagnostics and read the licenses. |
+| `Hushfacebook settings` | Adds Hushfacebook settings to Facebook's launcher icon. Long-press the icon to turn features on or off, pause Hushfacebook, save your switches to a file or load them, and export diagnostics. The licenses are there too. |
 | `Open links in external browser` | Opens web links in your default browser instead of Facebook's in-app browser. Facebook pages still open in the app. |
 | `Restore screens on re-signed builds` | Makes profiles and some Settings pages open again on a re-signed build. A Root Mount install doesn't need this patch. |
 
