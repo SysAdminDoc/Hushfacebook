@@ -129,7 +129,7 @@ Hushfacebook doesn't collect anything and has no server. The only time the patch
 | [SysAdminDoc/hushfeed](https://github.com/SysAdminDoc/hushfeed) at `1f1f81a` | The Gradle build, the shared extension library with its settings screen and diagnostics, the pause, the bytecode helpers, and the checks that apply every patch to real Facebook builds before a release. The settings export and import came later, from `bcc57ee`. |
 | [Morphe](https://github.com/MorpheApp) and [ReVanced](https://gitlab.com/ReVanced/revanced-patches) | The patcher and the patch template. Both of the above grew from their code. |
 
-Every source file says where it came from in its header, and [provenance.json](provenance.json) maps each file to the project and commit it came from, with its licence. [docs/sources.md](docs/sources.md) covers the other Facebook and Messenger patch sources: what each one does and what this bundle took from it.
+Every source file says where it came from in its header, and [provenance.json](provenance.json) maps each file to the project and commit it came from, with its licence. [docs/sources.md](docs/sources.md) covers the other Facebook and Messenger patch sources: what each one does and what this bundle took from it. The ledger behind that page, [sources/facebook-sources.json](sources/facebook-sources.json), pins every source's branches and licence, and code is only ported from a source it lists as adopted.
 
 ## Building from source
 
