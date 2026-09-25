@@ -37,6 +37,7 @@ public class SettingsEntryTest {
 
     @After public void stopWatching() {
         RuntimeEnvironment.getApplication().unregisterActivityLifecycleCallbacks(watcher);
+        HushfacebookPreferenceFragment.failNextInitialization = null;
     }
 
     /**
@@ -60,6 +61,43 @@ public class SettingsEntryTest {
         ActivityController<Activity> loggedOut = replace(login);
 
         assertNull("a screen the person closed came back", dialogOver(loggedOut.get()));
+    }
+
+    /**
+     * The two ways a person leaves the screen have to tell the entry so, or the screen follows its
+     * host to the next Facebook screen as if nobody had closed it. The request is still inside its
+     * window here, so a close the entry didn't hear about would reopen it.
+     */
+    @Test public void backOnTheRecoveryPageKeepsTheScreenClosedWhenItsHostGoesAway() {
+        HushfacebookPreferenceFragment.failNextInitialization = new IllegalStateException("injected");
+        ActivityController<Activity> login = openedOverNewActivity();
+        android.preference.Preference back = pageOver(login.get()).findPreference("morphe_settings_error_back");
+        assertNotNull("no recovery page", back);
+
+        back.getOnPreferenceClickListener().onPreferenceClick(back);
+        ShadowLooper.idleMainLooper();
+        assertNull("Back left the screen open", dialogOver(login.get()));
+        ActivityController<Activity> loggedOut = replace(login);
+
+        assertNull("the screen came back after the person left it with Back", dialogOver(loggedOut.get()));
+    }
+
+    @Test public void theBackKeyKeepsTheScreenClosedWhenItsHostGoesAway() {
+        ActivityController<Activity> login = openedOverNewActivity();
+
+        ((SettingsDialog) dialogOver(login.get())).getDialog().onBackPressed();
+        ShadowLooper.idleMainLooper();
+        assertNull("the Back key left the screen open", dialogOver(login.get()));
+        ActivityController<Activity> loggedOut = replace(login);
+
+        assertNull("the screen came back after the person closed it with the Back key", dialogOver(loggedOut.get()));
+    }
+
+    @SuppressWarnings("deprecation")
+    private static HushfacebookPreferenceFragment pageOver(Activity activity) {
+        SettingsDialog dialog = (SettingsDialog) dialogOver(activity);
+        assertNotNull("no screen over " + activity, dialog);
+        return (HushfacebookPreferenceFragment) dialog.getChildFragmentManager().findFragmentById(SettingsDialog.CONTAINER_ID);
     }
 
     /** An activity started by the launcher shortcut, with the screen open over it. */

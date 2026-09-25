@@ -120,9 +120,17 @@ public class SettingsDialogTest {
         assertFalse("Back finished the host activity", activity.isFinishing());
     }
 
+    /**
+     * Recreation hands back the page the framework saved, with its state, rather than a fresh one
+     * built over it. A marker in the saved page's arguments is how the test tells the two apart: a
+     * dialog that built a new page on every view would pass the count and container checks alone,
+     * and the list would jump back to the top on every rotation.
+     */
     @Test
     public void recreationKeepsOnePageInItsContainer() {
-        show(controller.get());
+        android.os.Bundle marker = new android.os.Bundle();
+        marker.putString("marker", "the page the framework saved");
+        pageOf(show(controller.get())).setArguments(marker);
 
         controller.recreate();
         ShadowLooper.idleMainLooper();
@@ -131,6 +139,8 @@ public class SettingsDialogTest {
         assertNotNull("the settings didn't come back after recreation", restored);
         assertEquals("pages after recreation", 1, pages(restored).size());
         HushfacebookPreferenceFragment page = pageOf(restored);
+        assertNotNull("recreation replaced the saved page with a new one", page.getArguments());
+        assertEquals("the page the framework saved", page.getArguments().getString("marker"));
         View view = page.getView();
         assertNotNull("the restored page has no view", view);
         assertEquals(SettingsDialog.CONTAINER_ID, ((View) view.getParent()).getId());
