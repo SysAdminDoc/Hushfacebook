@@ -1781,6 +1781,28 @@ try {
     Assert-True (($batched -join "`n") -like "*${servedSerial}:docs/phone.md:1:*") `
         "The scan missed a commit past its first batch: $($batched -join '; ')"
 
+    # A hit in a binary file: git grep prints the file's bytes, and a carriage return among them
+    # splits the printed line into pieces that don't open with a commit. The refusal puts the hit
+    # down to the one commit that carries it, and none of the pieces.
+    $binaryDoc = Join-Path $hookRoot 'docs/logo.bin'
+    New-Item -ItemType Directory -Path (Split-Path -Parent $binaryDoc) -Force | Out-Null
+    [IO.File]::WriteAllBytes($binaryDoc, [byte[]](@(0x89, 0x50, 0x4E, 0x47, 0x00, 0x0D) +
+        [Text.Encoding]::ASCII.GetBytes("x$([char]13)adb -s $phoneSerial") + @(0x0D, 0x00, 0x0A)))
+    & git -C $hookRoot add docs/logo.bin
+    & git -C $hookRoot commit --quiet -m 'a picture that names the phone'
+    $binaryNamed = (& git -C $hookRoot rev-parse HEAD).Trim()
+    try {
+        & $prePushScript -Root $hookRoot -PushedRefs "refs/heads/main $binaryNamed refs/heads/main $staleDropped" 6> $null
+        $binaryRefusal = 'no refusal'
+    } catch {
+        $binaryRefusal = $_.Exception.Message
+    }
+    Assert-True ($binaryRefusal -like "Tracked files in commit $binaryNamed name the maintainer's machine or phone*" -and
+        $binaryRefusal -like "*${binaryNamed}:docs/logo.bin:1:*") `
+        "A hit in a binary file was not put down to its commit alone: $binaryRefusal"
+    & git -C $hookRoot rm --quiet docs/logo.bin
+    & git -C $hookRoot commit --quiet -m 'takes the picture out'
+
     # The build branch, which runs the Gradle gates that hold the Bouncy Castle graphs to the
     # reviewed release. Starting a real build from a contract test would be absurd, so the case
     # reads the first thing that branch does instead: with no GitHub credentials and no gh on

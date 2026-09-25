@@ -344,15 +344,21 @@ try {
         $named = @(Find-MachineNames -Root $Root -Commit $scanned)
     }
     if ($named.Count -gt 0) {
+        # Each hit is a line git grep printed, <commit>:<path>:<line>:<text> when read out of a
+        # commit. A hit in a binary file prints that file's bytes, and a carriage return among them
+        # splits the line into pieces that don't open with a commit, so the commits are taken only
+        # from lines that do, and control characters are shown as ?.
+        $hits = @($named | Where-Object { ([string]$_) -match '^[0-9a-f]{40}:' })
+        if ($hits.Count -eq 0) { $hits = $named }
+        $shown = @($hits | Select-Object -First 5 | ForEach-Object { ([string]$_) -replace '\p{Cc}', '?' }) -join '; '
         if ($scanned.Count -eq 0) {
             throw ("Tracked files in the working tree name the maintainer's machine or phone, and a push " +
-                'would publish them: ' + (($named | Select-Object -First 5) -join '; '))
+                "would publish them: $shown")
         }
-        # git grep puts the commit a hit came from in front of it.
-        $carriers = @($named | ForEach-Object { ([string]$_).Split(':')[0] } | Select-Object -Unique)
+        $carriers = @($hits | ForEach-Object { ([string]$_).Split(':')[0] } | Select-Object -Unique)
         throw ("Tracked files in commit $($carriers -join ', ') name the maintainer's machine or phone, " +
             'and this push would publish them. A commit on top leaves them in the history it publishes, ' +
-            'so rewrite the commit that added them: ' + (($named | Select-Object -First 5) -join '; '))
+            "so rewrite the commit that added them: $shown")
     }
     if ($PSBoundParameters.ContainsKey('ChangedPaths') -or $scanned.Count -gt 0) {
         Write-Step "no tracked file in $scope names a machine or phone"
