@@ -201,6 +201,28 @@ public class SaveFolderTest {
         assertFalse(SaveFolder.isClean(" Clips"));
     }
 
+    /**
+     * A name from a phone on a newer Android can hold a character this one doesn't know yet. It
+     * counts as an ordinary character, so the name can come in, but only a name that would be clean
+     * with it: a path or a hidden folder stays out whatever else it holds.
+     */
+    @Test
+    public void aCharacterThisPhoneDoesNotKnowYetCountsAsAnOrdinaryOne() {
+        int newer = 0x50000;
+        assertEquals("the stand-in for a newer character has to be unknown here",
+                Character.UNASSIGNED, Character.getType(newer));
+        String unknown = new String(Character.toChars(newer));
+        assertFalse(SaveFolder.isClean("Clips" + unknown));
+        for (String importable : new String[]{"Clips" + unknown, "Clips " + unknown, unknown, "My " + unknown + " clips", "Clips"}) {
+            assertTrue(printable(importable), SaveFolder.isImportable(importable));
+        }
+        for (String refused : new String[]{"../" + unknown, "My/" + unknown, unknown + " ", "." + unknown, unknown + "​",
+                "a/b", " Clips", "", null}) {
+            assertFalse(refused == null ? "null" : printable(refused), SaveFolder.isImportable(refused));
+        }
+        assertEquals("the saves here drop what the phone can't place", "Clips", SaveFolder.sanitize("Clips " + unknown));
+    }
+
     @Test
     public void theFolderFollowsTheSettingAndStartsAsFacebook() {
         assertEquals("Facebook", SaveFolder.leaf());

@@ -52,6 +52,26 @@ public final class SaveFolder {
     }
 
     /**
+     * Whether a settings file's [name] may be taken as the folder. A newer Android knows characters
+     * an older one doesn't, and {@link #sanitize} drops what the phone can't place, so a name one
+     * phone saved can read as unclean on another. Each character this phone doesn't know counts as
+     * a plain symbol here, and the rest has to be exactly as sanitize leaves it.
+     */
+    public static boolean isImportable(String name) {
+        if (name == null || name.isEmpty()) return false;
+        StringBuilder known = new StringBuilder(name.length());
+        for (int i = 0; i < name.length(); ) {
+            int codePoint = name.codePointAt(i);
+            i += Character.charCount(codePoint);
+            known.appendCodePoint(Character.getType(codePoint) == Character.UNASSIGNED ? STAND_IN : codePoint);
+        }
+        return isClean(known.toString());
+    }
+
+    /** A symbol every phone knows and sanitize keeps as it is (black star). */
+    private static final int STAND_IN = 0x2605;
+
+    /**
      * The folder name to use for [raw].
      *
      * <ul>

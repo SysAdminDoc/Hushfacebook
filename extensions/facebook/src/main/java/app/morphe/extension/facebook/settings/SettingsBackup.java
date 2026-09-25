@@ -90,7 +90,9 @@ public final class SettingsBackup {
      * The one setting a file carries that isn't a switch: the folder saves go to. A file holds it
      * as the clean folder name the saves use, and an import takes nothing else there. A value
      * {@link SaveFolder#sanitize} would change refuses the whole file, as a switch that isn't true
-     * or false does, so a file can't point the saves at a path.
+     * or false does, so a file can't point the saves at a path. A character this phone doesn't know
+     * yet, from a newer Android, counts as an ordinary one ({@link SaveFolder#isImportable}), and
+     * the folder taken is the name the saves here will use.
      */
     static final StringSetting FOLDER = Settings.SAVE_FOLDER;
 
@@ -343,10 +345,12 @@ public final class SettingsBackup {
             String name = names.next();
             if (FOLDER.key.equals(name)) {
                 Object value = values.opt(name);
-                if (!(value instanceof String) || !SaveFolder.isClean((String) value)) {
+                if (!(value instanceof String) || !SaveFolder.isImportable((String) value)) {
                     throw new Rejected(Reason.VALUE, "Not one clean folder name: " + name);
                 }
-                folder = (String) value;
+                // A newer phone's name can hold characters this one doesn't know yet, which the
+                // saves here drop, so the folder taken is the one they'll really use.
+                folder = SaveFolder.sanitize((String) value);
                 continue;
             }
             BooleanSetting setting = known.get(name);

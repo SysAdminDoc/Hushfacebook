@@ -501,6 +501,44 @@ public class SettingsBackupTest {
         assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
     }
 
+    /**
+     * A file a phone on a newer Android wrote can name a folder with a character this one doesn't
+     * know yet. The folder comes in as the name the saves here will use, and the switches in the
+     * same file come in with it, where before the whole file was refused.
+     */
+    @Test
+    public void aFolderFromANewerAndroidComesInAsTheNameSavesUseHere() throws Exception {
+        int newer = 0x50000;
+        assertEquals("the stand-in for a newer character has to be unknown here",
+                Character.UNASSIGNED, Character.getType(newer));
+        String unknown = new String(Character.toChars(newer));
+        Settings.SAVE_FOLDER.save("Old");
+        boolean flipped = !Settings.HIDE_SUGGESTED_POSTS.savedValue();
+        JSONObject file = new JSONObject(fileWith(Settings.HIDE_SUGGESTED_POSTS, flipped));
+        file.getJSONObject("settings").put(SettingsBackup.FOLDER.key, "Clips " + unknown);
+
+        SettingsBackup.Snapshot snapshot = SettingsBackup.parse(file.toString());
+        assertEquals("Clips", snapshot.folder);
+        assertEquals("Clips", snapshot.folderChange());
+        assertEquals(1, snapshot.switchChanges());
+        assertEquals(2, SettingsBackup.apply(snapshot));
+        assertEquals("Clips", Settings.SAVE_FOLDER.savedValue());
+        assertEquals(flipped, Settings.HIDE_SUGGESTED_POSTS.savedValue());
+
+        file.getJSONObject("settings").put(SettingsBackup.FOLDER.key, unknown);
+        assertEquals("a name of nothing this phone knows is the default folder",
+                app.morphe.extension.facebook.download.SaveFolder.DEFAULT, SettingsBackup.parse(file.toString()).folder);
+        for (String refused : new String[]{"../" + unknown, "My/" + unknown, "." + unknown}) {
+            file.getJSONObject("settings").put(SettingsBackup.FOLDER.key, refused);
+            try {
+                SettingsBackup.parse(file.toString());
+                fail("a file with the folder " + printable(refused) + " was read");
+            } catch (SettingsBackup.Rejected rejected) {
+                assertEquals(printable(refused), SettingsBackup.Reason.VALUE, rejected.reason);
+            }
+        }
+    }
+
     /** A preview kept across a rebuild keeps its folder, and only a clean one comes back. */
     @Test
     public void aWaitingImportKeepsItsFolderOnlyWhileItIsClean() throws Exception {
