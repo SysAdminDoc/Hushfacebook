@@ -2,6 +2,20 @@
 
 Every Hushfacebook release, newest first.
 
+## 0.1.3 (2026-09-25)
+
+* **Facebook:** New patch, Hide Stories tray. It takes the row of stories at the top of the feed away, "Create story" included, the way Facebook builds the feed when its own tray is turned off. Stories still open from a profile, a notification or the Stories viewer.
+* **Facebook:** Hide suggested and promoted posts has two new switches. "Suggested for you" hides the posts Facebook recommends from people, pages and groups you don't follow, going by the same flag Facebook's own "hide suggested posts" reads, so posts from friends and pages you follow stay. "People you may know" hides that row in the feed and leaves friend requests alone.
+* **Facebook:** New patch, Hide AI-detected posts. It hides feed posts Facebook's own detection labelled as made with AI. Its switch starts off, and a post whose label can't be read stays.
+* **Facebook:** New patch, Download any video. "Download to phone" in a video post's menu saves feed and Watch videos through the same checked downloader stories and reels use. A new Save folder setting names the folder saves go to, under Movies for videos and Pictures for photos, and it starts as Facebook.
+* **Facebook:** New patch, Material You theme. Facebook's dark mode takes the colours of your wallpaper on Android 12 and newer, and a fixed palette on Android 11, while light mode stays as it is. Each colour keeps its lightness, so text keeps the contrast Facebook gave it. The Hushfacebook screen follows your phone's dark or light setting in the same palette. It's off unless you pick it. With AMOLED black theme in the same build the backgrounds stay black, and Material You colours the text, icons, dividers and cards.
+* **Facebook:** New patch, Sanitize sharing links. It takes the tracking tags Facebook adds to the links you share or copy (mibextid, a random per-share extid, sfnsn and others) back off, with a switch of its own. A facebook.com/share/ link is made on Facebook's servers for one share, so it can still be traced back to you, and the switch says so.
+* **Facebook:** Links that open in your browser leave without the fbclid tag Facebook adds to them.
+* **Facebook:** Hushfacebook's text, the launcher shortcut included, is in the language Facebook itself shows. A phone set to German with Facebook set to English used to get an English screen under a German shortcut.
+* **Facebook:** A settings file holding a number too large to read is refused with a message. The import used to stop without saying anything.
+* **Facebook:** Every release now comes with a software bill of materials (CycloneDX) for the bundle, and a release stops if a dependency has a known advisory nobody has looked at.
+* **Facebook:** Both Facebook 580.0.0.51.74 and 577.0.0.50.72 take all 18 patches. It still needs Morphe Manager 1.32.0 or newer.
+
 ## 0.1.2 (2026-09-25)
 
 * **Facebook:** Hushfacebook settings can now export the runtime feature switches to a JSON file and import them on this phone or another one. Import shows what will change, skips names this build doesn't know, and refuses damaged or newer files without changing anything. Pause and debug logging stay local. The new flow follows the phone's language in English, German, Spanish, Indonesian, Brazilian Portuguese and Turkish.
