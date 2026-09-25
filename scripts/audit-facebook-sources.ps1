@@ -583,6 +583,49 @@ $collapsed = New-Object System.Collections.Generic.List[object]
 # What code search found in repositories the ledger already knows, so a maintainer can copy the
 # blob ids into contentHashes or a mirror's blobs when settling a finding.
 $knownHits = New-Object System.Collections.Generic.List[object]
+
+# What an index or code search says about a repository the ledger already holds, under whatever
+# name it was found by.
+function Test-KnownRepository {
+    param($Candidate, [string]$Key, $Record, [string[]]$Blobs)
+    if ($Record.Kind -eq 'entry') {
+        $recordedPackages = @($Record.Entry.packages | ForEach-Object { "$_" })
+        $newPackages = @($Candidate.Packages | Where-Object { $recordedPackages -notcontains $_ })
+        if ($newPackages.Count -gt 0) {
+            Add-Finding -Kind 'packages-changed' -Repository ([string]$Record.Entry.repository) `
+                -Detail ("now targets " + ($newPackages -join ', ') + ", which the ledger doesn't record") `
+                -Evidence ([ordered]@{ sources = @($Candidate.Sources); features = @($Candidate.Features) })
+        }
+    } elseif ($Record.Kind -eq 'mirror') {
+        $diverged = @($Blobs | Where-Object { -not $knownBlobs.ContainsKey($_) })
+        if ($diverged.Count -gt 0) {
+            Add-Finding -Kind 'mirror-changed' -Repository ([string]$Record.Record.repository) `
+                -Detail "a copy of $($Record.Lineage) now holds Facebook-family files the lineage doesn't" `
+                -Evidence ([ordered]@{ hits = @($Candidate.Hits | Where-Object { $diverged -contains $_.blob }) })
+        }
+    } elseif ($Candidate.Packages.Count -gt 0) {
+        # An index listing a recorded fork or an out-of-scope repository for a Facebook-family
+        # package means it publishes a bundle of its own. The Morphe Archive keeps every fork's
+        # patch list, so a fork only it lists counts for packages its entry doesn't target.
+        $listers = @($Candidate.Sources | Where-Object { $_ -notlike '*code search' }) -join ', '
+        $evidence = [ordered]@{ sources = @($Candidate.Sources); packages = @($Candidate.Packages); features = @($Candidate.Features) }
+        if ($Record.Kind -eq 'fork') {
+            $recordedPackages = @($Record.Entry.packages | ForEach-Object { "$_" })
+            $newPackages = @($Candidate.Packages | Where-Object { $recordedPackages -notcontains $_ })
+            $curated = @($Candidate.Sources | Where-Object { $_ -ne 'Morphe Archive' -and $_ -notlike '*code search' })
+            if ($curated.Count -gt 0 -or $newPackages.Count -gt 0) {
+                Add-Finding -Kind 'listed-as-bundle' -Repository "https://$Key" `
+                    -Detail ("a recorded fork of $($Record.Lineage) that $listers lists as a bundle of its own for " +
+                        (@($Candidate.Packages) -join ', ') + '; give it an entry of its own') -Evidence $evidence
+            }
+        } else {
+            Add-Finding -Kind 'listed-as-bundle' -Repository ([string]$Record.Record.repository) `
+                -Detail ("out of scope in the ledger, but $listers lists it as a bundle for " + (@($Candidate.Packages) -join ', ') +
+                    '; record it as an entry') -Evidence $evidence
+        }
+    }
+}
+
 foreach ($candidate in @($candidates.Values | Sort-Object Key)) {
     $key = $candidate.Key
     $segments = @($key -split '/')
@@ -594,42 +637,7 @@ foreach ($candidate in @($candidates.Values | Sort-Object Key)) {
             $knownHits.Add([pscustomobject][ordered]@{ repository = "https://$key"; kind = $record.Kind; lineage = $record.Lineage
                 hits = @($candidate.Hits | Sort-Object path -Unique) })
         }
-        if ($record.Kind -eq 'entry') {
-            $recordedPackages = @($record.Entry.packages | ForEach-Object { "$_" })
-            $newPackages = @($candidate.Packages | Where-Object { $recordedPackages -notcontains $_ })
-            if ($newPackages.Count -gt 0) {
-                Add-Finding -Kind 'packages-changed' -Repository ([string]$record.Entry.repository) `
-                    -Detail ("now targets " + ($newPackages -join ', ') + ", which the ledger doesn't record") `
-                    -Evidence ([ordered]@{ sources = @($candidate.Sources); features = @($candidate.Features) })
-            }
-        } elseif ($record.Kind -eq 'mirror') {
-            $diverged = @($blobs | Where-Object { -not $knownBlobs.ContainsKey($_) })
-            if ($diverged.Count -gt 0) {
-                Add-Finding -Kind 'mirror-changed' -Repository ([string]$record.Record.repository) `
-                    -Detail "a copy of $($record.Lineage) now holds Facebook-family files the lineage doesn't" `
-                    -Evidence ([ordered]@{ hits = @($candidate.Hits | Where-Object { $diverged -contains $_.blob }) })
-            }
-        } elseif ($candidate.Packages.Count -gt 0) {
-            # An index listing a recorded fork or an out-of-scope repository for a Facebook-family
-            # package means it publishes a bundle of its own. The Morphe Archive keeps every fork's
-            # patch list, so a fork only it lists counts for packages its entry doesn't target.
-            $listers = @($candidate.Sources | Where-Object { $_ -notlike '*code search' }) -join ', '
-            $evidence = [ordered]@{ sources = @($candidate.Sources); packages = @($candidate.Packages); features = @($candidate.Features) }
-            if ($record.Kind -eq 'fork') {
-                $recordedPackages = @($record.Entry.packages | ForEach-Object { "$_" })
-                $newPackages = @($candidate.Packages | Where-Object { $recordedPackages -notcontains $_ })
-                $curated = @($candidate.Sources | Where-Object { $_ -ne 'Morphe Archive' -and $_ -notlike '*code search' })
-                if ($curated.Count -gt 0 -or $newPackages.Count -gt 0) {
-                    Add-Finding -Kind 'listed-as-bundle' -Repository "https://$key" `
-                        -Detail ("a recorded fork of $($record.Lineage) that $listers lists as a bundle of its own for " +
-                            (@($candidate.Packages) -join ', ') + '; give it an entry of its own') -Evidence $evidence
-                }
-            } else {
-                Add-Finding -Kind 'listed-as-bundle' -Repository ([string]$record.Record.repository) `
-                    -Detail ("out of scope in the ledger, but $listers lists it as a bundle for " + (@($candidate.Packages) -join ', ') +
-                        '; record it as an entry') -Evidence $evidence
-            }
-        }
+        Test-KnownRepository -Candidate $candidate -Key $key -Record $record -Blobs $blobs
         continue
     }
     $unknownBlobs = @($blobs | Where-Object { -not $knownBlobs.ContainsKey($_) })
@@ -649,6 +657,8 @@ foreach ($candidate in @($candidates.Values | Sort-Object Key)) {
             $resolved = ConvertTo-SourceKey "https://github.com/$($repo.full_name)"
             if ($resolved -and $resolved -ne $key -and $known.ContainsKey($resolved)) {
                 $notes.Add("https://$key is an old name of https://$resolved, which the ledger knows")
+                # Held to the same checks as a listing under the current name.
+                Test-KnownRepository -Candidate $candidate -Key $resolved -Record $known[$resolved] -Blobs $blobs
                 continue
             }
             $meta = [ordered]@{ fullName = [string]$repo.full_name; license = [string](Get-SourceProperty (Get-SourceProperty $repo 'license') 'spdx_id')

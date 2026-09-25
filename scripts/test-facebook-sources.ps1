@@ -676,6 +676,13 @@ $fakeForge = @{ Answers = (New-FakeAnswers); Requests = (New-Object System.Colle
     Reset-FixtureLedger
     $fakeForge.Answers = New-FakeAnswers
 
+    # An old name gets the checks the current name gets: here it's the recorded fork's old name,
+    # listed as a bundle of its own.
+    $fakeForge.Answers.directory.Content = $fakeForge.Answers.directory.Content -replace '"fixture-owner/alpha-patches"', '"fixture-owner/alpha-old"'
+    $fakeForge.Answers.oldNameMeta.Content = '{"full_name":"someone/alpha-patches","fork":true,"archived":false}'
+    Assert-Drift 'listed-as-bundle' '*github.com/someone/alpha-patches*recorded fork of alpha*' 'A recorded fork an index lists by its old name'
+    $fakeForge.Answers = New-FakeAnswers
+
     $fakeForge.Answers.awesome = @{ Status = 500; Content = $null }
     Assert-Drift 'source-failed' '*Awesome Morphe could not be read*' 'An index that could not be read'
     $fakeForge.Answers = New-FakeAnswers
