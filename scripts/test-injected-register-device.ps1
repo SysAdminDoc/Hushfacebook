@@ -212,6 +212,16 @@ try {
             $Node.Extent.Text -like '*running the device verifier on*' }
         $beforeDeviceHalf = { param([string]$Statement)
             Edit-ScriptNode $verifierText $deviceHalfStart { param($Text) "$Statement`n    $Text" }.GetNewClosure() }
+        # And the other places the tally copies put a statement: before the compare, and after
+        # the helpers are dot-sourced.
+        $compareStatement = { param($Node)
+            $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+            $Node.Extent.Text -like '$comparison = Compare-VerifierTallies*' }
+        $beforeCompare = { param([string]$Statement)
+            Edit-ScriptNode $verifierText $compareStatement { param($Text) "$Statement`n    $Text" }.GetNewClosure() }
+        $afterHelpers = { param([string]$Statement)
+            Edit-ScriptNode $verifierText $deviceDotSource { param($Text) "$Text`n$Statement" }.GetNewClosure() }
+        $approveAll = '[pscustomobject]@{ Valid = $true; CleanTotal = 0; PatchedTotal = 0; Deltas = @() }'
         $wiringCases = @(
             @{ Name = 'the untouched verifier'; Check = $dotSourcesDevice; Expect = $true; Text = $verifierText }
             @{ Name = 'the untouched verifier'; Check = $talliesBothSides; Expect = $true; Text = $verifierText }
@@ -292,6 +302,62 @@ try {
                 Text = & $beforeDeviceHalf '@() | & { process { exit 0 } }' }
             @{ Name = 'the device half after a script block a return can leave'; Check = $talliesBothSides; Expect = $true
                 Text = & $beforeDeviceHalf '& { if ($Serial) { return }; exit 0 }' }
+            # A tally input or a tally written in a way that isn't an assignment to the tally
+            # variable, or a helper replaced without a function statement. Each leaves every
+            # -Serial run comparing a build with itself, or not comparing at all. The copies
+            # expected to pass write other names the same ways.
+            @{ Name = 'the clean input set to the patched APK in the device half'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf '$cleanBase = $PatchedApk' }
+            @{ Name = 'the patched input set to the clean one in the device half'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf '$PatchedApk = $cleanBase' }
+            @{ Name = 'the clean input taken from the patched APK instead of Get-BaseApk'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                    $Node.Extent.Text -like '$cleanBase = Get-BaseApk*' } { param($Text) '$cleanBase = $PatchedApk' } }
+            @{ Name = 'the clean input taken again, from the patched APK, before the DexDiff run'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                    $Node.Extent.Text -eq '$diff = Invoke-DexDiff' } { param($Text)
+                    "`$cleanBase = Get-BaseApk -Apk `$PatchedApk -Destination (Join-Path `$work 'again.apk')`n$Text" } }
+            @{ Name = 'the clean input taken from a command other than Get-BaseApk'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                    $Node.Extent.Text -like '$cleanBase = Get-BaseApk*' } { param($Text) '$cleanBase = Write-Output $PatchedApk' } }
+            @{ Name = 'the patched input set to the clean one by a function the device half calls'; Check = $talliesBothSides
+                Text = Edit-ScriptNode (& $afterHelpers 'function Reset-Input { $script:PatchedApk = $script:cleanBase }') `
+                    $deviceHalfStart { param($Text) "Reset-Input`n    $Text" } }
+            @{ Name = 'the clean input written with -OutVariable in the device half'; Check = $talliesBothSides
+                Text = & $beforeDeviceHalf 'Write-Output $PatchedApk -OutVariable cleanBase | Out-Null' }
+            @{ Name = 'the clean tally written over with Set-Variable'; Check = $talliesBothSides
+                Text = & $beforeCompare 'Set-Variable -Name cleanTally -Value $patchedTally' }
+            @{ Name = 'the clean tally written over with sv'; Check = $talliesBothSides
+                Text = & $beforeCompare 'sv cleanTally $patchedTally' }
+            @{ Name = 'the clean tally written over with Microsoft.PowerShell.Utility\Set-Variable'; Check = $talliesBothSides
+                Text = & $beforeCompare 'Microsoft.PowerShell.Utility\Set-Variable -Name cleanTally -Value $patchedTally' }
+            @{ Name = 'the clean tally written over with New-Variable -Force'; Check = $talliesBothSides
+                Text = & $beforeCompare 'New-Variable -Name cleanTally -Value $patchedTally -Force' }
+            @{ Name = 'the clean tally emptied with Clear-Variable'; Check = $talliesBothSides
+                Text = & $beforeCompare 'Clear-Variable -Name cleanTally' }
+            @{ Name = 'the clean tally written over through the variable: drive'; Check = $talliesBothSides
+                Text = & $beforeCompare 'Set-Item -Path variable:cleanTally -Value $patchedTally' }
+            @{ Name = 'the clean tally written over by a foreach over the patched one'; Check = $talliesBothSides
+                Text = & $beforeCompare 'foreach ($cleanTally in @($patchedTally)) { }' }
+            @{ Name = 'a tally written over with Set-Variable of a name built at run time'; Check = $talliesBothSides
+                Text = & $beforeCompare "Set-Variable -Name ('clean' + 'Tally') -Value `$patchedTally" }
+            @{ Name = 'Compare-VerifierTallies replaced through ${function:}'; Check = $talliesBothSides
+                Text = & $afterHelpers "`${function:Compare-VerifierTallies} = { param(`$Clean, `$Patched) $approveAll }" }
+            @{ Name = 'Compare-VerifierTallies replaced with Set-Item function:'; Check = $talliesBothSides
+                Text = & $afterHelpers "Set-Item -Path function:Compare-VerifierTallies -Value { param(`$Clean, `$Patched) $approveAll }" }
+            @{ Name = 'Invoke-AndroidVerifierTally replaced with New-Item function:'; Check = $talliesBothSides
+                Text = & $afterHelpers 'New-Item -Path function: -Name Invoke-AndroidVerifierTally -Value { @{} } -Force | Out-Null' }
+            @{ Name = 'Compare-VerifierTallies made an alias of a function of the script'; Check = $talliesBothSides
+                Text = & $afterHelpers "function Approve-Tallies { param(`$Clean, `$Patched) $approveAll }`nSet-Alias -Name Compare-VerifierTallies -Value Approve-Tallies" }
+            @{ Name = 'another variable set with Set-Variable before the compare'; Check = $talliesBothSides; Expect = $true
+                Text = & $beforeCompare 'Set-Variable -Name note -Value $patchedTally' }
+            @{ Name = 'another function set up through the function: drive'; Check = $talliesBothSides; Expect = $true
+                Text = & $afterHelpers "Set-Item -Path function:Show-Note -Value { 'note' }" }
+            @{ Name = 'an alias of another name'; Check = $talliesBothSides; Expect = $true
+                Text = & $afterHelpers 'Set-Alias -Name Show-Note -Value Write-Host' }
             @{ Name = 'the suite line in a block comment'; Check = $gateRunsSuite
                 Text = Edit-ScriptNode $prePushSource { param($Node)
                     $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and

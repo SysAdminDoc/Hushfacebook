@@ -505,10 +505,22 @@ function Test-AstReachable {
             }
         } elseif ($parent -is [System.Management.Automation.Language.StatementBlockAst] -or
                 $parent -is [System.Management.Automation.Language.NamedBlockAst]) {
-            foreach ($statement in $parent.Statements) {
-                if ([object]::ReferenceEquals($statement, $child)) { break }
-                if (Test-StatementEnds $statement $Ending) { return $false }
+            # Nothing after the block's first statement that ends it runs. Where that is gets
+            # worked out once per block for this set of ending functions, since every node in
+            # the block asks.
+            if (-not [object]::ReferenceEquals($script:WiringEndsFor, $Ending)) {
+                $script:WiringEndsFor = $Ending
+                $script:WiringFirstEnd = [System.Collections.Generic.Dictionary[object, int]]::new()
             }
+            $firstEnd = 0
+            if (-not $script:WiringFirstEnd.TryGetValue($parent, [ref]$firstEnd)) {
+                $firstEnd = $parent.Statements.Count
+                for ($k = 0; $k -lt $parent.Statements.Count; $k++) {
+                    if (Test-StatementEnds $parent.Statements[$k] $Ending) { $firstEnd = $k; break }
+                }
+                $script:WiringFirstEnd[$parent] = $firstEnd
+            }
+            if ($parent.Statements.IndexOf($child) -gt $firstEnd) { return $false }
         }
         $child = $parent
         $parent = $parent.Parent
@@ -525,17 +537,21 @@ function Get-CalledFunctions {
     param([System.Management.Automation.Language.Ast]$Ast, [System.Collections.Generic.HashSet[string]]$Ending)
 
     # A name defined twice, with a scope or without, counts as never called: which body a call
-    # runs depends on which definition ran last before it.
+    # runs depends on which definition ran last before it. A function set up through the
+    # function: drive or an alias (Get-FunctionWrites) is another definition, and one whose name
+    # is built at run time could be another definition of any of them.
+    $called = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $definitions = [System.Collections.Generic.Dictionary[string, int]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    foreach ($function in $Ast.FindAll({ param($node)
-            $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)) {
-        $name = Get-FunctionName $function
+    $names = @(@($Ast.FindAll({ param($node)
+            $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+        ForEach-Object { Get-FunctionName $_ }) + @(Get-FunctionWrites $Ast))
+    foreach ($name in $names) {
+        if ([string]::Equals($name, '*', [System.StringComparison]::Ordinal)) { return , $called }
         $count = 0
         [void]$definitions.TryGetValue($name, [ref]$count)
         $definitions[$name] = $count + 1
     }
     $commands = @($Ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.CommandAst] }, $true))
-    $called = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     do {
         $grew = $false
         foreach ($command in $commands) {
@@ -657,21 +673,257 @@ function Test-RunsDexDiffWithContracts {
     return $false
 }
 
+# The built-in aliases, read once, so a command written as sv or % is known by its cmdlet's name.
+$script:WiringAliases = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+Get-Alias | Where-Object { $_.ResolvedCommandName } | ForEach-Object { $script:WiringAliases[$_.Name] = $_.ResolvedCommandName }
+
+function Resolve-CommandName {
+    <#
+    .SYNOPSIS
+        The name a command runs under: without a module prefix such as
+        Microsoft.PowerShell.Utility\, and an alias taken to its cmdlet.
+    #>
+    param([string]$Name)
+
+    $bare = ($Name -split '\\')[-1]
+    $resolved = $null
+    if ($script:WiringAliases.TryGetValue($bare, [ref]$resolved)) { return $resolved }
+    return $bare
+}
+
+function Test-CommandIs {
+    <#
+    .SYNOPSIS
+        Whether a command runs one of these cmdlets, by its own name, with a module prefix or
+        through an alias (Resolve-CommandName), compared ordinally.
+    #>
+    param([System.Management.Automation.Language.CommandAst]$Command, [string[]]$Names)
+
+    $name = Resolve-CommandName ([string]$Command.GetCommandName())
+    foreach ($candidate in $Names) {
+        if ([string]::Equals($name, $candidate, [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
+    }
+    return $false
+}
+
+function Get-ArgumentNames {
+    <#
+    .SYNOPSIS
+        The names an argument gives: a constant, or each constant of an array, and '*' for
+        anything else, which could name anything.
+    #>
+    param($Argument)
+
+    if ($Argument -is [System.Management.Automation.Language.ArrayLiteralAst]) {
+        foreach ($element in $Argument.Elements) { Get-ArgumentNames $element }
+        return
+    }
+    $constant = Get-ConstantValue $Argument
+    if ($null -ne $constant -and $null -ne $constant.Value) { return [string]$constant.Value }
+    return '*'
+}
+
+function Get-DriveItemNames {
+    <#
+    .SYNOPSIS
+        The items a Set-Item, New-Item, Copy-Item, Move-Item, Rename-Item, Clear-Item or
+        Remove-Item command may write on a drive such as function: or variable:, when one of its
+        arguments names that drive: each constant argument without the drive, since -Name and
+        -NewName pick the item as well as -Path does, and '*' for a path built at run time.
+    #>
+    param([System.Management.Automation.Language.CommandAst]$Command, [string]$Drive)
+
+    if (-not (Test-CommandIs $Command @('Set-Item', 'New-Item', 'Copy-Item', 'Move-Item', 'Rename-Item',
+            'Clear-Item', 'Remove-Item'))) { return }
+    $prefix = "${Drive}:"
+    $texts = @()
+    $touches = $false
+    foreach ($element in @($Command.CommandElements | Select-Object -Skip 1)) {
+        $value = if ($element -is [System.Management.Automation.Language.CommandParameterAst]) { $element.Argument } else { $element }
+        if ($value -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
+            $texts += $value.Value
+            if ($value.Value.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) { $touches = $true }
+        } elseif ($value -is [System.Management.Automation.Language.ExpandableStringExpressionAst] -and
+                $value.Value.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $texts += '*'
+            $touches = $true
+        }
+    }
+    if (-not $touches) { return }
+    foreach ($text in $texts) {
+        $name = $text
+        if ($name.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) { $name = $name.Substring($prefix.Length) }
+        $name = $name.TrimStart('\', '/')
+        if ($name) { $name }
+    }
+}
+
+function Get-FunctionWrites {
+    <#
+    .SYNOPSIS
+        The command names a script sets up other than with a function statement: a ${function:X}
+        assignment, an item command on the function: drive (Get-DriveItemNames), and Set-Alias or
+        New-Alias, since an alias takes a function's place. '*' stands for a name built at run
+        time, which could be any of them.
+    #>
+    param([System.Management.Automation.Language.Ast]$Ast)
+
+    foreach ($node in @($Ast.FindAll({ param($node)
+            $node -is [System.Management.Automation.Language.AssignmentStatementAst] -or
+            $node -is [System.Management.Automation.Language.CommandAst] }, $true))) {
+        if ($node -is [System.Management.Automation.Language.AssignmentStatementAst]) {
+            foreach ($target in @($node.Left.FindAll({ param($target)
+                    $target -is [System.Management.Automation.Language.VariableExpressionAst] }, $true))) {
+                $path = $target.VariablePath.UserPath
+                if ($path.StartsWith('function:', [System.StringComparison]::OrdinalIgnoreCase)) {
+                    $path.Substring('function:'.Length)
+                }
+            }
+            continue
+        }
+        Get-DriveItemNames $node 'function'
+        if (Test-CommandIs $node @('Set-Alias', 'New-Alias')) {
+            foreach ($element in @($node.CommandElements | Select-Object -Skip 1)) {
+                $value = if ($element -is [System.Management.Automation.Language.CommandParameterAst]) { $element.Argument } else { $element }
+                if ($null -ne $value) { Get-ArgumentNames $value }
+            }
+        }
+    }
+}
+
+function Get-VariableWrites {
+    <#
+    .SYNOPSIS
+        Every place a script may write a variable, in any scope, as a Name and the Node that
+        writes it: an assignment to it, a foreach over it, Set-Variable, New-Variable,
+        Clear-Variable or Remove-Variable naming it with -Name or first, -OutVariable or another
+        common parameter that fills a variable naming it, or an item command on the variable:
+        drive naming it. The name has no scope, and a name built at run time comes back as '*'
+        (Select-VariableWrites).
+    #>
+    param([System.Management.Automation.Language.Ast]$Ast)
+
+    foreach ($node in @($Ast.FindAll({ param($node)
+            $node -is [System.Management.Automation.Language.AssignmentStatementAst] -or
+            $node -is [System.Management.Automation.Language.ForEachStatementAst] -or
+            $node -is [System.Management.Automation.Language.CommandAst] }, $true))) {
+        $names = @(if ($node -is [System.Management.Automation.Language.AssignmentStatementAst]) {
+            $node.Left.FindAll({ param($target)
+                $target -is [System.Management.Automation.Language.VariableExpressionAst] }, $true) |
+                ForEach-Object { $_.VariablePath.UserPath }
+        } elseif ($node -is [System.Management.Automation.Language.ForEachStatementAst]) {
+            $node.Variable.VariablePath.UserPath
+        } else {
+            Get-CommandVariableNames $node
+        })
+        foreach ($name in $names) {
+            $bare = if ([string]::Equals($name, '*', [System.StringComparison]::Ordinal)) { '*' } else { ($name.TrimStart('+') -split ':')[-1] }
+            [pscustomobject]@{ Name = $bare; Node = $node }
+        }
+    }
+}
+
+function Select-VariableWrites {
+    <#
+    .SYNOPSIS
+        The nodes among Get-VariableWrites that may write this variable, each once: the ones that
+        name it and the ones whose name is built at run time.
+    #>
+    param([object[]]$Writes, [string]$Name)
+
+    $seen = [System.Collections.Generic.HashSet[object]]::new()
+    foreach ($write in $Writes) {
+        if (([string]::Equals($write.Name, '*', [System.StringComparison]::Ordinal) -or
+                [string]::Equals($write.Name, $Name, [System.StringComparison]::OrdinalIgnoreCase)) -and
+            $seen.Add($write.Node)) { $write.Node }
+    }
+}
+
+function Get-CommandVariableNames {
+    <#
+    .SYNOPSIS
+        The variables one command names to write, for Get-VariableWrites, with '*' for a name
+        built at run time.
+    #>
+    param([System.Management.Automation.Language.CommandAst]$Command)
+
+    $names = @(Get-DriveItemNames $Command 'variable')
+    $variableCommand = Test-CommandIs $Command @('Set-Variable', 'New-Variable', 'Clear-Variable', 'Remove-Variable')
+    $elements = $Command.CommandElements
+    $first = $null
+    $named = $false
+    for ($k = 1; $k -lt $elements.Count; $k++) {
+        $element = $elements[$k]
+        if ($element -isnot [System.Management.Automation.Language.CommandParameterAst]) {
+            if ($null -eq $first) { $first = $element }
+            continue
+        }
+        # The value after a parameter written without a colon is taken as its argument, which
+        # a switch such as -Force doesn't have. That only ever misreads a name as '*'.
+        $argument = $element.Argument
+        if ($null -eq $argument -and $k + 1 -lt $elements.Count -and
+                $elements[$k + 1] -isnot [System.Management.Automation.Language.CommandParameterAst]) {
+            $k++
+            $argument = $elements[$k]
+        }
+        # -OutVariable and its kin, by alias or by a name long enough to pick one of them.
+        $parameter = $element.ParameterName
+        $fills = $false
+        foreach ($alias in 'ov', 'pv', 'ev', 'wv', 'iv') {
+            if ([string]::Equals($parameter, $alias, [System.StringComparison]::OrdinalIgnoreCase)) { $fills = $true }
+        }
+        foreach ($common in 'OutVariable', 'PipelineVariable', 'ErrorVariable', 'WarningVariable', 'InformationVariable') {
+            if ($parameter.Length -ge 2 -and $common.StartsWith($parameter, [System.StringComparison]::OrdinalIgnoreCase)) { $fills = $true }
+        }
+        if ($fills -and $null -ne $argument) { $names += @(Get-ArgumentNames $argument) }
+        if ($variableCommand -and 'Name'.StartsWith($parameter, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $named = $true
+            if ($null -ne $argument) { $names += @(Get-ArgumentNames $argument) }
+        }
+    }
+    if ($variableCommand -and -not $named) { $names += @(if ($null -ne $first) { Get-ArgumentNames $first } else { '*' }) }
+    return $names
+}
+
+function Get-EnclosingBody {
+    <#
+    .SYNOPSIS
+        The function or script block a node sits in, which could run at another time than the
+        place it's written, or $null for code at the script's own level.
+    #>
+    param($Node)
+
+    for ($parent = $Node.Parent; $null -ne $parent; $parent = $parent.Parent) {
+        if ($parent -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
+            $parent -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) { return $parent }
+    }
+    return $null
+}
+
 function Test-TalliesBothSides {
     <#
     .SYNOPSIS
         Whether verify-injected-registers.ps1 takes a device tally of the clean APK and one of the
         patched APK, each into a variable of its own that nothing else writes, and compares
-        exactly those two, with the helpers' functions rather than ones the script defines.
+        exactly those two, with the helpers' functions rather than ones the script defines, and
+        of the same two files the static half compared.
+    .DESCRIPTION
+        A write counts in every form Get-VariableWrites knows, and a helper replaced in every form
+        Get-FunctionWrites knows as well as with a function statement. The clean input is the one
+        Get-BaseApk assignment, and nothing writes either input after the DexDiff run, or from a
+        function or script block that could run later. The static half has already passed on the
+        real pair by then, so a write there would leave every -Serial run comparing the patched
+        build with itself.
     #>
     param([string]$Path)
 
     $ast = Get-ScriptAst $Path
     # A function of either name defined in the script takes the helper's place, whatever it does.
-    foreach ($function in @($ast.FindAll({ param($node)
-            $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true))) {
-        $name = ($function.Name -split ':')[-1]
-        foreach ($helper in 'Compare-VerifierTallies', 'Invoke-AndroidVerifierTally') {
+    $replaced = @(@($ast.FindAll({ param($node)
+            $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+        ForEach-Object { Get-FunctionName $_ }) + @(Get-FunctionWrites $ast))
+    foreach ($name in $replaced) {
+        foreach ($helper in '*', 'Compare-VerifierTallies', 'Invoke-AndroidVerifierTally') {
             if ([string]::Equals($name, $helper, [System.StringComparison]::OrdinalIgnoreCase)) { return $false }
         }
     }
@@ -685,19 +937,30 @@ function Test-TalliesBothSides {
     $clean = $tallies['$cleanBase']
     $patched = $tallies['$PatchedApk']
     if (-not $clean -or -not $patched) { return $false }
-    # One assignment to each variable anywhere in the script, with a scope prefix or without: its
+    $writes = @(Get-VariableWrites $ast)
+    # One write to each variable anywhere in the script, with a scope prefix or without: its
     # tally. A copy of the other tally written over it, or both tallies taken into one variable,
     # would leave every device run comparing the patched build with itself.
     foreach ($variable in $clean, $patched) {
-        $bare = ($variable -split ':')[-1]
-        $writes = @($ast.FindAll({ param($node)
-            $node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
-            $null -ne $node.Left.Find({ param($target)
-                $target -is [System.Management.Automation.Language.VariableExpressionAst] -and
-                [string]::Equals(($target.VariablePath.UserPath -split ':')[-1], $bare,
-                    [System.StringComparison]::OrdinalIgnoreCase) }, $true) }, $true))
-        if ($writes.Count -ne 1) { return $false }
+        if (@(Select-VariableWrites $writes ($variable -split ':')[-1]).Count -ne 1) { return $false }
     }
+    # The two files the static half compared: nothing writes either after the DexDiff run starts,
+    # or from a body that could run then, and the clean one is Get-BaseApk's, written once.
+    $dexDiff = @($live | Where-Object { $_.GetCommandName() -eq 'Invoke-DexDiff' } | Sort-Object { $_.Extent.StartOffset })
+    if ($dexDiff.Count -eq 0) { return $false }
+    foreach ($side in 'cleanBase', 'PatchedApk') {
+        foreach ($write in @(Select-VariableWrites $writes $side)) {
+            if ($write.Extent.EndOffset -gt $dexDiff[0].Extent.StartOffset -or $null -ne (Get-EnclosingBody $write)) { return $false }
+        }
+    }
+    $cleanWrites = @(Select-VariableWrites $writes 'cleanBase')
+    if ($cleanWrites.Count -ne 1) { return $false }
+    $source = $cleanWrites[0]
+    if ($source -isnot [System.Management.Automation.Language.AssignmentStatementAst] -or
+        $source.Right -isnot [System.Management.Automation.Language.PipelineAst] -or
+        $source.Right.PipelineElements.Count -ne 1 -or
+        $source.Right.PipelineElements[0] -isnot [System.Management.Automation.Language.CommandAst] -or
+        $source.Right.PipelineElements[0].GetCommandName() -ne 'Get-BaseApk') { return $false }
     foreach ($compare in @($live | Where-Object { $_.GetCommandName() -eq 'Compare-VerifierTallies' })) {
         $cleanArgument = Get-CommandArgument $compare 'Clean'
         $patchedArgument = Get-CommandArgument $compare 'Patched'
