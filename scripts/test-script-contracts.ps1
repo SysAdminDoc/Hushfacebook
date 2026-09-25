@@ -2608,14 +2608,43 @@ try {
         New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $Root $relative) -Destination $destination
     }
-    # The index names the floor its own release needed, and the copied catalog may already pin the
-    # next one. Here the copied tree is the release, so the index is written up to its catalog.
+    # The copied source can be one commit ahead of the published index while a release is being
+    # prepared. Here the copied tree is the release, so the index is written up to the catalog
+    # before any strict index-push case runs.
+    $releaseVersionForIndex = Get-BundleVersion -Root $releaseRepo
+    $releaseCatalogForIndex = Get-Content -LiteralPath (Join-Path $releaseRepo 'patches-list.json') -Raw |
+        ConvertFrom-Json
+    $releaseTargetForIndex = Get-PatchTarget -PatchList $releaseCatalogForIndex
+    $releasePatchCountForIndex = @($releaseCatalogForIndex.patches).Count
     $releaseFloor = (Read-CatalogToolchain -Source 'the copied catalog' `
         -Text (Get-Content -LiteralPath (Join-Path $releaseRepo 'gradle/libs.versions.toml') -Raw)).ManagerFloor
     $releaseIndexPath = Join-Path $releaseRepo 'patches-bundle.json'
-    $releaseIndexText = (Get-Content -LiteralPath $releaseIndexPath -Raw) -replace
+    $releaseIndexText = Get-Content -LiteralPath $releaseIndexPath -Raw
+    $releaseIndex = $releaseIndexText | ConvertFrom-Json
+    $copiedIndexVersion = [string]$releaseIndex.version
+    if ($copiedIndexVersion -ne $releaseVersionForIndex) {
+        $releaseIndexText = $releaseIndexText -replace
+            ('(?<![\d.])' + [regex]::Escape($copiedIndexVersion) + '(?!\d)'), $releaseVersionForIndex
+    }
+    $releaseIndexText = $releaseIndexText -replace
+        '(?<!\d)\d+ patches\b', "$releasePatchCountForIndex patches"
+    $describedBuild = [regex]::Match([string]$releaseIndex.description, 'Facebook\s+(\d+(?:\.\d+)+)')
+    if ($describedBuild.Success -and $describedBuild.Groups[1].Value -ne $releaseTargetForIndex.PackageVersion) {
+        $releaseIndexText = $releaseIndexText -replace
+            ('(?<![\d.])' + [regex]::Escape($describedBuild.Groups[1].Value) + '(?!\d)'),
+            $releaseTargetForIndex.PackageVersion
+    }
+    $releaseIndexText = $releaseIndexText -replace
         '(Morphe Manager )\d+(?:\.\d+)+( or newer)', "`${1}$releaseFloor`${2}"
     Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value $releaseIndexText
+    $releaseBugFormPath = Join-Path $releaseRepo '.github/ISSUE_TEMPLATE/bug_report.yml'
+    $releaseBugFormText = Get-Content -LiteralPath $releaseBugFormPath -Raw
+    $releaseBugFormText = $releaseBugFormText -replace
+        '(placeholder:\s*Version )\S+( for Facebook)', "`${1}$releaseVersionForIndex`${2}"
+    $releaseBugFormText = $releaseBugFormText -replace
+        '(placeholder:\s*Version \S+ for Facebook )\d+(?:\.\d+)+',
+        "`${1}$($releaseTargetForIndex.PackageVersion)"
+    Set-Content -LiteralPath $releaseBugFormPath -Encoding UTF8 -NoNewline -Value $releaseBugFormText
     # Through Invoke-FixtureGit, with the git directory proved before anything is written, for
     # the reason the toolchain fixture above gives.
     Invoke-FixtureGit -Root $releaseRepo -Arguments @('init', '--quiet') | Out-Null

@@ -2,6 +2,11 @@
 
 Every Hushfacebook release, newest first.
 
+## 0.1.2 (2026-09-25)
+
+* **Facebook:** Hushfacebook settings can now export the runtime feature switches to a JSON file and import them on this phone or another one. Import shows what will change, skips names this build doesn't know, and refuses damaged or newer files without changing anything. Pause and debug logging stay local. The new flow follows the phone's language in English, German, Spanish, Indonesian, Brazilian Portuguese and Turkish.
+* **Facebook:** Added a Facebook-blue Hushfacebook identity with a new icon, README hero, social preview and light or dark wordmarks. The README now leads with the product's main benefits and direct install, download and support links.
+
 ## 0.1.1 (2026-09-24)
 
 * **Facebook:** The Hushfacebook settings screen is readable. Its row titles were drawn in Facebook's near-black text on the black page, and the Export diagnostic report and Clear diagnostic data rows showed up blank. Both were found on a Galaxy S25 running 0.1.0.
