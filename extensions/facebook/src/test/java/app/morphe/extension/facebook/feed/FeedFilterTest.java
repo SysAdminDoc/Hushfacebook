@@ -35,7 +35,7 @@ public class FeedFilterTest {
     @Rule public final SettingsContextRule settingsContext = new SettingsContextRule();
 
     /** Stands in for GraphQLFeedStoryCategory: only the constant names matter to the rule. */
-    enum Category { ORGANIC, SPONSORED, PROMOTION, INJECTED_STORY }
+    enum Category { ORGANIC, SPONSORED, PROMOTION, INJECTED_STORY, ENGAGEMENT, FB_SHORTS, FB_SHORTS_FALLBACK, END_OF_FEED_REELS, FB_STORIES }
 
     @After
     public void restoreSwitches() {
@@ -45,7 +45,46 @@ public class FeedFilterTest {
         Settings.HIDE_SUGGESTED_FOR_YOU.resetToDefault();
         Settings.HIDE_PEOPLE_YOU_MAY_KNOW.resetToDefault();
         Settings.HIDE_STORIES_TRAY.resetToDefault();
+        Settings.HIDE_FEED_REELS.resetToDefault();
         FeedFilterCounters.clear();
+    }
+
+    /** The guard with only the reels patch in: no story flag rule reads anything. */
+    private static boolean reelsOnly(Category category, Object feedUnit, boolean reelsPatched) {
+        return FeedFilter.hideEdge(category, feedUnit, false, false, story -> null, false, story -> null, reelsPatched);
+    }
+
+    /**
+     * A row of reels goes under each of the three categories Facebook files one under, with the
+     * patch in and the switch on (its default). A post, a story row and the reels rows of a build
+     * without the patch all stay, and so do the rows once the switch is off.
+     */
+    @Test
+    public void reelsRowsLeaveTheFeedWithTheirPatchAndSwitch() {
+        assertTrue("the switch starts on", Settings.HIDE_FEED_REELS.get());
+        for (Category reels : new Category[]{Category.FB_SHORTS, Category.FB_SHORTS_FALLBACK, Category.END_OF_FEED_REELS}) {
+            assertTrue(reels.name(), reelsOnly(reels, new Object(), true));
+            assertFalse("without the patch: " + reels, reelsOnly(reels, new Object(), false));
+        }
+        assertFalse("a post stays", reelsOnly(Category.ENGAGEMENT, new Object(), true));
+        assertFalse("a stories row stays", reelsOnly(Category.FB_STORIES, new Object(), true));
+        assertFalse("a category that is not an enum is not guessed at", FeedFilter.hideEdge(
+                "FB_SHORTS", new Object(), false, false, story -> null, false, story -> null, true));
+
+        Settings.HIDE_FEED_REELS.save(false);
+        assertFalse("the switch off keeps the rows", reelsOnly(Category.FB_SHORTS, new Object(), true));
+    }
+
+    /** A hidden row counts under its category, so a report says how many of each went. */
+    @Test
+    public void aHiddenReelsRowCountsUnderItsCategory() {
+        reelsOnly(Category.FB_SHORTS, new Object(), true);
+        reelsOnly(Category.FB_SHORTS, new Object(), true);
+        reelsOnly(Category.END_OF_FEED_REELS, new Object(), true);
+        reelsOnly(Category.ENGAGEMENT, new Object(), true);
+        String report = String.join("\n", FeedFilterCounters.report());
+        assertTrue(report, report.contains(FeedFilter.FEED_ROUTE + ": 4 lists, 4 items, 3 removed"));
+        assertTrue(report, report.contains("Removed: FB_SHORTS 2, END_OF_FEED_REELS 1"));
     }
 
     @Test

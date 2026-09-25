@@ -63,6 +63,7 @@ Hide "People you may know"	“Tanıyor olabileceğin kişiler” bölümünü gi
 Hide "Suggested for you" posts	“Senin için önerilenler” gönderilerini gizle
 Hide AI-detected posts	Yapay zekâ ile üretildiği tespit edilen gönderileri gizle
 Hide promoted posts	Tanıtılan gönderileri gizle
+Hide Reels in the feed	Akıştaki Reels videolarını gizle
 Hide sponsored posts	Sponsorlu gönderileri gizle
 Hide sponsored reels	Sponsorlu Reels videolarını gizle
 Hide sponsored stories	Sponsorlu hikayeleri gizle
@@ -146,6 +147,7 @@ the part of the Reels ad block patched into the app	Reels reklam engelinin uygul
 the re-signed build fix	yeniden imzalanmış sürüm düzeltmesi
 The row of friend suggestions between posts.	Gönderilerin arasındaki arkadaş önerileri satırı.
 The row of stories at the top of the feed, Create story included.	Akışın en üstündeki hikaye şeridi, “Hikaye oluştur” da dahil.
+The rows of reels between posts, and the reels Facebook adds where your feed ends.	Gönderilerin arasındaki Reels sıraları ve Facebook'un akışının bittiği yere eklediği Reels videoları.
 The setting couldn't finish updating. Its saved value is shown.	Ayarın güncellenmesi tamamlanamadı. Kayıtlı değeri gösteriliyor.
 There is no diagnostic data to clear.	Temizlenecek tanılama verisi yok.
 There is no diagnostic data to put back.	Geri getirilecek tanılama verisi yok.

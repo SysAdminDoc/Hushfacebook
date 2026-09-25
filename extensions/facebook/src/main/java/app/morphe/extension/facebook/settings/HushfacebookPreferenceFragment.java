@@ -142,7 +142,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         Set<PatchFamily> build = PatchFamily.inThisBuild();
 
         if (build.contains(PatchFamily.SPONSORED_POSTS) || build.contains(PatchFamily.SUGGESTED_POSTS)
-                || build.contains(PatchFamily.STORIES_TRAY) || build.contains(PatchFamily.AI_DETECTED_POSTS)) {
+                || build.contains(PatchFamily.STORIES_TRAY) || build.contains(PatchFamily.FEED_REELS)
+                || build.contains(PatchFamily.AI_DETECTED_POSTS)) {
             PreferenceCategory feed = category(screen, L10n.t("News feed"));
             if (build.contains(PatchFamily.SPONSORED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_SPONSORED_POSTS, L10n.t("Hide sponsored posts"),
@@ -164,6 +165,10 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             if (build.contains(PatchFamily.STORIES_TRAY)) {
                 feed.addPreference(toggle(context, Settings.HIDE_STORIES_TRAY, L10n.t("Hide the Stories tray"),
                         L10n.t("The row of stories at the top of the feed, Create story included.")));
+            }
+            if (build.contains(PatchFamily.FEED_REELS)) {
+                feed.addPreference(toggle(context, Settings.HIDE_FEED_REELS, L10n.t("Hide Reels in the feed"),
+                        L10n.t("The rows of reels between posts, and the reels Facebook adds where your feed ends.")));
             }
             if (build.contains(PatchFamily.AI_DETECTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_AI_DETECTED_POSTS, L10n.t("Hide AI-detected posts"),

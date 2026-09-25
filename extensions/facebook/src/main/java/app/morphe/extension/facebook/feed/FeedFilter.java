@@ -65,6 +65,14 @@ public final class FeedFilter {
      */
     static final String TRAY_ROUTE = "Stories tray adapters";
 
+    /**
+     * The story categories Facebook files the feed's rows of reels under: the "Reels" carousels
+     * between posts, their fallback, and the reels it adds where the feed you follow ends. On a
+     * signed-in 580 each arrived as a ShowcaseFeedUnit edge (S25, 2026-09-25). The names are the
+     * enum's own, which the obfuscator keeps, and the patch holds both builds to all three.
+     */
+    static final String[] REELS_CATEGORIES = {"FB_SHORTS", "FB_SHORTS_FALLBACK", "END_OF_FEED_REELS"};
+
     /** The adapter the patch passes: the classic tray, or the unified one a server gate turns on. */
     public static final int LEGACY_TRAY = 0;
     public static final int UNIFIED_TRAY = 1;
@@ -114,7 +122,8 @@ public final class FeedFilter {
      */
     public static boolean hideEdge(Object category, Object feedUnit) {
         return hideEdge(category, feedUnit, SettingsStatus.sponsoredPosts(), SettingsStatus.suggestedPosts(),
-                RecommendationLabel.PATCHED, SettingsStatus.aiDetectedPosts(), GenAiLabel.PATCHED);
+                RecommendationLabel.PATCHED, SettingsStatus.aiDetectedPosts(), GenAiLabel.PATCHED,
+                SettingsStatus.feedReels());
     }
 
     /** The guard with the sponsored and suggested patch-time flags passed in, and no GenAI rule. */
@@ -139,8 +148,17 @@ public final class FeedFilter {
      */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
             StoryFlag.Accessor recommendationAccessor, boolean aiPatched, StoryFlag.Accessor aiAccessor) {
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, recommendationAccessor, aiPatched,
+                aiAccessor, false);
+    }
+
+    /** The guard with the reels patch's flag passed in too. */
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
+            StoryFlag.Accessor recommendationAccessor, boolean aiPatched, StoryFlag.Accessor aiAccessor,
+            boolean reelsPatched) {
         try {
             if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
+            if (reelsPatched) HookStatus.invoked(FamilyNames.FEED_REELS);
             if (suggestedPatched) {
                 HookStatus.invoked(FamilyNames.SUGGESTED_POSTS);
                 reportSuggestedClasses();
@@ -166,6 +184,9 @@ public final class FeedFilter {
             if (sponsoredPatched && hiddenCategory(category)) {
                 reason = categoryName;
             }
+            if (reason == null && reelsPatched && isReelsCategory(categoryName) && Settings.HIDE_FEED_REELS.get()) {
+                reason = categoryName;
+            }
             if (reason == null && suggestedPatched) {
                 if (Settings.HIDE_SUGGESTED_POSTS.get()) reason = suggestedUnitName(feedUnit);
                 if (reason == null && Settings.HIDE_SUGGESTED_FOR_YOU.get()) {
@@ -187,6 +208,7 @@ public final class FeedFilter {
             return true;
         } catch (Throwable failure) {
             if (sponsoredPatched) HookStatus.threw(FamilyNames.SPONSORED_POSTS, "feed guard", failure);
+            if (reelsPatched) HookStatus.threw(FamilyNames.FEED_REELS, "feed guard", failure);
             if (suggestedPatched) HookStatus.threw(FamilyNames.SUGGESTED_POSTS, "feed guard", failure);
             if (aiPatched) HookStatus.threw(FamilyNames.AI_DETECTED_POSTS, "feed guard", failure);
             Logger.printException(() -> "Feed filter: could not judge an edge", failure);
@@ -248,6 +270,15 @@ public final class FeedFilter {
         String name = ((Enum<?>) category).name();
         if (SPONSORED.equals(name)) return Settings.HIDE_SPONSORED_POSTS.get();
         if (PROMOTION.equals(name)) return Settings.HIDE_PROMOTED_POSTS.get();
+        return false;
+    }
+
+    /** Whether a story category is one Facebook files the feed's rows of reels under. */
+    static boolean isReelsCategory(String categoryName) {
+        if (categoryName == null) return false;
+        for (String reels : REELS_CATEGORIES) {
+            if (reels.equals(categoryName)) return true;
+        }
         return false;
     }
 

@@ -30,6 +30,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean feedReels() {
+        return false;
+    }
+
     public static boolean aiDetectedPosts() {
         return false;
     }

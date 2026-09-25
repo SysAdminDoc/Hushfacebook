@@ -63,6 +63,7 @@ Hide "People you may know"	„Personen, die du kennen könntest“ ausblenden
 Hide "Suggested for you" posts	„Vorschläge für dich“ ausblenden
 Hide AI-detected posts	Als KI erkannte Beiträge ausblenden
 Hide promoted posts	Beworbene Beiträge ausblenden
+Hide Reels in the feed	Reels im Feed ausblenden
 Hide sponsored posts	Gesponserte Beiträge ausblenden
 Hide sponsored reels	Gesponserte Reels ausblenden
 Hide sponsored stories	Gesponserte Stories ausblenden
@@ -146,6 +147,7 @@ the part of the Reels ad block patched into the app	der in die App gepatchte Tei
 the re-signed build fix	der Fix für neu signierte Builds
 The row of friend suggestions between posts.	Die Reihe mit Freundschaftsvorschlägen zwischen den Beiträgen.
 The row of stories at the top of the feed, Create story included.	Die Reihe mit Stories oben im Feed, „Story erstellen“ eingeschlossen.
+The rows of reels between posts, and the reels Facebook adds where your feed ends.	Die Reihen mit Reels zwischen den Beiträgen und die Reels, die Facebook dort anhängt, wo dein Feed endet.
 The setting couldn't finish updating. Its saved value is shown.	Die Einstellung ließ sich nicht vollständig aktualisieren. Der gespeicherte Wert wird angezeigt.
 There is no diagnostic data to clear.	Es gibt keine Diagnosedaten zum Löschen.
 There is no diagnostic data to put back.	Es gibt keine Diagnosedaten zum Wiederherstellen.

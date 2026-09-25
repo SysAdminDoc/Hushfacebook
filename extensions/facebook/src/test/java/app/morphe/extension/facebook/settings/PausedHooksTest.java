@@ -67,7 +67,7 @@ public class PausedHooksTest {
     @Rule public final SettingsContextRule settingsContext = new SettingsContextRule();
 
     /** Stands in for GraphQLFeedStoryCategory: only the constant names matter to the guard. */
-    enum Category { ORGANIC, SPONSORED, PROMOTION }
+    enum Category { ORGANIC, SPONSORED, PROMOTION, FB_SHORTS }
 
     /** Stands in for the obfuscated ad item base class; the patch passes its binary name. */
     public static class AdBase {
@@ -130,6 +130,9 @@ public class PausedHooksTest {
         probes.put(PatchFamily.STORIES_TRAY, Arrays.asList(
                 () -> FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY),
                 () -> FeedFilter.hideStoriesTray(FeedFilter.UNIFIED_TRAY)));
+        // A row of reels between posts.
+        probes.put(PatchFamily.FEED_REELS, Collections.singletonList(
+                () -> FeedGuardForTests.hidesReels(Category.FB_SHORTS, new Object())));
         // A story Facebook's own detection marked as made with AI.
         probes.put(PatchFamily.AI_DETECTED_POSTS, Collections.singletonList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true))));

@@ -56,6 +56,13 @@ public class Settings extends BaseSettings {
             new BooleanSetting("hushfacebook_hide_stories_tray", TRUE);
 
     /**
+     * The feed's rows of reels: the "Reels" carousels between posts and the reels Facebook adds where
+     * the feed you follow ends. Each is an edge of its own, filed under a reels story category.
+     */
+    public static final BooleanSetting HIDE_FEED_REELS =
+            new BooleanSetting("hushfacebook_hide_feed_reels", TRUE);
+
+    /**
      * Feed posts Facebook's own detection marked as made with AI. Off until one AI-labeled and one
      * ordinary post have been recorded on a signed-in feed and the rule told them apart.
      */
