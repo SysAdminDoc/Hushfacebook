@@ -61,4 +61,4 @@ New source written for this project may use:
  */
 ```
 
-Code taken from another project keeps its notices and gets a `Forked from:` line with the file's URL at the commit it came from. Record it in `provenance.json` too. `ProvenanceTest` fails when a shipped file matches no rule, or when a rule names an upstream that NOTICE doesn't.
+Code taken from another project keeps its notices and gets a `Forked from:` line with the file's URL at the commit it came from. Record it in `provenance.json` too. A rule naming a single file wins over the folder rule around it, which is how a file written here can sit among ported code. `ProvenanceTest` fails when a shipped file matches no rule or two, when a rule names an upstream that NOTICE doesn't, and when a file's header disagrees with its rule: it has to name a repository of that rule's chain by URL, a `Forked from:` source has to be one of them, and a file under a rule for code written here can't say it came from somewhere else.

@@ -1,5 +1,5 @@
 {
-  "note": "Where every shipped source file under patches/ and extensions/ came from. Each file matches exactly one rule, checked by ProvenanceTest. A ported rule names the upstream repository, the commit it was copied from and its licence; every upstream named here must also appear in NOTICE.",
+  "note": "Where every shipped source file under patches/ and extensions/ came from. A rule naming a single file wins over the directory rule around it; otherwise each file matches exactly one rule. A ported rule names the upstream repository, the commit it was copied from, the repositories it came through and its licence, and every file's header names a repository of its rule, by URL. Every upstream named here must also appear in NOTICE. ProvenanceTest checks all of it.",
   "rules": [
     {
       "paths": [
@@ -14,6 +14,7 @@
       "via": [
         "https://github.com/icysymmetra/tiktok-patches-for-morphe",
         "https://github.com/MorpheApp/morphe-patches",
+        "https://github.com/MorpheApp/morphe-patches-library",
         "https://gitlab.com/ReVanced/revanced-patches"
       ],
       "license": "GPL-3.0-only with the Morphe section 7 notices",
