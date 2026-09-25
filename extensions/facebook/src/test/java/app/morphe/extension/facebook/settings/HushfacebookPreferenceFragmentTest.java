@@ -142,6 +142,32 @@ public class HushfacebookPreferenceFragmentTest {
         }
     }
 
+    /**
+     * A version is a value set into a sentence, so both rows that show one isolate it: in a
+     * right-to-left sentence "580.0.0.51.74" then keeps the order it was written in.
+     */
+    @Test
+    public void theVersionRowsIsolateTheVersions() {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        org.robolectric.Shadows.shadowOf(context.getPackageManager())
+                .getInternalMutablePackageInfo(context.getPackageName()).versionName = "580.0.0.51.74";
+        String facebook = app.morphe.extension.shared.Utils.getAppVersionName();
+        assertTrue("no Facebook version to look for", facebook != null && !facebook.isEmpty());
+
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            List<Preference> rows = rowsOf(controller);
+            Preference card = rows.get(0);
+            assertEquals("Hushfacebook is on", String.valueOf(card.getTitle()));
+            assertTrue(String.valueOf(card.getSummary()), String.valueOf(card.getSummary()).contains(L10n.isolate(facebook)));
+            Preference version = null;
+            for (Preference row : rows) {
+                if ("Version".contentEquals(row.getTitle())) version = row;
+            }
+            assertNotNull("no Version row", version);
+            assertTrue(String.valueOf(version.getSummary()), String.valueOf(version.getSummary()).contains(L10n.isolate(facebook)));
+        }
+    }
+
     private static List<Preference> rowsOf(ActivityController<Activity> controller) {
         HushfacebookPreferenceFragment fragment = new HushfacebookPreferenceFragment();
         controller.get().getFragmentManager().beginTransaction()

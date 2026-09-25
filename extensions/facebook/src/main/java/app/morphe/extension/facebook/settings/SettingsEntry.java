@@ -83,34 +83,40 @@ public final class SettingsEntry {
 
     private static void publishShortcut(Context context) {
         final Context app = context.getApplicationContext() != null ? context.getApplicationContext() : context;
-        Utils.runOnBackgroundThread(() -> {
-            try {
-                ShortcutManager manager = app.getSystemService(ShortcutManager.class);
-                if (manager == null) return;
-                String longLabel = L10n.t(app, "Hushfacebook settings");
-                for (ShortcutInfo existing : manager.getDynamicShortcuts()) {
-                    // One labelled in another language is pushed again below, which replaces it.
-                    if (SHORTCUT_ID.equals(existing.getId())
-                            && longLabel.contentEquals(existing.getLongLabel())) return;
-                }
-                Intent intent = new Intent(Intent.ACTION_VIEW)
-                        .setComponent(new ComponentName(app.getPackageName(), LAUNCHER_ALIAS))
-                        .putExtra(EXTRA_OPEN_SETTINGS, true)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                ShortcutInfo shortcut = new ShortcutInfo.Builder(app, SHORTCUT_ID)
-                        .setShortLabel("Hushfacebook")
-                        .setLongLabel(longLabel)
-                        .setIcon(Icon.createWithAdaptiveBitmap(shortcutIcon()))
-                        .setIntent(intent)
-                        .setRank(0)
-                        .build();
-                // Evicts the lowest-ranked dynamic shortcut when Facebook's own fill the limit.
-                manager.pushDynamicShortcut(shortcut);
-                Logger.printInfo(() -> "Settings entry: launcher shortcut published");
-            } catch (Exception ex) {
-                Logger.printException(() -> "Settings entry: could not publish the shortcut", ex);
+        Utils.runOnBackgroundThread(() -> publishShortcutNow(app));
+    }
+
+    /**
+     * Publishes the launcher shortcut, or labels it again when the phone's language has changed,
+     * on the thread it's called on. Package-visible for tests.
+     */
+    static void publishShortcutNow(Context app) {
+        try {
+            ShortcutManager manager = app.getSystemService(ShortcutManager.class);
+            if (manager == null) return;
+            String longLabel = L10n.t(app, "Hushfacebook settings");
+            for (ShortcutInfo existing : manager.getDynamicShortcuts()) {
+                // One labelled in another language is pushed again below, which replaces it.
+                if (SHORTCUT_ID.equals(existing.getId())
+                        && longLabel.contentEquals(existing.getLongLabel())) return;
             }
-        });
+            Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(new ComponentName(app.getPackageName(), LAUNCHER_ALIAS))
+                    .putExtra(EXTRA_OPEN_SETTINGS, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ShortcutInfo shortcut = new ShortcutInfo.Builder(app, SHORTCUT_ID)
+                    .setShortLabel("Hushfacebook")
+                    .setLongLabel(longLabel)
+                    .setIcon(Icon.createWithAdaptiveBitmap(shortcutIcon()))
+                    .setIntent(intent)
+                    .setRank(0)
+                    .build();
+            // Evicts the lowest-ranked dynamic shortcut when Facebook's own fill the limit.
+            manager.pushDynamicShortcut(shortcut);
+            Logger.printInfo(() -> "Settings entry: launcher shortcut published");
+        } catch (Exception ex) {
+            Logger.printException(() -> "Settings entry: could not publish the shortcut", ex);
+        }
     }
 
     /** Injected at the start of every Facebook activity's {@code onCreate}. */

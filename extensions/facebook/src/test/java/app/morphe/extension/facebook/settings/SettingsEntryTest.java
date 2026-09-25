@@ -46,6 +46,31 @@ public class SettingsEntryTest {
     }
 
     /**
+     * The launcher shortcut is labelled in the phone's language when it's first published, and a
+     * phone that changes language gets it relabelled: one found under the old label is pushed
+     * again. Kept as it was, it stayed in its first language for good.
+     */
+    @Test public void theShortcutFollowsThePhonesLanguage() {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        android.content.pm.ShortcutManager manager = context.getSystemService(android.content.pm.ShortcutManager.class);
+        SettingsEntry.publishShortcutNow(context);
+        org.junit.Assert.assertEquals("Hushfacebook settings", longLabel(manager));
+
+        RuntimeEnvironment.setQualifiers("+de");
+        SettingsEntry.publishShortcutNow(context);
+        org.junit.Assert.assertEquals(app.morphe.extension.shared.L10nTablesForTests.of("de").get("Hushfacebook settings"),
+                longLabel(manager));
+        org.junit.Assert.assertEquals("one shortcut, relabelled, not two", 1, manager.getDynamicShortcuts().size());
+    }
+
+    private static String longLabel(android.content.pm.ShortcutManager manager) {
+        for (android.content.pm.ShortcutInfo shortcut : manager.getDynamicShortcuts()) {
+            if (SettingsEntry.SHORTCUT_ID.equals(shortcut.getId())) return String.valueOf(shortcut.getLongLabel());
+        }
+        return null;
+    }
+
+    /**
      * Signed out, the shortcut's screen lands on the login screen, and Facebook replaces that with
      * its logged-out screen a moment later. Android resumes the replacement before it destroys the
      * login screen, so the replacement is already in front when the request comes back, and it

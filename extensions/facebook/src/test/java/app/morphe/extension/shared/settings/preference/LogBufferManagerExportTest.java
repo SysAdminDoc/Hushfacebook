@@ -9,6 +9,7 @@ package app.morphe.extension.shared.settings.preference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import app.morphe.extension.shared.SettingsContextRule;
@@ -141,6 +142,35 @@ public class LogBufferManagerExportTest {
         }
         assertEquals(report, firstBody.toString(StandardCharsets.UTF_8.name()));
         assertEquals(report, secondBody.toString(StandardCharsets.UTF_8.name()));
+    }
+
+    /**
+     * The file's place is a value set into a sentence, so the toast isolates it: a right-to-left
+     * sentence then keeps "Download/Morphe/..." in the order it was written.
+     */
+    @Test public void theSavedPathIsIsolatedInItsToast() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        Downloads downloads = Robolectric.setupContentProvider(Downloads.class, MediaStore.AUTHORITY);
+        Shadows.shadowOf(context.getContentResolver()).registerOutputStream(downloads.uriFor(1), new ByteArrayOutputStream());
+        app.morphe.extension.shared.Utils.setContext(context);
+        app.morphe.extension.shared.settings.BaseSettings.DEBUG_LOG_FILTERS.save("all");
+        app.morphe.extension.shared.diagnostics.HookStatus.clear();
+        LogBufferManager.clearLogBuffer();
+        app.morphe.extension.shared.diagnostics.HookStatus.missingViewId("comments", "jlk");
+        org.robolectric.shadows.ShadowToast.reset();
+
+        LogBufferManager.exportToFile();
+        String toast = null;
+        long until = System.currentTimeMillis() + 20_000;
+        while (toast == null && System.currentTimeMillis() < until) {
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+            toast = org.robolectric.shadows.ShadowToast.getTextOfLatestToast();
+            if (toast == null) Thread.sleep(50);
+        }
+
+        assertNotNull("the export said nothing", toast);
+        String saved = Environment.DIRECTORY_DOWNLOADS + "/Morphe/" + downloads.row(1).getAsString(MediaStore.MediaColumns.DISPLAY_NAME);
+        assertEquals("Full report saved to " + app.morphe.extension.shared.L10n.isolate(saved), toast);
     }
 
     /** MediaStore's Downloads table, as much of it as an export touches. */

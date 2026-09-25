@@ -62,6 +62,7 @@ public class SettingsAccessibilityTest {
     @After
     public void restore() {
         PatchFamily.inBuildForTests = null;
+        HushfacebookPreferenceFragment.failNextInitialization = null;
         PauseForTests.resume();
         Settings.HIDE_SPONSORED_POSTS.resetToDefault();
         controller.close();
@@ -88,6 +89,39 @@ public class SettingsAccessibilityTest {
         assertTrue("a double tap would do nothing", info.getActionList().contains(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK));
         assertTrue(info.isClickable());
+        // The row's own delegate replaces the list's, so it has to keep what the list says of a
+        // row: which item of the list it is.
+        assertNotNull("the list's item info is gone", info.getCollectionItemInfo());
+    }
+
+    /**
+     * The click event is what a screen reader answers a double tap with, so it has to carry the
+     * role and the state the tap left, both ways.
+     */
+    @Test
+    public void theClickEventCarriesTheStateTheTapLeft() {
+        View row = rowFor(SettingsL10nTest.show(controller.get()), Settings.HIDE_SPONSORED_POSTS.key);
+        SwitchPreference toggle = (SwitchPreference) item(row);
+        for (boolean on : new boolean[]{true, false, true}) {
+            toggle.setChecked(on);
+            android.view.accessibility.AccessibilityEvent event = android.view.accessibility.AccessibilityEvent.obtain(
+                    android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED);
+            row.onInitializeAccessibilityEvent(event);
+            assertEquals(Switch.class.getName(), String.valueOf(event.getClassName()));
+            assertEquals("the event says " + event.isChecked() + " for a switch that's " + on, on, event.isChecked());
+        }
+    }
+
+    /** The recovery page's rows wrap too: its title is the longest line on it in most languages. */
+    @Test
+    public void theRecoveryPageWrapsItsWholeTitle() {
+        HushfacebookPreferenceFragment.failNextInitialization = new IllegalStateException("injected");
+        List<View> rows = rows(SettingsL10nTest.show(controller.get()));
+        assertEquals("the recovery page has a message and two actions", 3, rows.size());
+        for (View row : rows) {
+            TextView title = row.findViewById(android.R.id.title);
+            assertEquals(item(row).getKey() + " title lines", Integer.MAX_VALUE, title.getMaxLines());
+        }
     }
 
     /** A double tap goes through the list as a tap does, and the row then reads the new state. */
