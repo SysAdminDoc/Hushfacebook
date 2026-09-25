@@ -90,7 +90,7 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Sanitize sharing links` | Takes Facebook's tracking tags, such as mibextid, off the links you share or copy. The post or reel a link opens stays the same. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you. |
 | `Stop Story auto-advance` | Keeps each Story on screen until you tap or swipe. Turn the switch off for Facebook's timing. |
 
-`Download any reel`, `Download any video`, `AMOLED black theme`, `Material You theme`, `Hide Stories tray`, `Hide Reels in the feed`, `Block background-return feed refresh`, `Stop Story auto-advance` and `Clean up Reels` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
+`Download any video`, `AMOLED black theme`, `Material You theme`, `Hide Stories tray`, `Hide Reels in the feed`, `Block background-return feed refresh`, `Stop Story auto-advance` and `Clean up Reels` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
 
 ### Dark mode themes
 

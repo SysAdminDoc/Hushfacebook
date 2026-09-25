@@ -118,7 +118,7 @@ val downloadReelPatch = bytecodePatch(
     name = "Download any reel",
     description = "Adds a Download button beside every reel. Videos save at the best quality " +
         "the player streams.",
-    default = false,
+    default = true,
 ) {
     category("Downloads")
     dependsOn(settingsPatch)

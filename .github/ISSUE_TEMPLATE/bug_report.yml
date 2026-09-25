@@ -68,7 +68,7 @@ body:
     attributes:
       label: Which patches did you select?
       description: If you kept the manager's own selection, just say so. Otherwise list what you added or removed.
-      placeholder: The default selection, plus Download any reel.
+      placeholder: The default selection, plus Download any video.
     validations:
       required: true
   - type: dropdown

@@ -31,7 +31,7 @@ param(
     # Print every line the desktop CLI writes, not only errors.
     [switch]$ShowPatchLog,
     # Patch names to leave out of this build. The catalog applies everything, the patches that
-    # are off by default included (AMOLED black theme, Download any reel), so a check of what
+    # are off by default included (AMOLED black theme, Download any video), so a check of what
     # Facebook does without one of them needs a build that leaves it out.
     [string[]]$Exclude = @(),
     # Patch with the release bundle even when a source file is newer than it, for replaying
