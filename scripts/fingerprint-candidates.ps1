@@ -20,6 +20,8 @@
 
     -Calibrate holds the ranking to scripts/fingerprint-calibration.txt: real transitions the patches
     resolve on both 577 and 580, each of which has to rank its known replacement in the top five.
+    -CalibrationPath runs a list of your own the same way, and -OldApk and -NewApk name the two builds
+    it describes. They default to 577 and 580, the builds the bundled list names methods of.
 
     An APK argument is a path to an .apk or .apkm, or a version that names exactly one fixture in the
     folder HUSHFACEBOOK_FIXTURE_DIR names, such as 577 or 580.0.0.51.74.
@@ -37,6 +39,11 @@
 
 .EXAMPLE
     scripts/fingerprint-candidates.ps1 -Calibrate
+
+.EXAMPLE
+    scripts/fingerprint-candidates.ps1 -Calibrate -CalibrationPath 580-to-583.txt -OldApk 580 -NewApk 583
+
+    Checks the ranking against transitions confirmed on a later pair of builds.
 #>
 [CmdletBinding()]
 param(
@@ -101,11 +108,14 @@ function Invoke-Candidates {
     return $LASTEXITCODE
 }
 
-$modes = @($Calibrate.IsPresent, [bool]$Signature, [bool]($OldApk -or $Method)) | Where-Object { $_ }
+# -Method picks the capture mode. -OldApk names the build of the method there, and with -Calibrate
+# the old build the calibration list describes, so it counts toward neither.
+if ($OldApk -and -not ($Method -or $Calibrate)) { throw '-OldApk goes with -Method, or with -Calibrate.' }
+$modes = @($Calibrate.IsPresent, [bool]$Signature, [bool]$Method) | Where-Object { $_ }
 if (@($modes).Count -ne 1) {
     throw 'Pass -Calibrate, or -Signature with -NewApk, or -OldApk and -Method (with -NewApk, -SignaturePath or both).'
 }
-if (($OldApk -or $Method) -and -not ($OldApk -and $Method)) { throw '-OldApk and -Method go together.' }
+if ($Method -and -not $OldApk) { throw '-OldApk and -Method go together.' }
 if ($Signature -and -not $NewApk) { throw '-Signature needs -NewApk to rank against.' }
 if ($Method -and -not $NewApk -and -not $SignaturePath) { throw 'Pass -NewApk to rank, -SignaturePath to keep the signature, or both.' }
 

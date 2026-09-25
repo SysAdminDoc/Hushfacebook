@@ -1237,11 +1237,28 @@ public final class FingerprintCandidates {
         return cases;
     }
 
+    /** Whether the build has this method with code, before its methods are indexed. */
+    static boolean hasBody(Build build, String descriptor) {
+        int arrow = descriptor.indexOf("->");
+        ClassDef cd = arrow < 0 ? null : build.classes.get(descriptor.substring(0, arrow));
+        if (cd == null) return false;
+        for (Method m : cd.getMethods()) if (m.getImplementation() != null && descriptor(m).equals(descriptor)) return true;
+        return false;
+    }
+
     static int calibrate(File calibration, File oldApk, File newApk, File report, int top) throws Exception {
         List<Case> cases = readCalibration(calibration);
         List<String> olds = new ArrayList<>();
         for (Case c : cases) if (!olds.contains(c.oldMethod)) olds.add(c.oldMethod);
-        Map<String, Features> signatures = captureAll(new Build(oldApk), olds);
+        // A list names one build's methods: given another old build, say that rather than ask for a descriptor.
+        Build old = new Build(oldApk);
+        for (Case c : cases) {
+            if (!hasBody(old, c.oldMethod)) {
+                throw new InputException("Calibration case " + c.id + ": no method " + c.oldMethod + " with a body in "
+                        + oldApk.getName() + ", so the calibration does not describe this old build");
+            }
+        }
+        Map<String, Features> signatures = captureAll(old, olds);
         Indexed ix = index(new Build(newApk));
         for (Case c : cases) {
             if (!ix.build.indexOf.containsKey(c.newMethod)) {

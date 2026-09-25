@@ -246,6 +246,24 @@ try {
         @($starCalibrated.Output | Where-Object { $_ -match '^\[fingerprint\] case star rank 7 score [0-9.]+ FAIL stands-out$' }).Count -eq 1) `
         "A calibration ranked a known method second while methods left off the shortlist outranked it.`n$($starCalibrated.Text)"
 
+    # The wrapper's -Calibrate takes -OldApk as it takes -NewApk, as the two builds a -CalibrationPath
+    # list describes. A list that names no method of the old build given is refused as such, and
+    # -OldApk still names nothing beside -Signature.
+    $wrapperCalibrated = Invoke-Wrapper @('-Calibrate', '-OldApk', $getterApk, '-NewApk', $crowdApk,
+        '-CalibrationPath', $crowdCalibration, '-ReportPath', (Join-Path $caseRoot 'wrapper-calibration.txt'),
+        '-Java', $Java, '-DesktopJar', $DesktopJar, '-Root', $Root)
+    Assert-True ($wrapperCalibrated.ExitCode -eq 0 -and
+        @($wrapperCalibrated.Output | Where-Object { $_ -match '^\[fingerprint\] case crowd rank 1 score [0-9.]+ ok fails-closed$' }).Count -eq 1) `
+        "The wrapper did not calibrate against the old build -OldApk named.`n$($wrapperCalibrated.Text)"
+    $otherOld = Invoke-Wrapper @('-Calibrate', '-OldApk', $oldApk, '-NewApk', $crowdApk, '-CalibrationPath', $crowdCalibration,
+        '-ReportPath', (Join-Path $caseRoot 'other-old.txt'), '-Java', $Java, '-DesktopJar', $DesktopJar, '-Root', $Root)
+    Assert-True ($otherOld.ExitCode -eq 2 -and $otherOld.Text -match 'does not describe this old build') `
+        "A calibration list ran against an old build it names no method of.`n$($otherOld.Text)"
+    $strayOld = Invoke-Wrapper @('-OldApk', $getterApk, '-Signature', $getterSignature, '-NewApk', $crowdApk,
+        '-Java', $Java, '-DesktopJar', $DesktopJar, '-Root', $Root)
+    Assert-True ($strayOld.ExitCode -ne 0 -and $strayOld.Text -match '-OldApk goes with -Method, or with -Calibrate') `
+        "The wrapper took -OldApk beside -Signature, where it names nothing.`n$($strayOld.Text)"
+
     # A signature of another version is refused rather than read the new way.
     $future = Join-Path $caseRoot 'future.json'
     [System.IO.File]::WriteAllText($future, $signatureText.Replace('"version": 1', '"version": 2'))
