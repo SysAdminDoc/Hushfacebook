@@ -650,8 +650,21 @@ if (-not $descriptionFloorMatch.Success) {
     throw 'The bundle description does not say which Morphe Manager it needs ("Morphe Manager X or newer").'
 }
 $descriptionFloor = $descriptionFloorMatch.Groups[1].Value
-$indexFloor = Resolve-IndexManagerFloor -Root $rootPath -Version $publishedVersion
+# The release is found through its tag, and the push that writes a new description usually comes
+# from a clone that doesn't have it yet: `gh release create` makes the tag on GitHub only. The
+# published asset run has already read the tag's commit off the remote, and holds the bundle to it,
+# so the floor is read there too. Any other run that may use the network asks the repository the
+# index names when the clone has no tag of its own. An index push can't go out unchecked, so the
+# published asset run refuses a floor it can't read.
+$floorArguments = @{ Root = $rootPath; Version = $publishedVersion }
+if ($VerifyPublishedAsset) { $floorArguments['Commit'] = $releaseCommit }
+if (-not $SkipUrlCheck) { $floorArguments['RemoteUrl'] = "https://github.com/$slug.git" }
+$indexFloor = Resolve-IndexManagerFloor @floorArguments
 if ($null -eq $indexFloor.Floor) {
+    if ($VerifyPublishedAsset) {
+        throw ("The published release's Manager floor couldn't be read, and a published asset check " +
+            "doesn't pass the index without it: $($indexFloor.Note).")
+    }
     Write-Host "[release] $($indexFloor.Note)"
 } elseif ($descriptionFloor -ne $indexFloor.Floor) {
     throw ("The bundle description asks for Morphe Manager $descriptionFloor or newer, but $($indexFloor.Source) " +

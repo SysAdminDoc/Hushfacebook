@@ -699,6 +699,7 @@ try {
 # 703 files. Clearing the environment is the fix; the assertion after init is what would have
 # stopped it in the second it happened.
 $toolchainRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-toolchain-" + [guid]::NewGuid().ToString('N'))
+$toolchainRemote = "$toolchainRoot-published.git"
 
 function Invoke-FixtureGit {
     <#
@@ -799,6 +800,36 @@ try {
     $untagged = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.10'
     Assert-True ($null -eq $untagged.Floor -and $untagged.Note -like "*v0.0.10 isn't in this clone*") `
         "An untagged release was given a floor: $($untagged.Floor), $($untagged.Note)"
+    # A commit the caller read off the remote wins over the clone's tag, which still names the old
+    # commit after a release is re-cut on GitHub.
+    $recutFloor = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.9' -Commit $head
+    Assert-True ($recutFloor.Floor -eq '1.30.0') "The clone's tag was read over the published commit: $($recutFloor.Floor)"
+    # With no tag in the clone the remote is asked, since `gh release create` makes the tag on
+    # GitHub only. A bare repository stands in for it: a lightweight tag, an annotated one read
+    # through the commit it peels to, and one on a commit this clone doesn't have.
+    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('init', '--bare', '--quiet', $toolchainRemote) | Out-Null
+    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('tag', '-a', '-m', 'release', 'v0.0.13', $head) | Out-Null
+    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('push', '--quiet', $toolchainRemote,
+        "${releaseCommitSha}:refs/tags/v0.0.12", 'refs/tags/v0.0.13') | Out-Null
+    Invoke-FixtureGit -Root $toolchainRoot -Arguments @('tag', '-d', 'v0.0.13') | Out-Null
+    $onlyThere = "$(Invoke-FixtureGit -Root $toolchainRemote -Arguments @('-c', 'user.name=Contracts',
+        '-c', 'user.email=contracts@example.invalid', 'commit-tree', "$head^{tree}", '-m', 'only there') |
+        Select-Object -First 1)".Trim()
+    Invoke-FixtureGit -Root $toolchainRemote -Arguments @('tag', 'v0.0.14', $onlyThere) | Out-Null
+    $remoteFloor = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.12' -RemoteUrl $toolchainRemote
+    Assert-True ($remoteFloor.Floor -eq '1.29.0' -and $remoteFloor.Source -eq "tag v0.0.12 on $toolchainRemote") `
+        "A tag only the remote has was not read there: $($remoteFloor.Floor) from $($remoteFloor.Source), $($remoteFloor.Note)"
+    $peeledFloor = Resolve-IndexManagerFloor -Root $toolchainRoot -Version '0.0.13' -RemoteUrl $toolchainRemote
+    Assert-True ($peeledFloor.Floor -eq '1.30.0') `
+        "An annotated tag only the remote has was not read at its commit: $($peeledFloor.Floor), $($peeledFloor.Note)"
+    foreach ($unread in @(
+            @{ Version = '0.0.14'; Remote = $toolchainRemote; Note = "*names commit $($onlyThere.Substring(0, 8)), which this clone doesn't have*" },
+            @{ Version = '0.0.15'; Remote = $toolchainRemote; Note = "*v0.0.15 isn't in this clone or on $toolchainRemote*" },
+            @{ Version = '0.0.15'; Remote = (Join-Path $toolchainRoot 'missing.git'); Note = "*couldn't be asked for it*" })) {
+        $unreadFloor = Resolve-IndexManagerFloor -Root $toolchainRoot -Version $unread.Version -RemoteUrl $unread.Remote
+        Assert-True ($null -eq $unreadFloor.Floor -and $unreadFloor.Note -like $unread.Note) `
+            "A floor the remote couldn't give was not reported as unchecked: $($unreadFloor.Floor), $($unreadFloor.Note)"
+    }
 
     # A commit with no catalog in it, and a receipt naming no commit at all. Both fall back to
     # the working catalog rather than throwing, and the first says so.
@@ -869,7 +900,7 @@ try {
             '*the test catalog*' "A catalog with $($broken.Name) was read without complaint."
     }
 } finally {
-    Remove-Item -LiteralPath $toolchainRoot -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $toolchainRoot, $toolchainRemote -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host '[scripts] release receipt schema, manifest reading and validation contracts passed'
@@ -2388,7 +2419,8 @@ try {
     # that answers -version and does what the desktop CLI leaves behind for each input (the result
     # report, the patched APK and the merged APK beside it), and an aapt2 that prints the manifest
     # lines written for each APK. One .apkm per declared build, and a bundle stamped with the
-    # commit's time where buildAndroid leaves it. The CLI's merge carries a component the base
+    # commit's time where buildAndroid leaves it, carrying the classes.dex the published asset check
+    # at the end of this section looks for. The CLI's merge carries a component the base
     # APK's manifest lacks, so a delta taken against the base instead of the merge records it as
     # the patches' own and the empty allowlist refuses the receipt.
     $tools = Join-Path $releaseRoot 'tools'
@@ -2513,6 +2545,7 @@ try {
     New-TestBundleArchive -Path $releaseBundle -Entries ([ordered]@{
         'META-INF/MANIFEST.MF' = ("Manifest-Version: 1.0`nVersion: $releaseVersionHere`nTimestamp: $($releaseSeconds * 1000)`n" +
             "Patcher-Version: $($releaseToolchain.PatcherVersion)`n`n")
+        'classes.dex' = "dex`n035" + ('patches' * 8)
         'extensions/facebook.mpe' = "dex`n035" + ('payload' * 8) })
 
     # The builder reads git with a plain `git -C`, which a GIT_DIR inherited from a hook would
@@ -2663,6 +2696,120 @@ try {
     } finally {
         [Environment]::CurrentDirectory = $savedProcessDirectory
         Pop-Location
+    }
+
+    # The index push. `gh release create` makes the release tag on GitHub only, so the clone that
+    # pushes the new description doesn't have it, and the floor check printed that it hadn't run
+    # and let the push through. The hook's published asset run reads the tag's commit off the
+    # remote and holds the bundle to it, so the floor is read at that commit as well; a run with no
+    # bundle asks the repository the index names. A bare repository answers for GitHub through the
+    # fixture's url.insteadOf, and stand-ins serve the download, its checksum list, the repository
+    # description and the CLI's patch listing, so nothing leaves the machine.
+    $indexUrl = [Uri]($releaseIndexText | ConvertFrom-Json).download_url
+    $indexRepository = 'https://github.com/' + ((@($indexUrl.AbsolutePath.Trim('/') -split '/') | Select-Object -First 2) -join '/') + '.git'
+    $publishedRepo = (Join-Path $releaseRoot 'published.git').Replace('\', '/')
+    Invoke-FixtureGit -Root $releaseRoot -Arguments @('init', '--bare', '--quiet', $publishedRepo) | Out-Null
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('config', "url.$publishedRepo.insteadOf", $indexRepository) | Out-Null
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('push', '--quiet', $publishedRepo, "refs/tags/v$indexVersionHere") | Out-Null
+    Set-Content -LiteralPath (Join-Path $tools 'patch-names.txt') -Encoding ASCII -Value @($releaseNames | ForEach-Object { "Name: $_" })
+    $listJava = Join-Path $tools 'list-java.cmd'
+    [System.IO.File]::WriteAllText($listJava, ((@(
+        '@echo off',
+        'setlocal EnableExtensions',
+        'rem The release check runs -jar <cli> list-patches ... --out=<file>, and cmd splits that at the',
+        'rem equals sign unless the path has a space in it.',
+        'set "HERE=%~dp0"',
+        'set "LISTING="',
+        'if "%~1"=="-version" (',
+        '    echo openjdk version "21.0.5" 2024-10-15',
+        '    exit /b 0',
+        ')',
+        ':next',
+        'if "%~1"=="" exit /b 2',
+        'set "ARG=%~1"',
+        'if "%ARG%"=="--out" set "LISTING=%~2"',
+        'if "%ARG:~0,6%"=="--out=" set "LISTING=%ARG:~6%"',
+        'if defined LISTING goto list',
+        'shift',
+        'goto next',
+        ':list',
+        'copy /y "%HERE%patch-names.txt" "%LISTING%" >nul || exit /b 3',
+        'exit /b 0') -join "`r`n") + "`r`n"), [System.Text.Encoding]::ASCII)
+    $servedBundle = $releaseBundle
+    function Invoke-IndexPushCheck([hashtable]$Arguments) {
+        $saved = @{}
+        foreach ($variable in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'GIT_*' })) {
+            $saved[$variable.Name] = $variable.Value
+            Remove-Item -LiteralPath ('Env:\' + $variable.Name)
+        }
+        # The asset check asks git for the published tag from where it runs, not through -Root.
+        Push-Location -LiteralPath $releaseRepo
+        try {
+            function Invoke-WebRequest {
+                param($Uri, $Method, $OutFile, $MaximumRedirection, $TimeoutSec, [switch]$PassThru, [switch]$UseBasicParsing)
+                if ($OutFile) { Copy-Item -LiteralPath $servedBundle -Destination $OutFile -Force }
+                $sum = (Get-FileHash -LiteralPath $servedBundle -Algorithm SHA256).Hash.ToLowerInvariant()
+                [pscustomobject]@{ StatusCode = 200; Content = [Text.Encoding]::UTF8.GetBytes("$sum  patches-$indexVersionHere.mpp`n") }
+            }
+            function gh {
+                $global:LASTEXITCODE = 0
+                "Hushfacebook v${indexVersionHere}: $($releaseNames.Count) patches for Facebook $($releaseTarget.PackageVersion)."
+            }
+            $global:LASTEXITCODE = 0
+            $said = @(& $factsScript -Root $releaseRepo @Arguments 6>&1 | ForEach-Object { "$_" }) -join "`n"
+            if ($LASTEXITCODE -ne 0) { throw "The release check exited $LASTEXITCODE on the index push: $said" }
+            return $said
+        } finally {
+            Pop-Location
+            foreach ($name in $saved.Keys) { Set-Item -LiteralPath ('Env:\' + $name) -Value $saved[$name] }
+        }
+    }
+    $publishedRun = @{ VerifyPublishedAsset = $true; ArtifactPath = $releaseBundle; SkipDescriptionTestCount = $true
+        SkipUrlCheck = $true; DesktopJar = $stubJar; Java = $listJava }
+    try {
+        Invoke-FixtureGit -Root $releaseRepo -Arguments @('tag', '-d', "v$indexVersionHere") | Out-Null
+        $said = Invoke-IndexPushCheck $publishedRun
+        Assert-True ($said -like "*published bundle is pinned to v$indexVersionHere ($releaseCommit)*" -and
+            $said -like "*the index asks for Morphe Manager $releaseFloor or newer, as tag v$indexVersionHere pins*") `
+            "The index push was not held to the Manager floor its published tag pins: $said"
+        $said = Invoke-IndexPushCheck @{ SkipDescriptionTestCount = $true }
+        Assert-True ($said -like "*the index asks for Morphe Manager $releaseFloor or newer, as tag v$indexVersionHere on $indexRepository pins*") `
+            "A run with no bundle did not read the floor at the tag the index's repository has: $said"
+        Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value (
+            $releaseIndexText -replace '(Morphe Manager )\d+(?:\.\d+)+( or newer)', '${1}1.20.0${2}')
+        Assert-Throws { Invoke-IndexPushCheck @{ SkipDescriptionTestCount = $true } } '*Morphe Manager 1.20.0 or newer*' `
+            'An index push from a clone without the release tag named a Manager floor the tag does not pin, and went through.'
+        Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value $releaseIndexText
+
+        # A release re-cut on GitHub onto another commit, here one with no catalog, while the clone
+        # keeps its tag on the first: the floor is read where the published tag points, and a
+        # published asset run refuses a floor it can't read rather than noting it.
+        Invoke-FixtureGit -Root $releaseRepo -Arguments @('rm', '--cached', '--quiet', '--', 'gradle/libs.versions.toml') | Out-Null
+        $recutTree = "$(Invoke-FixtureGit -Root $releaseRepo -Arguments @('write-tree') | Select-Object -First 1)".Trim()
+        Invoke-FixtureGit -Root $releaseRepo -Arguments @('reset', '--quiet') | Out-Null
+        $recut = "$(Invoke-FixtureGit -Root $releaseRepo -Arguments @('commit-tree', $recutTree, '-p', $releaseCommit,
+            '-m', 're-cut') | Select-Object -First 1)".Trim()
+        $recutSeconds = [long]"$(Invoke-FixtureGit -Root $releaseRepo -Arguments @('log', '-1', '--format=%ct', $recut) |
+            Select-Object -First 1)".Trim()
+        $servedBundle = Join-Path $releaseRoot "recut\patches-$releaseVersionHere.mpp"
+        New-Item -ItemType Directory -Path (Split-Path -Parent $servedBundle) -Force | Out-Null
+        New-TestBundleArchive -Path $servedBundle -Entries ([ordered]@{
+            'META-INF/MANIFEST.MF' = ("Manifest-Version: 1.0`nVersion: $releaseVersionHere`nTimestamp: $($recutSeconds * 1000)`n" +
+                "Patcher-Version: $($releaseToolchain.PatcherVersion)`n`n")
+            'classes.dex' = "dex`n035" + ('patches' * 8)
+            'extensions/facebook.mpe' = "dex`n035" + ('payload' * 8) })
+        Invoke-FixtureGit -Root $releaseRepo -Arguments @('push', '--quiet', '--force', $publishedRepo,
+            "${recut}:refs/tags/v$indexVersionHere") | Out-Null
+        Invoke-FixtureGit -Root $releaseRepo -Arguments @('tag', "v$indexVersionHere", $releaseCommit) | Out-Null
+        $recutRun = $publishedRun.Clone()
+        $recutRun['ArtifactPath'] = $servedBundle
+        Assert-Throws { Invoke-IndexPushCheck $recutRun } `
+            "*published release's Manager floor couldn't be read*tag v$indexVersionHere has no version catalog*" `
+            'An index push was checked against the clone''s tag, or went through with its release floor unread.'
+    } finally {
+        Set-Content -LiteralPath $releaseIndexPath -Encoding UTF8 -NoNewline -Value $releaseIndexText
+        Invoke-FixtureGit -Root $releaseRepo -Arguments @('tag', '--force', "v$indexVersionHere", $releaseCommit) | Out-Null
+        Invoke-FixtureGit -Root $releaseRepo -Arguments @('config', '--unset', "url.$publishedRepo.insteadOf") | Out-Null
     }
 } finally {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue

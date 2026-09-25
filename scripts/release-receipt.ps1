@@ -607,30 +607,66 @@ function Resolve-IndexManagerFloor {
         commit pinned, whatever the catalog pins since. 0.1.1 was stamped by patcher 1.14.0 and
         needs Manager 1.31.0 after the catalog moved on to 1.14.1 and 1.32.0 for the next release,
         so neither the working catalog nor the index version alone gives the answer. The tag
-        v<version> says which commit it was. A clone without that tag, or a tag whose commit has no
-        catalog, can't tell, and answers Floor $null with a Note saying the check didn't run.
+        v<version> says which commit it was.
+
+        -Commit is that commit when the caller has read the published tag already, as the release
+        check's published asset run does: a local tag can name another commit than GitHub's, after
+        a release is re-cut there, and git fetch won't move it. Without -Commit the clone's own tag
+        is read, and when the clone doesn't have one, -RemoteUrl is asked. `gh release create` makes
+        the tag on GitHub only, so the push that writes a new description comes from a clone
+        without it. A tag found nowhere, a commit this clone doesn't hold, or one with no catalog
+        can't tell, and answers Floor $null with a Note saying the check didn't run.
 
         Answers @{ Floor; Source; Note }.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Root,
-        [Parameter(Mandatory = $true)][string]$Version
+        [Parameter(Mandatory = $true)][string]$Version,
+        [string]$Commit,
+        [string]$RemoteUrl
     )
 
     $tag = "v$Version"
-    $commit = "$(Invoke-RepoGit -Root $Root -Arguments @('rev-parse', '--verify', '--quiet', "refs/tags/$tag^{commit}") |
+    $source = "tag $tag"
+    $unchecked = 'so the Manager floor the index names wasn''t checked'
+    if ($Commit -notmatch '^[0-9a-f]{40}$') {
+        $Commit = "$(Invoke-RepoGit -Root $Root -Arguments @('rev-parse', '--verify', '--quiet', "refs/tags/$tag^{commit}") |
+            Select-Object -First 1)".Trim()
+    }
+    if ($Commit -notmatch '^[0-9a-f]{40}$') {
+        $missing = "tag $tag isn't in this clone"
+        if ($RemoteUrl) {
+            $advertised = @(Invoke-RepoGit -Root $Root -Arguments @('ls-remote', $RemoteUrl, "refs/tags/$tag", "refs/tags/$tag^{}"))
+            $asked = $LASTEXITCODE -eq 0
+            # An annotated tag's own line names the tag object; the peeled line names its commit.
+            $escaped = [regex]::Escape("refs/tags/$tag")
+            $line = @(@($advertised | Where-Object { "$_" -match "^[0-9a-f]{40}\s+$escaped\^\{\}$" }) +
+                @($advertised | Where-Object { "$_" -match "^[0-9a-f]{40}\s+$escaped$" })) | Select-Object -First 1
+            if (-not $asked) {
+                $missing += " and $RemoteUrl couldn't be asked for it"
+            } elseif (-not $line) {
+                $missing += " or on $RemoteUrl"
+            } else {
+                $Commit = ([string]$line).Substring(0, 40)
+                $source = "tag $tag on $RemoteUrl"
+            }
+        }
+        if ($Commit -notmatch '^[0-9a-f]{40}$') {
+            return [pscustomobject]@{ Floor = $null; Source = $null; Note = "$missing, $unchecked" }
+        }
+    }
+    $held = "$(Invoke-RepoGit -Root $Root -Arguments @('rev-parse', '--verify', '--quiet', "$Commit^{commit}") |
         Select-Object -First 1)".Trim()
-    if ($commit -notmatch '^[0-9a-f]{40}$') {
+    if ($held -notmatch '^[0-9a-f]{40}$') {
         return [pscustomobject]@{ Floor = $null; Source = $null
-            Note = "tag $tag isn't in this clone, so the Manager floor the index names wasn't checked" }
+            Note = "$source names commit $($Commit.Substring(0, 8)), which this clone doesn't have, $unchecked" }
     }
-    $catalogAtTag = (Invoke-RepoGit -Root $Root -Arguments @('show', "${commit}:gradle/libs.versions.toml")) -join "`n"
+    $catalogAtTag = (Invoke-RepoGit -Root $Root -Arguments @('show', "${held}:gradle/libs.versions.toml")) -join "`n"
     if ([string]::IsNullOrWhiteSpace($catalogAtTag)) {
-        return [pscustomobject]@{ Floor = $null; Source = $null
-            Note = "tag $tag has no version catalog, so the Manager floor the index names wasn't checked" }
+        return [pscustomobject]@{ Floor = $null; Source = $null; Note = "$source has no version catalog, $unchecked" }
     }
-    $atTag = Read-CatalogToolchain -Text $catalogAtTag -Source "gradle/libs.versions.toml at $tag"
-    return [pscustomobject]@{ Floor = $atTag.ManagerFloor; Source = "tag $tag"; Note = $null }
+    $atTag = Read-CatalogToolchain -Text $catalogAtTag -Source "gradle/libs.versions.toml at $source"
+    return [pscustomobject]@{ Floor = $atTag.ManagerFloor; Source = $source; Note = $null }
 }
 
 function Resolve-ReceiptCatalog {
