@@ -30,7 +30,6 @@ import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.preference.AbstractPreferenceFragment;
 import app.morphe.extension.shared.settings.preference.ClearLogBufferPreference;
 import app.morphe.extension.shared.settings.preference.ExportDiagnosticReportPreference;
-import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /**
  * The preference list, built in code rather than from an XML resource so the bundle adds no
@@ -65,8 +64,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         setPreferenceScreen(screen);
 
         screen.addPreference(statusCard(context));
-        // The export row below reads this section; registering twice keeps one.
-        LogBufferManager.registerReportSection(PatchFamily.REPORT);
+        // The export row below reads these; registering twice keeps one.
+        PatchFamily.registerDiagnostics();
         Set<PatchFamily> build = PatchFamily.inThisBuild();
 
         if (build.contains(PatchFamily.SPONSORED_POSTS) || build.contains(PatchFamily.SUGGESTED_POSTS)) {

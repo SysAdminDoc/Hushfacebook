@@ -8,13 +8,16 @@
 package app.morphe.extension.facebook.download;
 
 import android.content.Context;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
  * Saves the picture or the video that the app is showing, without asking the app to do it.
@@ -37,13 +40,25 @@ import app.morphe.extension.facebook.settings.Settings;
  * seconds of scrolling. Anything remembered rather than passed in saves the wrong video, and
  * still reports success.
  *
- * <p>Capture the log with {@code adb logcat -s Hushfacebook.Save}.
+ * <p>Every step goes to the diagnostic report under Downloads, and to logcat as
+ * {@code morphe: MediaDownload}. Addresses are logged as file name and quality only.
  */
 public final class MediaDownload {
 
     private MediaDownload() {}
 
-    static final String TAG = "Hushfacebook.Save";
+    /** The source every save event carries in the diagnostic report. */
+    static final String SOURCE = "MediaDownload";
+
+    /** A step of a save, always kept: a save is rare and each one is worth a line. */
+    static void info(Logger.LogMessage message) {
+        Logger.diagnosticInfo(DiagnosticCategory.DOWNLOADS, SOURCE, message);
+    }
+
+    /** A save that ended without a file, or a step that failed. */
+    static void failure(Logger.LogMessage message, Throwable cause) {
+        Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, message, cause);
+    }
 
     /** A guard against a rapid tap, not a work queue. */
     private static final int MAX_IN_FLIGHT = 3;
@@ -59,6 +74,7 @@ public final class MediaDownload {
      * @return whether a download started. {@code false} lets the caller fall back to the app.
      */
     public static boolean saveStory(Context context, Object host) {
+        HookStatus.invoked(FamilyNames.STORY_DOWNLOAD);
         try {
             // Off, Facebook's own save runs, as it would unpatched.
             if (!Settings.DOWNLOAD_STORIES.get()) return false;
@@ -70,7 +86,7 @@ public final class MediaDownload {
             PlayerSources.Source source = PlayerSources.find(host);
             if (source != null) {
                 addIfUsable(urls, source.hdUrl);
-                if (beginDash(context, "video " + source.videoId, source.manifest, urls)) return true;
+                if (beginDash(context, "the story video", source.manifest, urls)) return true;
             }
 
             return begin(context, urls);
@@ -78,7 +94,8 @@ public final class MediaDownload {
             // Throwable and not Exception. A renamed field surfaces as NoSuchFieldError, and a
             // reflective call on a changed class surfaces as a LinkageError. Neither is an
             // Exception, and either one that reaches Facebook's click handler ends the app.
-            Log.w(TAG, "the story save could not start", t);
+            HookStatus.threw(FamilyNames.STORY_DOWNLOAD, "story save", t);
+            failure(() -> "the story save could not start", t);
             return false;
         }
     }
@@ -113,7 +130,8 @@ public final class MediaDownload {
 
             return begin(context, urls);
         } catch (Throwable t) {
-            Log.w(TAG, "the video save could not start", t);
+            HookStatus.threw(FamilyNames.REEL_DOWNLOAD, "reel save", t);
+            failure(() -> "the video save could not start", t);
             return false;
         }
     }
@@ -171,16 +189,16 @@ public final class MediaDownload {
      */
     private static boolean begin(Context context, List<String> urls) {
         if (urls == null || urls.isEmpty()) {
-            Log.w(TAG, "nothing to save: the item carried no address");
+            failure(() -> "nothing to save: the item carried no address", null);
             return false;
         }
 
         // The walk collects any address the object can reach, a link in a caption included. Only
         // Meta's media servers are candidates, so a foreign address can't outrank a real one.
-        int found = urls.size();
+        final int found = urls.size();
         urls = metaOnly(urls);
         if (urls.isEmpty()) {
-            Log.w(TAG, "nothing to save: none of the " + found + " addresses was on Meta's media servers");
+            failure(() -> "nothing to save: none of the " + found + " addresses was on Meta's media servers", null);
             return false;
         }
 
@@ -191,7 +209,8 @@ public final class MediaDownload {
         String chosen = isVideo ? video : image;
 
         if (chosen == null) {
-            Log.w(TAG, "nothing to save: none of the " + urls.size() + " addresses was a file");
+            final int candidates = urls.size();
+            failure(() -> "nothing to save: none of the " + candidates + " addresses was a file", null);
             return false;
         }
 
@@ -207,9 +226,10 @@ public final class MediaDownload {
             all.append(describe(url));
         }
 
-        Log.i(TAG, "saving " + (isVideo ? "video" : "image")
+        final int candidates = urls.size();
+        info(() -> "saving " + (isVideo ? "video" : "image")
             + " " + describe(chosen)
-            + " from " + urls.size() + " candidate(s): " + all);
+            + " from " + candidates + " candidate(s): " + all);
 
         Downloader.Kind kind = isVideo ? Downloader.Kind.VIDEO : Downloader.Kind.IMAGE;
         start(safe, isVideo, writer -> saveFile(safe, chosen, kind, writer));
@@ -278,7 +298,7 @@ public final class MediaDownload {
 
         if (video == null) {
             if (manifest != null) {
-                Log.i(TAG, "the manifest of " + label + " has no track to save: " + tracks);
+                info(() -> "the manifest of " + label + " has no track to save: " + tracks);
             }
             return false;
         }
@@ -293,7 +313,7 @@ public final class MediaDownload {
 
         DashManifest.Track audio = DashManifest.bestAudio(tracks);
 
-        Log.i(TAG, "saving " + label + " from its DASH manifest: " + video
+        info(() -> "saving " + label + " from its DASH manifest: " + video
             + (audio == null ? ", no sound track" : " + " + audio)
             + ", instead of " + (fallback == null ? "nothing" : describe(fallback)));
 
@@ -301,7 +321,7 @@ public final class MediaDownload {
             Downloader.Result result = DashSave.save(safe, video, audio, writer, policyFor(safe));
             if (result.ok() || fallback == null) return result;
 
-            Log.w(TAG, "the DASH save ended with " + result + ", saving " + describe(fallback));
+            failure(() -> "the DASH save ended with " + result + ", saving " + describe(fallback), null);
             return saveFile(safe, fallback, Downloader.Kind.VIDEO, writer);
         });
         return true;
@@ -317,7 +337,7 @@ public final class MediaDownload {
         if (context == null) return null;
 
         if (IN_FLIGHT.get() >= MAX_IN_FLIGHT) {
-            Log.w(TAG, "too many saves at once");
+            failure(() -> "too many saves at once", null);
             return null;
         }
 
@@ -326,11 +346,12 @@ public final class MediaDownload {
     }
 
     /** One save on the worker thread. It writes through [writer] and returns the result. */
-    private interface Job {
+    interface Job {
         Downloader.Result run(MediaStoreWriter writer);
     }
 
-    private static void start(Context application, boolean video, Job job) {
+    /** Runs [job] on its own worker thread, and hands the thread back so a test can wait for it. */
+    static Thread start(Context application, boolean video, Job job) {
         IN_FLIGHT.incrementAndGet();
         Feedback.show(application, "Saving...", false);
 
@@ -339,12 +360,13 @@ public final class MediaDownload {
 
             try {
                 Downloader.Result result = job.run(writer);
-                Log.i(TAG, "save finished: " + result);
+                if (result.ok()) info(() -> "save finished: " + result);
+                else failure(() -> "save finished: " + result, null);
                 Feedback.show(application, message(result.status, writer.savedLocation()), !result.ok());
             } catch (Throwable t) {
                 // Nothing can leave this thread. Facebook installs its own handler for uncaught
                 // exceptions and reports them as its own crashes.
-                Log.w(TAG, "the save failed", t);
+                failure(() -> "the save failed", t);
                 Feedback.show(application, "Download failed", true);
             } finally {
                 IN_FLIGHT.decrementAndGet();
@@ -356,6 +378,7 @@ public final class MediaDownload {
         worker.setDaemon(true);
         worker.setPriority(Thread.NORM_PRIORITY - 1);
         worker.start();
+        return worker;
     }
 
     private static String message(Downloader.Status status, String location) {

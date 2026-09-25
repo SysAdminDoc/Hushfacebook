@@ -8,10 +8,12 @@
  */
 package app.morphe.extension.facebook.feed;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.facebook.settings.SettingsStatus;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
  * What the news feed guard asks about each edge before Facebook adds it to the feed.
@@ -91,6 +93,11 @@ public final class FeedFilter {
      */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
         try {
+            if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
+            if (suggestedPatched) {
+                HookStatus.invoked(FamilyNames.SUGGESTED_POSTS);
+                reportSuggestedClasses();
+            }
             FeedFilterCounters.sawList(FEED_ROUTE, 1);
             String categoryName = category instanceof Enum ? ((Enum<?>) category).name() : null;
             FeedFilterCounters.sawKind(FEED_ROUTE, categoryName);
@@ -108,8 +115,31 @@ public final class FeedFilter {
             Logger.printDebug(() -> "Feed filter: hid a " + hidden + " post");
             return true;
         } catch (Throwable failure) {
+            if (sponsoredPatched) HookStatus.threw(FamilyNames.SPONSORED_POSTS, "feed guard", failure);
+            if (suggestedPatched) HookStatus.threw(FamilyNames.SUGGESTED_POSTS, "feed guard", failure);
             Logger.printException(() -> "Feed filter: could not judge an edge", failure);
             return false;
+        }
+    }
+
+    /** Which Hook status row the suggested unit classes were last reported into. */
+    private static volatile long reportedGeneration = -1;
+
+    /**
+     * The suggested unit classes this build carries, reported once per Hook status row: again
+     * after a diagnostic clear, which empties the row this was written into. One class missing is
+     * Facebook dropping a unit; all of them missing is a moved model package, and the rule then
+     * hides nothing at all.
+     */
+    private static void reportSuggestedClasses() {
+        long generation = HookStatus.generation();
+        if (reportedGeneration == generation) return;
+        reportedGeneration = generation;
+        Class<?>[] found = suggestedClasses();
+        for (Class<?> type : found) HookStatus.bound(FamilyNames.SUGGESTED_POSTS, type.getSimpleName());
+        if (found.length == 0) {
+            HookStatus.missingMember(FamilyNames.SUGGESTED_POSTS, "class", "com.facebook.graphql.model",
+                    "any suggested feed unit");
         }
     }
 
@@ -163,11 +193,13 @@ public final class FeedFilter {
     /** Injection point. Whether the story viewer's ad bucket sources contribute nothing. */
     public static boolean hideSponsoredStories() {
         try {
+            HookStatus.invoked(FamilyNames.SPONSORED_STORIES);
             FeedFilterCounters.sawList(STORY_ROUTE, 1);
             boolean hide = Settings.HIDE_SPONSORED_STORIES.get();
             if (hide) FeedFilterCounters.removed(STORY_ROUTE, 1, "ad buckets skipped");
             return hide;
         } catch (Throwable failure) {
+            HookStatus.threw(FamilyNames.SPONSORED_STORIES, "story ad sources", failure);
             Logger.printException(() -> "Story filter: could not read its switch", failure);
             return false;
         }

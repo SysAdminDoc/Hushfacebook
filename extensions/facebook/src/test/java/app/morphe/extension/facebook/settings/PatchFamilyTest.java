@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import app.morphe.extension.shared.SettingsContextRule;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.PauseForTests;
@@ -53,6 +54,8 @@ public class PatchFamilyTest {
         PatchFamily.inBuildForTests = null;
         PauseForTests.resume();
         Settings.HIDE_PROMOTED_POSTS.resetToDefault();
+        Settings.HIDE_SPONSORED_POSTS.resetToDefault();
+        HookStatus.clear();
     }
 
     @Test
@@ -136,8 +139,8 @@ public class PatchFamilyTest {
 
         List<String> running = PatchFamily.reportLines(build, false);
         assertEquals(Arrays.asList(
-                "Hide sponsored posts: switch (hushfacebook_hide_sponsored_posts=on, hushfacebook_hide_promoted_posts=off)",
-                "Hide sponsored reels: switch (hushfacebook_hide_sponsored_reels=on); stays in while paused: "
+                "Hide sponsored posts: on (hushfacebook_hide_sponsored_posts=on, hushfacebook_hide_promoted_posts=off)",
+                "Hide sponsored reels: on (hushfacebook_hide_sponsored_reels=on); stays in while paused: "
                         + "the Reels banner and mid-roll ad block",
                 "Download any reel: no switch, stays in while paused: the Download button on reels",
                 "not in this build: Hide suggested and promoted posts, Hide sponsored stories, Open links in "
@@ -146,13 +149,35 @@ public class PatchFamilyTest {
                 running);
 
         List<String> paused = PatchFamily.reportLines(build, true);
-        assertEquals("Hide sponsored posts: switch, paused so it answers off (saved "
+        assertEquals("Hide sponsored posts: disabled while paused (saved "
                 + "hushfacebook_hide_sponsored_posts=on, hushfacebook_hide_promoted_posts=off)", paused.get(0));
-        assertEquals("Hide sponsored reels: switch, paused so it answers off (saved "
+        assertEquals("Hide sponsored reels: disabled while paused (saved "
                 + "hushfacebook_hide_sponsored_reels=on); stays in while paused: the Reels banner and mid-roll ad block",
                 paused.get(1));
         assertEquals("a patch with no switch reads the same paused", running.get(2), paused.get(2));
         assertEquals(running.get(3), paused.get(3));
+
+        // Both of a family's switches off is the family off; one of them on keeps it on above.
+        Settings.HIDE_SPONSORED_POSTS.save(false);
+        assertEquals("Hide sponsored posts: disabled by its switch (hushfacebook_hide_sponsored_posts=off, "
+                + "hushfacebook_hide_promoted_posts=off)", PatchFamily.reportLines(build, false).get(0));
+    }
+
+    /**
+     * A paused export marks the Hook status lines of the families a switch runs, and leaves the
+     * ones with no switch alone: they keep working, and a mark would tell a reader otherwise.
+     */
+    @Test
+    public void aPausedExportMarksOnlyTheFamiliesASwitchRuns() {
+        HookStatus.clear();
+        PatchFamily.registerDiagnostics();
+        HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
+        HookStatus.invoked(FamilyNames.AMOLED_THEME);
+
+        List<String> lines = HookStatus.report(" (paused)");
+        assertTrue(String.join("\n", lines),
+                lines.contains("Hide sponsored posts: invoked 1, 0 found, 0 missing (paused)"));
+        assertTrue(String.join("\n", lines), lines.contains("AMOLED black theme: invoked 1, 0 found, 0 missing"));
     }
 
     /** The section goes through the redactor like every other one, and has to come out whole. */

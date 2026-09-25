@@ -373,7 +373,9 @@ public final class LogBufferManager {
                 .append("schema: 1\n")
                 .append("generated_utc: ").append(utcNow()).append('\n')
                 .append("app: ").append(Utils.getContext().getPackageName())
-                .append(' ').append(Utils.getAppVersionName()).append('\n')
+                .append(' ').append(Utils.getAppVersionName())
+                .append(" (").append(Utils.getAppVersionCode()).append(")\n")
+                .append("abi: ").append(abiLine()).append('\n')
                 .append("morphe: ").append(Utils.getPatchesReleaseVersion()).append('\n');
         if (paused) {
             report.append("hushfacebook: paused (")
@@ -430,6 +432,36 @@ public final class LogBufferManager {
                     .append(events);
         }
         return report.toString();
+    }
+
+    /**
+     * The ABI the host's native code was installed for, whether this process is 64-bit, and what
+     * the device supports. An arm64 build running under translation on an x86_64 emulator and the
+     * same build on a phone fail differently, and a native crash means something else on each.
+     * Every part answers "unknown" rather than stopping the report.
+     */
+    static String abiLine() {
+        String app;
+        try {
+            Context context = Utils.getContext();
+            String nativeDir = context == null ? null : context.getApplicationInfo().nativeLibraryDir;
+            app = nativeDir == null ? "unknown" : new File(nativeDir).getName();
+        } catch (Throwable unreadable) {
+            app = "unknown";
+        }
+        String process;
+        try {
+            process = android.os.Process.is64Bit() ? "64-bit" : "32-bit";
+        } catch (Throwable unreadable) {
+            process = "unknown";
+        }
+        String device;
+        try {
+            device = android.text.TextUtils.join(",", Build.SUPPORTED_ABIS);
+        } catch (Throwable unreadable) {
+            device = "unknown";
+        }
+        return "app " + app + ", process " + process + ", device " + device;
     }
 
     /**

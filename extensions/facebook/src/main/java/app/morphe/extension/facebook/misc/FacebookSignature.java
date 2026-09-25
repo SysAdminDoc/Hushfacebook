@@ -14,6 +14,9 @@ import android.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
+import app.morphe.extension.shared.diagnostics.HookStatus;
+
 /**
  * Helper for the Facebook "[Fix] Restore screens on re-signed builds" patch.
  *
@@ -53,6 +56,10 @@ public final class FacebookSignature {
     public static List<Signature> originalSigners(PackageInfo info) {
         if (info == null || !PACKAGE.equals(info.packageName)) return null;
 
+        // Counted only when it answers for Facebook, which is the whole of its job. The name is a
+        // compile-time constant: this can run while content providers start, before Hushfacebook
+        // has a context, and Hook status reads no setting.
+        HookStatus.invoked(FamilyNames.RESTORE_TRUST);
         List<Signature> signers = original;
         if (signers == null) {
             signers = Collections.singletonList(new Signature(Base64.decode(CERTIFICATE, Base64.DEFAULT)));

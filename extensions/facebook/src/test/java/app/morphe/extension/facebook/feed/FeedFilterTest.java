@@ -16,9 +16,13 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.lang.reflect.Field;
+
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
+import app.morphe.extension.shared.diagnostics.HookStatus;
+import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /** The rules the shared feed guard asks about each edge. */
 @RunWith(RobolectricTestRunner.class)
@@ -104,5 +108,34 @@ public class FeedFilterTest {
         assertTrue(report, report.contains(FeedFilter.FEED_ROUTE + ": 4 lists, 4 items, 2 removed"));
         assertTrue(report, report.contains("Last reason: GraphQLPagesYouMayLikeFeedUnit"));
         assertTrue(report, report.contains("Kinds: ORGANIC 2, SPONSORED 2"));
+    }
+
+    /**
+     * A build that carries none of the suggested unit classes hides nothing under that switch, and
+     * the report says so: the model package moved. The control, with the class there, reports it
+     * found. A clear starts a new Hook status row, and the classes are reported into it again.
+     */
+    @Test
+    public void theReportSaysWhetherTheSuggestedUnitsAreInThisBuild() throws Exception {
+        Field cache = FeedFilter.class.getDeclaredField("suggestedClasses");
+        cache.setAccessible(true);
+        LogBufferManager.clearLogBuffer();
+        try {
+            cache.set(null, new Class<?>[0]);
+            assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true));
+            String report = LogBufferManager.buildExportText();
+            assertTrue(report, report.contains("Hide suggested and promoted posts: invoked 1, 0 found, 1 missing. "
+                    + "First missing: class com.facebook.graphql.model#any suggested feed unit"));
+            assertTrue(report, report.contains("Hide sponsored posts: invoked 1, 0 found, 0 missing"));
+
+            cache.set(null, null);
+            LogBufferManager.clearLogBuffer();
+            assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true));
+            assertTrue(String.join("\n", HookStatus.report()),
+                    HookStatus.report().contains("Hide suggested and promoted posts: invoked 1, 1 found, 0 missing"));
+        } finally {
+            cache.set(null, null);
+            LogBufferManager.clearLogBuffer();
+        }
     }
 }

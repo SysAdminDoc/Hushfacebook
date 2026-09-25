@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.preference.LogBufferManager;
@@ -32,24 +33,24 @@ import app.morphe.extension.shared.settings.preference.LogBufferManager;
  * name the patch uses to switch that method on.
  */
 public enum PatchFamily {
-    SPONSORED_POSTS("Hide sponsored posts", "sponsoredPosts", null,
+    SPONSORED_POSTS(FamilyNames.SPONSORED_POSTS, "sponsoredPosts", null,
             Settings.HIDE_SPONSORED_POSTS, Settings.HIDE_PROMOTED_POSTS),
-    SUGGESTED_POSTS("Hide suggested and promoted posts", "suggestedPosts", null,
+    SUGGESTED_POSTS(FamilyNames.SUGGESTED_POSTS, "suggestedPosts", null,
             Settings.HIDE_SUGGESTED_POSTS),
-    SPONSORED_STORIES("Hide sponsored stories", "sponsoredStories", null,
+    SPONSORED_STORIES(FamilyNames.SPONSORED_STORIES, "sponsoredStories", null,
             Settings.HIDE_SPONSORED_STORIES),
-    SPONSORED_REELS("Hide sponsored reels", "sponsoredReels", "the Reels banner and mid-roll ad block",
+    SPONSORED_REELS(FamilyNames.SPONSORED_REELS, "sponsoredReels", "the Reels banner and mid-roll ad block",
             Settings.HIDE_SPONSORED_REELS),
-    EXTERNAL_BROWSER("Open links in external browser", "externalBrowser", null,
+    EXTERNAL_BROWSER(FamilyNames.EXTERNAL_BROWSER, "externalBrowser", null,
             Settings.OPEN_LINKS_EXTERNALLY),
-    STORY_DOWNLOAD("Download any story", "storyDownload", "Save in every story's menu",
+    STORY_DOWNLOAD(FamilyNames.STORY_DOWNLOAD, "storyDownload", "Save in every story's menu",
             Settings.DOWNLOAD_STORIES),
-    REEL_DOWNLOAD("Download any reel", "reelDownload", "the Download button on reels"),
-    AD_PREFETCH("Block background ad prefetch", "adPrefetch", "the background ad prefetch block"),
-    AD_TELEMETRY("Block ad telemetry", "adTelemetry", "the ad telemetry block"),
-    AUDIENCE_NETWORK("Disable Audience Network", "audienceNetwork", "the Audience Network block"),
-    AMOLED_THEME("AMOLED black theme", "amoledTheme", "the AMOLED black theme"),
-    RESTORE_TRUST("Restore screens on re-signed builds", "restoreTrust", "the re-signed build fix");
+    REEL_DOWNLOAD(FamilyNames.REEL_DOWNLOAD, "reelDownload", "the Download button on reels"),
+    AD_PREFETCH(FamilyNames.AD_PREFETCH, "adPrefetch", "the background ad prefetch block"),
+    AD_TELEMETRY(FamilyNames.AD_TELEMETRY, "adTelemetry", "the ad telemetry block"),
+    AUDIENCE_NETWORK(FamilyNames.AUDIENCE_NETWORK, "audienceNetwork", "the Audience Network block"),
+    AMOLED_THEME(FamilyNames.AMOLED_THEME, "amoledTheme", "the AMOLED black theme"),
+    RESTORE_TRUST(FamilyNames.RESTORE_TRUST, "restoreTrust", "the re-signed build fix");
 
     /** The patch's name in Morphe Manager. */
     public final String patchName;
@@ -137,12 +138,18 @@ public enum PatchFamily {
         return lines;
     }
 
+    /**
+     * "on", "disabled by its switch" or "disabled while paused", then the saved switches. A
+     * family with two switches is on while either is: each hides its own kind of post.
+     */
     private String reportLine(boolean paused) {
         StringBuilder line = new StringBuilder(patchName).append(": ");
         if (switches.isEmpty()) {
             return line.append("no switch, stays in while paused: ").append(staysWhilePaused).toString();
         }
-        line.append(paused ? "switch, paused so it answers off (saved " : "switch (");
+        boolean anyOn = false;
+        for (BooleanSetting setting : switches) anyOn |= setting.savedValue();
+        line.append(paused ? "disabled while paused (saved " : anyOn ? "on (" : "disabled by its switch (");
         for (int i = 0; i < switches.size(); i++) {
             if (i > 0) line.append(", ");
             BooleanSetting setting = switches.get(i);
@@ -151,6 +158,17 @@ public enum PatchFamily {
         line.append(')');
         if (staysWhilePaused != null) line.append("; stays in while paused: ").append(staysWhilePaused);
         return line.toString();
+    }
+
+    /**
+     * Registers the [PATCHES] report section, and tells Hook status which families no pause
+     * reaches, so a paused export marks only the ones a switch runs. Registering twice keeps one.
+     */
+    public static void registerDiagnostics() {
+        LogBufferManager.registerReportSection(REPORT);
+        for (PatchFamily family : values()) {
+            if (family.switches.isEmpty()) HookStatus.runsWhilePaused(family.patchName);
+        }
     }
 
     /** The [PATCHES] section of the diagnostic report. */

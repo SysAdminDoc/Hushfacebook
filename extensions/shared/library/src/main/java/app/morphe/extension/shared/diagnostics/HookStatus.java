@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * What each hook family found in this Facebook build, and what it did not.
@@ -44,10 +45,13 @@ public final class HookStatus {
     private static final class Miss {
         final String key;
         final String detail;
+        /** A lookup that found several candidates and took none, rather than one that found none. */
+        final boolean ambiguous;
 
-        Miss(String key, String detail) {
+        Miss(String key, String detail, boolean ambiguous) {
             this.key = key;
             this.detail = detail;
+            this.ambiguous = ambiguous;
         }
     }
 
@@ -60,8 +64,18 @@ public final class HookStatus {
         final Set<String> missed = Collections.newSetFromMap(new ConcurrentHashMap<>());
         /** Raw key and displayed detail together, in the order misses arrived. */
         final List<Miss> order = new CopyOnWriteArrayList<>();
+        /** How many times a hook of this family ran, whatever it then found. */
+        final AtomicLong invoked = new AtomicLong();
         volatile boolean truncated;
         volatile boolean boundTruncated;
+
+        int ambiguousCount() {
+            int count = 0;
+            for (Miss miss : order) {
+                if (miss.ambiguous) count++;
+            }
+            return count;
+        }
     }
 
     // Declared as the class rather than Map: putIfAbsent on the Map interface is an API 24
@@ -95,6 +109,7 @@ public final class HookStatus {
         final String name;
         final List<String> bound;
         final List<Miss> misses;
+        final long invoked;
         final boolean truncated;
         final boolean boundTruncated;
 
@@ -102,6 +117,7 @@ public final class HookStatus {
             this.name = name;
             this.bound = new ArrayList<>(family.bound);
             this.misses = new ArrayList<>(family.order);
+            this.invoked = family.invoked.get();
             this.truncated = family.truncated;
             this.boundTruncated = family.boundTruncated;
         }
@@ -169,6 +185,43 @@ public final class HookStatus {
     }
 
     /**
+     * A hook of this family ran. What it found is reported separately; this says only that
+     * Facebook reached it, which is the first thing a report of "the switch is on and nothing
+     * happens" needs to know. A repeat costs one hash lookup and one increment.
+     *
+     * <p>Hooks call this first thing, often before their own guard, so it never throws.
+     */
+    public static void invoked(String family) {
+        try {
+            Family entry = FAMILIES.get(family);
+            if (entry == null) {
+                synchronized (STATE_LOCK) {
+                    entry = family(family);
+                }
+            }
+            entry.invoked.incrementAndGet();
+        } catch (Throwable ignored) {
+            // A count that can't be kept is not worth failing the host's call over.
+        }
+    }
+
+    /**
+     * A lookup that needs exactly one match and found several, so the hook took none of them.
+     *
+     * <p>It is kept apart from a plain miss because the fix is different: a renamed member is
+     * found again by its new name, while two candidates mean the rule that picks one no longer
+     * tells them apart, and taking either could act on the wrong object.
+     */
+    public static void ambiguous(String family, String kind, String owner, String name, int candidates) {
+        String key = owner + '#' + name + " ambiguous";
+        Family entry = FAMILIES.get(family);
+        if (entry != null && (entry.truncated || entry.missed.contains(key))) return;
+        record(family, key, "a single " + kind + " " + owner + "#" + name + " (found " + candidates + ")",
+                "The " + kind + " lookup " + owner + "#" + name + " for " + family + " found " + candidates
+                        + " candidates, so the hook took none of them", true);
+    }
+
+    /**
      * A hook that found its anchor, ran, and came back out through a catch.
      *
      * <p>This is a different failure from a missing view or a renamed member, and it used to
@@ -188,14 +241,14 @@ public final class HookStatus {
         record(family, key,
                 "a working '" + name + "' hook (it threw " + cause + ")",
                 "The '" + name + "' hook for " + family + " threw " + cause
-                        + ", so Facebook's own behaviour was left alone");
+                        + ", so Facebook's own behaviour was left alone", false);
     }
 
     private static void record(String family, String key, String detail) {
-        record(family, key, detail, null);
+        record(family, key, detail, null, false);
     }
 
-    private static void record(String family, String key, String detail, String ownMessage) {
+    private static void record(String family, String key, String detail, String ownMessage, boolean ambiguous) {
         synchronized (STATE_LOCK) {
             Family entry = family(family);
             if (entry.truncated || entry.missed.contains(key)) return;
@@ -204,7 +257,7 @@ public final class HookStatus {
                 return;
             }
             entry.missed.add(key);
-            entry.order.add(new Miss(key, detail));
+            entry.order.add(new Miss(key, detail, ambiguous));
         }
 
         // Never hold STATE_LOCK while Logger enters LogBufferManager. Diagnostic clear takes
@@ -286,12 +339,15 @@ public final class HookStatus {
      * go. A bundle with a table sets one of these; a bundle without gets the English below.
      */
     public interface LineWriter {
-        String line(String family, int found, int missing, boolean truncated, String firstMiss);
+        String line(String family, long invoked, int found, int ambiguous, int missing, boolean truncated,
+                    String firstMiss);
     }
 
-    private static final LineWriter ENGLISH = (family, found, missing, truncated, firstMiss) -> {
+    private static final LineWriter ENGLISH = (family, invoked, found, ambiguous, missing, truncated, firstMiss) -> {
         StringBuilder line = new StringBuilder(family)
-                .append(": ").append(found).append(" found, ").append(missing).append(" missing");
+                .append(": invoked ").append(invoked).append(", ").append(found).append(" found, ");
+        if (ambiguous > 0) line.append(ambiguous).append(" ambiguous, ");
+        line.append(missing).append(" missing");
         if (truncated) line.append(", and more it stopped counting");
         if (firstMiss != null) line.append(". First missing: ").append(firstMiss);
         return line.toString();
@@ -319,10 +375,13 @@ public final class HookStatus {
                 Family entry = FAMILIES.get(name);
                 if (entry == null) continue;
                 LineWriter writer = lineWriter;
+                int ambiguous = entry.ambiguousCount();
                 String line = (writer == null ? ENGLISH : writer).line(
                         name,
+                        entry.invoked.get(),
                         entry.bound.size(),
-                        entry.order.size(),
+                        ambiguous,
+                        entry.order.size() - ambiguous,
                         entry.truncated || entry.boundTruncated,
                         entry.order.isEmpty() ? null : entry.order.get(0).detail);
                 lines.add(pausedMark != null && !RUNS_WHILE_PAUSED.contains(name) ? line + pausedMark : line);
@@ -413,6 +472,8 @@ public final class HookStatus {
                 }
                 current.truncated |= saved.truncated;
                 current.boundTruncated |= saved.boundTruncated;
+                // Runs since the clear happened as well as before it, so both are kept.
+                current.invoked.addAndGet(saved.invoked);
             }
 
             // The restored families were observed first. Keep newer families after them.

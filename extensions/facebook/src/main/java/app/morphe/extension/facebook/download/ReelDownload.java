@@ -8,8 +8,11 @@
 package app.morphe.extension.facebook.download;
 
 import android.content.Context;
-import android.util.Log;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 import kotlin.jvm.functions.Function1;
 
 /**
@@ -37,7 +40,8 @@ import kotlin.jvm.functions.Function1;
  */
 public final class ReelDownload implements Function1<Object, Object> {
 
-    private static final String TAG = "Hushfacebook.Save";
+    /** The source every tap of the button carries in the diagnostic report. */
+    private static final String SOURCE = "ReelDownload";
 
     /** The player params of this item. Its source holds the addresses. */
     private final Object playerParams;
@@ -93,14 +97,16 @@ public final class ReelDownload implements Function1<Object, Object> {
             // touch and every visibility change, which buries the log that this feature needs.
             if (!saves) return null;
 
-            Log.i(TAG, "reel download tapped"
-                + (argument == null ? "" : ", event " + argument.getClass().getName()));
+            HookStatus.invoked(FamilyNames.REEL_DOWNLOAD);
+            final String event = argument == null ? "" : ", event " + argument.getClass().getName();
+            Logger.diagnosticInfo(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "reel download tapped" + event);
 
             save();
         } catch (Throwable t) {
             // Nothing can leave this method. It runs on the thread that draws, inside the app's
             // own click dispatch, so a throw here ends the app rather than the download.
-            Log.w(TAG, "the reel handler failed", t);
+            HookStatus.threw(FamilyNames.REEL_DOWNLOAD, "reel handler", t);
+            Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "the reel handler failed", t);
         }
 
         return null;
@@ -110,20 +116,26 @@ public final class ReelDownload implements Function1<Object, Object> {
         Object source = sourceOf(playerParams);
 
         if (source == null) {
-            Log.w(TAG, "the player of this reel holds no source");
+            Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE,
+                () -> "the player of this reel holds no source", null);
             return;
         }
 
         MediaDownload.saveVideo(context, source, hdField, sdField, manifestField);
     }
 
+    private static final String VIDEO_DATA_SOURCE = "com.facebook.video.engine.api.VideoDataSource";
+    private static final String VIDEO_PLAYER_PARAMS = "com.facebook.video.engine.api.VideoPlayerParams";
+
     /**
      * The source of the player, found by type rather than by name.
      *
      * <p>The params object holds exactly one field of the source type, and that type is a name that
-     * Redex keeps, so no letter has to be written down here.
+     * Redex keeps, so no letter has to be written down here. Two fields of it at one level would
+     * mean that rule no longer picks the reel on the screen, so the walk takes neither and says
+     * so in Hook status rather than save a reel that could be the next one.
      */
-    private static Object sourceOf(Object params) {
+    static Object sourceOf(Object params) {
         if (params == null) return null;
 
         // The sidebar holds a rich params object, which holds the plain one, which holds the
@@ -132,17 +144,16 @@ public final class ReelDownload implements Function1<Object, Object> {
 
         for (int depth = 0; depth < 3 && current != null; depth++) {
             Object next = null;
+            java.lang.reflect.Field sourceField = null;
+            int sourceFields = 0;
 
             for (java.lang.reflect.Field field : current.getClass().getDeclaredFields()) {
                 try {
                     String type = field.getType().getName();
 
-                    if (type.equals("com.facebook.video.engine.api.VideoDataSource")) {
-                        field.setAccessible(true);
-                        return field.get(current);
-                    }
-
-                    if (type.equals("com.facebook.video.engine.api.VideoPlayerParams")) {
+                    if (type.equals(VIDEO_DATA_SOURCE)) {
+                        if (sourceFields++ == 0) sourceField = field;
+                    } else if (type.equals(VIDEO_PLAYER_PARAMS)) {
                         field.setAccessible(true);
                         next = field.get(current);
                     }
@@ -151,9 +162,25 @@ public final class ReelDownload implements Function1<Object, Object> {
                 }
             }
 
+            if (sourceFields > 1) {
+                HookStatus.ambiguous(FamilyNames.REEL_DOWNLOAD, "field", current.getClass().getName(),
+                    VIDEO_DATA_SOURCE, sourceFields);
+                return null;
+            }
+            if (sourceField != null) {
+                HookStatus.bound(FamilyNames.REEL_DOWNLOAD, VIDEO_DATA_SOURCE);
+                try {
+                    sourceField.setAccessible(true);
+                    return sourceField.get(current);
+                } catch (Throwable unreadable) {
+                    return null;
+                }
+            }
+
             current = next;
         }
 
+        HookStatus.missingMember(FamilyNames.REEL_DOWNLOAD, "field", params.getClass().getName(), VIDEO_DATA_SOURCE);
         return null;
     }
 

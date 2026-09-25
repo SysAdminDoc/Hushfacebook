@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
+import app.morphe.extension.shared.diagnostics.HookStatus;
+
 /**
  * The source of each player that the app builds, by video id.
  *
@@ -84,7 +87,15 @@ public final class PlayerSources {
             if (videoId == null || videoId.isEmpty()) return;
 
             Object source = fieldOfType(params, VIDEO_DATA_SOURCE);
-            if (source == null) return;
+            if (source == null) {
+                // A source not set yet is ordinary. A params class with no field of the type is a
+                // build that moved it, and every story save then falls back to 360p.
+                if (!hasFieldOfType(params, VIDEO_DATA_SOURCE)) {
+                    HookStatus.missingMember(FamilyNames.STORY_DOWNLOAD, "field", params.getClass().getName(),
+                        VIDEO_DATA_SOURCE);
+                }
+                return;
+            }
 
             String hd = RenditionPicker.fieldValue(source, hdField);
             String manifest = RenditionPicker.fieldValue(source, manifestField);
@@ -93,9 +104,25 @@ public final class PlayerSources {
             synchronized (SOURCES) {
                 SOURCES.put(videoId, new Source(videoId, hd, manifest));
             }
-        } catch (Throwable ignored) {
+            HookStatus.bound(FamilyNames.STORY_DOWNLOAD, "player source");
+        } catch (Throwable failure) {
             // This runs inside a constructor of the app. No error can go out of it.
+            try {
+                HookStatus.threw(FamilyNames.STORY_DOWNLOAD, "player source", failure);
+            } catch (Throwable ignored) {
+                // Not even the report of one.
+            }
         }
+    }
+
+    /** Whether [host]'s class or one of its parents declares a field of [typeName]. */
+    private static boolean hasFieldOfType(Object host, String typeName) {
+        for (Class<?> type = host.getClass(); type != null && type != Object.class; type = type.getSuperclass()) {
+            for (Field field : type.getDeclaredFields()) {
+                if (field.getType().getName().equals(typeName)) return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 
@@ -26,6 +27,7 @@ import java.lang.reflect.Method;
 
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
+import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /** Which links leave Facebook's in-app browser, and where they go. */
 @RunWith(RobolectricTestRunner.class)
@@ -90,5 +92,43 @@ public class ExternalBrowserTest {
 
         assertFalse(ExternalBrowser.redirect(browser, browser.getIntent()));
         assertNull(shadowOf(browser).getNextStartedActivity());
+    }
+
+    /**
+     * Facebook's in-app browser on a phone where no app opens web links. The message quotes the
+     * link with its scheme and, the way some Android versions print an intent, without one: the
+     * redactor takes out the first, and only leaving the message out keeps the second out too.
+     */
+    public static final class NoBrowserAround extends Activity {
+        @Override
+        public void startActivity(Intent intent) {
+            throw new ActivityNotFoundException("No Activity found to handle Intent { act=android.intent.action.VIEW "
+                    + "dat=https://example.org/private/path host=example.org/private/path flg=0x10000000 }");
+        }
+    }
+
+    /**
+     * A link no browser took stays in the app and says so in the report, by the exception's class
+     * alone: its message quotes the intent, and the intent carries the link.
+     */
+    @Test
+    public void aLinkNoBrowserTookReachesTheReportWithoutTheLink() {
+        LogBufferManager.clearLogBuffer();
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.org/private/path"));
+            Activity browser = Robolectric.buildActivity(NoBrowserAround.class, intent).create().get();
+
+            assertFalse(ExternalBrowser.redirect(browser, browser.getIntent()));
+            assertFalse("the in-app browser closed with no link opened elsewhere", browser.isFinishing());
+
+            String report = LogBufferManager.buildExportText();
+            assertTrue(report, report.contains(
+                    "| ExternalBrowser | ERROR | No external browser took the link (ActivityNotFoundException)"));
+            assertTrue(report, report.contains("Open links in external browser: invoked 1, 0 found, 0 missing"));
+            assertFalse(report, report.contains("example.org"));
+            assertFalse(report, report.contains("private/path"));
+        } finally {
+            LogBufferManager.clearLogBuffer();
+        }
     }
 }

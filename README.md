@@ -72,7 +72,7 @@ Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The scr
 
 - Switches for the feed, story and Reels filters, for opening links in your browser and for story saves. They take effect straight away, with no restart and no new patching.
 - **Pause Hushfacebook**. From the next start, every switch acts as if it were off and Facebook's own code runs in its place. Your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
-- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It also says which patches a switch runs and which stay in while paused.
+- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build, and for each patch it says whether a switch runs it, how often its hooks ran and what they couldn't find. Failed saves and links no browser opened are in it too.
 - **Licenses**, the notices of every project this is built on.
 
 Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in Facebook's folder under `Android/data` pauses it too. Safe mode is the same pause. If Facebook still keeps closing, the cause is Facebook itself or a patch that stays in while paused, so patch again without the one you suspect.

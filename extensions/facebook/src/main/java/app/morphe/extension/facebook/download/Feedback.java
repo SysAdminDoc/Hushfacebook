@@ -10,8 +10,10 @@ package app.morphe.extension.facebook.download;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.widget.Toast;
+
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 
 /**
  * Tells the user what happened.
@@ -29,7 +31,8 @@ final class Feedback {
 
     private Feedback() {}
 
-    private static final String TAG = MediaDownload.TAG;
+    /** The source a message that couldn't be shown carries in the diagnostic report. */
+    private static final String SOURCE = "Feedback";
 
     static void show(Context applicationContext, String text, boolean longToast) {
         if (applicationContext == null || text == null) return;
@@ -46,11 +49,11 @@ final class Feedback {
                         longToast ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT
                     ).show();
                 } catch (Throwable t) {
-                    Log.w(TAG, "could not show a message", t);
+                    Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "could not show a message", t);
                 }
             });
         } catch (Throwable t) {
-            Log.w(TAG, "could not reach the main thread", t);
+            Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "could not reach the main thread", t);
         }
     }
 }

@@ -7,15 +7,17 @@
  */
 package app.morphe.extension.facebook.ads;
 
-import android.util.Log;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
  * Helper for the "[Reels] Hide sponsored reels" patch.
@@ -40,7 +42,8 @@ public final class ReelsAdFilter {
 
     private ReelsAdFilter() {}
 
-    private static final String TAG = "Hushfacebook.ReelsAds";
+    /** The source every event of this filter carries in the diagnostic report. */
+    private static final String SOURCE = "ReelsAdFilter";
 
     /** The diagnostic counter routes, one per level the patch filters. */
     static final String SECTIONS_ROUTE = "Reels sections";
@@ -61,6 +64,7 @@ public final class ReelsAdFilter {
      * @param adClassName binary name of the ad item base class, for example {@code X.B89}.
      */
     public static List<?> withoutAdSections(List<?> page, String adClassName) {
+        HookStatus.invoked(FamilyNames.SPONSORED_REELS);
         FeedFilterCounters.sawList(SECTIONS_ROUTE, page == null ? 0 : page.size());
         if (page == null || page.isEmpty() || !switchedOn()) return page;
 
@@ -85,7 +89,9 @@ public final class ReelsAdFilter {
         if (dropped == 0) return page;
 
         FeedFilterCounters.removed(SECTIONS_ROUTE, dropped, "ad item in a section");
-        Log.i(TAG, "section filter dropped " + dropped + " item(s) from " + page.size() + " section(s)");
+        final int droppedItems = dropped;
+        Logger.diagnosticDebug(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,
+                () -> "section filter dropped " + droppedItems + " item(s) from " + page.size() + " section(s)");
 
         return sectionEmptied ? kept : page;
     }
@@ -97,7 +103,11 @@ public final class ReelsAdFilter {
         int removed = 0;
 
         try {
+            // A section with no list at all is a wrapper the filter can't see into, and the ads in
+            // it reach the screen. Nothing else reads the page at this level, so it is recorded.
+            boolean holdsAList = false;
             for (Field field : section.getClass().getDeclaredFields()) {
+                if (List.class.isAssignableFrom(field.getType())) holdsAList = true;
                 List<?> items = itemsOf(field, section);
                 if (items == null || items.isEmpty()) continue;
 
@@ -120,8 +130,15 @@ public final class ReelsAdFilter {
 
                 removed += ads.size();
             }
+            if (holdsAList) {
+                HookStatus.bound(FamilyNames.SPONSORED_REELS, "section item list");
+            } else {
+                HookStatus.missingMember(FamilyNames.SPONSORED_REELS, "item list", section.getClass().getName(),
+                        "List field");
+            }
         } catch (Throwable t) {
-            Log.w(TAG, "could not filter a section", t);
+            HookStatus.threw(FamilyNames.SPONSORED_REELS, "section filter", t);
+            Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE, () -> "could not filter a section", t);
         }
 
         return removed;
@@ -135,7 +152,8 @@ public final class ReelsAdFilter {
                 if (items != null && !items.isEmpty()) return true;
             }
         } catch (Throwable t) {
-            Log.w(TAG, "could not re-read a section", t);
+            HookStatus.threw(FamilyNames.SPONSORED_REELS, "section re-read", t);
+            Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE, () -> "could not re-read a section", t);
 
             // Keep the section. A section that you cannot read is not a proven empty section.
             return true;
@@ -164,6 +182,7 @@ public final class ReelsAdFilter {
      * @param adClassName binary name of the ad item base class, for example {@code X.B89}.
      */
     public static Collection<?> withoutAds(Collection<?> items, String adClassName) {
+        HookStatus.invoked(FamilyNames.SPONSORED_REELS);
         FeedFilterCounters.sawList(PAGES_ROUTE, items == null ? 0 : items.size());
         if (items == null || items.isEmpty() || !switchedOn()) return items;
 
@@ -184,7 +203,8 @@ public final class ReelsAdFilter {
         // Only when something was actually dropped, so this stays silent on an ordinary page while
         // still confirming on a device that the filter is reached and doing its job.
         FeedFilterCounters.removed(PAGES_ROUTE, items.size() - kept.size(), "ad item");
-        Log.i(TAG, "dropped " + (items.size() - kept.size()) + " of " + items.size());
+        Logger.diagnosticDebug(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,
+                () -> "dropped " + (items.size() - kept.size()) + " of " + items.size());
 
         return kept;
     }
@@ -194,7 +214,9 @@ public final class ReelsAdFilter {
         try {
             return Settings.HIDE_SPONSORED_REELS.get();
         } catch (Throwable t) {
-            Log.w(TAG, "could not read the sponsored reels switch", t);
+            HookStatus.threw(FamilyNames.SPONSORED_REELS, "switch read", t);
+            Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,
+                    () -> "could not read the sponsored reels switch", t);
             return false;
         }
     }

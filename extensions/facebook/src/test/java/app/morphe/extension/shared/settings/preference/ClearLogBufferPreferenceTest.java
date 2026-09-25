@@ -93,8 +93,8 @@ public class ClearLogBufferPreferenceTest {
         String report = LogBufferManager.buildExportText();
         assertTrue(report, report.contains("old buffered event"));
         assertTrue(report, report.contains("new buffered event"));
-        assertTrue(report, report.contains("comments: 1 found, 1 missing"));
-        assertTrue(report, report.contains("inbox: 1 found, 0 missing"));
+        assertTrue(report, report.contains("comments: invoked 0, 1 found, 1 missing"));
+        assertTrue(report, report.contains("inbox: invoked 0, 1 found, 0 missing"));
 
         // Restoring a raw miss key, rather than only its displayed sentence, keeps the normal
         // repeat guard working when the same hook runs again.

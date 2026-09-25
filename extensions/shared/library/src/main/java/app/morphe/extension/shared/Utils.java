@@ -82,6 +82,7 @@ public class Utils {
     static volatile Context context;
 
     private static String versionName;
+    private static volatile long versionCode = -1;
     private static String applicationLabel;
     private static volatile String processName;
 
@@ -152,6 +153,26 @@ public class Utils {
         }
 
         return versionName;
+    }
+
+    /**
+     * The host's version code, such as 475019344 for Facebook 580.0.0.51.74, or -1 when the
+     * package manager can't say. Facebook ships several builds under one version name, and the
+     * code is what tells them apart in a report.
+     */
+    @SuppressWarnings("deprecation")
+    public static long getAppVersionCode() {
+        long code = versionCode;
+        if (code < 0) {
+            try {
+                PackageInfo info = getPackageInfo();
+                code = Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+                versionCode = code;
+            } catch (Exception ex) {
+                Logger.printException(() -> "Failed to get package info", ex);
+            }
+        }
+        return code;
     }
 
     public static String getApplicationName() {

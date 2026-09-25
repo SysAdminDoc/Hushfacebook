@@ -14,6 +14,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
+import app.morphe.extension.shared.diagnostics.HookStatus;
+
 /**
  * Helper for the "[General] AMOLED black theme" patch. It holds the rule for route one and route
  * four. See {@code docs/facebook-theme-map.md}.
@@ -25,8 +28,9 @@ import java.util.Set;
  * <p>The decision also needs the colour, because the same tokens serve light mode, where a card is
  * white. Thus the patch needs no test for dark mode.
  *
- * <p>{@link #apply} runs for each colour on each layout pass. Thus it makes no object, loads no
- * class and writes no log.
+ * <p>{@link #apply} runs for each colour on each layout pass. Thus it makes no object and writes no
+ * log. The one thing it adds is a count in Hook status, a hash lookup and an increment once the
+ * first call has made the family's entry, which is what shows a report that the theme ran at all.
  */
 public final class AmoledTheme {
 
@@ -94,6 +98,7 @@ public final class AmoledTheme {
      * @return black if this is a background that is already dark, or {@code color} unchanged.
      */
     public static int apply(int color, Object token) {
+        HookStatus.invoked(FamilyNames.AMOLED_THEME);
         if (!isDarkNeutral(color)) return color;
         if (!(token instanceof Enum)) return color;
 
@@ -112,6 +117,7 @@ public final class AmoledTheme {
      * change.
      */
     public static int parseColor(String text) {
+        HookStatus.invoked(FamilyNames.AMOLED_THEME);
         int color = Color.parseColor(text);
         return isDarkNeutral(color) ? 0xFF000000 : color;
     }

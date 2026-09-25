@@ -10,9 +10,12 @@ package app.morphe.extension.facebook.misc;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /**
  * Helper for the Facebook "[General] Open links in external browser" patch.
@@ -44,7 +47,8 @@ public final class ExternalBrowser {
 
     private ExternalBrowser() {}
 
-    private static final String TAG = "Hushfacebook.Browser";
+    /** The source every event of this hook carries in the diagnostic report. */
+    private static final String SOURCE = "ExternalBrowser";
 
     /**
      * The hosts that stay in the in-app browser.
@@ -69,6 +73,7 @@ public final class ExternalBrowser {
      *         caller must continue and open the in-app browser as before.
      */
     public static boolean redirect(Activity activity, Intent intent) {
+        HookStatus.invoked(FamilyNames.EXTERNAL_BROWSER);
         if (activity == null || intent == null) return false;
         if (!switchedOn()) return false;
 
@@ -86,8 +91,11 @@ public final class ExternalBrowser {
         } catch (Throwable t) {
             // ActivityNotFoundException: the device has no browser, or the browser is off.
             // SecurityException: the target that answered refused the launch. In both cases, leave
-            // the link to Facebook and do not lose it.
-            Log.w(TAG, "No external browser took the link. It stays in the in-app browser.", t);
+            // the link to Facebook and do not lose it. Only the class is reported: the exception's
+            // own text quotes the intent, and the intent carries the link.
+            final String kind = t.getClass().getSimpleName();
+            Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,
+                    () -> "No external browser took the link (" + kind + "). It stays in the in-app browser.", null);
             return false;
         }
 
@@ -126,7 +134,9 @@ public final class ExternalBrowser {
         try {
             return Settings.OPEN_LINKS_EXTERNALLY.get();
         } catch (Throwable t) {
-            Log.w(TAG, "Could not read the external browser switch", t);
+            HookStatus.threw(FamilyNames.EXTERNAL_BROWSER, "switch read", t);
+            Logger.diagnosticError(DiagnosticCategory.FEED_AND_NAVIGATION, SOURCE,
+                    () -> "Could not read the external browser switch", t);
             return false;
         }
     }

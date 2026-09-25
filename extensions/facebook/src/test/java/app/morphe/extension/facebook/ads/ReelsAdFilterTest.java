@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,6 +25,8 @@ import java.util.List;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
+import app.morphe.extension.shared.diagnostics.HookStatus;
+import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /** The two page filters that take server-inlined ads out of Reels. */
 @RunWith(RobolectricTestRunner.class)
@@ -113,5 +116,49 @@ public class ReelsAdFilterTest {
         String report = String.join("\n", FeedFilterCounters.report());
         assertTrue(report, report.contains(ReelsAdFilter.PAGES_ROUTE + ": 2 lists, 5 items, 1 removed"));
         assertTrue(report, report.contains(ReelsAdFilter.SECTIONS_ROUTE + ": 1 lists, 1 items, 1 removed"));
+    }
+
+    /** A section wrapper with no list in it at all, so the filter can't see its items. */
+    public static final class Opaque {
+        Object item = new VideoAd();
+    }
+
+    /** A section whose list fails when read, the way one Facebook swapped under the filter can. */
+    public static final class Unreadable {
+        List<Object> items = new AbstractList<Object>() {
+            @Override
+            public Object get(int index) {
+                throw new IllegalStateException("read under the filter");
+            }
+
+            @Override
+            public int size() {
+                return 1;
+            }
+        };
+    }
+
+    /**
+     * A section the filter can't read leaves the page as Facebook sent it, and says so in the
+     * report: the ads in it reach the screen, and nothing else would tell anyone why.
+     */
+    @Test
+    public void aSectionTheFilterCantReadReachesTheReport() {
+        LogBufferManager.clearLogBuffer();
+        try {
+            List<Object> page = Arrays.asList(new Opaque(), new Unreadable());
+            assertSame(page, ReelsAdFilter.withoutAdSections(page, AD));
+
+            String report = LogBufferManager.buildExportText();
+            assertTrue(report, report.contains("Hide sponsored reels: invoked 1, 0 found, 2 missing. First missing: "
+                    + "item list " + Opaque.class.getName() + "#List field"));
+            assertTrue(report, report.contains(
+                    "The 'section filter' hook for Hide sponsored reels threw java.lang.IllegalStateException"));
+            assertTrue(report, report.contains("| ReelsAdFilter | ERROR | could not filter a section"));
+            assertTrue(HookStatus.missing("Hide sponsored reels").toString(), HookStatus.missing("Hide sponsored reels")
+                    .contains("a working 'section filter' hook (it threw java.lang.IllegalStateException)"));
+        } finally {
+            LogBufferManager.clearLogBuffer();
+        }
     }
 }

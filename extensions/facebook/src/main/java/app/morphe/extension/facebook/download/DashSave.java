@@ -15,11 +15,13 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
-import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 
 /**
  * Saves one DASH video track and one audio track as one MP4 file.
@@ -38,7 +40,8 @@ final class DashSave {
 
     private DashSave() {}
 
-    private static final String TAG = MediaDownload.TAG;
+    /** The source every event of a DASH save carries in the diagnostic report. */
+    private static final String SOURCE = "DashSave";
 
     private static final String CACHE_FOLDER = "hushfacebook-save";
 
@@ -130,7 +133,7 @@ final class DashSave {
 
             return Downloader.publish(joined, "video/mp4", sink);
         } catch (Throwable t) {
-            Log.w(TAG, "the DASH save failed", t);
+            Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "the DASH save failed", t);
             return Downloader.Result.fail(Downloader.Status.WRITE_ERROR, "the tracks could not be joined");
         } finally {
             Downloader.delete(videoFile);

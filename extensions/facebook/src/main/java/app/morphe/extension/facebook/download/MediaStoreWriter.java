@@ -13,7 +13,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,6 +21,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
 
 /**
  * Writes a fetched file into the gallery of the device.
@@ -37,7 +39,8 @@ import java.util.Map;
  */
 final class MediaStoreWriter implements Downloader.Sink {
 
-    private static final String TAG = MediaDownload.TAG;
+    /** The source every gallery event carries in the diagnostic report. */
+    private static final String SOURCE = "MediaStoreWriter";
 
     /** Where the files go. One folder, so that the two halves of the feature land together. */
     private static final String FOLDER = "Facebook";
@@ -104,7 +107,7 @@ final class MediaStoreWriter implements Downloader.Sink {
         try {
             context.getContentResolver().delete(item, null, null);
         } catch (Throwable t) {
-            Log.w(TAG, "could not remove the unfinished entry", t);
+            Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "could not remove the unfinished entry", t);
         } finally {
             item = null;
         }
