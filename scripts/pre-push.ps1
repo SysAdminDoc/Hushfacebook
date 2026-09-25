@@ -310,6 +310,7 @@ try {
         'scripts/injected-mutation-contracts.txt',
         'scripts/injected-register-contracts.ps1',
         'scripts/injected-register-removal-allowlist.txt',
+        'scripts/script-wiring.ps1',
         'scripts/test-injected-registers.ps1',
         'scripts/verify-all-patches.ps1',
         'scripts/verify-injected-registers.ps1'
@@ -327,6 +328,7 @@ try {
     }).Count -gt 0
     $injectedRegisterDevicePaths = @(
         'scripts/injected-register-device.ps1',
+        'scripts/script-wiring.ps1',
         'scripts/test-injected-register-device.ps1',
         'scripts/verify-injected-registers.ps1'
     )

@@ -16,7 +16,9 @@
     carries the joins ART accepts, so a check made stricter still has to pass them. Each bad build
     has to fail with findings of its own category only, so a check that fires for the wrong reason
     fails here too. Removed methods and DEX entries, the removal allowlist, and the device tally
-    comparison are held to what they did before.
+    comparison are held to what they did before. verify-injected-registers.ps1 also runs end to
+    end with stand-in tools, and its wiring is read through the parser (script-wiring.ps1), with
+    the wiring checks themselves tried on copies that drop the calls but keep their text.
 #>
 [CmdletBinding()]
 param(
@@ -30,6 +32,7 @@ if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'Resolve-Java.ps1')
 . (Join-Path $PSScriptRoot 'injected-register-contracts.ps1')
 . (Join-Path $PSScriptRoot 'common.ps1')
+. (Join-Path $PSScriptRoot 'script-wiring.ps1')
 
 function Assert-True {
     param([bool]$Condition, [string]$Message)
@@ -46,39 +49,6 @@ function Invoke-Checked {
     if ($LASTEXITCODE -ne 0) {
         throw "$Description exited $LASTEXITCODE.`n$($output -join "`n")"
     }
-}
-
-# The commands a script runs, as PowerShell's parser sees them. Comment-based help and comments
-# aren't commands, so a wiring check can't be satisfied by a script describing a call it dropped.
-function Get-CommandTexts {
-    param([string]$Path)
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
-    if ($errors.Count -ne 0) { throw "$Path does not parse: $($errors[0].Message)" }
-    @($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.CommandAst] }, $true) |
-        ForEach-Object { $_.Extent.Text })
-}
-
-function Test-RunsCommand {
-    param([string]$Path, [string[]]$AllOf)
-    foreach ($text in (Get-CommandTexts $Path)) {
-        $all = $true
-        foreach ($needle in $AllOf) { if ($text.IndexOf($needle, [StringComparison]::Ordinal) -lt 0) { $all = $false } }
-        if ($all) { return $true }
-    }
-    return $false
-}
-
-function Test-DotSources {
-    param([string]$Path, [string]$File)
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
-    @($ast.FindAll({ param($node)
-        $node -is [System.Management.Automation.Language.CommandAst] -and
-        $node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
-        $node.Extent.Text.Contains($File) }, $true)).Count -gt 0
 }
 
 function New-DexApk {
@@ -142,20 +112,94 @@ $newError = Compare-VerifierTallies -Clean @{} -Patched @{ 'Verification error i
 Assert-True (-not $newError.Valid -and $newError.Deltas[0].Kind -eq 'extra') `
     'A verifier error the clean build does not raise was accepted.'
 
-# The calls themselves, read through the parser: help text names these files too.
+# The calls themselves, as the scripts run them (script-wiring.ps1). Help text, comments, log
+# lines, functions nothing calls and dead branches can all name these files too.
 $verifier = Join-Path $PSScriptRoot 'verify-injected-registers.ps1'
-Assert-True ((Test-DotSources $verifier 'injected-register-contracts.ps1') -and `
-    (Test-RunsCommand $verifier @('Compare-VerifierTallies', '-Clean', '-Patched'))) `
+$allPatches = Join-Path $PSScriptRoot 'verify-all-patches.ps1'
+$prePush = Join-Path $PSScriptRoot 'pre-push.ps1'
+Assert-True ((Test-DotSourcesFile $verifier 'injected-register-contracts.ps1') -and (Test-TalliesBothSides $verifier)) `
     'The device verifier does not use the exact tally comparison contract.'
-Assert-True (Test-RunsCommand $verifier @('DexDiff.java', 'injected-mutation-contracts.txt')) `
-    'The verifier does not hold the patched APK to the mutation contracts.'
-Assert-True (Test-RunsCommand (Join-Path $PSScriptRoot 'verify-all-patches.ps1') @('verify-injected-registers.ps1', '-PatchedApk')) `
+Assert-True (Test-RunsDexDiffWithContracts $verifier) 'The verifier does not hold the patched APK to the mutation contracts.'
+Assert-True (Test-VerifiesWhatItPatched $allPatches) `
     'verify-all-patches.ps1 does not run the structural checks on the APK it patched.'
-$prePushText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'pre-push.ps1') -Raw
-Assert-True ($prePushText -match "(?m)^\s*\`$suites \+= , @\('scripts/test-injected-registers\.ps1'") `
+Assert-True (Test-PushGateRunsSuite $prePush 'scripts/test-injected-registers.ps1') `
     'The push gate does not run the injected-register fixture test.'
-Assert-True ($prePushText -notmatch 'so it has nothing to run there') `
+Assert-True ((Get-Content -LiteralPath $prePush -Raw) -notmatch 'so it has nothing to run there') `
     'The push gate still skips a suite it expects when the file is missing.'
+
+# The checks themselves, on copies of those scripts with the wiring taken out in the ways that
+# leave its text behind. Each copy has to fail the check it was made for, and an untouched copy
+# has to pass it, so a check can't pass here by failing everything.
+$wiringCopies = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) `
+    ("hushfacebook-wiring-" + [guid]::NewGuid().ToString('N'))))
+try {
+    New-Item -ItemType Directory -Path $wiringCopies | Out-Null
+    $verifierText = [System.IO.File]::ReadAllText($verifier)
+    $allPatchesText = [System.IO.File]::ReadAllText($allPatches)
+    $prePushSource = [System.IO.File]::ReadAllText($prePush)
+    $runsDexDiff = { param($Path) Test-RunsDexDiffWithContracts $Path }
+    $dotSourcesContracts = { param($Path) Test-DotSourcesFile $Path 'injected-register-contracts.ps1' }
+    $talliesBothSides = { param($Path) Test-TalliesBothSides $Path }
+    $verifiesPatched = { param($Path) Test-VerifiesWhatItPatched $Path }
+    $gateRunsSuite = { param($Path) Test-PushGateRunsSuite $Path 'scripts/test-injected-registers.ps1' }
+    $wiringCases = @(
+        @{ Name = 'the untouched verifier'; Check = $runsDexDiff; Expect = $true; Text = $verifierText }
+        @{ Name = 'the untouched verifier'; Check = $dotSourcesContracts; Expect = $true; Text = $verifierText }
+        @{ Name = 'the untouched verifier'; Check = $talliesBothSides; Expect = $true; Text = $verifierText }
+        @{ Name = 'the untouched verify-all-patches.ps1'; Check = $verifiesPatched; Expect = $true; Text = $allPatchesText }
+        @{ Name = 'the untouched pre-push.ps1'; Check = $gateRunsSuite; Expect = $true; Text = $prePushSource }
+        @{ Name = 'the contracts dropped from the DexDiff call and named in a log line'; Check = $runsDexDiff
+            Text = (Edit-ScriptNode $verifierText { param($Node)
+                $Node -is [System.Management.Automation.Language.ParenExpressionAst] -and
+                $Node.Extent.Text -like '*injected-mutation-contracts.txt*' } { param($Text) '' }) +
+                "`nWrite-Host '[registers] DexDiff.java runs without injected-mutation-contracts.txt now'`n" }
+        @{ Name = 'the DexDiff function left uncalled'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText { param($Node)
+                $Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -eq 'Invoke-DexDiff'
+            } { param($Text) '[pscustomobject]@{ ExitCode = 0; Output = @() }' } }
+        @{ Name = 'the DexDiff call behind a return'; Check = $runsDexDiff
+            Text = Edit-ScriptNode $verifierText { param($Node)
+                $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                $Node.Extent.Text -like '*DexDiff.java*' } { param($Text) "return`n    $Text" } }
+        @{ Name = 'the contracts helper dot-sourced in a dead branch'; Check = $dotSourcesContracts
+            Text = Edit-ScriptNode $verifierText { param($Node)
+                $Node -is [System.Management.Automation.Language.CommandAst] -and
+                $Node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
+                $Node.Extent.Text -like '*injected-register-contracts.ps1*' } { param($Text) "if (`$false) { $Text }" } }
+        @{ Name = 'the patched tally compared with itself'; Check = $talliesBothSides
+            Text = Edit-ScriptNode $verifierText { param($Node)
+                $Node -is [System.Management.Automation.Language.CommandAst] -and
+                $Node.GetCommandName() -eq 'Compare-VerifierTallies'
+            } { param($Text) 'Compare-VerifierTallies -Clean $patchedTally -Patched $patchedTally' } }
+        @{ Name = 'the verifier call replaced by a log line naming it'; Check = $verifiesPatched
+            Text = Edit-ScriptNode $allPatchesText { param($Node)
+                $Node -is [System.Management.Automation.Language.CommandAst] -and
+                $Node.Extent.Text -like '*verify-injected-registers.ps1*' } { param($Text)
+                "Write-Host '[verify] skipped verify-injected-registers.ps1 -PatchedApk `$out'" } }
+        @{ Name = 'the verifier run on the stock APK'; Check = $verifiesPatched
+            Text = Edit-ScriptNode $allPatchesText { param($Node)
+                $Node -is [System.Management.Automation.Language.CommandAst] -and
+                $Node.Extent.Text -like '*verify-injected-registers.ps1*' } { param($Text)
+                $Text.Replace('-PatchedApk $out', '-PatchedApk $stockApk') } }
+        @{ Name = 'the suite line in a block comment'; Check = $gateRunsSuite
+            Text = Edit-ScriptNode $prePushSource { param($Node)
+                $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                $Node.Left.Extent.Text -eq '$suites' -and
+                $Node.Extent.Text -like "*'scripts/test-injected-registers.ps1'*" } { param($Text) "<#`n$Text`n#>" } }
+    )
+    $wiringFailures = @()
+    $copy = Join-Path $wiringCopies 'copy.ps1'
+    foreach ($case in $wiringCases) {
+        [System.IO.File]::WriteAllText($copy, $case.Text)
+        $expect = $case.ContainsKey('Expect') -and $case.Expect
+        if ((& $case.Check $copy) -ne $expect) {
+            $wiringFailures += "$($case.Name): the check said $(-not $expect)"
+        }
+    }
+    if ($wiringFailures.Count -ne 0) { throw ("The wiring checks misjudged:`n" + ($wiringFailures -join "`n")) }
+} finally {
+    Remove-Item -LiteralPath $wiringCopies -Recurse -Force -ErrorAction SilentlyContinue
+}
 
 # The verifier run end to end, with stand-ins for the tools it starts: a java that answers the
 # version probe and plays DexDiff with the given exit code, an aapt2 that describes Facebook 580,

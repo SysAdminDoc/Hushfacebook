@@ -14,6 +14,7 @@ param([string]$Root)
 $ErrorActionPreference = 'Stop'
 if (-not $Root) { $Root = Split-Path -Parent $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'injected-register-device.ps1')
+. (Join-Path $PSScriptRoot 'script-wiring.ps1')
 
 function Assert-True {
     param([bool]$Condition, [string]$Message)
@@ -180,22 +181,63 @@ try {
         'A cleanup failure after successful verification was accepted.'
     Assert-BothCleanupCalls -State $successWithCleanupFailure.State -Context 'success cleanup failure'
 
-    # Through the parser, so help text can't stand in for the calls: the helper dot-sourced, and
-    # the tally taken with it for both sides.
-    $tokens = $null
-    $errors = $null
-    $verifierAst = [System.Management.Automation.Language.Parser]::ParseFile(
-        (Join-Path $PSScriptRoot 'verify-injected-registers.ps1'), [ref]$tokens, [ref]$errors)
-    $commands = @($verifierAst.FindAll({ param($node) $node -is [System.Management.Automation.Language.CommandAst] }, $true))
-    $dotSourced = @($commands | Where-Object {
-        $_.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
-        $_.Extent.Text.Contains('injected-register-device.ps1') }).Count -gt 0
-    $tallies = @($commands | Where-Object { $_.GetCommandName() -eq 'Invoke-AndroidVerifierTally' }).Count
-    Assert-True ($dotSourced -and $tallies -ge 2) 'The device verifier does not use the cleanup helper for both sides.'
+    # As the verifier runs them (script-wiring.ps1), so help text, log lines, functions nothing
+    # calls and dead branches can't stand in for the calls: the helper dot-sourced, and a tally of
+    # the clean APK and one of the patched APK, compared with each other.
+    $verifier = Join-Path $PSScriptRoot 'verify-injected-registers.ps1'
+    $prePush = Join-Path $PSScriptRoot 'pre-push.ps1'
+    Assert-True ((Test-DotSourcesFile $verifier 'injected-register-device.ps1') -and (Test-TalliesBothSides $verifier)) `
+        'The device verifier does not use the cleanup helper for both sides.'
     # The line that adds the suite to the run, not the path list that only decides when to run it.
-    $prePushText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'pre-push.ps1') -Raw
-    Assert-True ($prePushText -match "(?m)^\s*\`$suites \+= , @\('scripts/test-injected-register-device\.ps1'") `
+    Assert-True (Test-PushGateRunsSuite $prePush 'scripts/test-injected-register-device.ps1') `
         'The push gate does not run the verifier cleanup fixtures.'
+
+    # The checks themselves, on copies with the wiring taken out in ways that leave its text
+    # behind. Each copy has to fail the check it was made for, and an untouched copy has to pass.
+    $wiringCopy = Join-Path ([System.IO.Path]::GetTempPath()) `
+        ("hushfacebook-device-wiring-" + [guid]::NewGuid().ToString('N') + '.ps1')
+    try {
+        $verifierText = [System.IO.File]::ReadAllText($verifier)
+        $prePushSource = [System.IO.File]::ReadAllText($prePush)
+        $dotSourcesDevice = { param($Path) Test-DotSourcesFile $Path 'injected-register-device.ps1' }
+        $talliesBothSides = { param($Path) Test-TalliesBothSides $Path }
+        $gateRunsSuite = { param($Path) Test-PushGateRunsSuite $Path 'scripts/test-injected-register-device.ps1' }
+        $wiringCases = @(
+            @{ Name = 'the untouched verifier'; Check = $dotSourcesDevice; Expect = $true; Text = $verifierText }
+            @{ Name = 'the untouched verifier'; Check = $talliesBothSides; Expect = $true; Text = $verifierText }
+            @{ Name = 'the untouched pre-push.ps1'; Check = $gateRunsSuite; Expect = $true; Text = $prePushSource }
+            @{ Name = 'both tallies taken of the patched APK'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.CommandAst] -and
+                    $Node.GetCommandName() -eq 'Invoke-AndroidVerifierTally' -and $Node.Extent.Text -like '*$cleanBase*'
+                } { param($Text) $Text.Replace('$cleanBase', '$PatchedApk') } }
+            @{ Name = 'the device half in a function nothing calls'; Check = $talliesBothSides
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.IfStatementAst] -and
+                    $Node.Clauses[0].Item1.Extent.Text -eq '$Serial' } { param($Text) "function Invoke-DeviceHalf {`n$Text`n}" } }
+            @{ Name = 'the device helper dot-sourced in a dead branch'; Check = $dotSourcesDevice
+                Text = Edit-ScriptNode $verifierText { param($Node)
+                    $Node -is [System.Management.Automation.Language.CommandAst] -and
+                    $Node.InvocationOperator -eq [System.Management.Automation.Language.TokenKind]::Dot -and
+                    $Node.Extent.Text -like '*injected-register-device.ps1*' } { param($Text) "if (`$false) { $Text }" } }
+            @{ Name = 'the suite line in a block comment'; Check = $gateRunsSuite
+                Text = Edit-ScriptNode $prePushSource { param($Node)
+                    $Node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                    $Node.Left.Extent.Text -eq '$suites' -and
+                    $Node.Extent.Text -like "*'scripts/test-injected-register-device.ps1'*" } { param($Text) "<#`n$Text`n#>" } }
+        )
+        $wiringFailures = @()
+        foreach ($case in $wiringCases) {
+            [System.IO.File]::WriteAllText($wiringCopy, $case.Text)
+            $expect = $case.ContainsKey('Expect') -and $case.Expect
+            if ((& $case.Check $wiringCopy) -ne $expect) {
+                $wiringFailures += "$($case.Name): the check said $(-not $expect)"
+            }
+        }
+        if ($wiringFailures.Count -ne 0) { throw ("The wiring checks misjudged:`n" + ($wiringFailures -join "`n")) }
+    } finally {
+        [System.IO.File]::Delete($wiringCopy)
+    }
 
 } finally {
     [System.IO.File]::Delete($fixture)
