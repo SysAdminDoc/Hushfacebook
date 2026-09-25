@@ -32,9 +32,9 @@ import java.util.Locale;
  * isn't where the socket goes, so that fence stays down there, and a proxy resolves the name
  * itself.
  *
- * <p>FAKE_IP: fake-IP DNS (Clash, sing-box, v2rayNG, OpenClash, common where Facebook is
- * blocked) answers every name from 198.18.0.0/15 or fc00::/18 and carries the connection to the
- * real host. It runs as a VPN on the phone, which the route sees, or on the home router, which it
+ * <p>FAKE_IP: fake-IP DNS (Clash, mihomo, sing-box, v2rayNG, OpenClash, common where Facebook
+ * is blocked) answers every name from 198.18.0.0/15, fc00::/18 or fdfe:dcba:9876::/64 and
+ * carries the connection to the real host. It runs as a VPN on the phone, which the route sees, or on the home router, which it
  * can't: a direct route then gets those answers too, and refusing them failed every save there.
  * Neither range is a home network's, so they are let through on every route.
  *
@@ -228,8 +228,12 @@ class MediaUrlPolicy {
 
     private static String nonPublicV6(byte[] b) {
         int first = b[0] & 0xFF;
-        // fc00::/18 is let through, like 198.18.0.0/15; the rest of fc00::/7 stays private.
-        boolean fakeIp = first == 0xFC && b[1] == 0 && (b[2] & 0xC0) == 0;
+        // The IPv6 fake-IP pools are let through, like 198.18.0.0/15: fc00::/18 (sing-box) and
+        // fdfe:dcba:9876::/64 (Clash and mihomo, OpenClash's preset). The rest of fc00::/7 stays
+        // private.
+        boolean fakeIp = (first == 0xFC && b[1] == 0 && (b[2] & 0xC0) == 0)
+                || (first == 0xFD && (b[1] & 0xFF) == 0xFE && (b[2] & 0xFF) == 0xDC && (b[3] & 0xFF) == 0xBA
+                        && (b[4] & 0xFF) == 0x98 && (b[5] & 0xFF) == 0x76 && b[6] == 0 && b[7] == 0);
         if ((first & 0xFE) == 0xFC && !fakeIp) return "a private address";
         if (first == 0xFE && (b[1] & 0xC0) == 0x80) return "a link-local address";
         if (first == 0xFE && (b[1] & 0xC0) == 0xC0) return "a private address";

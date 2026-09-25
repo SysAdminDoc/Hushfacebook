@@ -15,6 +15,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -117,6 +118,11 @@ public class MediaUrlPolicyTest {
                 { "192.0.2.1", "reserved" }, { "203.0.113.9", "reserved" }, { "2001:db8::1", "reserved" },
                 { "100.64.0.1", "carrier-grade NAT" },
                 { "::ffff:10.0.0.1", "private" }, { "64:ff9b::a00:1", "private" }, { "2002:a00:1::", "private" },
+                // Java hands a mapped address back as IPv4, so only the compatible form reaches
+                // the embedded-address rule.
+                { "::a00:1", "private" }, { "::7f00:1", "loopback" },
+                { "198.51.100.7", "reserved" }, { "192.88.99.1", "reserved" }, { "192.0.0.9", "reserved" },
+                { "fdfe:dcba:9876:1::1", "private" }, { "fdfe:dcba:9877::1", "private" },
         };
         List<String> accepted = new ArrayList<>();
         for (String[] c : cases) {
@@ -165,6 +171,13 @@ public class MediaUrlPolicyTest {
         assertNull(refusal(tunneled(host -> new InetAddress[] { InetAddress.getByName("fc00::17") }), CDN));
         assertNull("a proxy resolves the name itself",
                 refusal(tunneled(host -> { throw new UnknownHostException(host); }), CDN));
+        // Not asked at all, rather than asked and then forgiven: the route decides first.
+        List<String> asked = new ArrayList<>();
+        assertNull(refusal(tunneled(host -> {
+            asked.add(host);
+            return new InetAddress[] { InetAddress.getByName("10.0.0.1") };
+        }), CDN));
+        assertEquals("a tunnel route looked the host up", Collections.emptyList(), asked);
         // The address rules still hold.
         MediaUrlPolicy anyAnswer = tunneled(host -> new InetAddress[] { InetAddress.getByName(PUBLIC) });
         assertEquals("it is not HTTPS", refusal(anyAnswer, CDN.replace("https://", "http://")));
@@ -186,6 +199,11 @@ public class MediaUrlPolicyTest {
         assertEquals("its host resolves to a private address", refusal(resolvingTo("fc00:4000::1"), CDN));
         assertEquals("its host resolves to a private address", refusal(resolvingTo("fd00::1"), CDN));
         assertEquals("its host resolves to a private address", refusal(resolvingTo("192.168.1.1"), CDN));
+        // Clash and mihomo answer IPv6 from fdfe:dcba:9876::/64, OpenClash's preset, and a router
+        // doing both families hands out one of each.
+        assertNull(refusal(resolvingTo("fdfe:dcba:9876::c"), CDN));
+        assertNull(refusal(resolvingTo("198.18.0.12", "fdfe:dcba:9876::c"), CDN));
+        assertNull(refusal(resolvingTo("fdfe:dcba:9876:0:ffff:ffff:ffff:ffff"), CDN));
     }
 
     /**
