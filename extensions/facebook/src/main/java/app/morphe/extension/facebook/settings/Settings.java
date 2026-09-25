@@ -48,7 +48,10 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting HIDE_PEOPLE_YOU_MAY_KNOW =
             new BooleanSetting("hushfacebook_hide_people_you_may_know", TRUE);
 
-    /** The row of stories at the top of the feed, found by its GraphQL type name. */
+    /**
+     * The row of stories at the top of the feed. The feed's adapter list builds it as an adapter of
+     * its own, and the patch has both tray adapters return nothing while this is on.
+     */
     public static final BooleanSetting HIDE_STORIES_TRAY =
             new BooleanSetting("hushfacebook_hide_stories_tray", TRUE);
 

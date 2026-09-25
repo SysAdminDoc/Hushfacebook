@@ -71,7 +71,7 @@ public class GenAiRuleTest {
     }
 
     private static boolean guard(Object category, Object unit, StoryFlag.Accessor accessor) {
-        return FeedFilter.hideEdge(category, unit, true, true, true, accessor);
+        return FeedFilter.hideEdge(category, unit, true, true, story -> null, true, accessor);
     }
 
     private static String counters() {
@@ -192,7 +192,7 @@ public class GenAiRuleTest {
     public void anUnpatchedBuildHidesNothing() {
         Settings.HIDE_AI_DETECTED_POSTS.save(true);
         Answer answer = new Answer(FeedGuardForTests.detectedInfo(true));
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLStory(), true, true, false, answer));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLStory(), true, true, story -> null, false, answer));
         assertEquals(0, answer.calls);
         assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLStory()));
         assertNull(aiLine());

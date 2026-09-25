@@ -91,11 +91,11 @@ public class FeedFilterTest {
     /** With both patches in, the guard hides by category first and by unit type second. */
     @Test
     public void thePatchedGuardHidesByCategoryAndByUnit() {
-        assertTrue(FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, false, false));
+        assertTrue(FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, false));
         assertFalse("the suggested rule belongs to its own patch",
-                FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, false, false));
-        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), false, true, false));
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true, false));
+                FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, false));
+        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), false, true));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true));
     }
 
     /**
@@ -105,9 +105,9 @@ public class FeedFilterTest {
     @Test
     public void everyEdgeIsCountedAndEveryHiddenOneSaysWhy() {
         FeedFilterCounters.clear();
-        FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true, false);
-        FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, true, false);
-        FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true, false);
+        FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true);
+        FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, true);
+        FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true);
         FeedFilter.hideEdge(Category.SPONSORED, null);
 
         String report = String.join("\n", FeedFilterCounters.report());
@@ -128,7 +128,7 @@ public class FeedFilterTest {
         LogBufferManager.clearLogBuffer();
         try {
             cache.set(null, new Class<?>[0]);
-            assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true, false));
+            assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new Object(), true, true));
             String report = LogBufferManager.buildExportText();
             // The three found are the members the recommendation flag is read through.
             assertTrue(report, report.contains("Hide suggested and promoted posts: invoked 1, 3 found, 1 missing. "
@@ -137,7 +137,7 @@ public class FeedFilterTest {
 
             cache.set(null, null);
             LogBufferManager.clearLogBuffer();
-            assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true, false));
+            assertTrue(FeedFilter.hideEdge(Category.ORGANIC, new GraphQLPagesYouMayLikeFeedUnit(), true, true));
             assertTrue(String.join("\n", HookStatus.report()),
                     HookStatus.report().contains("Hide suggested and promoted posts: invoked 1, 4 found, 0 missing"));
         } finally {
@@ -156,7 +156,7 @@ public class FeedFilterTest {
     public void theStoryCategoryAloneNoLongerMarksASuggestedPost() {
         assertFalse(FeedFilter.hideEdge(Category.INJECTED_STORY, new Object(), false, true));
         assertFalse(FeedFilter.hideEdge(Category.INJECTED_STORY, new GraphQLStory(), false, true,
-                story -> FeedGuardForTests.recommendationContext(false), false, false, GenAiLabel.PATCHED));
+                story -> FeedGuardForTests.recommendationContext(false), false, GenAiLabel.PATCHED));
     }
 
     /**
@@ -165,23 +165,27 @@ public class FeedFilterTest {
      */
     @Test
     public void peopleYouMayKnowGoesByItsTypeName() {
-        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), false, true, false));
+        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), false, true));
         assertFalse(FeedFilter.hideEdge(Category.ORGANIC,
-                new TypedFeedUnit("PaginatedPeopleYouMayKnowFeedUnitUsersEdge"), false, true, false));
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit("Story"), false, true, false));
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), true, false, true));
+                new TypedFeedUnit("PaginatedPeopleYouMayKnowFeedUnitUsersEdge"), false, true));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit("Story"), false, true));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), true, false));
         Settings.HIDE_PEOPLE_YOU_MAY_KNOW.save(false);
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), false, true, false));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow(), false, true));
     }
 
-    /** The Stories tray has its own patch, off unless it was picked, and its own switch. */
+    /**
+     * The Stories tray is never an edge on a real feed: the feed's adapter list adds it as an
+     * adapter of its own (StoriesTrayTest). A unit answering its type name, should one ever come
+     * through, is left to Facebook like any other unit no rule claims, with the tray's switch on.
+     */
     @Test
-    public void theStoriesTrayGoesOnlyWithItsOwnPatch() {
-        assertTrue(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), false, false, true));
-        assertFalse("the suggested patch leaves the tray alone",
-                FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), true, true, false));
-        Settings.HIDE_STORIES_TRAY.save(false);
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), false, false, true));
+    public void aStoriesTrayEdgeIsNotHiddenByTheGuard() {
+        assertTrue(Settings.HIDE_STORIES_TRAY.get());
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray(), true, true));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, TypedFeedUnit.storiesTray()));
+        assertTrue(String.join("\n", FeedFilterCounters.report()),
+                String.join("\n", FeedFilterCounters.report()).contains(FeedFilter.FEED_ROUTE + ": 2 lists, 2 items, 0 removed"));
     }
 
     /** A type name that can't be read, or isn't text, keeps the unit: the rules fail open. */
@@ -191,7 +195,7 @@ public class FeedFilterTest {
         assertNull(FeedFilter.typeName(new Object()));
         assertNull(FeedFilter.typeName(null));
         assertEquals("StoriesTrayFeedUnit", FeedFilter.typeName(TypedFeedUnit.storiesTray()));
-        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit.Unreadable(), true, true, true));
+        assertFalse(FeedFilter.hideEdge(Category.ORGANIC, new TypedFeedUnit.Unreadable(), true, true));
     }
 
     /**
@@ -205,7 +209,7 @@ public class FeedFilterTest {
         StoryFlag.Accessor recommended = story -> FeedGuardForTests.recommendationContext(true);
         for (int i = 0; i < 3; i++) {
             FeedFilter.hideEdge(Category.SPONSORED, new Object(), true, true);
-            FeedFilter.hideEdge(Category.ORGANIC, new GraphQLStory(), true, true, recommended, false, false,
+            FeedFilter.hideEdge(Category.ORGANIC, new GraphQLStory(), true, true, recommended, false,
                     GenAiLabel.PATCHED);
         }
         FeedFilter.hideEdge(Category.PROMOTION, new Object(), true, true);

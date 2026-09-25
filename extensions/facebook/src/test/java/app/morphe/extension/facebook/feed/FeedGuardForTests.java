@@ -15,7 +15,7 @@ public final class FeedGuardForTests {
     }
 
     public static boolean hides(Object category, Object feedUnit) {
-        return FeedFilter.hideEdge(category, feedUnit, true, true, true);
+        return FeedFilter.hideEdge(category, feedUnit, true, true);
     }
 
     /**
@@ -23,12 +23,12 @@ public final class FeedGuardForTests {
      * story's GenAI info is {@code detectedInfo}, and no story has a recommendation context.
      */
     public static boolean hides(Object category, Object feedUnit, Object detectedInfo) {
-        return FeedFilter.hideEdge(category, feedUnit, true, true, story -> null, true, true, story -> detectedInfo);
+        return FeedFilter.hideEdge(category, feedUnit, true, true, story -> null, true, story -> detectedInfo);
     }
 
     /** The guard with both feed patches in, where any story's recommendation context is {@code context}. */
     public static boolean hidesRecommended(Object category, Object feedUnit, Object context) {
-        return FeedFilter.hideEdge(category, feedUnit, true, true, story -> context, true, false, GenAiLabel.PATCHED);
+        return FeedFilter.hideEdge(category, feedUnit, true, true, story -> context, false, GenAiLabel.PATCHED);
     }
 
     /** GenAI info of the type Facebook's detection writes, with its flag set to [flagged]. */

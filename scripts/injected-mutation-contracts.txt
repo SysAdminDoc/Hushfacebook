@@ -1,6 +1,7 @@
 # Call sites a patched Facebook must have, checked across every dex of the APK by DexDiff.java.
 #   single-call <method reference> in <caller method name>
 #   first-call <method reference> on <class>
+#   start-call <method reference> holding <string>
 # Two feed guards stacked on addNewEdgeToCollection is the shape that broke builds before, and a
 # guard anywhere else filters nothing.
 single-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideEdge(Ljava/lang/Object;Ljava/lang/Object;)Z in addNewEdgeToCollection
@@ -8,3 +9,7 @@ single-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideEdge(Ljava/lang
 # stops filling one leaves the stub answering its marker, and the rule keeps every post.
 first-call Lapp/morphe/extension/facebook/feed/GenAiLabel;->detectedInfo(Ljava/lang/Object;)Ljava/lang/Object; on Lcom/facebook/graphql/model/GraphQLStory;
 first-call Lapp/morphe/extension/facebook/feed/RecommendationLabel;->recommendationContext(Ljava/lang/Object;)Ljava/lang/Object; on Lcom/facebook/graphql/model/GraphQLStory;
+# The Stories tray patch asks the extension first thing in both of the feed's tray adapters: the
+# classic one, holding its trace name, and the unified one, holding its create-adapter stop name.
+start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z holding NewsFeedAdapterConfiguration.addStoriesAdapter
+start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z holding stories_tray_create_adapter_stop

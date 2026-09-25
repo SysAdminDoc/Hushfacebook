@@ -23,6 +23,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction;
 import com.android.tools.smali.dexlib2.iface.instruction.formats.ArrayPayload;
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference;
 import com.android.tools.smali.dexlib2.iface.reference.Reference;
+import com.android.tools.smali.dexlib2.iface.reference.StringReference;
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference;
 
 import java.io.File;
@@ -81,8 +82,9 @@ import java.util.TreeSet;
  * addNewEdgeToCollection, because two guards stacked on that method is what broke Froggo's
  * builds; and each extension stub a patch fills in with one of Facebook's renamed accessors calls
  * it before it returns, so a patch that stopped filling one fails here instead of shipping a stub
- * that answers its marker forever. The device verifier stays the authority; these catch the known
- * shapes without a phone.
+ * that answers its marker forever; and the Stories tray hook comes first in each of the two tray
+ * adapter methods. The device verifier stays the authority; these catch the known shapes without a
+ * phone.
  *
  *   java -cp &lt;cli jar&gt; DexDiff.java &lt;cleanApk&gt; &lt;patchedApk&gt; &lt;reportFile&gt;
  *       &lt;removalAllowlist&gt; [&lt;contracts&gt;]
@@ -134,6 +136,9 @@ public class DexDiff {
      *   <li>"first-call &lt;method reference&gt; on &lt;class&gt;": the method calls a method of
      *       &lt;class&gt; that takes no arguments before its first return or throw. A stub the
      *       patch filled does; one still answering its marker doesn't.
+     *   <li>"start-call &lt;method reference&gt; holding &lt;string&gt;": of the method's call sites,
+     *       exactly one is in a method that loads &lt;string&gt;, and there nothing comes before it
+     *       but plain instructions: no other call, branch, switch, return or throw.
      * </ul>
      */
     private static final class Contract {
@@ -161,10 +166,12 @@ public class DexDiff {
             boolean singleCall = parts.length == 4 && parts[0].equals("single-call") && parts[2].equals("in");
             boolean firstCall = parts.length == 4 && parts[0].equals("first-call") && parts[2].equals("on")
                     && parts[3].startsWith("L") && parts[3].endsWith(";");
-            if ((!singleCall && !firstCall) || !parts[1].contains("->")) {
+            boolean startCall = parts.length == 4 && parts[0].equals("start-call") && parts[2].equals("holding");
+            if ((!singleCall && !firstCall && !startCall) || !parts[1].contains("->")) {
                 throw new IllegalArgumentException("Invalid contract line " + lineNumber
                         + ": expected single-call <method reference> in <caller method name>,"
-                        + " or first-call <method reference> on <class>");
+                        + " first-call <method reference> on <class>,"
+                        + " or start-call <method reference> holding <string>");
             }
             contracts.add(new Contract(parts[0], parts[1], parts[3]));
         }
@@ -979,9 +986,13 @@ public class DexDiff {
         // an empty string when it makes none there.
         Map<String, String> firstCalls = new HashMap<>();
         Map<String, String> firstCallTargets = new HashMap<>();
+        // start-call: every call site of the method, with whether the call comes first there and
+        // the strings its method loads.
+        Map<String, List<StartSite>> startSites = new LinkedHashMap<>();
         for (Contract contract : contracts) {
             if (contract.kind.equals("single-call")) callSites.put(contract.callee, new ArrayList<>());
-            else firstCallTargets.put(contract.callee, contract.target);
+            else if (contract.kind.equals("first-call")) firstCallTargets.put(contract.callee, contract.target);
+            else startSites.put(contract.callee, new ArrayList<>());
         }
         MultiDexContainer<? extends DexFile> container =
                 DexFileFactory.loadDexContainer(apk, Opcodes.getDefault());
@@ -995,6 +1006,7 @@ public class DexDiff {
                     }
                     String firstCallOn = firstCallTargets.get(s);
                     if (firstCallOn != null) firstCalls.put(s, firstCallBeforeReturn(m, firstCallOn));
+                    if (!startSites.isEmpty()) recordStartSites(s, m, startSites);
                     if (callSites.isEmpty() || m.getImplementation() == null) continue;
                     for (Instruction i : m.getImplementation().getInstructions()) {
                         if (!(i instanceof ReferenceInstruction)) continue;
@@ -1008,6 +1020,29 @@ public class DexDiff {
         }
         List<String> contractFindings = new ArrayList<>();
         for (Contract contract : contracts) {
+            if (contract.kind.equals("start-call")) {
+                String rule = "contract start-call " + contract.callee + " holding " + contract.target;
+                List<StartSite> holding = new ArrayList<>();
+                for (StartSite site : startSites.get(contract.callee)) {
+                    if (site.strings.contains(contract.target)) holding.add(site);
+                }
+                if (holding.size() != 1) {
+                    List<String> where = new ArrayList<>();
+                    for (StartSite site : holding) where.add(site.method);
+                    System.out.println("[diff] " + rule + ": " + holding.size() + " call sites in such methods"
+                            + (where.isEmpty() ? "" : ", in " + String.join(", ", where)));
+                    contractFindings.add("contract: " + contract.callee + " has " + holding.size()
+                            + " call sites in methods holding \"" + contract.target + "\", and must have exactly one"
+                            + (where.isEmpty() ? "" : ": " + String.join(", ", where)));
+                } else if (!holding.get(0).first) {
+                    System.out.println("[diff] " + rule + ": not first in " + holding.get(0).method);
+                    contractFindings.add("contract: " + contract.callee + " is called in " + holding.get(0).method
+                            + ", but after a call, branch, switch, return or throw, not first");
+                } else {
+                    System.out.println("[diff] " + rule + ": first in " + holding.get(0).method);
+                }
+                continue;
+            }
             if (contract.kind.equals("first-call")) {
                 String call = firstCalls.get(contract.callee);
                 String rule = "contract first-call " + contract.callee;
@@ -1038,6 +1073,53 @@ public class DexDiff {
         }
         if (!contractFindings.isEmpty()) out.put("contract", contractFindings);
         return out;
+    }
+
+    /** One call site of a start-call method: where it is, whether it comes first, and what its method loads. */
+    private static final class StartSite {
+        final String method;
+        final boolean first;
+        final Set<String> strings;
+
+        StartSite(String method, boolean first, Set<String> strings) {
+            this.method = method;
+            this.first = first;
+            this.strings = strings;
+        }
+    }
+
+    /**
+     * Records each call [m] makes to a start-call method: whether only plain instructions come
+     * before it, and the strings [m] loads, which the contract picks its method by.
+     */
+    private static void recordStartSites(String s, Method m, Map<String, List<StartSite>> startSites) {
+        if (m.getImplementation() == null) return;
+        List<Instruction> body = new ArrayList<>();
+        for (Instruction i : m.getImplementation().getInstructions()) body.add(i);
+        Set<String> strings = null;
+        boolean plainSoFar = true;
+        for (Instruction i : body) {
+            String name = i.getOpcode().name;
+            if (name.startsWith("invoke") && i instanceof ReferenceInstruction) {
+                List<StartSite> sites = startSites.get(((ReferenceInstruction) i).getReference().toString());
+                if (sites != null) {
+                    if (strings == null) {
+                        strings = new TreeSet<>();
+                        for (Instruction j : body) {
+                            if (j instanceof ReferenceInstruction
+                                    && ((ReferenceInstruction) j).getReference() instanceof StringReference) {
+                                strings.add(((StringReference) ((ReferenceInstruction) j).getReference()).getString());
+                            }
+                        }
+                    }
+                    sites.add(new StartSite(s, plainSoFar, strings));
+                }
+            }
+            if (name.startsWith("invoke") || name.startsWith("return") || name.startsWith("goto")
+                    || name.startsWith("if-") || name.endsWith("-switch") || name.equals("throw")) {
+                plainSoFar = false;
+            }
+        }
     }
 
     /**

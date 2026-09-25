@@ -16,8 +16,7 @@ import com.android.tools.smali.dexlib2.iface.reference.StringReference
  * Facebook's generated GraphQL models keep that method's name while Redex renames their classes
  * every release, and each returns its GraphQL type as a literal. The extension's feed filter
  * compares the name a unit answers, so the literal being there is the evidence the rule needs.
- * `PaginatedPeopleYouMayKnowFeedUnit` is `LX/3zk;` and `StoriesTrayFeedUnit` is `LX/3zj;` in
- * 580, and both are in 577 under other names.
+ * `PaginatedPeopleYouMayKnowFeedUnit` is `LX/3zk;` in 580, and is in 577 under another name.
  */
 internal fun typeNameFingerprint(typeName: String) = Fingerprint(
     name = "getTypeName",

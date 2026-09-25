@@ -54,7 +54,9 @@ import java.util.Map;
  * the one feed guard goes, and the bundle's {@code FeedFilter.hideEdge} is the guard, under the
  * same names the contract file holds the real APK to. The bundle's two story-flag stubs are there
  * under their real names too, filled the way the patches fill them: a call to GraphQLStory's
- * accessor before anything returns.
+ * accessor before anything returns. And a second host class stands in for the feed's two Stories
+ * tray adapter methods, each holding the string the contract picks it by, with the tray patch's
+ * call to {@code FeedFilter.hideStoriesTray} first in the patched builds.
  *
  *   java -cp &lt;cli jar&gt; BadDexFixture.java &lt;outDir&gt;
  */
@@ -77,6 +79,9 @@ public class BadDexFixture {
     /** What the story's renamed accessor answers, a model class Redex renamed. */
     private static final String MODEL = "Lfixture/Model;";
     private static final ImmutableMethodReference STORY_ACCESSOR = method(STORY, "A0X", MODEL);
+
+    private static final String ADAPTERS = "Lfixture/Adapters;";
+    private static final ImmutableMethodReference HIDE_STORIES_TRAY = method(FILTER, "hideStoriesTray", "Z", "I");
 
     private static final ImmutableTypeReference STRING_TYPE = new ImmutableTypeReference("Ljava/lang/String;");
     private static final ImmutableTypeReference INT_ARRAY = new ImmutableTypeReference("[I");
@@ -331,6 +336,44 @@ public class BadDexFixture {
         return new ImmutableClassDef(HOST, AccessFlags.PUBLIC.getValue(), OBJECT, null, null, null, packedField(HOST), methods);
     }
 
+    /**
+     * One of the feed's two Stories tray adapter methods, static: v0 free, v1 the argument. [prefix]
+     * comes first, then its trace name, then the null it answers when Facebook leaves the tray out.
+     */
+    private static Method trayAdapter(String name, String traceName, List<Instruction> prefix) {
+        List<Instruction> instructions = new ArrayList<>(prefix);
+        instructions.add(new ImmutableInstruction21c(Opcode.CONST_STRING, 0, new ImmutableStringReference(traceName)));
+        instructions.add(new ImmutableInstruction11n(Opcode.CONST_4, 0, 0));
+        instructions.add(op(Opcode.RETURN_OBJECT, 0));
+        return define(ADAPTERS, name, OBJECT, true, new ImmutableMethodImplementation(2, instructions, null, null), OBJECT);
+    }
+
+    /** What the tray patch puts first: ask, and return null when told to. The keep path lands at 9. */
+    private static List<Instruction> trayHook(int adapter) {
+        return Arrays.asList(
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, adapter),   // 0
+                invoke(HIDE_STORIES_TRAY, 0),                              // 1
+                op(Opcode.MOVE_RESULT, 0),                                 // 4
+                ifEqz(0, 4),                                               // 5 -> 9
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),        // 7
+                op(Opcode.RETURN_OBJECT, 0));                              // 8
+    }
+
+    private static ClassDef adapters(List<Instruction> legacyPrefix, List<Instruction> unifiedPrefix) {
+        return new ImmutableClassDef(ADAPTERS, AccessFlags.PUBLIC.getValue(), OBJECT, null, null, null, null,
+                Arrays.asList(
+                        trayAdapter("addStoriesAdapter", "NewsFeedAdapterConfiguration.addStoriesAdapter", legacyPrefix),
+                        trayAdapter("addUnifiedTray", "stories_tray_create_adapter_stop", unifiedPrefix)));
+    }
+
+    private static ClassDef cleanAdapters() {
+        return adapters(Collections.<Instruction>emptyList(), Collections.<Instruction>emptyList());
+    }
+
+    private static ClassDef hookedAdapters() {
+        return adapters(trayHook(0), trayHook(1));
+    }
+
     private static ClassDef cleanHost() {
         return host(feedEdge(CLEAN_FEED_EDGE), staticHost(CLEAN_STATIC_HOST), switchHost(7), tryHost(CLEAN_TRY), true);
     }
@@ -357,6 +400,8 @@ public class BadDexFixture {
                 define(FILTER, "hideEdge", "Z", true, body(2,
                         new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN, 0)), OBJECT, OBJECT),
                 define(FILTER, "inspect", "V", true, body(2, op(Opcode.RETURN_VOID)), OBJECT, OBJECT),
+                define(FILTER, "hideStoriesTray", "Z", true, body(2,
+                        new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN, 0)), "I"),
                 define(FILTER, "wide", "V", true, body(2, op(Opcode.RETURN_VOID)), "J"),
                 define(FILTER, "reuse", "V", true, body(1,
                         new ImmutableInstruction10t(Opcode.GOTO, 5),                            // 0 -> 5
@@ -466,7 +511,12 @@ public class BadDexFixture {
     }
 
     private static List<ClassDef> bundle(ClassDef host, ClassDef genAiLabel, ClassDef recommendationLabel) {
-        return Arrays.asList(host, filter(), genAiLabel, recommendationLabel);
+        return bundle(host, genAiLabel, recommendationLabel, hookedAdapters());
+    }
+
+    private static List<ClassDef> bundle(ClassDef host, ClassDef genAiLabel, ClassDef recommendationLabel,
+            ClassDef adapters) {
+        return Arrays.asList(host, adapters, filter(), genAiLabel, recommendationLabel);
     }
 
     /**
@@ -533,7 +583,7 @@ public class BadDexFixture {
         if (!out.isDirectory() && !out.mkdirs()) throw new IllegalStateException("Cannot create " + out);
 
         Map<String, List<ClassDef>> dexes = new LinkedHashMap<>();
-        dexes.put("clean", Collections.singletonList(cleanHost()));
+        dexes.put("clean", Arrays.asList(cleanHost(), cleanAdapters()));
         dexes.put("secondary", Collections.singletonList(secondary()));
         dexes.put("good", good());
         List<ClassDef> goodWithSecondary = new ArrayList<>(good());
@@ -820,6 +870,17 @@ public class BadDexFixture {
                         new ImmutableInstruction35c(Opcode.INVOKE_STATIC, 0, 0, 0, 0, 0, 0, method(MODEL, "A0X", MODEL)),
                         op(Opcode.MOVE_RESULT_OBJECT, 1),
                         op(Opcode.RETURN_OBJECT, 1)))));
+        // contract: the unified tray adapter left without the tray patch's call.
+        ClassDef filledGenAi = stub(GENAI_LABEL, "detectedInfo", FILLED_STUB);
+        dexes.put("bad-tray-hook-missing", bundle(goodHost, filledGenAi, filledRecommendation,
+                adapters(trayHook(0), Collections.<Instruction>emptyList())));
+        // contract: the classic tray adapter's call after a branch, not first.
+        List<Instruction> late = new ArrayList<>();
+        late.add(ifEqz(1, 3));                                            // 0 -> 3
+        late.add(op(Opcode.NOP));                                         // 2
+        late.addAll(trayHook(0));                                         // 3
+        dexes.put("bad-tray-hook-late", bundle(goodHost, filledGenAi, filledRecommendation,
+                adapters(late, trayHook(1))));
         // contract: the story's accessor called only after the stub has already returned.
         dexes.put("bad-stub-call-after-return", bundle(goodHost, stub(GENAI_LABEL, "detectedInfo", body(2,
                         new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),

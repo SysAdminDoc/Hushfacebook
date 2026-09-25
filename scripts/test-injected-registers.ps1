@@ -548,6 +548,11 @@ try {
             'Lcom/facebook/graphql/model/GraphQLStory;->A0X()Lfixture/Model; before its first return'))) `
             "The good build's $stub was not reported calling the story's accessor.`n$($good.Output -join "`n")"
     }
+    foreach ($adapter in @('NewsFeedAdapterConfiguration.addStoriesAdapter: first in Lfixture/Adapters;->addStoriesAdapter(',
+            'stories_tray_create_adapter_stop: first in Lfixture/Adapters;->addUnifiedTray(')) {
+        Assert-True (($good.Output -join "`n") -match [regex]::Escape("hideStoriesTray(I)Z holding $adapter")) `
+            "The good build's tray hook was not reported first in its adapter: $adapter`n$($good.Output -join "`n")"
+    }
 
     $bad = [ordered]@{
         'bad-branch' = 'branch'
@@ -623,6 +628,8 @@ try {
         'bad-stub-not-filled' = 'contract'
         'bad-stub-other-class' = 'contract'
         'bad-stub-call-after-return' = 'contract'
+        'bad-tray-hook-missing' = 'contract'
+        'bad-tray-hook-late' = 'contract'
     }
     $failures = @()
     foreach ($case in $bad.GetEnumerator()) {
@@ -661,7 +668,10 @@ try {
     foreach ($line in @(
             'first-call Lapp/morphe/extension/facebook/feed/GenAiLabel;->detectedInfo(Ljava/lang/Object;)Ljava/lang/Object; on GraphQLStory',
             'first-call Lapp/morphe/extension/facebook/feed/GenAiLabel;->detectedInfo(Ljava/lang/Object;)Ljava/lang/Object; in Lcom/facebook/graphql/model/GraphQLStory;',
-            'first-call detectedInfo on Lcom/facebook/graphql/model/GraphQLStory;')) {
+            'first-call detectedInfo on Lcom/facebook/graphql/model/GraphQLStory;',
+            'start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z in addStoriesAdapter',
+            'start-call hideStoriesTray holding stories_tray_create_adapter_stop',
+            'start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z holding')) {
         [System.IO.File]::WriteAllText($badContract, "# a comment line first`n$line`n")
         $unreadableFirstCall = Invoke-DexDiff -Clean $cleanApk -Patched (Join-Path $caseRoot 'good.apk') `
             -Allowlist $emptyAllowlist -Name 'bad-first-call-contract' -Contracts $badContract

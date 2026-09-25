@@ -126,8 +126,10 @@ public class PausedHooksTest {
                 () -> FeedGuardForTests.hidesRecommended(Category.ORGANIC, new GraphQLStory(),
                         FeedGuardForTests.recommendationContext(true)),
                 () -> FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow())));
-        probes.put(PatchFamily.STORIES_TRAY, Collections.singletonList(
-                () -> FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.storiesTray())));
+        // Each of the feed's two Stories tray adapters returns nothing.
+        probes.put(PatchFamily.STORIES_TRAY, Arrays.asList(
+                () -> FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY),
+                () -> FeedFilter.hideStoriesTray(FeedFilter.UNIFIED_TRAY)));
         // A story Facebook's own detection marked as made with AI.
         probes.put(PatchFamily.AI_DETECTED_POSTS, Collections.singletonList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true))));

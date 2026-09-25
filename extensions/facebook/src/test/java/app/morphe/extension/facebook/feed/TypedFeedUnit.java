@@ -6,8 +6,9 @@ package app.morphe.extension.facebook.feed;
 
 /**
  * Stands in for a Facebook feed unit whose class Redex renamed: all the guard can read from it is
- * the GraphQL type name its {@code getTypeName()} answers, as {@code LX/3zk;} and {@code LX/3zj;}
- * answer "PaginatedPeopleYouMayKnowFeedUnit" and "StoriesTrayFeedUnit" in Facebook 580.
+ * the GraphQL type name its {@code getTypeName()} answers, as {@code LX/3zk;} answers
+ * "PaginatedPeopleYouMayKnowFeedUnit" in Facebook 580. The Stories tray's type name is here to
+ * show the guard leaves such a unit alone: the tray is built as an adapter, not an edge.
  */
 public class TypedFeedUnit {
     private final String typeName;

@@ -42,7 +42,7 @@ import app.morphe.extension.shared.settings.PauseForTests;
 public class RecommendationRuleTest {
     @Rule public final SettingsContextRule settingsContext = new SettingsContextRule();
 
-    enum Category { ORGANIC, SPONSORED, ENGAGEMENT, INJECTED_STORY }
+    enum Category { ORGANIC, SPONSORED, ENGAGEMENT }
 
     /** Stands in for the accessor the patch fills in, and counts how often the guard asked it. */
     private static final class Answer implements StoryFlag.Accessor {
@@ -75,7 +75,7 @@ public class RecommendationRuleTest {
 
     /** The guard with the suggested patch in and the given recommendation accessor. */
     private static boolean guard(Object category, Object unit, StoryFlag.Accessor accessor) {
-        return FeedFilter.hideEdge(category, unit, true, true, accessor, false, false, GenAiLabel.PATCHED);
+        return FeedFilter.hideEdge(category, unit, true, true, accessor, false, GenAiLabel.PATCHED);
     }
 
     private static String counters() {
@@ -192,7 +192,7 @@ public class RecommendationRuleTest {
     @Test
     public void anUnpatchedBuildHidesNothing() {
         Answer answer = new Answer(FeedGuardForTests.recommendationContext(true));
-        assertFalse(FeedFilter.hideEdge(Category.ENGAGEMENT, new GraphQLStory(), true, false, answer, false, false,
+        assertFalse(FeedFilter.hideEdge(Category.ENGAGEMENT, new GraphQLStory(), true, false, answer, false,
                 GenAiLabel.PATCHED));
         assertEquals(0, answer.calls);
         assertFalse(FeedFilter.hideEdge(Category.ENGAGEMENT, new GraphQLStory()));

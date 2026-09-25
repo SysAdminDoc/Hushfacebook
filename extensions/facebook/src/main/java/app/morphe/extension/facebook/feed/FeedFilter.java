@@ -40,9 +40,6 @@ public final class FeedFilter {
      */
     static final String PEOPLE_YOU_MAY_KNOW_TYPE = "PaginatedPeopleYouMayKnowFeedUnit";
 
-    /** The type name of the row of stories at the top of the feed, found the same way. */
-    static final String STORIES_TRAY_TYPE = "StoriesTrayFeedUnit";
-
     /** The diagnostic counter routes. Each news feed edge counts as a list of one post. */
     static final String FEED_ROUTE = "News feed posts";
     static final String STORY_ROUTE = "Story ad sources";
@@ -56,6 +53,16 @@ public final class FeedFilter {
      * each read of Facebook's recommendation flag found as the kind.
      */
     static final String RECOMMENDATION_ROUTE = "Recommendation flag";
+    /**
+     * The Stories tray adapters the feed asked for, each call counted with its adapter as the kind,
+     * and a skipped one as a removal. The tray is never a feed edge: the feed's adapter list adds it
+     * as an adapter of its own, so it never reaches the edge guard.
+     */
+    static final String TRAY_ROUTE = "Stories tray adapters";
+
+    /** The adapter the patch passes: the classic tray, or the unified one a server gate turns on. */
+    public static final int LEGACY_TRAY = 0;
+    public static final int UNIFIED_TRAY = 1;
 
     /**
      * Units Facebook injects into the feed that are not posts from anyone you follow. Every one
@@ -102,32 +109,17 @@ public final class FeedFilter {
      */
     public static boolean hideEdge(Object category, Object feedUnit) {
         return hideEdge(category, feedUnit, SettingsStatus.sponsoredPosts(), SettingsStatus.suggestedPosts(),
-                RecommendationLabel.PATCHED, SettingsStatus.storiesTray(), SettingsStatus.aiDetectedPosts(),
+                RecommendationLabel.PATCHED, SettingsStatus.aiDetectedPosts(), GenAiLabel.PATCHED);
+    }
+
+    /** The guard with the sponsored and suggested patch-time flags passed in, and no GenAI rule. */
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, RecommendationLabel.PATCHED, false,
                 GenAiLabel.PATCHED);
     }
 
-    /** The guard with the sponsored and suggested patch-time flags passed in, and neither the tray nor GenAI. */
-    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, RecommendationLabel.PATCHED, false,
-                false, GenAiLabel.PATCHED);
-    }
-
-    /** The guard with the Stories tray's flag too, and no GenAI rule. */
-    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
-            boolean storiesTrayPatched) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, RecommendationLabel.PATCHED,
-                storiesTrayPatched, false, GenAiLabel.PATCHED);
-    }
-
-    /** The guard with the GenAI rule's flag and accessor, and no Stories tray. */
-    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
-            boolean aiPatched, StoryFlag.Accessor aiAccessor) {
-        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, RecommendationLabel.PATCHED, false,
-                aiPatched, aiAccessor);
-    }
-
     /**
-     * The guard, with the four patch-time flags passed in so a test can stand in for the patches,
+     * The guard, with the three patch-time flags passed in so a test can stand in for the patches,
      * and the recommendation and GenAI accessors passed in so a test can stand in for the stubs the
      * patches fill in.
      *
@@ -141,8 +133,7 @@ public final class FeedFilter {
      * and Facebook's own path is all that runs.
      */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
-            StoryFlag.Accessor recommendationAccessor, boolean storiesTrayPatched, boolean aiPatched,
-            StoryFlag.Accessor aiAccessor) {
+            StoryFlag.Accessor recommendationAccessor, boolean aiPatched, StoryFlag.Accessor aiAccessor) {
         try {
             if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
             if (suggestedPatched) {
@@ -150,7 +141,6 @@ public final class FeedFilter {
                 reportSuggestedClasses();
                 RecommendationLabel.FLAG.report();
             }
-            if (storiesTrayPatched) HookStatus.invoked(FamilyNames.STORIES_TRAY);
             if (aiPatched) {
                 HookStatus.invoked(FamilyNames.AI_DETECTED_POSTS);
                 GenAiLabel.FLAG.report();
@@ -178,10 +168,6 @@ public final class FeedFilter {
                     reason = PEOPLE_YOU_MAY_KNOW_TYPE;
                 }
             }
-            if (reason == null && storiesTrayPatched && Settings.HIDE_STORIES_TRAY.get()
-                    && STORIES_TRAY_TYPE.equals(typeName(feedUnit))) {
-                reason = STORIES_TRAY_TYPE;
-            }
             if (reason == null && aiPatched && Settings.HIDE_AI_DETECTED_POSTS.get()) {
                 reason = flagReason(GenAiLabel.FLAG, AI_ROUTE, feedUnit, aiAccessor);
             }
@@ -194,7 +180,6 @@ public final class FeedFilter {
         } catch (Throwable failure) {
             if (sponsoredPatched) HookStatus.threw(FamilyNames.SPONSORED_POSTS, "feed guard", failure);
             if (suggestedPatched) HookStatus.threw(FamilyNames.SUGGESTED_POSTS, "feed guard", failure);
-            if (storiesTrayPatched) HookStatus.threw(FamilyNames.STORIES_TRAY, "feed guard", failure);
             if (aiPatched) HookStatus.threw(FamilyNames.AI_DETECTED_POSTS, "feed guard", failure);
             Logger.printException(() -> "Feed filter: could not judge an edge", failure);
             return false;
@@ -313,6 +298,32 @@ public final class FeedFilter {
             Logger.printInfo(() -> "Feed filter: none of the suggested unit classes is in this build");
         }
         return found;
+    }
+
+    /**
+     * Injection point, at the start of both Stories tray adapter methods of the feed's adapter
+     * configuration. True makes the method return null, which is what it returns when Facebook
+     * itself turns the tray off, and its callers only look a null up in the adapter list.
+     *
+     * <p>Until the settings are ready, and while Hushfacebook is paused, it answers false and the
+     * tray is built as Facebook builds it.
+     *
+     * @param adapter {@link #LEGACY_TRAY} or {@link #UNIFIED_TRAY}, the method the patch hooked.
+     */
+    public static boolean hideStoriesTray(int adapter) {
+        try {
+            HookStatus.invoked(FamilyNames.STORIES_TRAY);
+            String kind = adapter == UNIFIED_TRAY ? "unified" : "legacy";
+            FeedFilterCounters.sawList(TRAY_ROUTE, 1);
+            FeedFilterCounters.sawKind(TRAY_ROUTE, kind);
+            boolean hide = Utils.settingsReady() && Settings.HIDE_STORIES_TRAY.get();
+            if (hide) FeedFilterCounters.removed(TRAY_ROUTE, 1, kind + " adapter skipped");
+            return hide;
+        } catch (Throwable failure) {
+            HookStatus.threw(FamilyNames.STORIES_TRAY, "stories tray adapter", failure);
+            Logger.printException(() -> "Stories tray: could not read its switch", failure);
+            return false;
+        }
     }
 
     /** Injection point. Whether the story viewer's ad bucket sources contribute nothing. */
