@@ -94,6 +94,19 @@ function Get-SignerDigests {
         ForEach-Object { ($_ -replace '^.*certificate SHA-256 digest: ', '').Trim() } | Sort-Object -Unique)
 }
 
+# DexDiff over the pair, with Continue only in here, as in Get-SignerDigests. Called inside the try
+# below, a java that can't start throws out of here into the script's Stop. Called outside one, it
+# wouldn't, and this would read the exit code apksigner left, so the code starts at -1.
+function Invoke-DexDiff {
+    $ErrorActionPreference = 'Continue'
+    $global:LASTEXITCODE = -1
+    $output = @(& $Java '-Xmx8g' '-cp' $DesktopJar (Join-Path $PSScriptRoot 'DexDiff.java') `
+        $cleanBase $PatchedApk $ReportPath `
+        (Join-Path $PSScriptRoot 'injected-register-removal-allowlist.txt') `
+        (Join-Path $PSScriptRoot 'injected-mutation-contracts.txt') 2>&1 | ForEach-Object { "$_" })
+    [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
+}
+
 $work = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-regs-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 # The report stays where the caller can read it after the run: at -ReportPath when one is given,
@@ -172,17 +185,11 @@ if (@($cleanSigners | Where-Object { $_ -in $metaSigners }).Count -eq 0) {
 Write-Host "[registers] clean   $CleanApk (Facebook $($clean.versionName), signed by Meta)"
 Write-Host "[registers] patched $PatchedApk"
 
-$ErrorActionPreference = 'Continue'
-$diffOutput = & $Java '-Xmx8g' '-cp' $DesktopJar (Join-Path $PSScriptRoot 'DexDiff.java') `
-    $cleanBase $PatchedApk $ReportPath `
-    (Join-Path $PSScriptRoot 'injected-register-removal-allowlist.txt') `
-    (Join-Path $PSScriptRoot 'injected-mutation-contracts.txt') 2>&1
-$diffExit = $LASTEXITCODE
-$ErrorActionPreference = 'Stop'
-$diffOutput | ForEach-Object { Write-Host "[registers] $_" }
+$diff = Invoke-DexDiff
+$diff.Output | ForEach-Object { Write-Host "[registers] $_" }
 
-if ($diffExit -ne 0) {
-    Write-Host "[registers] FAIL: the dex comparison exited $diffExit; see $ReportPath"
+if ($diff.ExitCode -ne 0) {
+    Write-Host "[registers] FAIL: the dex comparison exited $($diff.ExitCode); see $ReportPath"
     $failed = $true
 } else {
     Write-Host '[registers] static: every injected instruction stays inside its method, and the structure and contracts hold.'
@@ -233,6 +240,8 @@ $completed = $true
     }
 }
 
-if ($failed) { exit 1 }
+# Success needs the try above to have run to its end. A launch error once left it early under a
+# script-wide Continue, and the run fell through to the success line with nothing checked.
+if ($failed -or -not $completed) { exit 1 }
 Write-Host '[registers] success.'
 exit 0

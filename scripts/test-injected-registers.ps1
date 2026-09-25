@@ -157,6 +157,87 @@ Assert-True ($prePushText -match "(?m)^\s*\`$suites \+= , @\('scripts/test-injec
 Assert-True ($prePushText -notmatch 'so it has nothing to run there') `
     'The push gate still skips a suite it expects when the file is missing.'
 
+# The verifier run end to end, with stand-ins for the tools it starts: a java that answers the
+# version probe and plays DexDiff with the given exit code, an aapt2 that describes Facebook 580,
+# and an apksigner that reports Meta's signer. With -JavaGone the apksigner also deletes that java,
+# which leaves it unable to start by the time DexDiff runs, as a JDK replaced mid-run would. A
+# Continue preference around the DexDiff call once turned exactly that into '[registers] success.'.
+$standIns = [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetTempPath()) `
+    ("hushfacebook-verifier-standins-" + [guid]::NewGuid().ToString('N'))))
+$metaSigner = @((Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'patches-list.json') -Raw |
+    ConvertFrom-Json).patches | ForEach-Object { $_.compatibility } |
+    Where-Object { $_.packageName -eq 'com.facebook.katana' } | ForEach-Object { $_.signatures } |
+    Sort-Object -Unique | Select-Object -First 1)
+Assert-True ($metaSigner.Count -eq 1) 'patches-list.json declares no Facebook signer for the stand-in apksigner.'
+
+function Write-StandIn {
+    param([string]$Path, [string]$Text)
+    [System.IO.File]::WriteAllText($Path, (($Text -replace "`r`n", "`n") -replace "`n", "`r`n"),
+        [System.Text.Encoding]::ASCII)
+}
+
+function Invoke-VerifierWithStandIns {
+    param([string]$Name, [int]$DexDiffExit, [switch]$JavaGone)
+    $case = Join-Path $standIns $Name
+    New-Item -ItemType Directory -Path $case -Force | Out-Null
+    $javaStandIn = Join-Path $case 'java.cmd'
+    Write-StandIn $javaStandIn @"
+@echo off
+if "%~1"=="-version" (
+  echo openjdk version "21.0.0"
+  exit /b 0
+)
+echo [diff] structural findings: 0
+exit /b $DexDiffExit
+"@
+    Write-StandIn (Join-Path $case 'aapt2.cmd') @'
+@echo off
+echo   E: manifest (line=2)
+echo     A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=475019344
+echo     A: http://schemas.android.com/apk/res/android:versionName(0x0101021c)="580.0.0.51.74" (Raw: "580.0.0.51.74")
+echo     A: package="com.facebook.katana" (Raw: "com.facebook.katana")
+exit /b 0
+'@
+    $delete = if ($JavaGone) { "del /f /q `"$javaStandIn`"" } else { 'rem' }
+    Write-StandIn (Join-Path $case 'apksigner.bat') @"
+@echo off
+$delete
+echo Signer #1 certificate SHA-256 digest: $($metaSigner[0])
+exit /b 0
+"@
+    foreach ($file in 'clean.apk', 'patched.apk', 'desktop.jar') {
+        [System.IO.File]::WriteAllText((Join-Path $case $file), 'stand-in')
+    }
+    $ErrorActionPreference = 'Continue'
+    $global:LASTEXITCODE = 0
+    $output = @(& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $verifier `
+        -CleanApk (Join-Path $case 'clean.apk') -PatchedApk (Join-Path $case 'patched.apk') `
+        -ReportPath (Join-Path $case 'report.txt') -Java $javaStandIn -DesktopJar (Join-Path $case 'desktop.jar') `
+        -Aapt2 (Join-Path $case 'aapt2.cmd') 2>&1 | ForEach-Object { "$_" })
+    [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output; Text = $output -join "`n" }
+}
+
+try {
+    New-Item -ItemType Directory -Path $standIns | Out-Null
+    # Each run has to reach the DexDiff call, or a stand-in that broke early would pass the checks below.
+    $reached = '(?m)^\[registers\] patched '
+    $passed = Invoke-VerifierWithStandIns -Name 'passed' -DexDiffExit 0
+    Assert-True ($passed.ExitCode -eq 0 -and $passed.Text -match $reached -and
+        $passed.Output -contains '[registers] success.') `
+        "The verifier did not pass a comparison DexDiff passed.`n$($passed.Text)"
+    $refused = Invoke-VerifierWithStandIns -Name 'refused' -DexDiffExit 1
+    Assert-True ($refused.ExitCode -eq 1 -and $refused.Text -match $reached -and
+        $refused.Text -match 'FAIL: the dex comparison exited 1' -and
+        $refused.Output -notcontains '[registers] success.') `
+        "The verifier did not fail a comparison DexDiff failed.`n$($refused.Text)"
+    $gone = Invoke-VerifierWithStandIns -Name 'java-gone' -DexDiffExit 0 -JavaGone
+    Assert-True ($gone.ExitCode -ne 0 -and $gone.Text -match $reached -and
+        $gone.Output -notcontains '[registers] success.' -and $gone.Text -notmatch '\[registers\] static: ') `
+        "The verifier passed a run whose java could not start for DexDiff (exit $($gone.ExitCode)).`n$($gone.Text)"
+} finally {
+    Remove-Item -LiteralPath $standIns -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 $Java = Resolve-Java -Explicit $Java
 $DesktopJar = Resolve-DesktopCli -Explicit $DesktopJar -Root $Root -Required
 $javac = Join-Path (Split-Path -Parent $Java) 'javac.exe'
