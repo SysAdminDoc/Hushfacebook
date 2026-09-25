@@ -99,8 +99,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             PreferenceCategory reels = category(screen, "Reels and Watch");
             if (build.contains(PatchFamily.SPONSORED_REELS)) {
                 reels.addPreference(toggle(context, Settings.HIDE_SPONSORED_REELS, "Hide sponsored reels",
-                        "Ads that arrive inside a page of reels. Banners, mid-rolls and ads the app adds on its "
-                                + "own stay blocked while the patch is in, whatever this switch or Pause says."));
+                        "Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the "
+                                + "patch is in, whatever this switch or Pause says. So do ads the app adds on its own."));
             }
             if (build.contains(PatchFamily.REEL_DOWNLOAD)) {
                 reels.addPreference(info(context, "Download button on reels",

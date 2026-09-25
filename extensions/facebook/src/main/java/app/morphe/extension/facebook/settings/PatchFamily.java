@@ -41,7 +41,7 @@ public enum PatchFamily {
     SPONSORED_STORIES(FamilyNames.SPONSORED_STORIES, "sponsoredStories", null,
             Settings.HIDE_SPONSORED_STORIES),
     SPONSORED_REELS(FamilyNames.SPONSORED_REELS, "sponsoredReels",
-            "the Reels ad block (banners, mid-rolls and ads the app adds on its own)",
+            "the part of the Reels ad block patched into the app",
             Settings.HIDE_SPONSORED_REELS),
     EXTERNAL_BROWSER(FamilyNames.EXTERNAL_BROWSER, "externalBrowser", null,
             Settings.OPEN_LINKS_EXTERNALLY),

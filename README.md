@@ -10,7 +10,7 @@
 
 Patches for the Facebook app on Android, for use with Morphe. They take sponsored posts and stories out of Facebook along with the ads in Reels, stop its background ad downloads and ad tracking, add story and reel downloads, open links in your own browser, and fix the screens a re-signed build breaks.
 
-Hushfacebook brings the Facebook patches from the Morphe patch sources that have them into one place, so they can be kept working as Facebook updates. Most of them come from [Andrew Liang's patches](https://github.com/andrewliang25/morphe-patches), rewritten here with fixes, and the feed filter also drops promoted posts the way [FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) does. The build, the settings screen and the checks behind every release come from [Hushfeed](https://github.com/SysAdminDoc/hushfeed). See [Where the patches come from](#where-the-patches-come-from).
+Hushfacebook brings the Facebook patches from the Morphe patch sources that have them into one place, so they can be kept working as Facebook updates. Most of them come from [Andrew Liang's patches](https://github.com/andrewliang25/morphe-patches), rewritten here with fixes, and the feed filter also drops promoted posts the way [FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) does. The build and the settings screen come from [Hushfeed](https://github.com/SysAdminDoc/hushfeed), and so do the checks behind every release. See [Where the patches come from](#where-the-patches-come-from).
 
 This project has no connection to Meta or to the Morphe project. Neither endorses it, and neither wrote it.
 
@@ -52,7 +52,7 @@ Neither path can be tried against a real block until the check reaches sideloads
 |---|---|
 | `AMOLED black theme` | Makes Facebook's dark mode black instead of dark grey. Turn on dark mode in Facebook first. |
 | `Block ad telemetry` | Stops Facebook watching for screenshots of ads and reporting which apps you install for ad attribution. |
-| `Block background ad prefetch` | Stops Facebook downloading ads and its ad model in the background. That saves data and battery, and the space they'd take. |
+| `Block background ad prefetch` | Stops Facebook downloading ads and its ad model in the background. That saves data and battery. The ads don't take up storage either. |
 | `Disable Audience Network` | Stops Facebook serving ads to other apps. Those apps then show their own ads or none, and rewarded ads can fail. |
 | `Download any reel` | Adds a Download button beside every reel. Videos save at the best quality the player streams. |
 | `Download any story` | Adds Save to the menu of any story, including stories with music. Videos save at the best quality the player streams. |
@@ -72,9 +72,9 @@ While a story or reel saves, a notification shows how far it's got, with a Cance
 
 Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
 
-- A switch for each filter, and switches for opening links in your browser and for story saves. They take effect straight away, with no restart and no new patching. While Hushfacebook is paused, a change waits until it's back on.
+- A switch for each filter. Opening links in your browser and saving stories have switches too. They take effect straight away, with no restart and no new patching. While Hushfacebook is paused, a change waits until it's back on.
 - **Pause Hushfacebook**. From the next start, every one of those switches acts as if it were off and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
-- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build and says whether a switch runs each patch. For each patch whose hooks have run, it gives how often they ran and the first thing they couldn't find. Failed saves and links no browser opened are in it too.
+- **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build and says, for every patch but the settings entry itself, whether a switch runs it. For each of those whose hooks have run, it gives how often they ran and the first thing they couldn't find. Failed saves and links no browser opened are in it too.
 - **Licenses**, the notices of every project this is built on.
 
 Hushfacebook pauses itself when Facebook crashes within a minute of starting three times in a row, and the screen says so. If you can't reach the screen at all, an empty file named `hushfacebook-safe-mode` in `Android/data/com.facebook.katana/files` pauses it too. It has to be in that `files` folder, not the one above it. Safe mode is the same pause. It changes what the switches answer, but every patch's code stays in place, so if Facebook keeps closing in safe mode, the cause can be Facebook itself or any patch, whichever row of the table below it's in. To find it, patch again without the patch you suspect, or with fewer patches.
@@ -86,7 +86,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 | Hide sponsored posts | Off. Sponsored and promoted posts come back. |
 | Hide suggested and promoted posts | Off. |
 | Hide sponsored stories | Off. |
-| Hide sponsored reels | Partly. Ads inside a page of reels come back, but banners over a reel, mid-roll ads and ads the app adds on its own stay blocked. |
+| Hide sponsored reels | Partly. Ads inside a page of reels come back. Banners over a reel and mid-roll ads stay blocked, and so do ads the app adds on its own. |
 | Open links in external browser | Off. Links open in Facebook's own browser. |
 | Download any story | Partly. Save stays in every story's menu, and it runs Facebook's own save. |
 | Download any reel | Stays. The Download button keeps working. |
@@ -101,7 +101,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 
 ## Privacy
 
-Hushfacebook doesn't collect anything and has no server. The only time the patched app goes online on Hushfacebook's behalf is to download a story or reel you asked to save, from the same Facebook address the player streams it from. A save only follows HTTPS addresses on Meta's media servers (fbcdn.net, fbsbx.com and cdninstagram.com), redirects included, and the file lands in Facebook's cache first. Only once it's whole, under 512 MB and actually a photo or video does it go to your gallery. Links in the code point only at github.com and gitlab.com, the sources named in the notices, and www.gnu.org for the licence.
+Hushfacebook doesn't collect anything and has no server. The only time the patched app goes online on Hushfacebook's behalf is to download a story or reel you asked to save, from the same Facebook address the player streams it from. A save only follows HTTPS addresses on Meta's media servers (fbcdn.net, fbsbx.com and cdninstagram.com), redirects included, and the file lands in Facebook's cache first. It goes to your gallery only once it's whole and under 512 MB, and only if it's really a photo or video. Links in the code point only at github.com and gitlab.com, the sources named in the notices, and www.gnu.org for the licence.
 
 ## Where the patches come from
 
@@ -109,8 +109,8 @@ Hushfacebook doesn't collect anything and has no server. The only time the patch
 |---|---|
 | [andrewliang25/morphe-patches](https://github.com/andrewliang25/morphe-patches) at `5db2e57` | Every Facebook patch: the feed, story and Reels ad filters, the prefetch, telemetry and Audience Network blocks, the external browser, the re-signed build fix, the AMOLED theme and both downloads. Rewritten rather than copied commit by commit, with fixes listed in the [changelog](CHANGELOG.md). |
 | [SapitoSucio/FroggoMorphePatches](https://github.com/SapitoSucio/FroggoMorphePatches) | The idea of dropping promoted posts beside sponsored ones. Andrew Liang credits it for some ideas and implementations too. |
-| [SysAdminDoc/hushfeed](https://github.com/SysAdminDoc/hushfeed) at `1f1f81a` | The Gradle build, the shared extension library with its settings, pause and diagnostics, the bytecode helpers, and the checks that apply every patch to real Facebook builds before a release. |
-| [Morphe](https://github.com/MorpheApp) and [ReVanced](https://gitlab.com/ReVanced/revanced-patches) | The patcher, the patch template and the code both of the above grew from. |
+| [SysAdminDoc/hushfeed](https://github.com/SysAdminDoc/hushfeed) at `1f1f81a` | The Gradle build, the shared extension library with its settings screen and diagnostics, the pause, the bytecode helpers, and the checks that apply every patch to real Facebook builds before a release. |
+| [Morphe](https://github.com/MorpheApp) and [ReVanced](https://gitlab.com/ReVanced/revanced-patches) | The patcher and the patch template. Both of the above grew from their code. |
 
 Every source file says where it came from in its header, and [provenance.json](provenance.json) maps each file to its source, commit and licence. [docs/sources.md](docs/sources.md) covers the other Facebook and Messenger patch sources, what each one does, and what this bundle took from it.
 
