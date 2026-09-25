@@ -10,17 +10,18 @@
     registers, the static off-by-one, the upper half of a wide parameter read as an object, a
     narrow constant read as a long and the reverse (the AMOLED sweep's bug on 580), either half of
     a live long overwritten and the other half still read, a broken pair or a narrow constant on
-    one arm of a branch or on a loop's back edge, a conflict (an object on one arm, an int on the
-    other) read by each instruction that takes a value, a long tested against zero, a move-result
-    the patch separated from its invoke, bad try ranges and handlers (a handler at a payload among
-    them), a move-exception the method's entry reaches, and the one feed guard doubled, moved or
-    missing. The good build carries the joins and the reads ART accepts, so a check made stricter
-    still has to pass them. Each bad build has to fail with findings of its own category only, so
-    a check that fires for the wrong reason fails here too. Removed methods and DEX entries, the
-    removal allowlist, and the device tally comparison are held to what they did before.
-    verify-injected-registers.ps1 also runs end to end with stand-in tools, and its wiring is read
-    through the parser (script-wiring.ps1), with the wiring checks themselves tried on copies that
-    drop the calls but keep their text.
+    one arm of a branch or on a loop's back edge, either half of a pair broken on one arm moved
+    where the arms meet, a zero on one arm read as a long, a conflict (an object on one arm, an int
+    on the other) read by each instruction that takes a value or read through a copy, a wide move
+    of a conflict, a long tested against zero, a move-result the patch separated from its invoke,
+    bad try ranges and handlers (a handler at a payload among them), a move-exception the method's
+    entry reaches, and the one feed guard doubled, moved or missing. The good build carries the
+    joins, copies and reads ART accepts, so a check made stricter still has to pass them. Each bad
+    build has to fail with findings of its own category only, so a check that fires for the wrong
+    reason fails here too. Removed methods and DEX entries, the removal allowlist, and the device
+    tally comparison are held to what they did before. verify-injected-registers.ps1 also runs end
+    to end with stand-in tools, and its wiring is read through the parser (script-wiring.ps1), with
+    the wiring checks themselves tried on copies that drop the calls but keep their text.
 #>
 [CmdletBinding()]
 param(
@@ -365,6 +366,12 @@ try {
         'bad-conflict-filled-new-array' = 'width'
         'bad-conflict-fill-array-data' = 'width'
         'bad-wide-if-eqz' = 'width'
+        'bad-broken-low-move' = 'width'
+        'bad-broken-high-move' = 'width'
+        'bad-conflict-object-copy' = 'width'
+        'bad-conflict-plain-copy' = 'width'
+        'bad-zero-for-wide-branch' = 'width'
+        'bad-move-wide-conflict' = 'width'
         'bad-move-result' = 'result'
         'bad-try-range' = 'try'
         'bad-try-handler' = 'try'

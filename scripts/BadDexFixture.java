@@ -307,7 +307,8 @@ public class BadDexFixture {
                 define(FILTER, "packs", "V", true, body(3, packColor(Opcode.CONST_WIDE_32, FILTER))),
                 // v0 is null on one arm and the object on the other, v1 zero or one: each is still
                 // its kind where the arms meet. v2 is an object on one arm and an int on the
-                // other, which only a use of it would fail, and a move only copies it.
+                // other, which only a use of it would fail. A move-object and a plain move only
+                // copy it, and v3 is written again before anything reads the copy.
                 define(FILTER, "joins", "V", true, body(5,
                         new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),                      // 0
                         new ImmutableInstruction11n(Opcode.CONST_4, 1, 0),                      // 1
@@ -319,7 +320,9 @@ public class BadDexFixture {
                         invoke(INSPECT, 0, 0),                                                   // 9
                         invoke(REUSE, 1),                                                        // 12
                         new ImmutableInstruction12x(Opcode.MOVE_OBJECT, 3, 2),                  // 15
-                        op(Opcode.RETURN_VOID)), OBJECT),                                        // 16
+                        new ImmutableInstruction12x(Opcode.MOVE, 3, 2),                         // 16
+                        new ImmutableInstruction11n(Opcode.CONST_4, 3, 0),                      // 17
+                        op(Opcode.RETURN_VOID)), OBJECT),                                        // 18
                 // The const-string can throw, and its handler reads v0 as the int it held before
                 // the const-string wrote an object there, which is all ART's handler sees.
                 define(FILTER, "caught", "V", true, body(2, Collections.singletonList(tryBlock(1, 2, 7)),
@@ -552,6 +555,44 @@ public class BadDexFixture {
                 ifEqz(0, 3),                                                                       // 3 -> 6
                 op(Opcode.RETURN_VOID),                                                            // 5
                 op(Opcode.RETURN_VOID))));                                                         // 6
+        // width: a long whose upper half was overwritten on one arm, and its lower half moved
+        // where the arms meet. A pair broken on one path stays broken: ART still holds a low half
+        // there, which a move may not copy, where a conflict would be copied without complaint.
+        dexes.put("bad-broken-low-move", withStaticHost(body(6,
+                new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
+                ifEqz(3, 3),                                                                       // 3 -> 6
+                new ImmutableInstruction11n(Opcode.CONST_4, 1, 1),                                 // 5
+                new ImmutableInstruction12x(Opcode.MOVE, 2, 0),                                    // 6
+                op(Opcode.RETURN_VOID))));                                                         // 7
+        // width: the same with the lower half overwritten, and the upper half moved.
+        dexes.put("bad-broken-high-move", withStaticHost(body(6,
+                new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
+                ifEqz(3, 3),                                                                       // 3 -> 6
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 1),                                 // 5
+                new ImmutableInstruction12x(Opcode.MOVE, 2, 1),                                    // 6
+                op(Opcode.RETURN_VOID))));                                                         // 7
+        // width: a conflict copied by move-object, which ART allows, and the copy passed on as an
+        // object, which it doesn't. Then a plain move's copy passed on as an int.
+        dexes.put("bad-conflict-object-copy", conflictThen(
+                new ImmutableInstruction12x(Opcode.MOVE_OBJECT, 1, 0), invoke(INSPECT, 1, 3), op(Opcode.RETURN_VOID)));
+        dexes.put("bad-conflict-plain-copy", conflictThen(
+                new ImmutableInstruction12x(Opcode.MOVE, 1, 0), invoke(REUSE, 1), op(Opcode.RETURN_VOID)));
+        // width: a zero on one arm where the other has a long, read as a long. A zero joins an
+        // object or a narrow value, and ART merges it with a low half into a conflict.
+        dexes.put("bad-zero-for-wide-branch", withStaticHost(body(6,
+                new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
+                ifEqz(3, 3),                                                                       // 3 -> 6
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),                                 // 5
+                invoke(WIDE, 0, 1),                                                                // 6
+                op(Opcode.RETURN_VOID))));                                                         // 9
+        // width: move-wide of a conflict. A narrow or object move may copy one, and a wide move
+        // may not, since ART checks the pair it copies.
+        dexes.put("bad-move-wide-conflict", withStaticHost(body(7,
+                new ImmutableInstruction31i(Opcode.CONST_WIDE_32, 0, BLACK),                       // 0
+                ifEqz(4, 3),                                                                       // 3 -> 6
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 1),                                 // 5
+                new ImmutableInstruction12x(Opcode.MOVE_WIDE, 2, 0),                               // 6
+                op(Opcode.RETURN_VOID))));                                                         // 7
         // result: a nop injected between the guard's invoke and its move-result.
         dexes.put("bad-move-result", withFeedEdge(body(4,
                 invoke(HIDE_EDGE, 2, 3), op(Opcode.NOP), op(Opcode.MOVE_RESULT, 0), ifEqz(0, 3),
