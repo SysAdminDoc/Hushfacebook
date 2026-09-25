@@ -266,14 +266,25 @@ private fun MutableMethod.rerouteParseColor(): Int {
 private fun Method.hasDarkColor(): Boolean =
     implementation?.instructions?.any { it.isDarkColor() } == true
 
-/** Replaces each dark grey that this method writes with black. Answers how many it replaced. */
-private fun MutableMethod.blackenDarkColors(): Int {
+/**
+ * Replaces each dark grey that this method writes with black. Answers how many it replaced.
+ *
+ * A `const-wide/32` carries its value as a narrow literal too, so a colour kept in a long matches.
+ * It stays a `const-wide/32`: a narrow `const` in its place leaves the long's upper register
+ * unset, and ART rejects the whole class ("register v0 has type IntegerConstant but expected
+ * Long (Low Half)", a static initializer on 580 with every patch on).
+ */
+internal fun MutableMethod.blackenDarkColors(): Int {
     val sites = (implementation ?: return 0).instructions.withIndex()
         .filter { it.value.isDarkColor() }
-        .map { it.index to (it.value as OneRegisterInstruction).registerA }
+        .map { Triple(it.index, (it.value as OneRegisterInstruction).registerA, it.value.opcode) }
 
-    sites.asReversed().forEach { (index, register) ->
-        replaceInstruction(index, "const v$register, $BLACK")
+    sites.asReversed().forEach { (index, register, opcode) ->
+        val black = when (opcode) {
+            Opcode.CONST_WIDE_16, Opcode.CONST_WIDE_32 -> "const-wide/32 v$register, $BLACK"
+            else -> "const v$register, $BLACK"
+        }
+        replaceInstruction(index, black)
     }
     return sites.size
 }
