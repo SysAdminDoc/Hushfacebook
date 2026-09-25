@@ -2310,8 +2310,11 @@ try {
     }
     $dependencyNamesHere = @(Get-PatchDependencyNames -PatchList $releaseCatalog -RequestedNames $releaseNames)
     $fixturePaths = @{}
-    $versionCode = 475019344
-    foreach ($build in $releaseTarget.PackageVersions) {
+    $versionCode = 475119344
+    # Beside the declared builds, a newer one the catalog doesn't declare, the kind a release run
+    # patches under -f to see what still applies on it.
+    $newerBuild = "$([int]($releaseTarget.PackageVersion -split '\.')[0] + 1).0.0.1.1"
+    foreach ($build in @($newerBuild) + @($releaseTarget.PackageVersions)) {
         $apkm = Join-Path $fixtures "facebook-$build-arm64-v8a.apkm"
         New-TestBundleArchive -Path $apkm -Entries ([ordered]@{
             'info.json' = "{`"versioncode`":`"$versionCode`"}"
@@ -2358,9 +2361,11 @@ try {
         }
     }
 
-    # A fixture for every declared build: one target each, none forced, every patch applied, and
-    # no manifest change, because the patched manifest is held to the merge and not to the base.
-    $allFixtures = @($releaseTarget.PackageVersions | ForEach-Object { $fixturePaths[$_] })
+    # A fixture for every declared build and the newer one: one target each, only the newer build
+    # forced, every patch applied, and no manifest change, because the patched manifest is held to
+    # the merge and not to the base.
+    $builtBuilds = @($releaseTarget.PackageVersions) + @($newerBuild)
+    $allFixtures = @($builtBuilds | ForEach-Object { $fixturePaths[$_] })
     try {
         Invoke-ReceiptBuilder -Fixtures $allFixtures
     } catch {
@@ -2368,12 +2373,14 @@ try {
     }
     $built = Get-Content -LiteralPath $releaseReceipt -Raw | ConvertFrom-Json
     $builtTargets = @($built.targets)
-    Assert-True ((@($builtTargets | ForEach-Object { [string]$_.source.versionName }) -join ',') -eq
-        ($releaseTarget.PackageVersions -join ',')) `
-        "The receipt does not hold one run of each declared build: $(@($builtTargets | ForEach-Object { $_.source.versionName }) -join ', ')"
+    $builtVersions = @($builtTargets | ForEach-Object { [string]$_.source.versionName })
+    Assert-True (($builtVersions -join ',') -eq ($builtBuilds -join ',')) `
+        "The receipt does not hold one run of each fixture: $($builtVersions -join ', ')"
     foreach ($builtTarget in $builtTargets) {
         $label = [string]$builtTarget.source.versionName
-        Assert-True ($builtTarget.source.forced -eq $false) "The receipt says the declared build $label was forced."
+        $declared = $releaseTarget.PackageVersions -contains $label
+        Assert-True ($builtTarget.source.forced -eq (-not $declared)) `
+            "The receipt says $label was $(if ($builtTarget.source.forced) { 'forced' } else { 'not forced' })."
         Assert-True ($builtTarget.source.sha256 -eq (Get-Sha256Hex -Path $fixturePaths[$label])) `
             "The receipt does not hash the $label fixture it was given."
         Assert-True (@($builtTarget.patches | Where-Object { $_.applied }).Count -eq $releaseNames.Count) `
@@ -2382,18 +2389,28 @@ try {
         Assert-True ($changes.Count -eq 0) "The receipt records the merge's own manifest change for $label as the patches': $($changes -join ', ')"
     }
     $patchRuns = @(Get-Content -LiteralPath $javaLog)
-    Assert-True ($patchRuns.Count -eq $allFixtures.Count -and
-        @($patchRuns | Where-Object { $_ -notlike '* forced=0' }).Count -eq 0) `
-        "The CLI was not run once per fixture without -f: $($patchRuns -join '; ')"
+    $expectedRuns = @($builtBuilds | ForEach-Object {
+        "patch $($fixturePaths[$_]) forced=$(if ($releaseTarget.PackageVersions -contains $_) { 0 } else { 1 })" })
+    Assert-True (($patchRuns -join "`n") -eq ($expectedRuns -join "`n")) `
+        "The CLI was not run once per fixture, with -f for the undeclared build only: $($patchRuns -join '; ')"
     # And the receipt the builder writes is one the release check accepts.
     $said = Invoke-ReleaseCheck
-    Assert-True ($said -like "*$proved*") "The release check did not accept the receipt the builder wrote: $said"
+    $builtProved = "the receipt proves $($releaseNames.Count) patches on $($builtVersions -join ', ') " +
+        "from commit $($releaseCommit.Substring(0, 8))"
+    Assert-True ($said -like "*$builtProved*") "The release check did not accept the receipt the builder wrote: $said"
 
-    # One fixture, the newest build only, is not enough for a receipt: the older declared build
-    # has no run, so the builder refuses rather than writing a receipt the release check would.
-    Assert-Throws { Invoke-ReceiptBuilder -Fixtures @($fixturePaths[$releaseTarget.PackageVersion]) } `
-        "*No target in the receipt is the declared $($releaseTarget.PackageName) $($unproved -join ', ') patched without -f*" `
-        'build-release-receipt.ps1 wrote a receipt from the newest build alone.'
+    # The newest build alone, or beside the undeclared one, is not enough for a receipt: the older
+    # declared build has no run. The builder says so before it patches anything. It used to patch
+    # every fixture first, which for Facebook unpacks gigabytes, and then refuse its own receipt.
+    foreach ($partial in @(@($releaseTarget.PackageVersion), @($releaseTarget.PackageVersion, $newerBuild))) {
+        Assert-Throws { Invoke-ReceiptBuilder -Fixtures @($partial | ForEach-Object { $fixturePaths[$_] }) } `
+            "*No fixture is the declared $($releaseTarget.PackageName) $($unproved -join ', ')*Nothing was patched*" `
+            "build-release-receipt.ps1 went ahead with fixtures of $($partial -join ', ') only."
+        if (Test-Path -LiteralPath $javaLog) {
+            throw ("build-release-receipt.ps1 patched before it found a declared build missing: " +
+                (@(Get-Content -LiteralPath $javaLog) -join '; '))
+        }
+    }
 } finally {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue
 }

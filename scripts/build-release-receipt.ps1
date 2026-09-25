@@ -13,9 +13,12 @@
     come out of the CLI's own result report, and both manifests are read back with aapt2. A
     patch that fails on any fixture stops the run with its name and no receipt is written: the
     receipt describes a bundle that fully applies, which is why the validator refuses any
-    verdict of applied = false rather than reading it as a recorded failure. At least one
-    fixture has to be the catalog's declared version patched without -f, or there is nothing
-    in the receipt a user's Manager run corresponds to.
+    verdict of applied = false rather than reading it as a recorded failure. Every build the
+    catalog declares needs a fixture of its own, patched without -f: the README says the
+    patches were checked on each of them, and the receipt is refused without a run of every
+    one. A fixture of any other build is patched under -f and recorded as forced. The fixtures'
+    base manifests are read before anything is patched, so a declared build with no fixture
+    stops the run at once instead of after the others, which for Facebook unpacks gigabytes.
 
     The patched APKs are working files and are deleted on the way out, including after a failure.
 
@@ -187,8 +190,37 @@ New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 $workRoot = (Resolve-Path -LiteralPath $WorkDir).Path
 $targets = New-Object System.Collections.Generic.List[object]
 
+# Every declared build needs its own run without -f, and the receipt check refuses a receipt
+# without one. That check comes after the patch runs, and a Facebook patch run unpacks the whole
+# bundle, while a base manifest is cheap to read. So the fixtures are held to the catalog here,
+# before anything is patched: a run given only the newest build patched it and then refused the
+# receipt it had produced.
+$stockFacts = @{}
 foreach ($apk in $Fixture) {
     if (-not (Test-Path -LiteralPath $apk -PathType Leaf)) { throw "Fixture not found: $apk" }
+    $label = Split-Path -Leaf $apk
+    $readDir = Resolve-WithinRoot -Path (Join-Path $workRoot ("manifest-" + [guid]::NewGuid().ToString('N'))) -Root $workRoot
+    try {
+        # Facebook ships as a split bundle, which aapt2 can't read; its manifest is the base APK's.
+        $stockApk = Get-BaseApk -Apk $apk -Destination (Join-Path $readDir 'stock-base.apk')
+        $stock = Get-ApkManifestFacts -Apk $stockApk -Aapt2 $Aapt2
+    } finally {
+        Remove-GeneratedPath -Path $readDir -Root $workRoot
+    }
+    if ($stock.package -ne $expectedTarget.PackageName) {
+        throw "$label is $($stock.package), not the catalog's target $($expectedTarget.PackageName)."
+    }
+    $stockFacts[$apk] = $stock
+}
+$fixtureVersions = @($Fixture | ForEach-Object { [string]$stockFacts[$_].versionName })
+$unfixed = @($expectedTarget.PackageVersions | Where-Object { $fixtureVersions -notcontains $_ })
+if ($unfixed.Count -gt 0) {
+    throw ("No fixture is the declared $($expectedTarget.PackageName) $($unfixed -join ', '), and the " +
+        "receipt needs a run of every declared build without -f. The fixtures given are " +
+        "$($fixtureVersions -join ', '). Nothing was patched.")
+}
+
+foreach ($apk in $Fixture) {
     $label = Split-Path -Leaf $apk
     Write-Host "[receipt] patching $label with $($patchNames.Count) patches"
 
@@ -196,12 +228,7 @@ foreach ($apk in $Fixture) {
     $runDir = Resolve-WithinRoot -Path (Join-Path $workRoot "receipt-$runId") -Root $workRoot
     New-Item -ItemType Directory -Force -Path $runDir | Out-Null
     try {
-        # Facebook ships as a split bundle, which aapt2 can't read; its manifest is the base APK's.
-        $stockApk = Get-BaseApk -Apk $apk -Destination (Join-Path $runDir 'stock-base.apk')
-        $stock = Get-ApkManifestFacts -Apk $stockApk -Aapt2 $Aapt2
-        if ($stock.package -ne $expectedTarget.PackageName) {
-            throw "$label is $($stock.package), not the catalog's target $($expectedTarget.PackageName)."
-        }
+        $stock = $stockFacts[$apk]
 
         $out = Resolve-WithinRoot -Path (Join-Path $runDir 'patched.apk') -Root $workRoot
         $temp = Resolve-WithinRoot -Path (Join-Path $runDir 'tmp') -Root $workRoot
