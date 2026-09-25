@@ -55,8 +55,11 @@ private const val DOWNLOAD_ROW = "fds_control_download_video"
 /** What this button is called in the slot the sidebar fills with `share_button`. */
 private const val TEST_ID = "download_button"
 
-/** The label. The factory takes it as a plain string, so no resource is needed. */
-private const val LABEL = "Download"
+/**
+ * The label, read at run time in the phone's language. The factory takes it as a plain string, so
+ * no resource is needed, and a string written into the patch was English on every phone.
+ */
+private const val LABEL = "$HANDLER->label()Ljava/lang/String;"
 
 /**
  * What is written under the icon.
@@ -473,7 +476,8 @@ private fun buildButton(
         move-object/from16 v6, p0
 
 ${handlers(hdField, sdField, manifestField)}
-        const-string v1, "$LABEL"
+        invoke-static { }, $LABEL
+        move-result-object v1
 
         new-instance v2, $primaryType
         invoke-direct { v2, v1, v8 }, $primaryType-><init>(Ljava/lang/String;$FUNCTION1)V

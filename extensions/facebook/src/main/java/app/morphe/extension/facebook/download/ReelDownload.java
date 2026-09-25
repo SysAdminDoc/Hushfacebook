@@ -11,6 +11,7 @@ import android.content.Context;
 
 import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.diagnostics.DiagnosticCategory;
@@ -100,6 +101,19 @@ public final class ReelDownload implements Function1<Object, Object> {
             Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE,
                 () -> "could not read the reel Download switch", t);
             return false;
+        }
+    }
+
+    /**
+     * The button's name, in the phone's language. Facebook's factory takes it as a plain string,
+     * and it's what a screen reader says for the button, since nothing is written under the icon.
+     * It was the English word written into the patch, so every phone heard "Download". Never throws.
+     */
+    public static String label() {
+        try {
+            return L10n.t("Download");
+        } catch (Throwable t) {
+            return "Download";
         }
     }
 

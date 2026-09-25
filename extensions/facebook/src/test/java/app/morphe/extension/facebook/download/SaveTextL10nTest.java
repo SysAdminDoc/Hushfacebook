@@ -82,6 +82,37 @@ public class SaveTextL10nTest {
         }
     }
 
+    /** The numbers are written the phone's way, in whatever language the sentence comes out in. */
+    @Test
+    @Config(qualifiers = "de")
+    public void progressNumbersAreWrittenThePhonesWay() {
+        long mib = 1024L * 1024L;
+        String german = L10nTablesForTests.of("de").get("%1$s of %2$s");
+        assertEquals(String.format(german, "4,2 MB", "100 MB"), SaveControl.progressText((long) (4.2 * mib), 100 * mib));
+    }
+
+    /** A French phone has no French table: an English sentence, French numbers. */
+    @Test
+    @Config(qualifiers = "fr-rFR")
+    public void aPhoneWithNoTableReadsEnglishWithItsOwnNumbers() {
+        long mib = 1024L * 1024L;
+        assertEquals("4,2 MB of 100 MB", SaveControl.progressText((long) (4.2 * mib), 100 * mib));
+        assertEquals("12 MB so far", SaveControl.progressText(12 * mib, -1));
+    }
+
+    /** The reel button's label, which the patch reads from here rather than writing it in English. */
+    @Test
+    public void theReelButtonIsLabelledFromTheCatalog() {
+        String label = ReelDownload.label();
+        assertTrue(label, label.startsWith("[") && label.endsWith("]"));
+    }
+
+    @Test
+    @Config(qualifiers = "es")
+    public void theReelButtonIsLabelledInThePhonesLanguage() {
+        assertEquals(L10nTablesForTests.of("es").get("Download"), ReelDownload.label());
+    }
+
     /** A channel named in one language is renamed in the next, keeping what the person set. */
     @Test
     @Config(qualifiers = "de")
