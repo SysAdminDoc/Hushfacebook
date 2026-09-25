@@ -181,6 +181,45 @@ public class DownloaderTest {
         assertRefused(Downloader.Status.REFUSED, "/fake.mp4", Downloader.Kind.VIDEO, Downloader.MAX_BYTES);
     }
 
+    /**
+     * The sniff reads a box name in the fifth to eighth bytes, and text can spell one there. The
+     * size in front of it is what gives text away: four printable characters read as more than
+     * 512 MB.
+     */
+    @Test
+    public void textThatSpellsABoxNameIsNotAContainer() throws IOException {
+        String[] texts = {
+                "The free trial has ended. Log in to watch.", "<!--free-->", "Get free music at example",
+                "Now skip ahead to the good part", "Too wide a request for this page",
+        };
+        for (String text : texts) {
+            byte[] body = text.getBytes(StandardCharsets.US_ASCII);
+            assertEquals(text, null, Downloader.sniff(Downloader.Kind.VIDEO, body, body.length));
+            assertEquals(text, null, Downloader.sniff(Downloader.Kind.AUDIO, body, body.length));
+        }
+        byte[] trial = texts[0].getBytes(StandardCharsets.US_ASCII);
+        serve("/trial.mp4", "video/mp4", trial);
+        assertRefused(Downloader.Status.REFUSED, "/trial.mp4", Downloader.Kind.VIDEO, Downloader.MAX_BYTES);
+    }
+
+    /** 0 runs to the end of the file and 1 means a 64-bit size follows. Nothing else under 8 is a box. */
+    @Test
+    public void aBoxSizeHasToBeOneAContainerCanStartWith() {
+        for (long size : new long[] { 0, 1, 8, 0x20, Downloader.MAX_BYTES }) {
+            assertEquals("size " + size, "video/mp4", Downloader.sniff(Downloader.Kind.VIDEO, box(size), 12));
+        }
+        for (long size : new long[] { 2, 7, Downloader.MAX_BYTES + 1, 0xFFFFFFFFL }) {
+            assertEquals("size " + size, null, Downloader.sniff(Downloader.Kind.VIDEO, box(size), 12));
+        }
+    }
+
+    private static byte[] box(long size) {
+        return new byte[] {
+                (byte) (size >>> 24), (byte) (size >>> 16), (byte) (size >>> 8), (byte) size,
+                'f', 't', 'y', 'p', 'i', 's', 'o', 'm',
+        };
+    }
+
     @Test
     public void aPictureAskedForAsVideoIsRefused() throws IOException {
         serve("/typed.jpg", "image/jpeg", jpeg(5000));

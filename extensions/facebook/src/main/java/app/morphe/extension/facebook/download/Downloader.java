@@ -353,7 +353,7 @@ final class Downloader {
      * video name, it looks like a success and isn't.
      */
     static String sniff(Kind kind, byte[] head, int length) {
-        String box = length >= 8 ? ascii(head, 4, 4) : null;
+        String box = length >= 8 && boxSizeFits(head) ? ascii(head, 4, 4) : null;
         boolean isoMedia = box != null && (box.equals("ftyp") || box.equals("styp") || box.equals("moov")
             || box.equals("mdat") || box.equals("free") || box.equals("skip") || box.equals("wide")
             || box.equals("sidx") || box.equals("moof"));
@@ -380,6 +380,18 @@ final class Downloader {
                 if (imageBrand) return brand.startsWith("avi") ? "image/avif" : "image/heic";
                 return null;
         }
+    }
+
+    /**
+     * Whether the first four bytes can be the size of an ISO media box: 0 (it runs to the end of
+     * the file), 1 (a 64-bit size follows its name), or at least its own 8-byte header and at most
+     * the cap. Four printable characters read as a size over 512 MB, so text that spells a box
+     * name in its fifth to eighth bytes, as "The free trial has ended" does, isn't a container.
+     */
+    private static boolean boxSizeFits(byte[] head) {
+        long size = ((head[0] & 0xFFL) << 24) | ((head[1] & 0xFFL) << 16) | ((head[2] & 0xFFL) << 8)
+            | (head[3] & 0xFFL);
+        return size == 0 || size == 1 || (size >= 8 && size <= MAX_BYTES);
     }
 
     private static boolean starts(byte[] head, int length, int... signature) {
