@@ -25,10 +25,18 @@ import java.util.Locale;
  * <p>The host check is the one that matters: TLS then has to show Meta's certificate for that
  * name, which nothing on a home network can. When the socket goes straight to the address the
  * phone's own lookup gives, that answer has to be public too, a second fence against a lookup
- * that points a Meta name at a private address. Through a VPN or a proxy the lookup isn't where
- * the socket goes, so that fence stays down there: fake-IP proxy clients (Clash, sing-box,
- * v2rayNG, common where Facebook is blocked) answer every name from 198.18.0.0/15 or fc00::/18
- * and carry the connection to the real host, and a proxy resolves the name itself.
+ * that points a Meta name at a private address. It is advisory: the connection looks the name up
+ * again, so a resolver that changes its answer between the two gets past it to a handshake, and
+ * TLS is what stops it there. The lookup uses the host exactly as the connection does, trailing
+ * dot and all, so the two at least read one cache entry. Through a VPN or a proxy the lookup
+ * isn't where the socket goes, so that fence stays down there, and a proxy resolves the name
+ * itself.
+ *
+ * <p>FAKE_IP: fake-IP DNS (Clash, sing-box, v2rayNG, OpenClash, common where Facebook is
+ * blocked) answers every name from 198.18.0.0/15 or fc00::/18 and carries the connection to the
+ * real host. It runs as a VPN on the phone, which the route sees, or on the home router, which it
+ * can't: a direct route then gets those answers too, and refusing them failed every save there.
+ * Neither range is a home network's, so they are let through on every route.
  *
  * <p>No Android type here, like {@link RenditionPicker}: the rules run under plain JUnit. Not final,
  * so a test can let its local server through and hand every other hop to these rules.
@@ -95,7 +103,9 @@ class MediaUrlPolicy {
         if (shape != null) return new Refusal(shape, false);
         if (!route.direct(url)) return null;
 
-        String host = normalise(url.getHost());
+        // Lowercase only. The connection resolves the host as written, trailing dot included, and
+        // a stripped name would be looked up under another cache key than the socket's.
+        String host = url.getHost().toLowerCase(Locale.US);
         InetAddress[] addresses;
         try {
             addresses = resolver.resolve(host);
@@ -209,7 +219,7 @@ class MediaUrlPolicy {
         if (a0 >= 240) return "a reserved address";
         if (a0 == 192 && a1 == 0 && (a2 == 0 || a2 == 2)) return "a reserved address";
         if (a0 == 192 && a1 == 88 && a2 == 99) return "a reserved address";
-        if (a0 == 198 && (a1 == 18 || a1 == 19)) return "a reserved address";
+        // 198.18.0.0/15 is let through: see FAKE_IP in the class notes.
         if (a0 == 198 && a1 == 51 && a2 == 100) return "a reserved address";
         if (a0 == 203 && a1 == 0 && a2 == 113) return "a reserved address";
         return null;
@@ -217,7 +227,9 @@ class MediaUrlPolicy {
 
     private static String nonPublicV6(byte[] b) {
         int first = b[0] & 0xFF;
-        if ((first & 0xFE) == 0xFC) return "a private address";
+        // fc00::/18 is let through, like 198.18.0.0/15; the rest of fc00::/7 stays private.
+        boolean fakeIp = first == 0xFC && b[1] == 0 && (b[2] & 0xC0) == 0;
+        if ((first & 0xFE) == 0xFC && !fakeIp) return "a private address";
         if (first == 0xFE && (b[1] & 0xC0) == 0x80) return "a link-local address";
         if (first == 0xFE && (b[1] & 0xC0) == 0xC0) return "a private address";
         if (first == 0xFF) return "a multicast address";

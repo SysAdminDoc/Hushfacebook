@@ -113,7 +113,7 @@ public class MediaUrlPolicyTest {
                 { "169.254.169.254", "link-local" }, { "fe80::1", "link-local" },
                 { "224.0.0.1", "multicast" }, { "ff02::1", "multicast" },
                 { "0.0.0.0", "unspecified" }, { "::", "unspecified" },
-                { "240.0.0.1", "reserved" }, { "255.255.255.255", "reserved" }, { "198.18.0.1", "reserved" },
+                { "240.0.0.1", "reserved" }, { "255.255.255.255", "reserved" }, { "fc80::1", "private" },
                 { "192.0.2.1", "reserved" }, { "203.0.113.9", "reserved" }, { "2001:db8::1", "reserved" },
                 { "100.64.0.1", "carrier-grade NAT" },
                 { "::ffff:10.0.0.1", "private" }, { "64:ff9b::a00:1", "private" }, { "2002:a00:1::", "private" },
@@ -170,8 +170,37 @@ public class MediaUrlPolicyTest {
         assertEquals("it is not HTTPS", refusal(anyAnswer, CDN.replace("https://", "http://")));
         assertEquals("its host is not one of Meta's media servers", refusal(anyAnswer, "https://example.com/v.mp4"));
         assertEquals("its host is a bare IP address", refusal(anyAnswer, "https://10.0.0.1/v.mp4"));
-        // And without a tunnel the same fake answer is refused.
-        assertEquals("its host resolves to a reserved address", refusal(resolvingTo("198.18.0.23"), CDN));
+    }
+
+    /**
+     * The same fake-IP DNS often runs on the home router instead, and then the phone sees a direct
+     * route answering from those pools. Refusing them there failed every save behind such a router,
+     * so both pools pass on any route, while the rest of fc00::/7 and every LAN range still don't.
+     */
+    @Test
+    public void aFakeIpAnswerPassesOnADirectRouteToo() throws Exception {
+        assertNull(refusal(resolvingTo("198.18.0.23"), CDN));
+        assertNull(refusal(resolvingTo("198.19.255.1"), CDN));
+        assertNull(refusal(resolvingTo("fc00::17"), CDN));
+        assertNull(refusal(resolvingTo("fc00:3fff::1"), CDN));
+        assertEquals("its host resolves to a private address", refusal(resolvingTo("fc00:4000::1"), CDN));
+        assertEquals("its host resolves to a private address", refusal(resolvingTo("fd00::1"), CDN));
+        assertEquals("its host resolves to a private address", refusal(resolvingTo("192.168.1.1"), CDN));
+    }
+
+    /**
+     * The lookup asks for the host the way the connection will, trailing dot included, so both
+     * read one cache entry rather than two a resolver could answer differently.
+     */
+    @Test
+    public void theLookupUsesTheHostAsTheConnectionWritesIt() throws Exception {
+        List<String> asked = new ArrayList<>();
+        MediaUrlPolicy recording = new MediaUrlPolicy(host -> {
+            asked.add(host);
+            return new InetAddress[] { InetAddress.getByName(PUBLIC) };
+        });
+        assertNull(refusal(recording, "https://Scontent.XX.fbcdn.net./x.mp4"));
+        assertEquals(java.util.Collections.singletonList("scontent.xx.fbcdn.net."), asked);
     }
 
     @Test
