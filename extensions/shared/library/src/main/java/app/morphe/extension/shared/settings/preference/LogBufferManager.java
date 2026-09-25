@@ -164,15 +164,10 @@ public final class LogBufferManager {
 
     public static void exportToClipboard() {
         try {
-            String exportText = buildExportText();
+            String exportText = clipboardText(CLIPBOARD_MAX_CHARS);
             if (exportText.isEmpty()) {
                 Utils.showToastShort(say(nothingToExportMessage, "No matching diagnostics found."));
                 return;
-            }
-            if (exportText.length() > CLIPBOARD_MAX_CHARS) {
-                exportText = "MORPHE DIAGNOSTIC REPORT\n"
-                        + "clipboard_note: older content omitted; use Save full report for everything\n\n"
-                        + exportText.substring(exportText.length() - CLIPBOARD_MAX_CHARS);
             }
             Utils.setClipboard(exportText);
             Utils.showToastShort(say(copiedMessage, "Diagnostic report copied to the clipboard."));
@@ -327,17 +322,84 @@ public final class LogBufferManager {
     }
 
     public static String buildExportText() {
+        Export export = buildExport();
+        return export == null ? "" : export.head + eventsSection(export.events, null);
+    }
+
+    /**
+     * What Copy quick report puts on the clipboard: the whole report when it fits in
+     * [maxChars]. Past that the oldest events go first, so the header and every fixed section
+     * arrive whole. Which build, which switches, what stayed in and whether the process ran
+     * paused are what a pasted report is read for, and they come before the events. Only a
+     * report whose fixed part alone is too long, which takes a long crash trace, is cut, and
+     * then at its end.
+     */
+    static String clipboardText(int maxChars) {
+        Export export = buildExport();
+        if (export == null) return "";
+        String whole = export.head + eventsSection(export.events, null);
+        if (whole.length() <= maxChars) return whole;
+
+        // Room is kept for the longest the note can be, with every event left out.
+        int total = export.events.size();
+        int budget = maxChars - export.head.length()
+                - eventsSection(Collections.<String>emptyList(), droppedNote(total)).length();
+        if (budget >= 0) {
+            int from = total;
+            int used = 0;
+            while (from > 0) {
+                int cost = export.events.get(from - 1).length() + (used > 0 ? 1 : 0);
+                if (used + cost > budget) break;
+                used += cost;
+                from--;
+            }
+            return export.head + eventsSection(export.events.subList(from, total), droppedNote(from));
+        }
+
+        String cut = "\nclipboard_note: cut at " + maxChars + " characters; use Save full report for everything\n";
+        return export.head.substring(0, Math.max(0, maxChars - cut.length())) + cut;
+    }
+
+    private static String droppedNote(int dropped) {
+        return "clipboard_note: " + dropped + " older events left out; use Save full report for everything";
+    }
+
+    /** The [SELECTED EVENTS] section, with [note] above its column heading, or "" with neither. */
+    private static String eventsSection(List<String> events, String note) {
+        if (events.isEmpty() && note == null) return "";
+        StringBuilder section = new StringBuilder("\n\n[SELECTED EVENTS]\n");
+        if (note != null) section.append(note).append('\n');
+        section.append("category | timestamp | thread | source | level | message\n");
+        for (int i = 0; i < events.size(); i++) {
+            if (i > 0) section.append('\n');
+            section.append(events.get(i));
+        }
+        return section.toString();
+    }
+
+    /** The report before its events, and the events oldest first, each one redacted. */
+    private static final class Export {
+        final String head;
+        final List<String> events;
+
+        Export(String head, List<String> events) {
+            this.head = head;
+            this.events = events;
+        }
+    }
+
+    /** The report in its two parts, or null when nothing in it is worth sending. */
+    private static Export buildExport() {
         Set<String> selected = LogExportFilterPreference.parse(BaseSettings.DEBUG_LOG_FILTERS.get());
         boolean includeAll = selected.isEmpty() || selected.contains("all");
         String crash = DiagnosticRedactor.redact(readCrashReport(Utils.getContext()));
         String npthCrash = DiagnosticRedactor.redact(readNpthCrashReport(Utils.getContext()));
 
         List<DiagnosticEvent> snapshot = new ArrayList<>(logBuffer);
-        StringBuilder events = new StringBuilder();
+        List<String> events = new ArrayList<>();
         for (DiagnosticEvent event : snapshot) {
             if (!includeAll && !selected.contains(event.category.value)) continue;
-            if (events.length() > 0) events.append('\n');
-            events.append(DiagnosticRedactor.redact(event.format()));
+            events.add(DiagnosticRedactor.redact(event.format()));
         }
 
         // Hook misses are buffered under PATCH_ERRORS, so the table follows the same choice
@@ -363,10 +425,10 @@ public final class LogBufferManager {
         // A table with a miss in it is different. Those events are the oldest in the buffer and
         // are the first evicted, so on a badly broken build the table is exactly what would be
         // dropped, and it is the thing the report exists to carry.
-        boolean worthReporting = paused || !crash.isEmpty() || !npthCrash.isEmpty() || events.length() > 0
+        boolean worthReporting = paused || !crash.isEmpty() || !npthCrash.isEmpty() || !events.isEmpty()
                 || (hooks.length() > 0
                         && app.morphe.extension.shared.diagnostics.HookStatus.anyMissing());
-        if (!worthReporting) return "";
+        if (!worthReporting) return null;
 
         StringBuilder report = new StringBuilder();
         report.append("MORPHE DIAGNOSTIC REPORT\n")
@@ -426,12 +488,7 @@ public final class LogBufferManager {
         if (!lastExit.isEmpty()) {
             report.append("\n[LAST EXIT]\n").append(lastExit).append('\n');
         }
-        if (events.length() > 0) {
-            report.append("\n\n[SELECTED EVENTS]\n")
-                    .append("category | timestamp | thread | source | level | message\n")
-                    .append(events);
-        }
-        return report.toString();
+        return new Export(report.toString(), events);
     }
 
     /**
