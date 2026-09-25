@@ -66,6 +66,11 @@ public final class MediaDownload {
 
     private static final AtomicInteger IN_FLIGHT = new AtomicInteger();
 
+    /** Saves still running. A test waits on this for the ones it started through a hook. */
+    static int savesInFlight() {
+        return IN_FLIGHT.get();
+    }
+
     /**
      * Save the media of the story that is open.
      *

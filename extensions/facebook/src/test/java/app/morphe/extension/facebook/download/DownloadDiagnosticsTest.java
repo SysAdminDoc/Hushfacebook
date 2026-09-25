@@ -160,10 +160,15 @@ public class DownloadDiagnosticsTest {
         }
     }
 
-    /** Waits for every save the feature started on its own worker. */
+    /**
+     * Waits for every save the feature started on its own worker. The count goes up before a hook
+     * returns and down only after the worker has logged how its save ended.
+     */
     private static void waitForSaves() throws InterruptedException {
-        for (Thread thread : Thread.getAllStackTraces().keySet()) {
-            if ("hushfacebook-save".equals(thread.getName())) thread.join(20_000);
+        long deadline = System.nanoTime() + 20_000_000_000L;
+        while (MediaDownload.savesInFlight() > 0) {
+            assertTrue("a save never finished", System.nanoTime() < deadline);
+            Thread.sleep(10);
         }
     }
 
