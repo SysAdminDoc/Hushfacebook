@@ -152,6 +152,51 @@ public class MediaSaveTest {
         assertNothingWasCreated("a foreign DASH track", result);
     }
 
+    private DashManifest.Track goodPicture() {
+        byte[] picture = mp4(64_000);
+        serve("/v.mp4", "video/mp4", picture, picture.length);
+        return new DashManifest.Track("video/mp4", "avc1.64001f", 1280, 720, 2_000_000, origin + "/v.mp4");
+    }
+
+    /**
+     * The case above stops at the picture, so nothing held the sound track to the same checks.
+     * The sound here is a good file on a second server this test's policy doesn't let through, so
+     * a sound fetch that skipped the policy would get it and fail later, at the join.
+     */
+    @Test
+    public void aSoundTrackOffMetasServersIsRefusedAfterAGoodPicture() throws IOException {
+        DashManifest.Track video = goodPicture();
+        try (LocalServer foreign = new LocalServer()) {
+            byte[] sound = mp4(20_000);
+            foreign.serve("/a.mp4", 200, "audio/mp4", sound, sound.length);
+            server.redirect("/away.mp4", foreign.origin() + "/a.mp4");
+
+            for (String url : new String[] { foreign.origin() + "/a.mp4", origin + "/away.mp4" }) {
+                DashManifest.Track audio = new DashManifest.Track("audio/mp4", "mp4a.40.2", 0, 0, 128_000, url);
+                Downloader.Result result = DashSave.save(context, video, audio, new MediaStoreWriter(context, true), policy);
+                assertEquals(url + ": " + result, Downloader.Status.REFUSED, result.status);
+                assertNothingWasCreated("a DASH save whose sound is at " + url, result);
+            }
+        }
+    }
+
+    /**
+     * Each track used to get the whole cap, so a pair could join into a file over it. The sound
+     * gets what the picture left now, and 64,000 plus 50,000 doesn't fit in 100,000.
+     */
+    @Test
+    public void aDashPairOverTheCapIsRefusedBeforeItIsJoined() {
+        DashManifest.Track video = goodPicture();
+        byte[] sound = mp4(50_000);
+        serve("/a.mp4", "audio/mp4", sound, sound.length);
+        DashManifest.Track audio = new DashManifest.Track("audio/mp4", "mp4a.40.2", 0, 0, 128_000, origin + "/a.mp4");
+
+        Downloader.Result result = DashSave.save(context, video, audio, new MediaStoreWriter(context, true), policy, 100_000);
+
+        assertEquals(result.toString(), Downloader.Status.TOO_LARGE, result.status);
+        assertNothingWasCreated("a DASH pair over the cap", result);
+    }
+
     /** MediaStore's video and image tables, as much of them as a save touches. */
     public static final class Gallery extends ContentProvider {
         final Map<Long, ContentValues> rows = new HashMap<>();

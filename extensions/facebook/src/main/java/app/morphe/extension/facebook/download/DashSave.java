@@ -110,6 +110,22 @@ final class DashSave {
         Downloader.Sink sink,
         MediaUrlPolicy policy
     ) {
+        return save(application, video, audio, sink, policy, Downloader.MAX_BYTES);
+    }
+
+    /**
+     * [maxBytes] holds the two tracks together, the way it holds a single file: the sound gets
+     * what the picture left of it, and the joined file is held to it too. So what reaches the
+     * gallery is never over the cap, whichever way it was saved.
+     */
+    static Downloader.Result save(
+        Context application,
+        DashManifest.Track video,
+        DashManifest.Track audio,
+        Downloader.Sink sink,
+        MediaUrlPolicy policy,
+        long maxBytes
+    ) {
         File videoFile = null;
         File audioFile = null;
         File joined = null;
@@ -119,17 +135,23 @@ final class DashSave {
             if (folder == null) return Downloader.Result.fail(Downloader.Status.WRITE_ERROR, "no cache folder");
 
             videoFile = File.createTempFile("video", ".mp4", folder);
-            Downloader.Result result = Downloader.fetch(video.url, Downloader.Kind.VIDEO, videoFile, policy);
+            Downloader.Result result = Downloader.fetch(video.url, Downloader.Kind.VIDEO, videoFile, policy, maxBytes);
             if (!result.ok()) return result;
 
             if (audio != null) {
                 audioFile = File.createTempFile("audio", ".mp4", folder);
-                result = Downloader.fetch(audio.url, Downloader.Kind.AUDIO, audioFile, policy);
+                result = Downloader.fetch(audio.url, Downloader.Kind.AUDIO, audioFile, policy,
+                    maxBytes - videoFile.length());
                 if (!result.ok()) return result;
             }
 
             joined = File.createTempFile("joined", ".mp4", folder);
             join(videoFile, audioFile, joined);
+            // Joining writes boxes of its own, so the file itself is held to the cap as well.
+            if (joined.length() > maxBytes) {
+                return Downloader.Result.fail(Downloader.Status.TOO_LARGE,
+                    "the joined file is " + joined.length() + " bytes, more than " + maxBytes);
+            }
 
             return Downloader.publish(joined, "video/mp4", sink);
         } catch (Throwable t) {
