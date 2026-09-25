@@ -2948,6 +2948,50 @@ try {
         Invoke-FixtureGit -Root $releaseRepo -Arguments @('tag', '--force', "v$indexVersionHere", $releaseCommit) | Out-Null
         Invoke-FixtureGit -Root $releaseRepo -Arguments @('config', '--unset', "url.$publishedRepo.insteadOf") | Out-Null
     }
+
+    # A lag window: the source has moved on to the next version and pins the next Manager floor,
+    # the clone already has that version's tag, and the index still describes the release before
+    # it. The description is held to the floor the index version's tag pins, not the source
+    # version's; the two tags pin different floors here, so reading the wrong one refuses the tree.
+    # Then the same window in a clone without the index version's tag, which says the floor
+    # wasn't checked.
+    function Edit-ReleaseFile([string]$Name, [scriptblock]$Edit) {
+        $path = Join-Path $releaseRepo $Name
+        $text = [System.IO.File]::ReadAllText($path)
+        $edited = & $Edit $text
+        if ($edited -ceq $text) { throw "The lag window left $Name as it was, so the case below would prove nothing." }
+        [System.IO.File]::WriteAllText($path, $edited, (New-Object System.Text.UTF8Encoding($false)))
+    }
+    $releasedAs = [version]$releaseVersionHere
+    $laterVersion = "$($releasedAs.Major).$($releasedAs.Minor).$($releasedAs.Build + 1)"
+    $releasedFloor = [version]$releaseFloor
+    $laterFloor = "$($releasedFloor.Major).$($releasedFloor.Minor + 1).0"
+    Edit-ReleaseFile 'gradle.properties' { param($text) $text -replace '(?m)^(\s*version\s*=\s*)\S+', "`${1}$laterVersion" }
+    Edit-ReleaseFile 'patches-list.json' { param($text) $text.Replace('"v' + $releaseVersionHere + '"', '"v' + $laterVersion + '"') }
+    Edit-ReleaseFile 'CHANGELOG.md' {
+        param($text) ([regex]'(?m)^## ').Replace($text,
+            "## $laterVersion (2026-09-26)`n`n* **Facebook:** Needs Morphe Manager $laterFloor or newer.`n`n## ", 1)
+    }
+    Edit-ReleaseFile 'gradle/libs.versions.toml' {
+        param($text) $text -replace '(?m)^(\s*manager-floor\s*=\s*")[^"]+', "`${1}$laterFloor"
+    }
+    Edit-ReleaseFile 'README.md' { param($text) $text.Replace($releaseFloor, $laterFloor) }
+    Edit-ReleaseFile '.github/ISSUE_TEMPLATE/bug_report.yml' {
+        param($text) $text.Replace("Morphe Manager $releaseFloor", "Morphe Manager $laterFloor")
+    }
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('add', '--', 'gradle.properties', 'patches-list.json', 'CHANGELOG.md',
+        'gradle/libs.versions.toml', 'README.md', '.github/ISSUE_TEMPLATE/bug_report.yml') | Out-Null
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('commit', '-m', 'next release', '--quiet') | Out-Null
+    $laterCommit = "$(Invoke-FixtureGit -Root $releaseRepo -Arguments @('rev-parse', 'HEAD') | Select-Object -First 1)".Trim()
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('tag', "v$laterVersion", $laterCommit) | Out-Null
+    $said = Invoke-ReleaseCheck
+    Assert-True ($said -like "*source $laterVersion is being prepared while the working index remains on $indexVersionHere*" -and
+        $said -like "*the index asks for Morphe Manager $releaseFloor or newer, as tag v$indexVersionHere pins*") `
+        "In a lag window the index was not held to the floor its own version's tag pins: $said"
+    Invoke-FixtureGit -Root $releaseRepo -Arguments @('tag', '-d', "v$indexVersionHere") | Out-Null
+    $said = Invoke-ReleaseCheck
+    Assert-True ($said -like "*tag v$indexVersionHere isn't in this clone, so the Manager floor the index names wasn't checked*") `
+        "A lag window without the index version's tag did not say the floor went unchecked: $said"
 } finally {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
