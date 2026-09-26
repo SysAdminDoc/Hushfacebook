@@ -47,6 +47,7 @@ import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.feed.TypedFeedUnit;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
 import app.morphe.extension.facebook.misc.LinkCleaner;
+import app.morphe.extension.facebook.reels.ReelDeclutter;
 import app.morphe.extension.facebook.stories.StoryAdvance;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
@@ -161,6 +162,12 @@ public class PausedHooksTest {
                     ReelsAdFilter.withoutAdSections(Collections.singletonList(section), AD);
                     return !section.items.contains(ad);
                 }));
+        // A Remix chip under a reel, the Follow button beside its author, and both footer queries.
+        probes.put(PatchFamily.REEL_DECLUTTER, Arrays.asList(
+                () -> ReelDeclutter.filterChips(Arrays.asList(new TypedFeedUnit("XFBFBShortsRemixAttribution"))) != null,
+                ReelDeclutter::hideFollowButton,
+                ReelDeclutter::skipHotComment,
+                ReelDeclutter::skipSocialBubbles));
         probes.put(PatchFamily.EXTERNAL_BROWSER, Collections.singletonList(() -> {
             Activity browser = Robolectric.buildActivity(Activity.class,
                     new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.org/"))).create().get();

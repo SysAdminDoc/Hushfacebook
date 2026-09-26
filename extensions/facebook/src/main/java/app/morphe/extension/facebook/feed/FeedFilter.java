@@ -381,8 +381,11 @@ public final class FeedFilter {
      * <p>A model whose tree Facebook already released answers {@code getTypeName()} from native code
      * with nothing behind it, and no try block catches what that does, so a unit that says its tree
      * isn't valid is never asked.
+     *
+     * <p>Public because the chips under a reel are generated models too, and the Reels clean-up
+     * reads their type the same way.
      */
-    static String typeName(Object feedUnit) {
+    public static String typeName(Object feedUnit) {
         if (feedUnit == null) return null;
         try {
             TypeNameReader reader = TYPE_NAME_READERS.computeIfAbsent(feedUnit.getClass(), TypeNameReader::of);

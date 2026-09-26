@@ -35,6 +35,12 @@ internal object FixtureDex {
         }
     }
 
+    /**
+     * Every dex of the bundle, one at a time, for a test that looks for several things in one
+     * pass. Whatever [visit] keeps has to be copied out, as the other readers here do.
+     */
+    fun forEach(bundle: File, visit: (DexBackedDexFile) -> Unit) = forEachDex(bundle, visit)
+
     /** The classes of [types] the bundle carries, by type. */
     fun classes(bundle: File, types: Set<String>): Map<String, ClassDef> {
         val found = mutableMapOf<String, ClassDef>()

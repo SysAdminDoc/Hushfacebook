@@ -229,11 +229,25 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
         }
 
-        if (build.contains(PatchFamily.SPONSORED_REELS) || build.contains(PatchFamily.REEL_DOWNLOAD)) {
+        if (build.contains(PatchFamily.SPONSORED_REELS) || build.contains(PatchFamily.REEL_DECLUTTER)
+                || build.contains(PatchFamily.REEL_DOWNLOAD)) {
             PreferenceCategory reels = category(screen, L10n.t("Reels and Watch"));
             if (build.contains(PatchFamily.SPONSORED_REELS)) {
                 reels.addPreference(toggle(context, Settings.HIDE_SPONSORED_REELS, L10n.t("Hide sponsored reels"),
                         L10n.t("Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.")));
+            }
+            if (build.contains(PatchFamily.REEL_DECLUTTER)) {
+                reels.addPreference(toggle(context, Settings.HIDE_REEL_CHIPS,
+                        L10n.t("Hide prompts and promos under reels"),
+                        L10n.t("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps "
+                                + "and outside links. The song and other labels stay.")));
+                reels.addPreference(toggle(context, Settings.HIDE_REEL_FOLLOW_BUTTON,
+                        L10n.t("Hide the Follow button on reels"),
+                        L10n.t("The Follow button next to the reel's author. You can still follow them from their profile.")));
+                reels.addPreference(toggle(context, Settings.HIDE_REEL_SOCIAL_FOOTER,
+                        L10n.t("Hide comment and reaction previews"),
+                        L10n.t("The comment Facebook previews under a reel and the bubbles of friends who reacted. "
+                                + "Open the comments to see them all.")));
             }
             if (build.contains(PatchFamily.REEL_DOWNLOAD)) {
                 reels.addPreference(toggle(context, Settings.DOWNLOAD_REELS, L10n.t("Download button on reels"),

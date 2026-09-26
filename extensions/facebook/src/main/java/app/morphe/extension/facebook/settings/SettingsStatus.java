@@ -54,6 +54,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean reelDeclutter() {
+        return false;
+    }
+
     public static boolean adPrefetch() {
         return false;
     }

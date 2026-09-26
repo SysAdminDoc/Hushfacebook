@@ -4,6 +4,7 @@ Every Hushfacebook release, newest first.
 
 ## Unreleased
 
+* **Facebook:** New patch, Clean up Reels. It takes the Follow button off reels and stops the comment and friends' reactions Facebook previews under them. The Remix, Use template, Add yours and Edits buttons go as well, along with the ones for Stars, games, partner apps and links out of Facebook. Each part has its own switch under Reels and Watch. The patch starts off in Morphe Manager, and its switches start on once you pick it.
 * **Facebook:** Saved photos and videos now use the file type found in their bytes when the server labels them incorrectly, so the gallery gets the right extension.
 * **Facebook:** A save now reports a gallery write failure when the file stream can't close or the pending entry can't be published. Unfinished entries are removed.
 * **Facebook:** If the gallery won't remove an unfinished save, Hushfacebook remembers it and tries again the next time Facebook starts.

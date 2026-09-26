@@ -190,6 +190,16 @@
       "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
       "license": "GPL-3.0-only",
       "changes": "Written for Hushfacebook: a Story progress-completion guard on Facebook 577 and 580 that leaves manual navigation alone."
+    },
+    {
+      "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/reels/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/reels/**"
+      ],
+      "origin": "original",
+      "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
+      "license": "GPL-3.0-only",
+      "changes": "Written for Hushfacebook: the Reels viewer clean-up, which drops the chips under a reel by their GraphQL type, answers Facebook's own config for removing the Follow button, and skips the footer's hot comment and friends' reaction queries, each behind its own switch, with the hooks found in Facebook 577 and 580 by kept literals and Redex names."
     }
   ]
 }

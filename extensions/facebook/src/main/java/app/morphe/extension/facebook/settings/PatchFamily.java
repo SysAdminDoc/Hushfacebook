@@ -55,6 +55,8 @@ public enum PatchFamily {
     SPONSORED_REELS(FamilyNames.SPONSORED_REELS, "sponsoredReels",
             "the part of the Reels ad block patched into the app",
             Settings.HIDE_SPONSORED_REELS),
+    REEL_DECLUTTER(FamilyNames.REEL_DECLUTTER, "reelDeclutter", null,
+            Settings.HIDE_REEL_CHIPS, Settings.HIDE_REEL_FOLLOW_BUTTON, Settings.HIDE_REEL_SOCIAL_FOOTER),
     EXTERNAL_BROWSER(FamilyNames.EXTERNAL_BROWSER, "externalBrowser", null,
             Settings.OPEN_LINKS_EXTERNALLY),
     SANITIZE_SHARING_LINKS(FamilyNames.SANITIZE_SHARING_LINKS, "sanitizeSharingLinks", null,

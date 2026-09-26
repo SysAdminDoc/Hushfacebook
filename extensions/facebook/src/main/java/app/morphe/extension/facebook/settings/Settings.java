@@ -85,6 +85,25 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting HIDE_SPONSORED_REELS =
             new BooleanSetting("hushfacebook_hide_sponsored_reels", TRUE);
 
+    /**
+     * The chips under a reel that prompt you to make something (Remix, Use template, Add yours,
+     * Edits) or promote something (Stars, games, a partner app, a link out of Facebook). A chip of
+     * any other type stays.
+     */
+    public static final BooleanSetting HIDE_REEL_CHIPS =
+            new BooleanSetting("hushfacebook_hide_reel_chips", TRUE);
+
+    /** The Follow button in a reel's author row, through Facebook's own config for removing it. */
+    public static final BooleanSetting HIDE_REEL_FOLLOW_BUTTON =
+            new BooleanSetting("hushfacebook_hide_reel_follow_button", TRUE);
+
+    /**
+     * The comment Facebook previews under a reel and the bubbles of friends who reacted. Both
+     * queries are skipped, so neither is drawn.
+     */
+    public static final BooleanSetting HIDE_REEL_SOCIAL_FOOTER =
+            new BooleanSetting("hushfacebook_hide_reel_social_footer", TRUE);
+
     /** Web links leave Facebook's in-app browser for the default browser. */
     public static final BooleanSetting OPEN_LINKS_EXTERNALLY =
             new BooleanSetting("hushfacebook_open_links_externally", TRUE);

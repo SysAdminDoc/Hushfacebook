@@ -55,6 +55,7 @@ public class PatchFamilyTest {
         PauseForTests.resume();
         Settings.HIDE_PROMOTED_POSTS.resetToDefault();
         Settings.HIDE_SPONSORED_POSTS.resetToDefault();
+        Settings.HIDE_REEL_FOLLOW_BUTTON.resetToDefault();
         HookStatus.clear();
     }
 
@@ -153,11 +154,16 @@ public class PatchFamilyTest {
                 "Block background ad prefetch: no switch, stays in while paused: the background ad prefetch block",
                 "not in this build: Hide suggested and promoted posts, Hide Stories tray, Hide Reels in the feed, "
                         + "Block background-return feed refresh, Hide AI-detected posts, "
-                        + "Hide sponsored stories, Stop Story auto-advance, Open links in "
+                        + "Hide sponsored stories, Stop Story auto-advance, Clean up Reels, Open links in "
                         + "external browser, Sanitize sharing links, Download any story, Download any reel, "
                         + "Download any video, Block ad telemetry, Disable Audience Network, AMOLED black theme, Material You theme, "
                         + "Restore screens on re-signed builds"),
                 running);
+        // Clean up Reels has three switches, and the report names each one.
+        Settings.HIDE_REEL_FOLLOW_BUTTON.save(false);
+        assertEquals("Clean up Reels: on (hushfacebook_hide_reel_chips=on, hushfacebook_hide_reel_follow_button=off, "
+                        + "hushfacebook_hide_reel_social_footer=on)",
+                PatchFamily.reportLines(EnumSet.of(PatchFamily.REEL_DECLUTTER), false).get(0));
         // The reel button has a switch now, so the report says what it's set to.
         assertEquals("Download any reel: on (hushfacebook_download_reels=on)",
                 PatchFamily.reportLines(EnumSet.of(PatchFamily.REEL_DOWNLOAD), false).get(0));

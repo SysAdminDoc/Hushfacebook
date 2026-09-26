@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(340);
+        Map<String, String> table = new HashMap<>(352);
         fillDe0(table);
         fillDe1(table);
         fillDe2(table);
@@ -191,8 +191,12 @@ public final class L10nTranslations {
                 "Als KI erkannte Beitr\u00e4ge ausblenden");
         table.put("Hide Reels in the feed",
                 "Reels im Feed ausblenden");
+        table.put("Hide comment and reaction previews",
+                "Vorschau von Kommentaren und Reaktionen ausblenden");
         table.put("Hide promoted posts",
                 "Beworbene Beitr\u00e4ge ausblenden");
+        table.put("Hide prompts and promos under reels",
+                "Aufforderungen und Werbung unter Reels ausblenden");
         table.put("Hide sponsored posts",
                 "Gesponserte Beitr\u00e4ge ausblenden");
         table.put("Hide sponsored reels",
@@ -201,6 +205,8 @@ public final class L10nTranslations {
                 "Gesponserte Stories ausblenden");
         table.put("Hide suggested and promoted units",
                 "Vorschlags- und Werbekarten ausblenden");
+        table.put("Hide the Follow button on reels",
+                "Folgen-Button bei Reels ausblenden");
         table.put("Hide the Stories tray",
                 "Stories-Leiste ausblenden");
         table.put("How far a photo or video you're saving has got, with a button to cancel it",
@@ -267,6 +273,8 @@ public final class L10nTranslations {
                 "Einstellungsdatei wird gelesen");
         table.put("Reels and Watch",
                 "Reels und Watch");
+        table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
+                "Die Buttons Remix, Vorlage verwenden, \u201eDu bist dran\u201c und Edits sowie die f\u00fcr Sterne, Spiele, Partner-Apps und externe Links. Der Song und andere Hinweise bleiben.");
         table.put("Remove tracking from shared links",
                 "Tracking aus geteilten Links entfernen");
         table.put("Retry",
@@ -287,6 +295,9 @@ public final class L10nTranslations {
                 "Vollst\u00e4ndigen Bericht unter Download/Morphe speichern.");
         table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
                 "Speichert deine Schalter und den Ordner in einer Datei. Pause und Debug-Protokoll sind nicht enthalten.");
+    }
+
+    private static void fillDe2(Map<String, String> table) {
         table.put("Saved to %1$s",
                 "Gespeichert unter %1$s");
         table.put("Saved to the gallery",
@@ -295,9 +306,6 @@ public final class L10nTranslations {
                 "Gespeichert. Starte Facebook neu, um diese \u00c4nderung zu \u00fcbernehmen.");
         table.put("Saves will go to a folder named %1$s.",
                 "Was du speicherst, landet dann in einem Ordner namens %1$s.");
-    }
-
-    private static void fillDe2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Foto wird gespeichert");
         table.put("Saving a video",
@@ -346,6 +354,10 @@ public final class L10nTranslations {
                 "Diese Einstellungsdatei ist besch\u00e4digt oder nur teilweise heruntergeladen. Es wurde nichts ge\u00e4ndert.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
                 "Diese Einstellungsdatei stammt aus einer neueren Hushfacebook-Version als dieser. Es wurde nichts ge\u00e4ndert.");
+        table.put("The Follow button next to the reel's author. You can still follow them from their profile.",
+                "Der Folgen-Button neben der Person, die das Reel gepostet hat. \u00dcber ihr Profil kannst du ihr weiterhin folgen.");
+        table.put("The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.",
+                "Der Kommentar, den Facebook unter einem Reel als Vorschau zeigt, und die Blasen der Freunde, die reagiert haben. \u00d6ffne die Kommentare, um alle zu sehen.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Der Diagnosebericht lie\u00df sich noch nicht speichern. Versuche es gleich noch einmal.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -401,7 +413,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(340);
+        Map<String, String> table = new HashMap<>(352);
         fillEs0(table);
         fillEs1(table);
         fillEs2(table);
@@ -548,8 +560,12 @@ public final class L10nTranslations {
                 "Ocultar publicaciones detectadas como IA");
         table.put("Hide Reels in the feed",
                 "Ocultar reels en el feed");
+        table.put("Hide comment and reaction previews",
+                "Ocultar las vistas previas de comentarios y reacciones");
         table.put("Hide promoted posts",
                 "Ocultar publicaciones promocionadas");
+        table.put("Hide prompts and promos under reels",
+                "Ocultar invitaciones y promociones en los reels");
         table.put("Hide sponsored posts",
                 "Ocultar publicaciones publicitarias");
         table.put("Hide sponsored reels",
@@ -558,6 +574,8 @@ public final class L10nTranslations {
                 "Ocultar historias publicitarias");
         table.put("Hide suggested and promoted units",
                 "Ocultar tarjetas sugeridas y promocionadas");
+        table.put("Hide the Follow button on reels",
+                "Ocultar el bot\u00f3n Seguir en los reels");
         table.put("Hide the Stories tray",
                 "Ocultar la bandeja de historias");
         table.put("How far a photo or video you're saving has got, with a button to cancel it",
@@ -624,6 +642,8 @@ public final class L10nTranslations {
                 "Leyendo el archivo de configuraci\u00f3n");
         table.put("Reels and Watch",
                 "Reels y Watch");
+        table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
+                "Los botones para hacer un remix, usar la plantilla, sumar el tuyo o abrir Edits, y los de estrellas, juegos, apps asociadas y enlaces externos. La canci\u00f3n y las dem\u00e1s etiquetas se quedan.");
         table.put("Remove tracking from shared links",
                 "Quitar el seguimiento de los enlaces compartidos");
         table.put("Retry",
@@ -644,6 +664,9 @@ public final class L10nTranslations {
                 "Guarda el informe completo en Download/Morphe.");
         table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
                 "Guarda tus interruptores y la carpeta en un archivo. Pausa y el registro de depuraci\u00f3n no se incluyen.");
+    }
+
+    private static void fillEs2(Map<String, String> table) {
         table.put("Saved to %1$s",
                 "Se guard\u00f3 en %1$s");
         table.put("Saved to the gallery",
@@ -652,9 +675,6 @@ public final class L10nTranslations {
                 "Guardado. Reinicia Facebook para aplicar este cambio.");
         table.put("Saves will go to a folder named %1$s.",
                 "Lo que guardes ir\u00e1 a una carpeta llamada %1$s.");
-    }
-
-    private static void fillEs2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Guardando una foto");
         table.put("Saving a video",
@@ -703,6 +723,10 @@ public final class L10nTranslations {
                 "Ese archivo de configuraci\u00f3n est\u00e1 da\u00f1ado o solo se descarg\u00f3 en parte. No se cambi\u00f3 nada.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
                 "Ese archivo de configuraci\u00f3n lo escribi\u00f3 una versi\u00f3n de Hushfacebook m\u00e1s reciente que esta. No se cambi\u00f3 nada.");
+        table.put("The Follow button next to the reel's author. You can still follow them from their profile.",
+                "El bot\u00f3n Seguir junto a quien public\u00f3 el reel. Puedes seguir a esa persona desde su perfil.");
+        table.put("The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.",
+                "El comentario que Facebook muestra como vista previa debajo de un reel y las burbujas de los amigos que reaccionaron. Abre los comentarios para verlos todos.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Todav\u00eda no se pudo guardar el informe de diagn\u00f3stico. Int\u00e9ntalo de nuevo en un momento.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -758,7 +782,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(340);
+        Map<String, String> table = new HashMap<>(352);
         fillIn0(table);
         fillIn1(table);
         fillIn2(table);
@@ -905,8 +929,12 @@ public final class L10nTranslations {
                 "Sembunyikan postingan yang terdeteksi dibuat dengan AI");
         table.put("Hide Reels in the feed",
                 "Sembunyikan Reels di Kabar Beranda");
+        table.put("Hide comment and reaction previews",
+                "Sembunyikan pratinjau komentar dan reaksi");
         table.put("Hide promoted posts",
                 "Sembunyikan postingan promosi");
+        table.put("Hide prompts and promos under reels",
+                "Sembunyikan ajakan dan promosi di bawah reel");
         table.put("Hide sponsored posts",
                 "Sembunyikan postingan bersponsor");
         table.put("Hide sponsored reels",
@@ -915,6 +943,8 @@ public final class L10nTranslations {
                 "Sembunyikan cerita bersponsor");
         table.put("Hide suggested and promoted units",
                 "Sembunyikan kartu saran dan promosi");
+        table.put("Hide the Follow button on reels",
+                "Sembunyikan tombol Ikuti di reel");
         table.put("Hide the Stories tray",
                 "Sembunyikan deretan Cerita");
         table.put("How far a photo or video you're saving has got, with a button to cancel it",
@@ -981,6 +1011,8 @@ public final class L10nTranslations {
                 "Membaca file pengaturan");
         table.put("Reels and Watch",
                 "Reels dan Watch");
+        table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
+                "Tombol untuk Remix, memakai templat, menambahkan milik Anda, dan Edits, serta tombol Bintang, game, aplikasi mitra, dan tautan eksternal. Lagu dan label lainnya tetap ada.");
         table.put("Remove tracking from shared links",
                 "Hapus pelacakan dari tautan yang dibagikan");
         table.put("Retry",
@@ -1001,6 +1033,9 @@ public final class L10nTranslations {
                 "Simpan laporan lengkap di Download/Morphe.");
         table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
                 "Simpan tombol dan folder Anda ke sebuah berkas. Jeda dan pencatatan debug tidak disertakan.");
+    }
+
+    private static void fillIn2(Map<String, String> table) {
         table.put("Saved to %1$s",
                 "Disimpan ke %1$s");
         table.put("Saved to the gallery",
@@ -1009,9 +1044,6 @@ public final class L10nTranslations {
                 "Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.");
         table.put("Saves will go to a folder named %1$s.",
                 "Semua yang Anda simpan akan masuk ke folder bernama %1$s.");
-    }
-
-    private static void fillIn2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Menyimpan foto");
         table.put("Saving a video",
@@ -1060,6 +1092,10 @@ public final class L10nTranslations {
                 "File pengaturan itu rusak atau hanya terunduh sebagian. Tidak ada yang diubah.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
                 "File pengaturan itu dibuat oleh versi Hushfacebook yang lebih baru daripada versi ini. Tidak ada yang diubah.");
+        table.put("The Follow button next to the reel's author. You can still follow them from their profile.",
+                "Tombol Ikuti di samping nama pembuat reel. Anda tetap bisa mengikutinya dari profilnya.");
+        table.put("The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.",
+                "Komentar yang ditampilkan Facebook sebagai pratinjau di bawah reel, dan gelembung teman yang memberi reaksi. Buka komentar untuk melihat semuanya.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Laporan diagnostik belum dapat disimpan. Coba lagi dalam beberapa saat.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -1115,7 +1151,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(340);
+        Map<String, String> table = new HashMap<>(352);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         fillPt_rBR2(table);
@@ -1262,8 +1298,12 @@ public final class L10nTranslations {
                 "Ocultar posts detectados como IA");
         table.put("Hide Reels in the feed",
                 "Ocultar reels no feed");
+        table.put("Hide comment and reaction previews",
+                "Ocultar pr\u00e9vias de coment\u00e1rios e rea\u00e7\u00f5es");
         table.put("Hide promoted posts",
                 "Ocultar posts promovidos");
+        table.put("Hide prompts and promos under reels",
+                "Ocultar convites e promo\u00e7\u00f5es nos reels");
         table.put("Hide sponsored posts",
                 "Ocultar posts patrocinados");
         table.put("Hide sponsored reels",
@@ -1272,6 +1312,8 @@ public final class L10nTranslations {
                 "Ocultar stories patrocinados");
         table.put("Hide suggested and promoted units",
                 "Ocultar blocos de sugest\u00f5es e promo\u00e7\u00f5es");
+        table.put("Hide the Follow button on reels",
+                "Ocultar o bot\u00e3o Seguir nos reels");
         table.put("Hide the Stories tray",
                 "Ocultar a bandeja de stories");
         table.put("How far a photo or video you're saving has got, with a button to cancel it",
@@ -1338,6 +1380,8 @@ public final class L10nTranslations {
                 "Lendo o arquivo de configura\u00e7\u00f5es");
         table.put("Reels and Watch",
                 "Reels e Watch");
+        table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
+                "Os bot\u00f5es de remix, usar modelo, adicionar o seu e Edits, e os de estrelas, jogos, apps parceiros e links externos. A m\u00fasica e as outras etiquetas continuam.");
         table.put("Remove tracking from shared links",
                 "Remover o rastreamento dos links compartilhados");
         table.put("Retry",
@@ -1358,6 +1402,9 @@ public final class L10nTranslations {
                 "Salve o relat\u00f3rio completo em Download/Morphe.");
         table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
                 "Salve seus bot\u00f5es e a pasta em um arquivo. Pausa e registro de depura\u00e7\u00e3o n\u00e3o s\u00e3o inclu\u00eddos.");
+    }
+
+    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Saved to %1$s",
                 "Salvo em %1$s");
         table.put("Saved to the gallery",
@@ -1366,9 +1413,6 @@ public final class L10nTranslations {
                 "Salvo. Reinicie o Facebook para aplicar esta altera\u00e7\u00e3o.");
         table.put("Saves will go to a folder named %1$s.",
                 "O que voc\u00ea salvar vai para uma pasta chamada %1$s.");
-    }
-
-    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Salvando uma foto");
         table.put("Saving a video",
@@ -1417,6 +1461,10 @@ public final class L10nTranslations {
                 "Esse arquivo de configura\u00e7\u00f5es est\u00e1 danificado ou s\u00f3 foi baixado em parte. Nada foi alterado.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
                 "Esse arquivo de configura\u00e7\u00f5es foi criado por uma vers\u00e3o do Hushfacebook mais recente que esta. Nada foi alterado.");
+        table.put("The Follow button next to the reel's author. You can still follow them from their profile.",
+                "O bot\u00e3o Seguir ao lado de quem publicou o reel. Voc\u00ea ainda pode seguir a pessoa pelo perfil dela.");
+        table.put("The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.",
+                "O coment\u00e1rio que o Facebook mostra como pr\u00e9via abaixo de um reel e as bolhas dos amigos que reagiram. Abra os coment\u00e1rios para ver todos.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "O relat\u00f3rio de diagn\u00f3stico ainda n\u00e3o p\u00f4de ser salvo. Tente de novo em instantes.");
         table.put("The diagnostic report couldn't be saved. Try again.",
@@ -1472,7 +1520,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(340);
+        Map<String, String> table = new HashMap<>(352);
         fillTr0(table);
         fillTr1(table);
         fillTr2(table);
@@ -1619,8 +1667,12 @@ public final class L10nTranslations {
                 "Yapay zek\u00e2 ile \u00fcretildi\u011fi tespit edilen g\u00f6nderileri gizle");
         table.put("Hide Reels in the feed",
                 "Ak\u0131\u015ftaki Reels videolar\u0131n\u0131 gizle");
+        table.put("Hide comment and reaction previews",
+                "Yorum ve tepki \u00f6nizlemelerini gizle");
         table.put("Hide promoted posts",
                 "Tan\u0131t\u0131lan g\u00f6nderileri gizle");
+        table.put("Hide prompts and promos under reels",
+                "Reels videolar\u0131n\u0131n alt\u0131ndaki davetleri ve tan\u0131t\u0131mlar\u0131 gizle");
         table.put("Hide sponsored posts",
                 "Sponsorlu g\u00f6nderileri gizle");
         table.put("Hide sponsored reels",
@@ -1629,6 +1681,8 @@ public final class L10nTranslations {
                 "Sponsorlu hikayeleri gizle");
         table.put("Hide suggested and promoted units",
                 "\u00d6nerilen ve tan\u0131t\u0131lan kartlar\u0131 gizle");
+        table.put("Hide the Follow button on reels",
+                "Reels videolar\u0131ndaki Takip Et d\u00fc\u011fmesini gizle");
         table.put("Hide the Stories tray",
                 "Hikaye \u015feridini gizle");
         table.put("How far a photo or video you're saving has got, with a button to cancel it",
@@ -1695,6 +1749,8 @@ public final class L10nTranslations {
                 "Ayar dosyas\u0131 okunuyor");
         table.put("Reels and Watch",
                 "Reels ve Watch");
+        table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
+                "Remix, \u015fablon kullanma, kendi videonu ekleme ve Edits d\u00fc\u011fmeleri ile y\u0131ld\u0131z, oyun, i\u015f orta\u011f\u0131 uygulamas\u0131 ve d\u0131\u015f ba\u011flant\u0131 d\u00fc\u011fmeleri. \u015eark\u0131 ve di\u011fer etiketler kal\u0131r.");
         table.put("Remove tracking from shared links",
                 "Payla\u015f\u0131lan ba\u011flant\u0131lardan izlemeyi kald\u0131r");
         table.put("Retry",
@@ -1715,6 +1771,9 @@ public final class L10nTranslations {
                 "Tam raporu Download/Morphe konumuna kaydeder.");
         table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
                 "Anahtarlar\u0131n\u0131z\u0131 ve klas\u00f6r\u00fcn\u00fcz\u00fc bir dosyaya kaydedin. Duraklatma ve hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc dahil edilmez.");
+    }
+
+    private static void fillTr2(Map<String, String> table) {
         table.put("Saved to %1$s",
                 "\u015euraya kaydedildi: %1$s");
         table.put("Saved to the gallery",
@@ -1723,9 +1782,6 @@ public final class L10nTranslations {
                 "Kaydedildi. Bu de\u011fi\u015fikli\u011fi uygulamak i\u00e7in Facebook'u yeniden ba\u015flat.");
         table.put("Saves will go to a folder named %1$s.",
                 "Kaydettiklerin %1$s adl\u0131 bir klas\u00f6re gidecek.");
-    }
-
-    private static void fillTr2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Foto\u011fraf kaydediliyor");
         table.put("Saving a video",
@@ -1774,6 +1830,10 @@ public final class L10nTranslations {
                 "Bu ayar dosyas\u0131 hasarl\u0131 ya da yaln\u0131zca bir k\u0131sm\u0131 indirilmi\u015f. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
         table.put("That settings file was written by a newer Hushfacebook than this one. Nothing was changed.",
                 "Bu ayar dosyas\u0131, Hushfacebook'un bu s\u00fcr\u00fcm\u00fcnden daha yeni bir s\u00fcr\u00fcm\u00fcyle olu\u015fturulmu\u015f. Hi\u00e7bir \u015fey de\u011fi\u015ftirilmedi.");
+        table.put("The Follow button next to the reel's author. You can still follow them from their profile.",
+                "Reels videosunu payla\u015fan ki\u015finin ad\u0131n\u0131n yan\u0131ndaki Takip Et d\u00fc\u011fmesi. Onu profilinden yine takip edebilirsin.");
+        table.put("The comment Facebook previews under a reel and the bubbles of friends who reacted. Open the comments to see them all.",
+                "Facebook'un bir Reels videosunun alt\u0131nda \u00f6nizleme olarak g\u00f6sterdi\u011fi yorum ve tepki veren arkada\u015flar\u0131n\u0131n baloncuklar\u0131. Hepsini g\u00f6rmek i\u00e7in yorumlar\u0131 a\u00e7.");
         table.put("The diagnostic report couldn't be saved yet. Try again in a moment.",
                 "Tan\u0131lama raporu hen\u00fcz kaydedilemedi. Birazdan tekrar dene.");
         table.put("The diagnostic report couldn't be saved. Try again.",
