@@ -10,10 +10,11 @@
     Called by .git/hooks/pre-push with the remote name and URL, reading the pushed refs from
     standard input the way git supplies them. Run scripts/install-hooks.ps1 once to wire it up.
 
-    Only what changed is checked: runtime tests when extension or patch sources move, and the
-    release facts when a published file moves. The one check every push gets is a scan of every
-    commit it publishes for tracked files that name the maintainer's machine or a phone. Set
-    HUSHFACEBOOK_SKIP_PRE_PUSH=1 to push anyway.
+    Only what changed is checked: runtime tests when extension or patch sources, or the root files
+    those tests read, move, and the release facts when a published file moves. A move counts at
+    both ends, the path it left and the one it took. The one check every push gets is a scan of
+    every commit it publishes for tracked files that name the maintainer's machine or a phone.
+    Set HUSHFACEBOOK_SKIP_PRE_PUSH=1 to push anyway.
 #>
 [CmdletBinding()]
 param(
@@ -110,16 +111,21 @@ function Get-PushedPaths {
             # when the branch changed only documentation. A first push is rare, and a complete
             # tree cannot be made incomplete by a deleted or force-updated remote-tracking ref.
             $range = "$localSha complete branch tree"
-            $names = Invoke-GitQuietly @('ls-tree', '-r', '--name-only', $localSha)
+            $names = Invoke-GitQuietly @('ls-tree', '-r', '--name-only', '-z', $localSha)
         } else {
             $range = "$remoteSha..$localSha"
-            $names = Invoke-GitQuietly @('diff', '--name-only', $remoteSha, $localSha)
+            # Both ends of a move. Taken for a rename, a moved file is listed under its new path
+            # alone: patches-bundle.json moved away ran no release check, a source moved out of
+            # extensions/ no runtime tests, and a gate suite renamed was never looked for.
+            $names = Invoke-GitQuietly @('diff', '--name-only', '--no-renames', '-z', $remoteSha, $localSha)
         }
         if ($LASTEXITCODE -ne 0) {
             throw "Could not read what $range changes. Fetch the remote and try again."
         }
-        foreach ($name in @($names)) {
-            if (-not [string]::IsNullOrWhiteSpace($name)) { [void]$paths.Add($name.Trim()) }
+        # Separated by NULs, so git prints each path as it is. Line by line it quotes a path with a
+        # byte outside ASCII, "extensions/.../\303\234ber.java" in quotes, which matched no route.
+        foreach ($name in ((@($names) -join "`n") -split "`0")) {
+            if (-not [string]::IsNullOrEmpty($name)) { [void]$paths.Add($name) }
         }
         $commit = Invoke-GitQuietly @('rev-parse', '--verify', "$localSha^{commit}")
         if ($LASTEXITCODE -eq 0 -and $commit -and -not $script:pushedCommits.Contains(([string]$commit).Trim())) {
@@ -371,13 +377,20 @@ try {
         exit 0
     }
 
+    # The root files the runtime tests read. ReadmePatchNamesTest holds the README's patch rows to
+    # the catalog, ProvenanceTest holds NOTICE and every source's header to provenance.json, and
+    # PatchFamilyTest and LicenseNoticeTest read the catalog and NOTICE. The Gradle files declare
+    # them as test inputs, so the tests rerun when one moves, but a push of one alone never
+    # started them: a README patch row went out with ReadmePatchNamesTest never run on it.
+    $runtimeTestInputs = @('README.md', 'NOTICE', 'provenance.json', 'patches-list.json')
     $touchesCode = @($paths | Where-Object {
         $_ -like 'extensions/*' -or $_ -like 'patches/*' -or
         # The pins and the reviewed checksums. Two Gradle tasks hold the Bouncy Castle graphs to
         # the reviewed release, and they only run on the way to a test task; a push that moved
         # the pin alone ran the release facts check, which knows nothing about them.
         $_ -eq 'gradle/libs.versions.toml' -or $_ -eq 'gradle/verification-metadata.xml' -or
-        $_ -eq 'settings.gradle.kts' -or $_ -eq 'build.gradle.kts'
+        $_ -eq 'settings.gradle.kts' -or $_ -eq 'build.gradle.kts' -or
+        $_ -in $runtimeTestInputs
     }).Count -gt 0
     $touchesScripts = @($paths | Where-Object { $_ -like 'scripts/*' }).Count -gt 0
     # The contract tests read two files outside scripts/ that nothing else checks: the catalog,
@@ -583,7 +596,7 @@ try {
     }
 
     if ($touchesCode) {
-        Write-Step 'extension or patch sources changed, running the runtime tests and the API level check'
+        Write-Step 'extension or patch sources, or a root file their tests read, changed, running the runtime tests and the API level check'
 
         # The Morphe settings plugin resolves from GitHub Packages, which needs a reader token.
         # A hook runs with git's environment, not the shell's, so these are usually absent and

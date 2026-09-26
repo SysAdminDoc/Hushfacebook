@@ -214,6 +214,11 @@ android {
             it.inputs.file(rootProject.layout.projectDirectory.file("NOTICE"))
                 .withPropertyName("licenseNotice")
                 .withPathSensitivity(PathSensitivity.RELATIVE)
+            // PatchFamilyTest holds every family to patches-list.json, which sits outside this module
+            // as well, so a push of the catalog alone would find these tests up to date.
+            it.inputs.file(rootProject.layout.projectDirectory.file("patches-list.json"))
+                .withPropertyName("patchList")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
             it.jvmArgs(
                 "--add-opens=java.base/java.lang=ALL-UNNAMED",
                 "--add-opens=java.base/java.util=ALL-UNNAMED",

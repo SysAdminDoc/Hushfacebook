@@ -1816,6 +1816,9 @@ Write-Host '[scripts] release facts contracts passed'
 $prePushScript = Join-Path $PSScriptRoot 'pre-push.ps1'
 $hookRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-hook-" + [guid]::NewGuid().ToString('N'))
 $savedSkip = $env:HUSHFACEBOOK_SKIP_PRE_PUSH
+$savedRoutingWrapper = $env:HUSHFACEBOOK_BUILD_WRAPPER
+$savedRoutingActor = $env:GITHUB_ACTOR
+$savedRoutingToken = $env:GITHUB_TOKEN
 $savedHookGit = @{}
 # These cases invoke another hook against a foreign repository. Git's own hook environment
 # must not leak into that repository or its local bare transport, including GIT_EXEC_PATH.
@@ -1847,10 +1850,23 @@ try {
         'param([string]$Root)',
         "Set-Content -LiteralPath '$contractsMarker' -Value 'ran'",
         'exit 0')
+    # The runtime tests start through HUSHFACEBOOK_BUILD_WRAPPER, which the hook reads from the
+    # user's environment when this process lacks it, so a stub stands in for it here: it records
+    # that the tests were asked for and builds nothing. The credentials the build path wants first
+    # are dummies. The build sections further down put stubs of their own in its place.
+    $buildMarker = Join-Path $hookRoot 'build-ran.txt'
+    $routingBuild = Join-Path $hookRoot 'routing-build.ps1'
+    Set-Content -LiteralPath $routingBuild -Encoding UTF8 -Value @(
+        'param([string]$ProjectDir, [string[]]$Tasks)',
+        "Set-Content -LiteralPath '$buildMarker' -Value 'ran'",
+        'exit 0')
+    $env:HUSHFACEBOOK_BUILD_WRAPPER = $routingBuild
+    $env:GITHUB_ACTOR = 'contract'
+    $env:GITHUB_TOKEN = 'contract'
 
     function Invoke-Hook {
         param([string[]]$Paths)
-        Remove-Item -LiteralPath $factsMarker, $contractsMarker -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $factsMarker, $contractsMarker, $buildMarker -Force -ErrorAction SilentlyContinue
         $global:LASTEXITCODE = 0
         & $prePushScript -Root $hookRoot -ChangedPaths $Paths 6> $null
         if ($LASTEXITCODE -ne 0) { throw "pre-push exited $LASTEXITCODE for $($Paths -join ', ')" }
@@ -2032,6 +2048,123 @@ try {
     Assert-True ($routed -like "*artifact=$releaseCopy hosted=False*") `
         "The index push compared something other than the release copy: $routed"
     Remove-Item -LiteralPath (Join-Path $hookRoot 'patches') -Recurse -Force
+
+    # The root files the runtime tests read. ReadmePatchNamesTest holds the README's patch rows to
+    # the catalog, ProvenanceTest holds NOTICE and every source's header to provenance.json, and
+    # PatchFamilyTest reads the catalog. The Gradle files declare them as test inputs, and a push
+    # of one alone still never started the tests. Files no test reads still don't start them.
+    foreach ($route in @(
+            @{ Path = 'README.md'; Build = $true }, @{ Path = 'NOTICE'; Build = $true },
+            @{ Path = 'provenance.json'; Build = $true }, @{ Path = 'patches-list.json'; Build = $true },
+            @{ Path = 'CHANGELOG.md'; Build = $false }, @{ Path = 'docs/sources.md'; Build = $false },
+            @{ Path = 'sources/facebook-sources.json'; Build = $false }, @{ Path = 'patches-bundle.json'; Build = $false },
+            @{ Path = 'assets/icons/icon-16.png'; Build = $false }, @{ Path = 'CONTRIBUTING.md'; Build = $false })) {
+        Invoke-Hook -Paths @($route.Path)
+        $started = Test-Path -LiteralPath $buildMarker
+        Assert-True ($started -eq $route.Build) `
+            "A push of only $($route.Path) $(if ($started) { 'started' } else { 'did not start' }) the runtime tests."
+    }
+
+    # What a push changes, read the way git lists it. Taken for a rename, a moved file was listed
+    # under its new path alone: patches-bundle.json moved away ran no release check, a source moved
+    # out of extensions/ no runtime tests, and a verifier suite renamed was never looked for, so the
+    # push went out without it. And git quotes a path with a byte outside ASCII unless told not to,
+    # and "extensions/.../\303\234ber.java" in quotes matched no route. A repository of its own,
+    # clean and pushed from HEAD, so every check runs in place from the stubs its commits carry.
+    $listingRepo = Join-Path ([System.IO.Path]::GetTempPath()) ("hushfacebook-listing-" + [guid]::NewGuid().ToString('N'))
+    $listingRan = "$listingRepo-ran"
+    New-Item -ItemType Directory -Path (Join-Path $listingRepo 'scripts'), $listingRan -Force | Out-Null
+    try {
+        & git -C $listingRepo init --quiet
+        $listingGitDir = (& git -C $listingRepo rev-parse --absolute-git-dir).Trim()
+        Assert-True ([IO.Path]::GetFullPath($listingGitDir).TrimEnd('\', '/') -ieq
+            [IO.Path]::GetFullPath((Join-Path $listingRepo '.git')).TrimEnd('\', '/')) `
+            'The listing fixture resolved outside its temporary repository; refusing to write.'
+        & git -C $listingRepo config user.name 'Listing Contract'
+        & git -C $listingRepo config user.email 'listing@example.invalid'
+        & git -C $listingRepo config core.autocrlf false
+        $listingStubs = [ordered]@{
+            'scripts/validate-release-facts.ps1' = ('param([string]$Root, [switch]$SkipDescriptionTestCount, ' +
+                '[switch]$AllowPublishedIndexLag, [switch]$VerifyPublishedAsset, [string]$ArtifactPath, ' +
+                '[switch]$ArtifactIsHosted, [switch]$SkipTestResults)')
+        }
+        foreach ($suite in @('scripts/test-script-contracts.ps1') + @($verifierRoutes.Keys)) {
+            $listingStubs[$suite] = 'param([string]$Root)'
+        }
+        foreach ($stub in $listingStubs.Keys) {
+            $ranFile = Join-Path $listingRan ([IO.Path]::GetFileNameWithoutExtension($stub) + '.txt')
+            Set-Content -LiteralPath (Join-Path $listingRepo $stub) -Encoding UTF8 -Value @(
+                $listingStubs[$stub], "Set-Content -LiteralPath '$ranFile' -Value 'ran'", 'exit 0')
+        }
+        # Commits what -Change leaves, pushes it the way git hands the hook a push, and answers
+        # with what ran: the stubs by name, and build for the runtime tests.
+        function Push-ListingChange([scriptblock]$Change, [switch]$NewBranch) {
+            $before = if ($NewBranch) { '0' * 40 } else { (& git -C $listingRepo rev-parse HEAD).Trim() }
+            & $Change
+            & git -C $listingRepo add -A
+            & git -C $listingRepo commit --quiet -m 'listing case'
+            $after = (& git -C $listingRepo rev-parse HEAD).Trim()
+            Remove-Item -Path (Join-Path $listingRan '*') -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $buildMarker -Force -ErrorAction SilentlyContinue
+            $global:LASTEXITCODE = 0
+            & $prePushScript -Root $listingRepo -PushedRefs "refs/heads/main $after refs/heads/main $before" 6> $null
+            if ($LASTEXITCODE -ne 0) { throw "pre-push exited $LASTEXITCODE" }
+            $ran = @(Get-ChildItem -LiteralPath $listingRan -File | ForEach-Object { $_.BaseName } | Sort-Object)
+            if (Test-Path -LiteralPath $buildMarker) { $ran = @('build') + $ran }
+            return ($ran -join ', ')
+        }
+
+        # A new branch is read from its whole tree, where the one source has a name outside ASCII.
+        $javaFolder = Join-Path $listingRepo 'extensions/facebook/src/main/java'
+        $ran = Push-ListingChange -NewBranch {
+            New-Item -ItemType Directory -Path $javaFolder -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $javaFolder "$([char]0x00DC)ber.java") -Encoding ASCII -Value 'final class U {}'
+        }
+        Assert-True ($ran -like 'build, *') "A new branch whose only source has a name outside ASCII ran [$ran], without the runtime tests."
+        $ran = Push-ListingChange {
+            Set-Content -LiteralPath (Join-Path $listingRepo 'patches-bundle.json') -Encoding ASCII -Value '{}'
+            Set-Content -LiteralPath (Join-Path $javaFolder 'Moved.java') -Encoding ASCII -Value 'final class Moved {}'
+        }
+        Assert-True ($ran -eq 'build, validate-release-facts') "A push adding the index and a source ran [$ran]."
+
+        # Each end of a move counts where it is.
+        $ran = Push-ListingChange {
+            New-Item -ItemType Directory -Path (Join-Path $listingRepo 'attic') -Force | Out-Null
+            & git -C $listingRepo mv patches-bundle.json attic/patches-bundle.json
+        }
+        Assert-True ($ran -eq 'validate-release-facts') "A push that moved patches-bundle.json away ran [$ran], not the release check."
+        $ran = Push-ListingChange { & git -C $listingRepo mv extensions/facebook/src/main/java/Moved.java attic/Moved.java }
+        Assert-True ($ran -eq 'build') "A push that moved a source out of extensions/ ran [$ran], not the runtime tests."
+
+        # A gate suite renamed away is one the gate still expects, by the name it had.
+        foreach ($suite in @('scripts/test-script-contracts.ps1') + @($verifierRoutes.Keys)) {
+            $renamed = "scripts/retired-$(Split-Path -Leaf $suite)"
+            Assert-Throws { Push-ListingChange { & git -C $listingRepo mv $suite $renamed } } "*$suite was deleted in this push*" `
+                "A push that renamed $suite went out without it."
+            & git -C $listingRepo mv $renamed $suite
+            & git -C $listingRepo commit --quiet -m 'the suite back'
+        }
+
+        # And a changed path with a name outside ASCII, where the push is a range.
+        $ran = Push-ListingChange {
+            Set-Content -LiteralPath (Join-Path $listingRepo "scripts/n$([char]0x00F6)tes.txt") -Encoding ASCII -Value 'notes'
+        }
+        Assert-True ($ran -eq 'test-script-contracts') "A push of a script with a name outside ASCII ran [$ran], not the contract tests."
+        $ran = Push-ListingChange {
+            Set-Content -LiteralPath (Join-Path $javaFolder "Caf$([char]0x00E9).java") -Encoding ASCII -Value 'final class Cafe {}'
+        }
+        Assert-True ($ran -eq 'build') "A push of a source with a name outside ASCII ran [$ran], not the runtime tests."
+    } finally {
+        foreach ($line in @(& git -C $listingRepo worktree list --porcelain)) {
+            if ($line -like 'worktree *') {
+                $listed = $line.Substring('worktree '.Length)
+                if ([IO.Path]::GetFullPath($listed).TrimEnd('\', '/') -ine [IO.Path]::GetFullPath($listingRepo).TrimEnd('\', '/')) {
+                    & git -C $listingRepo worktree remove --force $listed
+                }
+            }
+        }
+        Remove-Item -LiteralPath $listingRepo, $listingRan -Recurse -Force -ErrorAction SilentlyContinue
+    }
 
     # A new remote branch can contain several unpublished commits. The code change here is in
     # the first commit and the tip changes only documentation. Looking at HEAD^..HEAD silently
@@ -2619,6 +2752,9 @@ try {
     }
 } finally {
     $env:HUSHFACEBOOK_SKIP_PRE_PUSH = $savedSkip
+    $env:HUSHFACEBOOK_BUILD_WRAPPER = $savedRoutingWrapper
+    $env:GITHUB_ACTOR = $savedRoutingActor
+    $env:GITHUB_TOKEN = $savedRoutingToken
     foreach ($name in $savedHookGit.Keys) { Set-Item -LiteralPath ('Env:\' + $name) -Value $savedHookGit[$name] }
     Remove-Item -LiteralPath $hookRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
