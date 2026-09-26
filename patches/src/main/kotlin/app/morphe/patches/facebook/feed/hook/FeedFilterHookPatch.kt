@@ -13,7 +13,7 @@ import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patches.facebook.misc.extension.facebookExtensionPatch
-import app.morphe.patches.facebook.shared.AddNewEdgeToCollectionFingerprint
+import app.morphe.patches.facebook.shared.addNewEdgeToCollection
 import app.morphe.patches.facebook.misc.extension.EXTENSION_PACKAGE
 import app.morphe.patches.facebook.shared.FEED_STORY_CATEGORY
 import app.morphe.patches.facebook.shared.FEED_UNIT_EDGE
@@ -46,7 +46,7 @@ internal val feedFilterHookPatch = bytecodePatch {
         val categoryGetter = storyCategoryGetter()
         val feedUnit = feedUnitGetter()
 
-        val method = AddNewEdgeToCollectionFingerprint.method
+        val method = addNewEdgeToCollection()
         val edgeIndex = method.parameterTypes.indexOfFirst { it.toString() == FEED_UNIT_EDGE }
         if (edgeIndex < 0) {
             throw PatchException("addNewEdgeToCollection no longer takes a GraphQLFeedUnitEdge")
