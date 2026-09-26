@@ -121,8 +121,12 @@ final class MediaStoreWriter implements Downloader.Sink {
         item = null;
 
         try {
-            context.getContentResolver().delete(row, null, null);
-            SaveLeftovers.settled(context, row);
+            if (context.getContentResolver().delete(row, null, null) > 0) {
+                SaveLeftovers.settled(context, row);
+            } else {
+                Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE,
+                        () -> "the gallery did not remove the unfinished entry", null);
+            }
         } catch (Throwable t) {
             // Left on the list, so the first save of the next process tries again.
             Logger.diagnosticError(DiagnosticCategory.DOWNLOADS, SOURCE, () -> "could not remove the unfinished entry", t);

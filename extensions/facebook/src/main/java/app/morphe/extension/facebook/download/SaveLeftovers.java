@@ -106,6 +106,7 @@ final class SaveLeftovers {
 
         ContentResolver resolver = application.getContentResolver();
         int removed = 0;
+        Set<String> retry = new HashSet<>();
         for (String row : new HashSet<>(rows)) {
             try {
                 // Only while it's still pending: a row the stopped save had already published is a
@@ -113,10 +114,16 @@ final class SaveLeftovers {
                 // when it's named by its own address.
                 removed += resolver.delete(Uri.parse(row), MediaStore.MediaColumns.IS_PENDING + "=1", null);
             } catch (Throwable t) {
+                retry.add(row);
                 MediaDownload.failure(() -> "could not remove a pending gallery row a stopped save left", t);
             }
         }
-        ledger.edit().remove(PENDING).commit();
+        SharedPreferences.Editor update = ledger.edit();
+        if (retry.isEmpty()) update.remove(PENDING);
+        else update.putStringSet(PENDING, retry);
+        if (!update.commit()) {
+            MediaDownload.failure(() -> "could not update the list of pending gallery rows after a sweep", null);
+        }
         return removed;
     }
 }

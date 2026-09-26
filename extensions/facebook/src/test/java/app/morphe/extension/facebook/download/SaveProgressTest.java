@@ -562,6 +562,41 @@ public class SaveProgressTest {
     }
 
     @Test
+    public void aPendingRowTheGalleryRefusesToDeleteStaysOnTheRetryList() throws IOException {
+        Uri row = gallery.videoUri(1);
+        Shadows.shadowOf(context.getContentResolver()).registerOutputStream(row, published);
+        MediaStoreWriter writer = new MediaStoreWriter(context, true);
+        writer.open("video/mp4");
+        gallery.refuseDeletion = true;
+
+        writer.abandon();
+
+        assertTrue("the failed deletion took the row off the retry list", pendingList().contains(row.toString()));
+        assertTrue("the test gallery removed the row", gallery.rows.containsKey(1L));
+        gallery.refuseDeletion = false;
+        SaveLeftovers.sweepOnce(context);
+        assertFalse("a later sweep did not remove the row", gallery.rows.containsKey(1L));
+        assertTrue(pendingList().isEmpty());
+    }
+
+    @Test
+    public void aPendingRowSweepRetriesAfterTheGalleryThrows() {
+        Uri row = row(1);
+        SaveLeftovers.pending(context, row);
+        gallery.throwOnDelete = true;
+
+        SaveLeftovers.sweepOnce(context);
+
+        assertTrue("the failed sweep forgot the row", pendingList().contains(row.toString()));
+        assertTrue(gallery.rows.containsKey(ContentUris.parseId(row)));
+        gallery.throwOnDelete = false;
+        SaveLeftovers.forgetSweepForTests();
+        SaveLeftovers.sweepOnce(context);
+        assertFalse("the next process did not remove the row", gallery.rows.containsKey(ContentUris.parseId(row)));
+        assertTrue(pendingList().isEmpty());
+    }
+
+    @Test
     public void progressTextSaysHowMuchOfHowMuch() {
         assertNull(SaveControl.progressText(0, 100 * MIB));
         assertEquals("4.2 MB of 100 MB", SaveControl.progressText((long) (4.2 * MIB), 100 * MIB));
@@ -604,6 +639,8 @@ public class SaveProgressTest {
     public static final class Gallery extends ContentProvider {
         final Map<Long, ContentValues> rows = new HashMap<>();
         final List<Uri> inserts = new ArrayList<>();
+        boolean refuseDeletion;
+        boolean throwOnDelete;
         private long nextId = 1;
 
         Uri videoUri(long id) {
@@ -636,6 +673,8 @@ public class SaveProgressTest {
 
         /** Honours the one selection the sweep uses, the way MediaStore does for a row named by id. */
         @Override public int delete(Uri uri, String selection, String[] selectionArgs) {
+            if (throwOnDelete) throw new IllegalStateException("gallery unavailable");
+            if (refuseDeletion) return 0;
             long id = ContentUris.parseId(uri);
             ContentValues row = rows.get(id);
             if (row == null) return 0;
