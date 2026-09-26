@@ -51,7 +51,7 @@ private const val REMEMBER_HELPER = "hushfacebookRememberSource"
 val downloadStoryPatch = bytecodePatch(
     name = "Download any story",
     description = "Adds Save to the menu of any story, including stories with music. Videos " +
-        "save at the best quality the player streams.",
+        "save at the Download quality you set, best by default.",
     default = true,
 ) {
     category("Downloads")

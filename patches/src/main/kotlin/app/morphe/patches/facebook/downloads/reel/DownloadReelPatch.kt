@@ -116,8 +116,8 @@ private const val HELPER = "hushfacebookDownloadButton"
 @Suppress("unused")
 val downloadReelPatch = bytecodePatch(
     name = "Download any reel",
-    description = "Adds a Download button beside every reel. Videos save at the best quality " +
-        "the player streams.",
+    description = "Adds a Download button beside every reel. Videos save at the Download quality " +
+        "you set, best by default.",
     default = true,
 ) {
     category("Downloads")

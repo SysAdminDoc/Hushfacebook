@@ -73,9 +73,9 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Block background-return feed refresh` | Keeps your feed position when you return to Facebook within ten minutes. Pull to refresh and a fresh launch still work. |
 | `Clean up Reels` | Hides the Follow button on reels and the comment and reaction previews under them. Buttons such as Remix, Use template, Add yours and Stars go too, and each part has its own switch. |
 | `Disable Audience Network` | Stops Facebook serving ads to other apps. Those apps then show their own ads or none, and rewarded ads can fail. |
-| `Download any reel` | Adds a Download button beside every reel. Videos save at the best quality the player streams. |
-| `Download any video` | Adds Download to phone to the menu of videos in the feed and in Watch, below Facebook's own items. Videos save at the best quality the player streams. |
-| `Download any story` | Adds Save to the menu of any story, including stories with music. Videos save at the best quality the player streams. |
+| `Download any reel` | Adds a Download button beside every reel. Videos save at the Download quality you set, best by default. |
+| `Download any video` | Adds Download to phone to the menu of videos in the feed and in Watch, below Facebook's own items. Videos save at the Download quality you set, best by default. |
+| `Download any story` | Adds Save to the menu of any story, including stories with music. Videos save at the Download quality you set, best by default. |
 | `Hide AI-detected posts` | Removes feed posts that Facebook's own detection marked as made with AI. Its switch starts off, so turn it on in Hushfacebook's settings. |
 | `Hide sponsored posts` | Removes sponsored and promoted posts from the news feed, with no gap left behind. |
 | `Hide sponsored reels` | Removes ads from Reels and Watch, including product banners over a reel and ads inside a video. |
