@@ -10,22 +10,27 @@ package app.morphe.patches.facebook.ads.sponsoredreels
 import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.patches.facebook.misc.extension.facebookExtensionPatch
 import app.morphe.patches.facebook.misc.extension.enableStatus
+import app.morphe.patches.facebook.misc.extension.localRegisterCount
+import app.morphe.patches.facebook.misc.extension.parameterRegister
 import app.morphe.patches.facebook.misc.extension.requireLocals
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.util.returnEarly
+import app.morphe.util.singleOrPatchException
 import app.morphe.util.superclassChain
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.BytecodePatchContext
+import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
@@ -46,6 +51,8 @@ private const val FILTER = "Lapp/morphe/extension/facebook/ads/ReelsAdFilter;->"
 
 private const val SECTION_FILTER = "Lapp/morphe/extension/facebook/ads/ReelsAdFilter;->" +
     "withoutAdSections(Ljava/util/List;Ljava/lang/String;)Ljava/util/List;"
+
+private const val PATCH = "Hide sponsored reels"
 
 @Suppress("unused")
 val hideSponsoredReelsPatch = bytecodePatch(
@@ -71,7 +78,8 @@ val hideSponsoredReelsPatch = bytecodePatch(
         // yields both classes, each picked out by a shape no sibling parameter shares.
         val adTask = SfdAdInsertFingerprint.method.definingClass
         val taken = mutableClassDefBy(adTask).methods
-            .single { it.name == "<init>" }
+            .filter { it.name == "<init>" }
+            .singleOrPatchException("$PATCH: the one constructor of the SFD ad insert task $adTask")
             .parameterTypes
             .map { it.toString() }
 
@@ -96,30 +104,19 @@ val hideSponsoredReelsPatch = bytecodePatch(
         // The method that actually puts the page into the backing list: it takes the position to
         // insert at as well as the page. Its sibling only walks the page afterwards telling
         // listeners about each item, which is why filtering that one alone removed nothing.
-        val insertPage = collectionClass.methods.single {
+        val insertPage = collectionClass.methods.filter {
             it.returnType == "Z" &&
                 it.parameterTypes.map(CharSequence::toString) == listOf("I", COLLECTION)
-        }
+        }.singleOrPatchException("$PATCH: the item collection's page insert, (int, Collection)Z, on $collection")
 
         // The listener walk. Filtered too, so nothing is announced that was just dropped.
-        val announcePage = collectionClass.methods.single {
+        val announcePage = collectionClass.methods.filter {
             it.returnType == "V" &&
                 it.parameterTypes.map(CharSequence::toString) == listOf(collection, COLLECTION)
-        }
+        }.singleOrPatchException("$PATCH: the item collection's page announcement, (collection, Collection)V, on $collection")
 
-        // Replace the incoming page with one that has no ads in it. The helper hands back the very
-        // same collection when it holds none, so the usual page is untouched and keeps its type.
-        listOf(insertPage to "p2", announcePage to "p1").forEach { (method, page) ->
-            method.requireLocals("Hide sponsored reels", 1)
-            method.addInstructions(
-                0,
-                """
-                    const-string v0, "${adBase.toBinaryName()}"
-                    invoke-static { $page, v0 }, $FILTER
-                    move-result-object $page
-                """,
-            )
-        }
+        // Replace the incoming page with one that has no ads in it.
+        listOf(insertPage, announcePage).forEach { it.filterPageFirst(adBase.toBinaryName()) }
 
         // The filter on the collection is not enough. A device round on 2026-09-19 showed why. It
         // caught an ad in a page and logged the drop. The app then showed that ad as the third
@@ -133,18 +130,11 @@ val hideSponsoredReelsPatch = bytecodePatch(
         val controller = mutableClassDefBy(VideoHomeInsertAdsFingerprint.method.definingClass)
 
         // A page of fetched sections: one List in, boolean out.
-        val addPage = controller.methods.single {
+        val addPage = controller.methods.filter {
             it.returnType == "Z" && it.parameterTypes.map(CharSequence::toString) == listOf(LIST)
-        }
+        }.singleOrPatchException("$PATCH: the Reels controller's (List)Z method that takes a page of sections")
 
-        addPage.addInstructions(
-            0,
-            """
-                const-string ${addPage.scratch()}, "${adBase.toBinaryName()}"
-                invoke-static { p1, ${addPage.scratch()} }, $SECTION_FILTER
-                move-result-object p1
-            """,
-        )
+        addPage.filterSectionsFirst(adBase.toBinaryName())
 
         // The client-side insert paths stay blocked. None of them fired in the logging run, but
         // they are what the app would use if a future release went back to inserting on the device,
@@ -168,7 +158,8 @@ val hideSponsoredReelsPatch = bytecodePatch(
         // The banner helper. All banner requests go through it.
         val bannerFetch = adBreakFetch.futureCallBefore(BANNER_FETCH_LOG)
         mutableClassDefBy(bannerFetch.definingClass).methods
-            .single { MethodUtil.methodSignaturesMatch(it, bannerFetch) }
+            .filter { MethodUtil.methodSignaturesMatch(it, bannerFetch) }
+            .singleOrPatchException("$PATCH: the banner query helper $bannerFetch, declared on its own class")
             .let(::returnFailedFuture)
 
         // The ad-break server API. Each of its methods that returns a future is an ad query.
@@ -182,17 +173,10 @@ val hideSponsoredReelsPatch = bytecodePatch(
         // shares. Thus only this one executor call changes. The helper call has the same size and
         // no arguments, so the next move-result gets the failed future.
         val idleVideoFetch = ReelsVideoAdQueryFingerprint.method
-        val idleInstructions = idleVideoFetch.instructions()
-        val queryIndex = idleInstructions.indexOfFirst { it.string == REELS_VIDEO_AD_QUERY }
-        val executeIndex = (queryIndex until idleInstructions.size).first { index ->
-            idleInstructions[index].methodReference?.returnType == SETTABLE_FUTURE
-        }
-        check(idleInstructions[executeIndex].opcode == Opcode.INVOKE_STATIC) {
-            "The executor call at $executeIndex is not invoke-static"
-        }
-        check(idleInstructions[executeIndex + 1].opcode == Opcode.MOVE_RESULT_OBJECT) {
-            "The executor call at $executeIndex has no move-result-object"
-        }
+        val executeIndex = idleExecutorCallIndex(
+            idleVideoFetch.instructions(),
+            "${idleVideoFetch.definingClass}->${idleVideoFetch.name}",
+        )
         idleVideoFetch.replaceInstruction(
             executeIndex,
             "invoke-static { }, ${failedFutureOn(idleVideoFetch.definingClass)}",
@@ -230,14 +214,11 @@ private fun BytecodePatchContext.stopDeferredCardPoller() {
         }
     val state = tested ?: nameMethod.definingClass
 
-    fun isTick(method: MutableMethod) = method.returnType == "J" && method.parameterTypes.size == 2 &&
-        method.parameterTypes[1].toString() == "I" && method.implementation != null
-
     // The tick the state runs: its own, or the nearest one it inherits.
     val tick = superclassChain(state)
         .mapNotNull { mutableClassDefByOrNull(it) }
-        .firstNotNullOfOrNull { classDef -> classDef.methods.singleOrNull(::isTick) }
-        ?: error("No class of $state's hierarchy declares an ad-break tick")
+        .firstNotNullOfOrNull { classDef -> adBreakTickAmong(classDef.methods, classDef.type) }
+        ?: throw PatchException("$PATCH: no class of $state's hierarchy declares an ad-break tick")
 
     if (tick.definingClass == state) {
         tick.returnEarly(-1L)
@@ -259,6 +240,20 @@ private fun BytecodePatchContext.stopDeferredCardPoller() {
         ExternalLabel("other_state", tick.getInstruction(0)),
     )
 }
+
+/**
+ * The ad-break tick among [methods], all declared by [owner]: null when none of them is one, and a
+ * refusal when several are. Taking none of several would carry the walk up to a parent's tick,
+ * which the state never runs, and the poller would keep retrying with nothing to say so.
+ */
+internal fun <T : Method> adBreakTickAmong(methods: Iterable<T>, owner: String): T? {
+    val ticks = methods.filter(::isAdBreakTick)
+    if (ticks.isEmpty()) return null
+    return ticks.singleOrPatchException("$PATCH: the ad-break tick, (state, int)J with a body, that $owner declares")
+}
+
+private fun isAdBreakTick(method: Method) = method.returnType == "J" && method.parameterTypes.size == 2 &&
+    method.parameterTypes[1].toString() == "I" && method.implementation != null
 
 /** The state whose poller the lookup keeps retrying. */
 private const val DEFERRED_CARD_STATE = "UnresolvedWithDeferredCardState"
@@ -311,13 +306,106 @@ private fun BytecodePatchContext.returnFailedFuture(method: MutableMethod) =
     )
 
 /** The last call before [log] that returns a future. This is the fetch that the log reports. */
-private fun List<Instruction>.futureCallBefore(log: String): MethodReference {
+internal fun List<Instruction>.futureCallBefore(log: String): MethodReference {
     val logIndex = indexOfFirst { it.string == log }
     check(logIndex >= 0) { "\"$log\" is not in the ad-break fetch" }
 
     return take(logIndex)
         .mapNotNull { it.methodReference }
-        .last { it.returnType == LISTENABLE_FUTURE }
+        .lastOrNull { it.returnType == LISTENABLE_FUTURE }
+        ?: throw PatchException("$PATCH: the ad-break fetch makes no call returning ListenableFuture before \"$log\"")
+}
+
+/**
+ * Sends the page this method receives through the ad filter before its own code runs. The helper
+ * hands back the very same collection when it holds no ad, so the usual page is untouched and
+ * keeps its type.
+ *
+ * The page is the method's one Collection parameter, and its register comes from the declared
+ * parameters. Redex makes a method static in one build and leaves it an instance method in the
+ * next, and a p register written down for one of those would hand the filter the collection
+ * object, or `this`, in place of the page.
+ */
+internal fun MutableMethod.filterPageFirst(adItem: String) {
+    val page = parameterTypes.indices.filter { parameterTypes[it].toString() == COLLECTION }
+        .singleOrPatchException("$PATCH: the one Collection parameter of $definingClass->$name")
+    // Index 0: no local holds anything yet, so v0 is free for the ad type's name.
+    requireLocals(PATCH, 1)
+    val register = nibbleParameterRegister(page)
+    addInstructions(
+        0,
+        """
+            const-string v0, "$adItem"
+            invoke-static { $register, v0 }, $FILTER
+            move-result-object $register
+        """,
+    )
+}
+
+/**
+ * Sends the page of sections this controller method receives through the section filter before its
+ * own code runs. The page is its List parameter, found the way [filterPageFirst] finds the page.
+ */
+internal fun MutableMethod.filterSectionsFirst(adItem: String) {
+    val sections = parameterTypes.indices.filter { parameterTypes[it].toString() == LIST }
+        .singleOrPatchException("$PATCH: the one List parameter of $definingClass->$name")
+    val register = nibbleParameterRegister(sections)
+    val scratch = scratch()
+    addInstructions(
+        0,
+        """
+            const-string $scratch, "$adItem"
+            invoke-static { $register, $scratch }, $SECTION_FILTER
+            move-result-object $register
+        """,
+    )
+}
+
+/**
+ * Parameter [index]'s register, for a filter call that names it in a 4-bit operand, so it has to be
+ * v15 or below. The patcher's smali compiler leaves out an instruction whose register doesn't fit,
+ * without a word, which would drop the filter call and leave its move-result reading nothing.
+ */
+private fun MutableMethod.nibbleParameterRegister(index: Int): String {
+    val register = parameterRegister(index)
+    val number = localRegisterCount() + register.removePrefix("p").toInt()
+    if (number > 15) {
+        throw PatchException(
+            "$PATCH: $definingClass->$name holds parameter $index in v$number, above the v15 the filter call can name",
+        )
+    }
+    return register
+}
+
+/**
+ * The executor call of the idle state's own video ad query: the first call after the query's name
+ * that hands back a SettableFuture. It has to be static with its answer moved straight after,
+ * because the replacement is a static call of the same size.
+ *
+ * The name has to be the whole literal. The fingerprint found the method by a literal that only
+ * holds it, since the patcher matches `strings` by containment, so a renamed query such as
+ * "FBFetchReelsVideoAdsQueryV2" finds the method and leaves no literal to start from.
+ */
+internal fun idleExecutorCallIndex(instructions: List<Instruction>, method: String): Int {
+    val query = instructions.indexOfFirst { it.string == REELS_VIDEO_AD_QUERY }
+    if (query < 0) {
+        throw PatchException(
+            "$PATCH: $method holds no \"$REELS_VIDEO_AD_QUERY\" literal, only a longer string the fingerprint " +
+                "matched by containment, so it may not build the query this patch replaces",
+        )
+    }
+    val execute = (query until instructions.size).firstOrNull { index ->
+        instructions[index].methodReference?.returnType == SETTABLE_FUTURE
+    } ?: throw PatchException(
+        "$PATCH: $method makes no call returning SettableFuture after \"$REELS_VIDEO_AD_QUERY\"",
+    )
+    if (instructions[execute].opcode != Opcode.INVOKE_STATIC) {
+        throw PatchException("$PATCH: the executor call at $execute in $method is not invoke-static")
+    }
+    if (instructions.getOrNull(execute + 1)?.opcode != Opcode.MOVE_RESULT_OBJECT) {
+        throw PatchException("$PATCH: the executor call at $execute in $method has no move-result-object after it")
+    }
+    return execute
 }
 
 private val Instruction.methodReference
@@ -336,14 +424,22 @@ private fun String.toBinaryName() = removePrefix("L").removeSuffix(";").replace(
  * it and change nothing downstream. The two collection-level injections borrow v0, which is sound
  * because those methods are known to hold locals. The controller page method is not, so this one
  * resolves the register instead of an assumption.
+ *
+ * It has to be a local the instruction writes. An instruction that only reads its register, such as
+ * `if-eqz` or `monitor-enter`, or one that reads a parameter and writes it back, such as
+ * `check-cast`, would read the name the injection put there in place of the parameter.
  */
 private fun MutableMethod.scratch(): String {
-    val first = instructions().first()
-    check(first is OneRegisterInstruction) {
+    val first = instructions().firstOrNull()
+        ?: throw PatchException("$PATCH: $definingClass->$name has an empty body, so no register to borrow")
+    check(first is OneRegisterInstruction && first.opcode.setsRegister()) {
         "$definingClass->$name starts with ${first.opcode.name}, which writes no register to borrow"
     }
 
     val register = first.registerA
+    check(register < localRegisterCount()) {
+        "$definingClass->$name starts by writing v$register, a parameter, so it has no local to borrow"
+    }
     check(register < 16) { "$definingClass->$name: scratch register v$register is out of range" }
 
     return "v$register"
