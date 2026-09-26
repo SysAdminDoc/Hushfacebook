@@ -7,6 +7,7 @@ Every Hushfacebook release, newest first.
 * **Facebook:** Saved photos and videos now use the file type found in their bytes when the server labels them incorrectly, so the gallery gets the right extension.
 * **Facebook:** A save now reports a gallery write failure when the file stream can't close or the pending entry can't be published. Unfinished entries are removed.
 * **Facebook:** If the gallery won't remove an unfinished save, Hushfacebook remembers it and tries again the next time Facebook starts.
+* **Facebook:** The Hushfacebook item now stays first when you long-press Facebook's icon. Facebook adds its own Notifications, Friends and Reels shortcuts ahead of it whenever it posts some notifications, and a launcher that shows only a few shortcuts, or fewer next to a notification, left Hushfacebook off the end (#2).
 
 ## 0.1.6 (2026-09-26)
 

@@ -18,7 +18,7 @@ import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.util.superclassChain
 import com.android.tools.smali.dexlib2.Opcode
 
-private const val ENTRY = "$EXTENSION_PACKAGE/settings/SettingsEntry;"
+internal const val ENTRY = "$EXTENSION_PACKAGE/settings/SettingsEntry;"
 
 /** The activity the manifest's launcher alias targets. A manifest name is never obfuscated. */
 private const val MAIN_TAB_ACTIVITY = "Lcom/facebook/katana/activity/FbMainTabActivity;"
@@ -82,5 +82,11 @@ val settingsPatch = bytecodePatch(
             0,
             "invoke-static/range { p0 .. p1 }, $ENTRY->onNewIntent(Landroid/app/Activity;Landroid/content/Intent;)V",
         )
+
+        // Facebook pushes its own shortcuts at rank 0 whenever it posts some notifications, and the
+        // newest push goes first, so the shortcut above ended up last, where a launcher that shows
+        // only a few cut it off. Each of those calls now goes through the extension, which puts it
+        // back in front afterwards. Framework names only, which the obfuscator keeps.
+        rerouteShortcutCalls()
     }
 }

@@ -24,6 +24,8 @@ import android.os.Bundle;
 import android.os.SystemClock;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
@@ -37,7 +39,8 @@ import app.morphe.extension.facebook.feed.ReturnRefresh;
  * {@link #EXTRA_OPEN_SETTINGS}. Every Facebook activity reports its intent here from
  * {@code onCreate} and {@code onNewIntent}, and the next Facebook activity to resume shows the
  * screen as a full screen dialog. Nothing is added to Facebook's manifest, so no resource has to
- * be rebuilt to get here.
+ * be rebuilt to get here. The shortcut is kept first among Facebook's own, because a launcher
+ * shows only the first few.
  */
 @SuppressWarnings("unused")
 public final class SettingsEntry {
@@ -62,6 +65,8 @@ public final class SettingsEntry {
     private static volatile boolean closedByUser;
     /** The long label last pushed, or found already on the shortcut, in this process. */
     private static volatile String publishedLabel;
+    /** A check of the shortcut's place is waiting for the background thread. */
+    private static final AtomicBoolean keepFirstQueued = new AtomicBoolean();
 
     private SettingsEntry() {
     }
@@ -104,8 +109,9 @@ public final class SettingsEntry {
     }
 
     /**
-     * Publishes the launcher shortcut, or labels it again when Facebook's language has changed,
-     * on the thread it's called on. Package-visible for tests.
+     * Publishes the launcher shortcut, labels it again when Facebook's language has changed, or
+     * puts it back in front when Facebook's own went ahead of it, on the thread it's called on.
+     * Package-visible for tests.
      */
     static void publishShortcutNow(Context app) {
         try {
@@ -114,27 +120,120 @@ public final class SettingsEntry {
             String longLabel = L10n.t(app, "Hushfacebook settings");
             // Set before the attempt, so a shortcut that can't be pushed isn't tried on every screen.
             publishedLabel = longLabel;
-            for (ShortcutInfo existing : manager.getDynamicShortcuts()) {
-                // One labelled in another language is pushed again below, which replaces it.
-                if (SHORTCUT_ID.equals(existing.getId())
-                        && longLabel.contentEquals(existing.getLongLabel())) return;
-            }
-            Intent intent = new Intent(Intent.ACTION_VIEW)
-                    .setComponent(new ComponentName(app.getPackageName(), LAUNCHER_ALIAS))
-                    .putExtra(EXTRA_OPEN_SETTINGS, true)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            ShortcutInfo shortcut = new ShortcutInfo.Builder(app, SHORTCUT_ID)
-                    .setShortLabel("Hushfacebook")
-                    .setLongLabel(longLabel)
-                    .setIcon(Icon.createWithAdaptiveBitmap(shortcutIcon()))
-                    .setIntent(intent)
-                    .setRank(0)
-                    .build();
+            ShortcutInfo existing = ours(manager);
+            // One labelled in another language, or behind Facebook's, is pushed again below.
+            if (existing != null && existing.getRank() == 0
+                    && longLabel.contentEquals(existing.getLongLabel())) return;
             // Evicts the lowest-ranked dynamic shortcut when Facebook's own fill the limit.
-            manager.pushDynamicShortcut(shortcut);
+            manager.pushDynamicShortcut(shortcut(app, longLabel));
             Logger.printInfo(() -> "Settings entry: launcher shortcut published");
         } catch (Exception ex) {
             Logger.printException(() -> "Settings entry: could not publish the shortcut", ex);
+        }
+    }
+
+    /**
+     * Puts the shortcut back in front of Facebook's own, keeping the label it has, or publishes it
+     * when Facebook's call removed it. The label is kept because the process Facebook pushes from
+     * may not have Facebook's language yet, and the next screen relabels it anyway. Package-visible
+     * for tests.
+     */
+    static void keepFirstNow(Context app) {
+        try {
+            ShortcutManager manager = app.getSystemService(ShortcutManager.class);
+            if (manager == null) return;
+            ShortcutInfo existing = ours(manager);
+            if (existing == null) {
+                publishShortcutNow(app);
+                return;
+            }
+            final int rank = existing.getRank();
+            if (rank == 0) return;
+            CharSequence label = existing.getLongLabel();
+            manager.pushDynamicShortcut(shortcut(app, label != null ? label : L10n.t(app, "Hushfacebook settings")));
+            Logger.printInfo(() -> "Settings entry: launcher shortcut moved back in front from rank " + rank);
+        } catch (Exception ex) {
+            Logger.printException(() -> "Settings entry: could not put the shortcut back in front", ex);
+        }
+    }
+
+    /** The Hushfacebook shortcut among the dynamic ones, or null. */
+    private static ShortcutInfo ours(ShortcutManager manager) {
+        for (ShortcutInfo existing : manager.getDynamicShortcuts()) {
+            if (SHORTCUT_ID.equals(existing.getId())) return existing;
+        }
+        return null;
+    }
+
+    private static ShortcutInfo shortcut(Context app, CharSequence longLabel) {
+        Intent intent = new Intent(Intent.ACTION_VIEW)
+                .setComponent(new ComponentName(app.getPackageName(), LAUNCHER_ALIAS))
+                .putExtra(EXTRA_OPEN_SETTINGS, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return new ShortcutInfo.Builder(app, SHORTCUT_ID)
+                .setShortLabel("Hushfacebook")
+                .setLongLabel(longLabel)
+                .setIcon(Icon.createWithAdaptiveBitmap(shortcutIcon()))
+                .setIntent(intent)
+                // The platform puts the newest push first among equal ranks.
+                .setRank(0)
+                .build();
+    }
+
+    // Facebook's own calls that change its dynamic shortcuts come here instead: the patch sends each
+    // ShortcutManager call of these names to the method of the same name here, the manager first.
+    // Facebook pushes its Notifications, Friends and Reels shortcuts, and one per Messenger chat it
+    // notifies about, each at rank 0, and the platform puts the newest push first. So the
+    // Hushfacebook shortcut sank to the end of the list, where a launcher showing three or four,
+    // or two beside a notification, cut it off (#2). Facebook's call runs as it did, with the same
+    // answer and the same exceptions, and then the Hushfacebook shortcut goes back in front.
+
+    public static void pushDynamicShortcut(ShortcutManager manager, ShortcutInfo shortcut) {
+        manager.pushDynamicShortcut(shortcut);
+        keepFirst();
+    }
+
+    public static boolean addDynamicShortcuts(ShortcutManager manager, List<ShortcutInfo> shortcuts) {
+        boolean added = manager.addDynamicShortcuts(shortcuts);
+        keepFirst();
+        return added;
+    }
+
+    /** Replaces every dynamic shortcut, the Hushfacebook one too, which is published again after. */
+    public static boolean setDynamicShortcuts(ShortcutManager manager, List<ShortcutInfo> shortcuts) {
+        boolean set = manager.setDynamicShortcuts(shortcuts);
+        keepFirst();
+        return set;
+    }
+
+    public static boolean updateShortcuts(ShortcutManager manager, List<ShortcutInfo> shortcuts) {
+        boolean updated = manager.updateShortcuts(shortcuts);
+        keepFirst();
+        return updated;
+    }
+
+    public static void removeAllDynamicShortcuts(ShortcutManager manager) {
+        manager.removeAllDynamicShortcuts();
+        keepFirst();
+    }
+
+    /**
+     * Checks the shortcut on a background thread, once however many of Facebook's calls ask. The
+     * flag drops as the check starts, so a call that lands during it asks for another.
+     */
+    private static void keepFirst() {
+        try {
+            Context context = Utils.getContext();
+            if (context == null || !keepFirstQueued.compareAndSet(false, true)) return;
+            final Context app = context.getApplicationContext() != null ? context.getApplicationContext() : context;
+            boolean queued = Utils.runOnBackgroundThread(() -> {
+                keepFirstQueued.set(false);
+                keepFirstNow(app);
+            });
+            if (!queued) keepFirstQueued.set(false);
+        } catch (Throwable t) {
+            keepFirstQueued.set(false);
+            Logger.printException(() -> "Settings entry: could not check the shortcut after Facebook's", t);
         }
     }
 

@@ -91,6 +91,117 @@ public class SettingsEntryTest {
     }
 
     /**
+     * Facebook pushes its own shortcuts at rank 0, and the platform ranks the newest push first, so
+     * the Hushfacebook one ended up last. A launcher that shows three or four of them, or two next
+     * to a notification, cut it off (#2). Facebook's push still goes through, and then the
+     * Hushfacebook shortcut goes back in front.
+     */
+    @Test public void facebooksOwnPushLeavesTheHushfacebookShortcutFirst() throws Exception {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        android.content.pm.ShortcutManager manager = context.getSystemService(android.content.pm.ShortcutManager.class);
+        SettingsEntry.publishShortcutNow(context);
+        demote(context, manager, 3, "Hushfacebook settings");
+
+        SettingsEntry.pushDynamicShortcut(manager, facebookShortcut(context, "notifications"));
+        app.morphe.extension.shared.Utils.awaitBackgroundTasksForTests();
+
+        assertNotNull("Facebook's own push was lost", shortcut(manager, "notifications"));
+        org.junit.Assert.assertEquals("the Hushfacebook shortcut stayed behind Facebook's",
+                0, shortcut(manager, SettingsEntry.SHORTCUT_ID).getRank());
+    }
+
+    /** An update of Facebook's shortcuts can rank them again too, and its answer is Facebook's. */
+    @Test public void facebooksUpdateKeepsItsAnswerAndTheHushfacebookShortcutFirst() throws Exception {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        android.content.pm.ShortcutManager manager = context.getSystemService(android.content.pm.ShortcutManager.class);
+        SettingsEntry.publishShortcutNow(context);
+        manager.pushDynamicShortcut(facebookShortcut(context, "friends"));
+        demote(context, manager, 1, "Hushfacebook settings");
+
+        boolean updated = SettingsEntry.updateShortcuts(manager,
+                java.util.Collections.singletonList(facebookShortcut(context, "friends")));
+        app.morphe.extension.shared.Utils.awaitBackgroundTasksForTests();
+
+        assertTrue("Facebook's update answered false", updated);
+        org.junit.Assert.assertEquals(0, shortcut(manager, SettingsEntry.SHORTCUT_ID).getRank());
+    }
+
+    /** A call that replaces every dynamic shortcut took the Hushfacebook one with it. */
+    @Test public void facebookReplacingItsShortcutsPublishesTheHushfacebookOneAgain() throws Exception {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        android.content.pm.ShortcutManager manager = context.getSystemService(android.content.pm.ShortcutManager.class);
+        SettingsEntry.publishShortcutNow(context);
+
+        boolean set = SettingsEntry.setDynamicShortcuts(manager,
+                java.util.Collections.singletonList(facebookShortcut(context, "reels")));
+        app.morphe.extension.shared.Utils.awaitBackgroundTasksForTests();
+
+        assertTrue("Facebook's replacement answered false", set);
+        assertNotNull("Facebook's own shortcut was lost", shortcut(manager, "reels"));
+        android.content.pm.ShortcutInfo ours = shortcut(manager, SettingsEntry.SHORTCUT_ID);
+        assertNotNull("the Hushfacebook shortcut stayed gone", ours);
+        org.junit.Assert.assertEquals(0, ours.getRank());
+        org.junit.Assert.assertEquals("Hushfacebook settings", String.valueOf(ours.getLongLabel()));
+    }
+
+    /** Each start checks the place as well as the label, so a shortcut left behind comes back first. */
+    @Test public void theNextStartPutsAShortcutLeftBehindBackInFront() {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        android.content.pm.ShortcutManager manager = context.getSystemService(android.content.pm.ShortcutManager.class);
+        SettingsEntry.publishShortcutNow(context);
+        demote(context, manager, 2, "Hushfacebook settings");
+
+        SettingsEntry.publishShortcutNow(context);
+
+        org.junit.Assert.assertEquals(0, shortcut(manager, SettingsEntry.SHORTCUT_ID).getRank());
+        org.junit.Assert.assertEquals(1, manager.getDynamicShortcuts().size());
+    }
+
+    /**
+     * The process Facebook pushes from may not have Facebook's language yet, so moving the shortcut
+     * back keeps the label it has. Relabelled in the phone's language there, it flipped between
+     * the two languages each time Facebook pushed.
+     */
+    @Test public void movingTheShortcutBackKeepsItsLabel() {
+        android.content.Context context = RuntimeEnvironment.getApplication();
+        android.content.pm.ShortcutManager manager = context.getSystemService(android.content.pm.ShortcutManager.class);
+        String german = app.morphe.extension.shared.L10nTablesForTests.of("de").get("Hushfacebook settings");
+        demote(context, manager, 3, german);
+
+        SettingsEntry.keepFirstNow(context);
+
+        org.junit.Assert.assertEquals(german, longLabel(manager));
+        org.junit.Assert.assertEquals(0, shortcut(manager, SettingsEntry.SHORTCUT_ID).getRank());
+    }
+
+    /** What the platform leaves after Facebook's pushes rank ahead of the Hushfacebook shortcut. */
+    private static void demote(android.content.Context context, android.content.pm.ShortcutManager manager,
+                               int rank, String label) {
+        manager.pushDynamicShortcut(new android.content.pm.ShortcutInfo.Builder(context, SettingsEntry.SHORTCUT_ID)
+                .setShortLabel("Hushfacebook")
+                .setLongLabel(label)
+                .setIntent(new Intent(Intent.ACTION_VIEW))
+                .setRank(rank)
+                .build());
+        org.junit.Assert.assertEquals(rank, shortcut(manager, SettingsEntry.SHORTCUT_ID).getRank());
+    }
+
+    private static android.content.pm.ShortcutInfo facebookShortcut(android.content.Context context, String id) {
+        return new android.content.pm.ShortcutInfo.Builder(context, id)
+                .setShortLabel(id)
+                .setIntent(new Intent(Intent.ACTION_VIEW))
+                .setRank(0)
+                .build();
+    }
+
+    private static android.content.pm.ShortcutInfo shortcut(android.content.pm.ShortcutManager manager, String id) {
+        for (android.content.pm.ShortcutInfo shortcut : manager.getDynamicShortcuts()) {
+            if (id.equals(shortcut.getId())) return shortcut;
+        }
+        return null;
+    }
+
+    /**
      * Signed out, the shortcut's screen lands on the login screen, and Facebook replaces that with
      * its logged-out screen a moment later. Android resumes the replacement before it destroys the
      * login screen, so the replacement is already in front when the request comes back, and it
