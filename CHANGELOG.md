@@ -2,12 +2,13 @@
 
 Every Hushfacebook release, newest first.
 
-## Unreleased
+## 0.1.5 (2026-09-26)
 
 * **Facebook:** The optional Stop Story auto-advance patch keeps a finished Story on screen until you tap or swipe. Its switch restores Facebook's timing at any time.
 * **Facebook:** The Hushfacebook settings screen groups controls into rounded cards, gives its status a stronger header, and uses clearer blue controls in the default dark theme.
 * **Facebook:** A new, opt-in switch keeps the feed in place when you return to Facebook within ten minutes. Pull to refresh and a fresh launch still work.
 * **Facebook:** Hide Reels in the feed now catches Reels showcase rows filed under other feed categories and the row Facebook injects just before the feed ends. Other showcases and reels posted by people you follow stay.
+* **Facebook:** All 21 patches apply to both supported Facebook builds. Morphe Manager 1.32.0 or newer is still required.
 
 ## 0.1.4 (2026-09-25)
 
