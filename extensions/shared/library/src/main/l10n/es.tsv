@@ -181,10 +181,10 @@ Best	La mejor
 Smallest	La más pequeña
 Each video saves at the best quality the player streams.	Cada video se guarda con la mejor calidad que ofrece el reproductor.
 Each video saves at its lowest quality, for the smallest file.	Cada video se guarda con su calidad más baja, para que el archivo sea lo más pequeño posible.
-Each video saves at %1$s, or the closest quality it has.	Cada video se guarda en %1$s o en la calidad más cercana que tenga.
+Each video saves at %1$s or the closest quality below it. A video with nothing that low saves at the closest quality above.	Cada video se guarda en %1$s o en la calidad más cercana por debajo. Si un video no tiene ninguna tan baja, se guarda en la más cercana por encima.
 Videos will save at the best quality.	Los videos se guardarán con la mejor calidad.
 Videos will save at their lowest quality, for the smallest files.	Los videos se guardarán con su calidad más baja, para que los archivos sean lo más pequeños posible.
-Videos will save at %1$s, or the closest quality each one has.	Los videos se guardarán en %1$s o en la calidad más cercana que tenga cada uno.
+Videos will save at %1$s or the closest quality below it. A video with nothing that low will save at the closest quality above.	Los videos se guardarán en %1$s o en la calidad más cercana por debajo. Si un video no tiene ninguna tan baja, se guardará en la más cercana por encima.
 Settings imported.	Configuración importada.
 Video file name	Nombre de archivo de los videos
 %1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave it blank to use the default, %3$s.	%1$s se convierte en la fecha y la hora del guardado, y %2$s en el número del video en Facebook. A un nombre sin ninguno de los dos se le añade la fecha. Los caracteres no válidos se convierten en guiones bajos. Déjalo vacío para usar el nombre predeterminado, %3$s.

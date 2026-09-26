@@ -271,7 +271,10 @@ public class HushfacebookPreferenceFragmentTest {
             quality.setValue("P480");
             ShadowLooper.idleMainLooper();
             assertEquals(DownloadQuality.P480, Settings.DOWNLOAD_QUALITY.savedValue());
-            assertEquals("Each video saves at " + L10n.isolate("480p") + ", or the closest quality it has.",
+            // A cap prefers anything at or under it, so the summary can't promise the nearest
+            // quality: under 720p a video with 1080p and 240p saves at 240p.
+            assertEquals("Each video saves at " + L10n.isolate("480p") + " or the closest quality below it. A video "
+                            + "with nothing that low saves at the closest quality above.",
                     String.valueOf(quality.getSummary()));
 
             quality.setValue("SMALLEST");

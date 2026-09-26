@@ -161,8 +161,8 @@ public final class L10nTranslations {
                 "Aufs Handy herunterladen");
         table.put("Downloads",
                 "Downloads");
-        table.put("Each video saves at %1$s, or the closest quality it has.",
-                "Jedes Video wird in %1$s gespeichert oder in der n\u00e4chstliegenden Qualit\u00e4t, die es hat.");
+        table.put("Each video saves at %1$s or the closest quality below it. A video with nothing that low saves at the closest quality above.",
+                "Jedes Video wird in %1$s oder der n\u00e4chstniedrigeren Qualit\u00e4t gespeichert. Hat ein Video keine so niedrige Qualit\u00e4t, wird es in der n\u00e4chsth\u00f6heren gespeichert.");
         table.put("Each video saves at its lowest quality, for the smallest file.",
                 "Jedes Video wird in seiner niedrigsten Qualit\u00e4t gespeichert, damit die Datei so klein wie m\u00f6glich ist.");
         table.put("Each video saves at the best quality the player streams.",
@@ -424,8 +424,8 @@ public final class L10nTranslations {
     private static void fillDe3(Map<String, String> table) {
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Videos landen in %1$s und Fotos in %2$s.");
-        table.put("Videos will save at %1$s, or the closest quality each one has.",
-                "Videos werden dann in %1$s gespeichert oder in der n\u00e4chstliegenden Qualit\u00e4t, die das jeweilige Video hat.");
+        table.put("Videos will save at %1$s or the closest quality below it. A video with nothing that low will save at the closest quality above.",
+                "Videos werden dann in %1$s oder der n\u00e4chstniedrigeren Qualit\u00e4t gespeichert. Hat ein Video keine so niedrige Qualit\u00e4t, wird es in der n\u00e4chsth\u00f6heren gespeichert.");
         table.put("Videos will save at the best quality.",
                 "Videos werden dann in der besten Qualit\u00e4t gespeichert.");
         table.put("Videos will save at their lowest quality, for the smallest files.",
@@ -572,8 +572,8 @@ public final class L10nTranslations {
                 "Descargar en el tel\u00e9fono");
         table.put("Downloads",
                 "Descargas");
-        table.put("Each video saves at %1$s, or the closest quality it has.",
-                "Cada video se guarda en %1$s o en la calidad m\u00e1s cercana que tenga.");
+        table.put("Each video saves at %1$s or the closest quality below it. A video with nothing that low saves at the closest quality above.",
+                "Cada video se guarda en %1$s o en la calidad m\u00e1s cercana por debajo. Si un video no tiene ninguna tan baja, se guarda en la m\u00e1s cercana por encima.");
         table.put("Each video saves at its lowest quality, for the smallest file.",
                 "Cada video se guarda con su calidad m\u00e1s baja, para que el archivo sea lo m\u00e1s peque\u00f1o posible.");
         table.put("Each video saves at the best quality the player streams.",
@@ -835,8 +835,8 @@ public final class L10nTranslations {
     private static void fillEs3(Map<String, String> table) {
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Los videos van a %1$s y las fotos a %2$s.");
-        table.put("Videos will save at %1$s, or the closest quality each one has.",
-                "Los videos se guardar\u00e1n en %1$s o en la calidad m\u00e1s cercana que tenga cada uno.");
+        table.put("Videos will save at %1$s or the closest quality below it. A video with nothing that low will save at the closest quality above.",
+                "Los videos se guardar\u00e1n en %1$s o en la calidad m\u00e1s cercana por debajo. Si un video no tiene ninguna tan baja, se guardar\u00e1 en la m\u00e1s cercana por encima.");
         table.put("Videos will save at the best quality.",
                 "Los videos se guardar\u00e1n con la mejor calidad.");
         table.put("Videos will save at their lowest quality, for the smallest files.",
@@ -983,8 +983,8 @@ public final class L10nTranslations {
                 "Unduh ke ponsel");
         table.put("Downloads",
                 "Unduhan");
-        table.put("Each video saves at %1$s, or the closest quality it has.",
-                "Setiap video disimpan dalam %1$s, atau kualitas terdekat yang dimilikinya.");
+        table.put("Each video saves at %1$s or the closest quality below it. A video with nothing that low saves at the closest quality above.",
+                "Setiap video disimpan dalam %1$s atau kualitas terdekat di bawahnya. Video yang tidak memiliki kualitas serendah itu disimpan dalam kualitas terdekat di atasnya.");
         table.put("Each video saves at its lowest quality, for the smallest file.",
                 "Setiap video disimpan dengan kualitas terendahnya, agar ukuran filenya sekecil mungkin.");
         table.put("Each video saves at the best quality the player streams.",
@@ -1246,8 +1246,8 @@ public final class L10nTranslations {
     private static void fillIn3(Map<String, String> table) {
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Video disimpan ke %1$s dan foto ke %2$s.");
-        table.put("Videos will save at %1$s, or the closest quality each one has.",
-                "Video akan disimpan dalam %1$s, atau kualitas terdekat yang dimiliki tiap video.");
+        table.put("Videos will save at %1$s or the closest quality below it. A video with nothing that low will save at the closest quality above.",
+                "Video akan disimpan dalam %1$s atau kualitas terdekat di bawahnya. Video yang tidak memiliki kualitas serendah itu akan disimpan dalam kualitas terdekat di atasnya.");
         table.put("Videos will save at the best quality.",
                 "Video akan disimpan dengan kualitas terbaik.");
         table.put("Videos will save at their lowest quality, for the smallest files.",
@@ -1394,8 +1394,8 @@ public final class L10nTranslations {
                 "Baixar no celular");
         table.put("Downloads",
                 "Downloads");
-        table.put("Each video saves at %1$s, or the closest quality it has.",
-                "Cada v\u00eddeo \u00e9 salvo em %1$s ou na qualidade mais pr\u00f3xima que ele tiver.");
+        table.put("Each video saves at %1$s or the closest quality below it. A video with nothing that low saves at the closest quality above.",
+                "Cada v\u00eddeo \u00e9 salvo em %1$s ou na qualidade mais pr\u00f3xima abaixo disso. Um v\u00eddeo que n\u00e3o tiver nenhuma qualidade t\u00e3o baixa \u00e9 salvo na mais pr\u00f3xima acima.");
         table.put("Each video saves at its lowest quality, for the smallest file.",
                 "Cada v\u00eddeo \u00e9 salvo na qualidade mais baixa dele, para o arquivo ficar o menor poss\u00edvel.");
         table.put("Each video saves at the best quality the player streams.",
@@ -1657,8 +1657,8 @@ public final class L10nTranslations {
     private static void fillPt_rBR3(Map<String, String> table) {
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Os v\u00eddeos v\u00e3o para %1$s e as fotos para %2$s.");
-        table.put("Videos will save at %1$s, or the closest quality each one has.",
-                "Os v\u00eddeos v\u00e3o ser salvos em %1$s ou na qualidade mais pr\u00f3xima que cada um tiver.");
+        table.put("Videos will save at %1$s or the closest quality below it. A video with nothing that low will save at the closest quality above.",
+                "Os v\u00eddeos v\u00e3o ser salvos em %1$s ou na qualidade mais pr\u00f3xima abaixo disso. Um v\u00eddeo que n\u00e3o tiver nenhuma qualidade t\u00e3o baixa vai ser salvo na mais pr\u00f3xima acima.");
         table.put("Videos will save at the best quality.",
                 "Os v\u00eddeos v\u00e3o ser salvos na melhor qualidade.");
         table.put("Videos will save at their lowest quality, for the smallest files.",
@@ -1805,8 +1805,8 @@ public final class L10nTranslations {
                 "Telefona indir");
         table.put("Downloads",
                 "\u0130ndirmeler");
-        table.put("Each video saves at %1$s, or the closest quality it has.",
-                "Her video %1$s kalitesinde ya da sahip oldu\u011fu en yak\u0131n kalitede kaydedilir.");
+        table.put("Each video saves at %1$s or the closest quality below it. A video with nothing that low saves at the closest quality above.",
+                "Her video %1$s kalitesinde ya da bunun alt\u0131ndaki en yak\u0131n kalitede kaydedilir. Bu kadar d\u00fc\u015f\u00fck kalitesi olmayan video, bunun \u00fcst\u00fcndeki en yak\u0131n kalitede kaydedilir.");
         table.put("Each video saves at its lowest quality, for the smallest file.",
                 "Her video en d\u00fc\u015f\u00fck kalitesinde kaydedilir, b\u00f6ylece dosya en k\u00fc\u00e7\u00fck olur.");
         table.put("Each video saves at the best quality the player streams.",
@@ -2068,8 +2068,8 @@ public final class L10nTranslations {
     private static void fillTr3(Map<String, String> table) {
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Videolar %1$s klas\u00f6r\u00fcne, foto\u011fraflar %2$s klas\u00f6r\u00fcne kaydedilir.");
-        table.put("Videos will save at %1$s, or the closest quality each one has.",
-                "Videolar %1$s kalitesinde ya da her birinin sahip oldu\u011fu en yak\u0131n kalitede kaydedilecek.");
+        table.put("Videos will save at %1$s or the closest quality below it. A video with nothing that low will save at the closest quality above.",
+                "Videolar %1$s kalitesinde ya da bunun alt\u0131ndaki en yak\u0131n kalitede kaydedilecek. Bu kadar d\u00fc\u015f\u00fck kalitesi olmayan video, bunun \u00fcst\u00fcndeki en yak\u0131n kalitede kaydedilecek.");
         table.put("Videos will save at the best quality.",
                 "Videolar en iyi kalitede kaydedilecek.");
         table.put("Videos will save at their lowest quality, for the smallest files.",

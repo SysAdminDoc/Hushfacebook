@@ -592,7 +592,12 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         }
     }
 
-    /** What a save does with [quality], for the row's summary. */
+    /**
+     * What a save does with [quality], for the row's summary. A cap takes the best rendition at or
+     * under it, and only a video with nothing that low goes above it ({@link DownloadQuality}), so
+     * the sentence names both directions: "the closest quality" alone read as 1080p beating 240p
+     * under a 720p cap, and the save picks 240p.
+     */
     static String qualitySummary(DownloadQuality quality) {
         switch (quality) {
             case BEST:
@@ -600,8 +605,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             case SMALLEST:
                 return L10n.t("Each video saves at its lowest quality, for the smallest file.");
             default:
-                return L10n.f("Each video saves at %1$s, or the closest quality it has.",
-                        L10n.isolate(quality.ceilingLabel()));
+                return L10n.f("Each video saves at %1$s or the closest quality below it. A video with nothing "
+                        + "that low saves at the closest quality above.", L10n.isolate(quality.ceilingLabel()));
         }
     }
 

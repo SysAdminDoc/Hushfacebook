@@ -677,7 +677,8 @@ public class SettingsBackupTest {
             deliver(activity, tap(activity, page, IMPORT_ROW), file.toString());
             AlertDialog preview = shownPreview();
             String quality = "Videos will save at " + app.morphe.extension.shared.L10n.isolate("720p")
-                    + ", or the closest quality each one has.";
+                    + " or the closest quality below it. A video with nothing that low will save at the closest "
+                    + "quality above.";
             String name = "Saved videos will be named " + app.morphe.extension.shared.L10n.isolate("{date}_{video_id}") + ".";
             assertEquals("1 switch will change.\n\n" + quality + "\n\n" + name,
                     String.valueOf(shadowOf(preview).getMessage()));
@@ -941,7 +942,8 @@ public class SettingsBackupTest {
             deliver(activity, tap(activity, page, IMPORT_ROW), file.toString());
             AlertDialog preview = shownPreview();
             String quality = "Videos will save at " + app.morphe.extension.shared.L10n.isolate("480p")
-                    + ", or the closest quality each one has.";
+                    + " or the closest quality below it. A video with nothing that low will save at the closest "
+                    + "quality above.";
             assertEquals(quality, String.valueOf(shadowOf(preview).getMessage()));
             preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
             settle();

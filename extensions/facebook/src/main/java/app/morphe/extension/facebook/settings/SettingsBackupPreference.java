@@ -321,7 +321,11 @@ public class SettingsBackupPreference extends Preference {
         return L10n.f("Saves will go to a folder named %1$s.", L10n.isolate(folder));
     }
 
-    /** The sentence that says what quality videos save at after an import. */
+    /**
+     * The sentence that says what quality videos save at after an import. Worded like the row's
+     * summary (HushfacebookPreferenceFragment.qualitySummary): below the cap first, above it only
+     * when a video has nothing that low.
+     */
     static String qualitySentence(DownloadQuality quality) {
         switch (quality) {
             case BEST:
@@ -329,8 +333,8 @@ public class SettingsBackupPreference extends Preference {
             case SMALLEST:
                 return L10n.t("Videos will save at their lowest quality, for the smallest files.");
             default:
-                return L10n.f("Videos will save at %1$s, or the closest quality each one has.",
-                        L10n.isolate(quality.ceilingLabel()));
+                return L10n.f("Videos will save at %1$s or the closest quality below it. A video with nothing "
+                        + "that low will save at the closest quality above.", L10n.isolate(quality.ceilingLabel()));
         }
     }
 
