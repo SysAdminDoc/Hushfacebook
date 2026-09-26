@@ -18,9 +18,11 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
+import app.morphe.util.singleOrPatchException
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.iface.Field
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
@@ -45,6 +47,19 @@ private const val CONTEXT = "Landroid/content/Context;"
 private const val FUNCTION1 = "Lkotlin/jvm/functions/Function1;"
 private const val LIST = "Ljava/util/List;"
 private const val ARRAY_LIST = "Ljava/util/ArrayList;"
+
+/**
+ * How the injection adds to the sidebar's lists: through the List interface.
+ *
+ * The assembly call declares the button list only as a `java.util.List`, and where it comes from
+ * already changed once: 577 makes it with `new ArrayList`, 580 gets it from a helper declared to
+ * return an ArrayList. A class method such as `AbstractCollection.add` needs the verifier to know
+ * the register holds one, so a helper declared to return a plain List would make ART reject the
+ * whole sidebar class. An interface call verifies for any List.
+ */
+private const val LIST_ADD = "$LIST->add(Ljava/lang/Object;)Z"
+
+private const val PATCH = "Download any reel"
 
 /** The name the sidebar component reports for itself, inside the method that builds it. */
 private const val SIDEBAR = "UDDSideBarComponent"
@@ -164,10 +179,13 @@ val downloadReelPatch = bytecodePatch(
 
         val (sidebarClass, sidebarName) = sidebars.single()
         val component = mutableClassDefBy(sidebarClass)
-        val sidebar = component.methods.single { it.name == sidebarName }
+        val sidebar = component.methods.filter { it.name == sidebarName }
+            .singleOrPatchException("$PATCH: the one method named $sidebarName on $sidebarClass")
         val instructions = sidebar.instructions()
 
-        val scopedType = sidebar.parameterTypes.single().toString()
+        val scopedType = sidebar.parameterTypes
+            .singleOrPatchException("$PATCH: the one parameter of the sidebar builder $sidebarClass->$sidebarName")
+            .toString()
 
         // ---- the button factory -----------------------------------------------------------------
         //
@@ -246,15 +264,18 @@ val downloadReelPatch = bytecodePatch(
         //
         // Both by type. The player params are the field whose own type holds the player, and the
         // session is the only field of its kind.
-        val playerField = component.fields.single { field ->
+        val playerField = component.fields.filter { field ->
             mutableClassDefByOrNull(field.type.toString())?.fields?.any {
                 it.type.toString() == VIDEO_PLAYER_PARAMS
             } == true
-        }
+        }.singleOrPatchException("$PATCH: the one field of $sidebarClass whose class holds VideoPlayerParams")
 
-        val sessionField = component.fields.single { it.type.toString() == FB_USER_SESSION }
-        val contextField = mutableClassDefBy(scopedType).fields
-            .single { it.type.toString() == CONTEXT }
+        val sessionField = fieldOfType(component.fields, FB_USER_SESSION, "the one FbUserSession field of $sidebarClass")
+        val contextField = fieldOfType(
+            mutableClassDefBy(scopedType).fields,
+            CONTEXT,
+            "the one Context field of the sidebar's scoped context $scopedType",
+        )
 
         // ---- the helper -------------------------------------------------------------------------
         //
@@ -414,23 +435,16 @@ val downloadReelPatch = bytecodePatch(
         // crashed a start away from the next one.
         sidebar.addInstructionsWithLabels(
             assemblyIndex - 3,
-            """
-                invoke-static { }, $HANDLER->showsButton()Z
-                move-result v0
-                if-eqz v0, :facebooks_own
-                move-object/from16 v0, v${argumentRegister(FB_USER_SESSION)}
-                move-object/from16 v1, v${argumentRegister(scopedType)}
-                move-object/from16 v2, v$playerRegister
-                invoke-static { v0, v1, v2 }, $sidebarClass->$HELPER($FB_USER_SESSION$scopedType${playerField.type})${factory.returnType}
-                move-result-object v1
-                move-object/from16 v0, v$sourceRegister
-                invoke-virtual { v0, v1 }, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
-                sget-object v2, ${icon!!.definingClass}->${icon!!.name}:$iconEnumType
-                invoke-static { v2 }, ${marker.definingClass}->${marker.name}($iconEnumType)${marker.returnType}
-                move-result-object v2
-                move-object/from16 v0, v$markerRegister
-                invoke-virtual { v0, v2 }, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
-            """,
+            sidebarButtonBlock(
+                session = argumentRegister(FB_USER_SESSION),
+                scoped = argumentRegister(scopedType),
+                player = playerRegister,
+                helper = "$sidebarClass->$HELPER($FB_USER_SESSION$scopedType${playerField.type})${factory.returnType}",
+                buttons = sourceRegister,
+                icon = "${icon!!.definingClass}->${icon!!.name}:$iconEnumType",
+                marker = "${marker.definingClass}->${marker.name}($iconEnumType)${marker.returnType}",
+                markers = markerRegister,
+            ),
             // Bound to the instruction the block goes in front of. A label written inside an
             // injected block is resolved against the block's own addresses.
             ExternalLabel("facebooks_own", sidebar.getInstruction(assemblyIndex - 3)),
@@ -439,6 +453,45 @@ val downloadReelPatch = bytecodePatch(
         enableStatus("reelDownload")
     }
 }
+
+/**
+ * What goes in front of the sidebar assembly: ask the switch, then build the button through the
+ * helper and add it to the list of buttons, and its marker to the list of markers. Each number is
+ * the register that holds that value at the insertion point; v0 to v2 are free there.
+ *
+ * Both adds go through [LIST_ADD], an interface call, so they verify whatever List the builder
+ * hands the assembly.
+ */
+internal fun sidebarButtonBlock(
+    session: Int,
+    scoped: Int,
+    player: Int,
+    helper: String,
+    buttons: Int,
+    icon: String,
+    marker: String,
+    markers: Int,
+): String = """
+    invoke-static { }, $HANDLER->showsButton()Z
+    move-result v0
+    if-eqz v0, :facebooks_own
+    move-object/from16 v0, v$session
+    move-object/from16 v1, v$scoped
+    move-object/from16 v2, v$player
+    invoke-static { v0, v1, v2 }, $helper
+    move-result-object v1
+    move-object/from16 v0, v$buttons
+    invoke-interface { v0, v1 }, $LIST_ADD
+    sget-object v2, $icon
+    invoke-static { v2 }, $marker
+    move-result-object v2
+    move-object/from16 v0, v$markers
+    invoke-interface { v0, v2 }, $LIST_ADD
+"""
+
+/** The one field among [fields] whose type is [type], or a refusal naming [what]. */
+internal fun <T : Field> fieldOfType(fields: Iterable<T>, type: String, what: String): T =
+    fields.filter { it.type.toString() == type }.singleOrPatchException("$PATCH: $what")
 
 /**
  * The body of the helper that builds one button.
