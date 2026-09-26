@@ -52,7 +52,7 @@ public final class ExternalBrowser {
     private static final String SOURCE = "ExternalBrowser";
 
     /**
-     * The hosts that stay in the in-app browser.
+     * The hosts that stay in the in-app browser, and the only ones a link shim sits on.
      *
      * <p>Login, checkout and the web pages of Facebook need the JavaScript bridges and the autofill
      * of the in-app browser. No other browser has them.
@@ -62,6 +62,20 @@ public final class ExternalBrowser {
         "fb.com",
         "messenger.com",
         "meta.com",
+    };
+
+    /**
+     * Facebook's short links, which stay in the in-app browser too. Facebook's manifest claims
+     * each of them, but a re-signed Facebook fails Android's check of that claim, so a browser
+     * given one opened Facebook's page on the web instead of in the app. They aren't shim hosts.
+     */
+    private static final String[] SHORT_LINK_HOSTS = {
+        "fb.watch",
+        "fbwat.ch",
+        "fb.me",
+        "fb.gg",
+        "fb.audio",
+        "m.me",
     };
 
     /**
@@ -82,7 +96,7 @@ public final class ExternalBrowser {
         if (uri == null || !isWebUrl(uri)) return false;
 
         Uri target = unwrapLinkShim(uri);
-        if (isInternalHost(target.getHost())) return false;
+        if (isInternalHost(target.getHost()) || isOn(target.getHost(), SHORT_LINK_HOSTS)) return false;
         // Facebook adds fbclid to the destination inside the shim, so the site it opens can tell
         // Facebook the link was followed. It goes, and nothing else in the link changes.
         target = Uri.parse(LinkCleaner.clean(target.toString()));
@@ -156,10 +170,15 @@ public final class ExternalBrowser {
 
     /** Whether {@code host} is a domain of Facebook, or a subdomain of one. */
     private static boolean isInternalHost(String host) {
+        return isOn(host, INTERNAL_HOSTS);
+    }
+
+    /** Whether {@code host} is one of {@code domains}, or a subdomain of one. */
+    private static boolean isOn(String host, String[] domains) {
         if (host == null) return false;
 
-        String lower = host.toLowerCase();
-        for (String domain : INTERNAL_HOSTS) {
+        String lower = host.toLowerCase(java.util.Locale.ROOT);
+        for (String domain : domains) {
             // The dot keeps "notfacebook.com" from a match with "facebook.com".
             if (lower.equals(domain) || lower.endsWith("." + domain)) return true;
         }

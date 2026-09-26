@@ -98,6 +98,43 @@ public class ExternalBrowserTest {
         assertNull(shadowOf(browser).getNextStartedActivity());
     }
 
+    /**
+     * Facebook's short links open a Facebook page. Sent out, a browser opened that page on the web,
+     * because a re-signed Facebook fails Android's check of the hosts its manifest claims.
+     */
+    @Test
+    public void facebooksShortLinksStayInTheApp() {
+        for (String url : new String[]{"https://fb.watch/aBc/", "https://fb.me/xyz", "https://m.me/someone",
+                "https://lm.facebook.com/l.php?u=https%3A%2F%2Ffb.watch%2FaBc%2F&h=AT0x"}) {
+            Activity browser = browserWith(url);
+
+            assertFalse(url, ExternalBrowser.redirect(browser, browser.getIntent()));
+            assertNull(url, shadowOf(browser).getNextStartedActivity());
+        }
+    }
+
+    /** Only Facebook's own domains carry a link shim, so a short link's "u" is left alone. */
+    @Test
+    public void aShortLinkIsNeverTakenForAShim() throws Exception {
+        assertEquals("https://fb.me/x?u=https%3A%2F%2Fexample.org",
+                unwrap("https://fb.me/x?u=https%3A%2F%2Fexample.org").toString());
+    }
+
+    /** Lower-cased in the phone's language, Turkish turned the I of FB.AUDIO into a dotless one. */
+    @Test
+    public void hostsCompareTheSameInTurkish() {
+        java.util.Locale before = java.util.Locale.getDefault();
+        java.util.Locale.setDefault(new java.util.Locale("tr", "TR"));
+        try {
+            Activity browser = browserWith("https://FB.AUDIO/x");
+
+            assertFalse(ExternalBrowser.redirect(browser, browser.getIntent()));
+            assertNull(shadowOf(browser).getNextStartedActivity());
+        } finally {
+            java.util.Locale.setDefault(before);
+        }
+    }
+
     @Test
     public void theSwitchKeepsEveryLinkInTheApp() {
         Settings.OPEN_LINKS_EXTERNALLY.save(false);
