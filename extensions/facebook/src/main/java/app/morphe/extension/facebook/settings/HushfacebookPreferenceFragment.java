@@ -564,6 +564,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         row.setKey(Settings.DOWNLOAD_QUALITY.key);
         row.setTitle(L10n.t("Download quality"));
         row.setDialogTitle(L10n.t("Download quality"));
+        // A list's dialog keeps DialogPreference's Cancel, which Android fills in the activity's
+        // language unless it's set here, as the folder and file name rows' are.
+        row.setNegativeButtonText(L10n.t("Cancel"));
         DownloadQuality[] qualities = DownloadQuality.values();
         CharSequence[] entries = new CharSequence[qualities.length];
         CharSequence[] values = new CharSequence[qualities.length];
@@ -660,6 +663,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                 L10n.isolate(FileNameTemplate.DATE), L10n.isolate(FileNameTemplate.VIDEO_ID),
                 L10n.isolate(FileNameTemplate.DEFAULT)));
         row.setPositiveButtonText(L10n.t("Save"));
+        // Android's own Cancel follows the activity's language, as the folder row's did.
+        row.setNegativeButtonText(L10n.t("Cancel"));
         EditText field = row.getEditText();
         field.setSingleLine(true);
         field.setHint(L10n.t("File name"));

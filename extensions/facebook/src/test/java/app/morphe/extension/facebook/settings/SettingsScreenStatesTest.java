@@ -158,6 +158,31 @@ public class SettingsScreenStatesTest {
         }
     }
 
+    /** The video file name's dialog, next to the folder's, had the same English Cancel beside Speichern. */
+    @Test
+    @Config(qualifiers = "de")
+    public void theFileNameDialogCancelsInFacebooksLanguage() {
+        assertEquals("Abbrechen", L10n.t("Cancel"));
+        try (ActivityController<SettingsL10nTest.ActivityInEnglish> controller =
+                     Robolectric.buildActivity(SettingsL10nTest.ActivityInEnglish.class).setup()) {
+            HushfacebookPreferenceFragment.FileNameRow row = HushfacebookPreferenceFragment.fileNameRow(controller.get());
+            assertEquals(L10n.t("Save"), String.valueOf(row.getPositiveButtonText()));
+            assertEquals(L10n.t("Cancel"), String.valueOf(row.getNegativeButtonText()));
+        }
+    }
+
+    /** The quality list's only button is DialogPreference's Cancel, and it came in the activity's language too. */
+    @Test
+    @Config(qualifiers = "de")
+    public void theQualityListCancelsInFacebooksLanguage() {
+        assertEquals("Abbrechen", L10n.t("Cancel"));
+        try (ActivityController<SettingsL10nTest.ActivityInEnglish> controller =
+                     Robolectric.buildActivity(SettingsL10nTest.ActivityInEnglish.class).setup()) {
+            assertEquals(L10n.t("Cancel"), String.valueOf(
+                    HushfacebookPreferenceFragment.qualityRow(controller.get()).getNegativeButtonText()));
+        }
+    }
+
     /** A row that ignores taps, such as Import while an export runs, looked like one that takes them. */
     @Test
     public void aDisabledRowIsDimmedAndAnEnabledOneIsNot() {

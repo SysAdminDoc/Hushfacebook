@@ -530,6 +530,8 @@ public class SettingsL10nTest {
                 android.preference.DialogPreference dialog = (android.preference.DialogPreference) preference;
                 if (dialog.getDialogTitle() != null) shown.add(String.valueOf(dialog.getDialogTitle()));
                 if (dialog.getDialogMessage() != null) shown.add(String.valueOf(dialog.getDialogMessage()));
+                // Left unset, Android fills Cancel in the activity's language, not Facebook's.
+                if (dialog.getNegativeButtonText() != null) shown.add(String.valueOf(dialog.getNegativeButtonText()));
             }
             if (preference instanceof android.preference.EditTextPreference) {
                 android.preference.EditTextPreference field = (android.preference.EditTextPreference) preference;
