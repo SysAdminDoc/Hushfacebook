@@ -42,6 +42,7 @@ import app.morphe.extension.facebook.download.PlayerSourcesForTests;
 import app.morphe.extension.facebook.download.ReelDownload;
 import app.morphe.extension.facebook.download.VideoMenuItemForTests;
 import app.morphe.extension.facebook.feed.FeedFilter;
+import app.morphe.extension.facebook.feed.ReturnRefresh;
 import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.feed.TypedFeedUnit;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
@@ -139,6 +140,10 @@ public class PausedHooksTest {
                 () -> FeedGuardForTests.hidesReels(Category.FB_SHORTS, new Object()),
                 () -> FeedGuardForTests.hidesShowcaseReels(Category.SHOWCASE, ShowcaseStoryType.SHOWCASE_SHORT_VIDEO),
                 FeedFilter::hidePreEofReels));
+        probes.put(PatchFamily.RETURN_REFRESH, Collections.singletonList(() -> {
+            ReturnRefresh.uiHidden();
+            return ReturnRefresh.skip();
+        }));
         // A story Facebook's own detection marked as made with AI.
         probes.put(PatchFamily.AI_DETECTED_POSTS, Collections.singletonList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true))));

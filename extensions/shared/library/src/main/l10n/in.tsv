@@ -161,3 +161,5 @@ Web links leave Facebook's in-app browser. Facebook's own pages still open in th
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Mencatat ke log Android apa yang dilakukan setiap tambalan. Biarkan nonaktif kecuali Anda sedang melaporkan masalah.
 You paused Hushfacebook.	Anda menjeda Hushfacebook.
 Your switches already match that file, so nothing will change.	Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang akan berubah.
+Keep feed position on return	Pertahankan posisi beranda saat kembali
+Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Jika kembali ke Facebook dalam sepuluh menit, posisi beranda tetap sama. Tarik ke bawah untuk memuat ulang masih berfungsi.

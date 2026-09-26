@@ -62,6 +62,10 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting HIDE_FEED_REELS =
             new BooleanSetting("hushfacebook_hide_feed_reels", TRUE);
 
+    /** Keep the current feed when returning to Facebook within ten minutes. */
+    public static final BooleanSetting BLOCK_RETURN_REFRESH =
+            new BooleanSetting("hushfacebook_block_return_refresh", TRUE);
+
     /**
      * Feed posts Facebook's own detection marked as made with AI. Off until one AI-labeled and one
      * ordinary post have been recorded on a signed-in feed and the rule told them apart.

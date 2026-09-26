@@ -165,6 +165,7 @@
         "patches/src/main/kotlin/app/morphe/patches/facebook/feed/Recommendations.kt",
         "patches/src/main/kotlin/app/morphe/patches/facebook/feed/storiestray/**",
         "patches/src/main/kotlin/app/morphe/patches/facebook/feed/reels/**",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/feed/refresh/**",
         "patches/src/main/kotlin/app/morphe/patches/facebook/misc/extension/**",
         "patches/src/main/kotlin/app/morphe/patches/facebook/misc/settings/**",
         "extensions/facebook/src/main/java/app/morphe/extension/facebook/feed/**",

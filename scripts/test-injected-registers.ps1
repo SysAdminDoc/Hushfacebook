@@ -562,6 +562,9 @@ try {
         'ShowcaseType;->storyType(Ljava/lang/Object;)Ljava/lang/Object; on-type-named ShowcaseFeedUnit: calls ' +
         'Lfixture/Showcase;->A01()Lfixture/StoryType; before its first return')) `
         "The good build's showcase stub was not reported calling the showcase unit's accessor.`n$($good.Output -join "`n")"
+    Assert-True (($good.Output -join "`n") -match [regex]::Escape(
+        'ReturnRefresh;->skip()Z holding FeedRefreshTriggerController: first in Lfixture/ReturnController;->resumeAfterBackground(')) `
+        "The good build's background-return guard was not first in the resume callback.`n$($good.Output -join "`n")"
 
     $bad = [ordered]@{
         'bad-branch' = 'branch'
@@ -644,6 +647,8 @@ try {
         'bad-showcase-stub-not-filled' = 'contract'
         'bad-showcase-stub-other-class' = 'contract'
         'bad-showcase-two-classes' = 'contract'
+        'bad-return-refresh-hook-missing' = 'contract'
+        'bad-return-refresh-hook-late' = 'contract'
     }
     $failures = @()
     foreach ($case in $bad.GetEnumerator()) {

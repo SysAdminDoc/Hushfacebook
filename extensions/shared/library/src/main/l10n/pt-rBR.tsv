@@ -161,3 +161,5 @@ Web links leave Facebook's in-app browser. Facebook's own pages still open in th
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Grava no registro do Android o que cada patch faz. Deixe desligado, a não ser que esteja relatando um problema.
 You paused Hushfacebook.	Você pausou o Hushfacebook.
 Your switches already match that file, so nothing will change.	Suas opções já correspondem a esse arquivo, então nada vai mudar.
+Keep feed position on return	Manter a posição no feed ao voltar
+Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Se você voltar ao Facebook em até dez minutos, continuará de onde parou. Puxe para baixo para atualizar quando quiser.

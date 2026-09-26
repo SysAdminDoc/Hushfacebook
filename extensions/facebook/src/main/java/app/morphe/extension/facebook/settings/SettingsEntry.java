@@ -28,6 +28,7 @@ import java.lang.ref.WeakReference;
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
+import app.morphe.extension.facebook.feed.ReturnRefresh;
 
 /**
  * How the Hushfacebook screen is reached.
@@ -77,6 +78,7 @@ public final class SettingsEntry {
                 ((Application) context).registerActivityLifecycleCallbacks(new OpenWhenResumed());
                 callbacksRegistered = true;
             }
+            ReturnRefresh.register(context);
         } catch (Exception ex) {
             Logger.printException(() -> "Settings entry: could not watch activities", ex);
         }

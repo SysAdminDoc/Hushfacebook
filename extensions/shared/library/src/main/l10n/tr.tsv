@@ -161,3 +161,5 @@ Web links leave Facebook's in-app browser. Facebook's own pages still open in th
 Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Her yamanın ne yaptığını Android günlüğüne yazar. Bir sorun bildirmiyorsan kapalı bırak.
 You paused Hushfacebook.	Hushfacebook'u duraklattın.
 Your switches already match that file, so nothing will change.	Anahtarların zaten o dosyayla aynı, bu yüzden hiçbir şey değişmeyecek.
+Keep feed position on return	Geri dönünce akış konumunu koru
+Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Facebook'a on dakika içinde dönersen kaldığın yer korunur. Yenilemek için aşağı çekmeye devam edebilirsin.

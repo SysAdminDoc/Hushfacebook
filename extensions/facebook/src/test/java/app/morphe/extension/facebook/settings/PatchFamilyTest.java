@@ -151,7 +151,8 @@ public class PatchFamilyTest {
                 "Hide sponsored reels: on (hushfacebook_hide_sponsored_reels=on); stays in while paused: "
                         + "the part of the Reels ad block patched into the app",
                 "Block background ad prefetch: no switch, stays in while paused: the background ad prefetch block",
-                "not in this build: Hide suggested and promoted posts, Hide Stories tray, Hide Reels in the feed, Hide AI-detected posts, "
+                "not in this build: Hide suggested and promoted posts, Hide Stories tray, Hide Reels in the feed, "
+                        + "Block background-return feed refresh, Hide AI-detected posts, "
                         + "Hide sponsored stories, Open links in "
                         + "external browser, Sanitize sharing links, Download any story, Download any reel, "
                         + "Download any video, Block ad telemetry, Disable Audience Network, AMOLED black theme, Material You theme, "

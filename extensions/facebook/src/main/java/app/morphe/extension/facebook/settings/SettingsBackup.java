@@ -78,6 +78,7 @@ public final class SettingsBackup {
             Settings.HIDE_PEOPLE_YOU_MAY_KNOW,
             Settings.HIDE_STORIES_TRAY,
             Settings.HIDE_FEED_REELS,
+            Settings.BLOCK_RETURN_REFRESH,
             Settings.HIDE_AI_DETECTED_POSTS,
             Settings.HIDE_SPONSORED_STORIES,
             Settings.HIDE_SPONSORED_REELS,

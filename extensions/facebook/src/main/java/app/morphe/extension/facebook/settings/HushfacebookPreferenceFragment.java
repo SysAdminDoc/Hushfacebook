@@ -143,6 +143,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
 
         if (build.contains(PatchFamily.SPONSORED_POSTS) || build.contains(PatchFamily.SUGGESTED_POSTS)
                 || build.contains(PatchFamily.STORIES_TRAY) || build.contains(PatchFamily.FEED_REELS)
+                || build.contains(PatchFamily.RETURN_REFRESH)
                 || build.contains(PatchFamily.AI_DETECTED_POSTS)) {
             PreferenceCategory feed = category(screen, L10n.t("News feed"));
             if (build.contains(PatchFamily.SPONSORED_POSTS)) {
@@ -169,6 +170,11 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             if (build.contains(PatchFamily.FEED_REELS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_FEED_REELS, L10n.t("Hide Reels in the feed"),
                         L10n.t("The rows of reels between posts, and the reels Facebook adds where your feed ends.")));
+            }
+            if (build.contains(PatchFamily.RETURN_REFRESH)) {
+                feed.addPreference(toggle(context, Settings.BLOCK_RETURN_REFRESH,
+                        L10n.t("Keep feed position on return"),
+                        L10n.t("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.")));
             }
             if (build.contains(PatchFamily.AI_DETECTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_AI_DETECTED_POSTS, L10n.t("Hide AI-detected posts"),

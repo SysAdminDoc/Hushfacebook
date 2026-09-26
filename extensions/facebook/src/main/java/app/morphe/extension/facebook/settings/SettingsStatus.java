@@ -34,6 +34,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean returnRefresh() {
+        return false;
+    }
+
     public static boolean aiDetectedPosts() {
         return false;
     }

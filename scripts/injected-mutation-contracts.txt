@@ -20,3 +20,6 @@ first-call Lapp/morphe/extension/facebook/feed/ShowcaseType;->storyType(Ljava/la
 # And it asks the extension first thing in the pre-EOF injector, which holds its adapter's name and
 # adds its own Reels row at the tail of the feed without passing the feed guard.
 start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hidePreEofReels()Z holding PreEofIfuSectionAdapter
+# The background-return gate starts the controller's resume callback, which is distinct from the
+# NewsFeedFragment swipe-refresh callback. A later call would refresh before asking the switch.
+start-call Lapp/morphe/extension/facebook/feed/ReturnRefresh;->skip()Z holding FeedRefreshTriggerController

@@ -95,6 +95,10 @@ public class BadDexFixture {
     private static final String PRE_EOF = "Lfixture/PreEof;";
     private static final ImmutableMethodReference HIDE_PRE_EOF_REELS = method(FILTER, "hidePreEofReels", "Z");
 
+    private static final String RETURN_CONTROLLER = "Lfixture/ReturnController;";
+    private static final String RETURN_REFRESH = "Lapp/morphe/extension/facebook/feed/ReturnRefresh;";
+    private static final ImmutableMethodReference SKIP_RETURN_REFRESH = method(RETURN_REFRESH, "skip", "Z");
+
     private static final ImmutableTypeReference STRING_TYPE = new ImmutableTypeReference("Ljava/lang/String;");
     private static final ImmutableTypeReference INT_ARRAY = new ImmutableTypeReference("[I");
     private static final ImmutableTypeReference OBJECT_ARRAY = new ImmutableTypeReference("[Ljava/lang/Object;");
@@ -422,6 +426,31 @@ public class BadDexFixture {
                 op(Opcode.RETURN_VOID));           // 6
     }
 
+    private static ClassDef returnController(List<Instruction> prefix) {
+        List<Instruction> instructions = new ArrayList<>(prefix);
+        instructions.add(new ImmutableInstruction21c(Opcode.CONST_STRING, 0,
+                new ImmutableStringReference("FeedRefreshTriggerController")));
+        instructions.add(new ImmutableInstruction21c(Opcode.CONST_STRING, 0,
+                new ImmutableStringReference("onRefresh")));
+        instructions.add(op(Opcode.RETURN_VOID));
+        return new ImmutableClassDef(RETURN_CONTROLLER, AccessFlags.PUBLIC.getValue(), OBJECT,
+                null, null, null, null, Collections.singletonList(define(RETURN_CONTROLLER,
+                        "resumeAfterBackground", "V", false, new ImmutableMethodImplementation(3,
+                                instructions, null, null), OBJECT)));
+    }
+
+    private static List<Instruction> returnHook() {
+        return Arrays.asList(invoke(SKIP_RETURN_REFRESH), op(Opcode.MOVE_RESULT, 0),
+                ifEqz(0, 3), op(Opcode.RETURN_VOID));
+    }
+
+    private static ClassDef returnRefresh() {
+        return new ImmutableClassDef(RETURN_REFRESH, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(),
+                OBJECT, null, null, null, null, Collections.singletonList(define(RETURN_REFRESH,
+                        "skip", "Z", true, body(1,
+                                new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN, 0)))));
+    }
+
     private static ClassDef hookedAdapters() {
         return adapters(trayHook(0), trayHook(1));
     }
@@ -578,7 +607,7 @@ public class BadDexFixture {
     private static List<ClassDef> bundle(ClassDef host, ClassDef genAiLabel, ClassDef recommendationLabel,
             ClassDef adapters, ClassDef showcaseType, ClassDef preEof) {
         return Arrays.asList(host, adapters, filter(), genAiLabel, recommendationLabel, showcaseUnit(), showcaseType,
-                preEof);
+                preEof, returnController(returnHook()), returnRefresh());
     }
 
     /** A patched build that breaks only the reels patch's changes, as [showcaseType] and [preEof]. */
@@ -660,7 +689,7 @@ public class BadDexFixture {
 
         Map<String, List<ClassDef>> dexes = new LinkedHashMap<>();
         dexes.put("clean", Arrays.asList(cleanHost(), cleanAdapters(), showcaseUnit(),
-                preEof(Collections.<Instruction>emptyList())));
+                preEof(Collections.<Instruction>emptyList()), returnController(Collections.<Instruction>emptyList())));
         dexes.put("secondary", Collections.singletonList(secondary()));
         dexes.put("good", good());
         List<ClassDef> goodWithSecondary = new ArrayList<>(good());
@@ -987,6 +1016,20 @@ public class BadDexFixture {
         List<ClassDef> twoShowcases = new ArrayList<>(reelsBundle(filledShowcase, preEof(preEofHook())));
         twoShowcases.add(showcaseUnit("Lfixture/OtherShowcase;", "ShowcaseFeedUnit"));
         dexes.put("bad-showcase-two-classes", twoShowcases);
+
+        List<ClassDef> missingReturnHook = new ArrayList<>(good());
+        missingReturnHook.removeIf(cd -> cd.getType().equals(RETURN_CONTROLLER));
+        missingReturnHook.add(returnController(Collections.<Instruction>emptyList()));
+        dexes.put("bad-return-refresh-hook-missing", missingReturnHook);
+
+        List<Instruction> lateReturnHook = new ArrayList<>();
+        lateReturnHook.add(ifEqz(2, 3));
+        lateReturnHook.add(op(Opcode.NOP));
+        lateReturnHook.addAll(returnHook());
+        List<ClassDef> lateReturn = new ArrayList<>(good());
+        lateReturn.removeIf(cd -> cd.getType().equals(RETURN_CONTROLLER));
+        lateReturn.add(returnController(lateReturnHook));
+        dexes.put("bad-return-refresh-hook-late", lateReturn);
 
         for (Map.Entry<String, List<ClassDef>> e : dexes.entrySet()) {
             File dex = new File(out, e.getKey() + ".dex");

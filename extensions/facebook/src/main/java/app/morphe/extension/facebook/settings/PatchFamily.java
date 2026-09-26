@@ -44,6 +44,8 @@ public enum PatchFamily {
             Settings.HIDE_STORIES_TRAY),
     FEED_REELS(FamilyNames.FEED_REELS, "feedReels", null,
             Settings.HIDE_FEED_REELS),
+    RETURN_REFRESH(FamilyNames.RETURN_REFRESH, "returnRefresh", null,
+            Settings.BLOCK_RETURN_REFRESH),
     AI_DETECTED_POSTS(FamilyNames.AI_DETECTED_POSTS, "aiDetectedPosts", null,
             Settings.HIDE_AI_DETECTED_POSTS),
     SPONSORED_STORIES(FamilyNames.SPONSORED_STORIES, "sponsoredStories", null,
