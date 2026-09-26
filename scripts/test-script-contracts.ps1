@@ -306,6 +306,17 @@ exit /b 19
         $newer[0].FullName -eq (Get-Item -LiteralPath $stub).FullName -and
         $newer[1].FullName -eq (Get-Item -LiteralPath $rules).FullName) `
         "The R8 rules or a patches submodule's stub was missed: $(@($newer | ForEach-Object FullName) -join ', ')"
+    # NOTICE as well: :extensions:facebook compiles it into the payload for the Licenses row, so a
+    # bundle built before it moved carries the old text.
+    $notice = Join-Path $staleRoot 'NOTICE'
+    [System.IO.File]::WriteAllText($notice, 'x', [System.Text.Encoding]::ASCII)
+    [System.IO.File]::SetLastWriteTimeUtc($notice, $then)
+    Assert-True (@(Get-SourcesNewerThanBundle -Root $staleRoot -Bundle $staleBundle).Count -eq 5) `
+        'A NOTICE written before the bundle was counted.'
+    [System.IO.File]::SetLastWriteTimeUtc($notice, $then.AddMinutes(12))
+    $newer = @(Get-SourcesNewerThanBundle -Root $staleRoot -Bundle $staleBundle)
+    Assert-True ($newer.Count -eq 6 -and $newer[0].FullName -eq (Get-Item -LiteralPath $notice).FullName) `
+        "A NOTICE written after the bundle, which the payload carries, was missed: $(@($newer | ForEach-Object FullName) -join ', ')"
     $deviceScript = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'patch-for-device.ps1') -Raw
     Assert-True ($deviceScript -match 'Get-SourcesNewerThanBundle' -and
         $deviceScript -match '\[switch\]\$AllowStaleBundle') `
@@ -3646,6 +3657,62 @@ try {
         [System.IO.File]::WriteAllBytes($releaseReceipt, $cleanReceiptBytes)
     }
 
+    # A bundle that isn't a build of the commit, from a tree that is clean by the time the receipt
+    # is cut. The build stamps a bundle 0 when the tree had uncommitted changes as it started, and
+    # another commit's bundle carries that commit's time. The receipt check at the end refused
+    # both, but only after every fixture had been patched; they're refused before anything is now.
+    # And a source written after the bundle, which is what an edit put back since leaves: the tree
+    # is clean and the stamp right, yet the bundle may have been built from the edit. Nothing
+    # refused that one at all, so a bundle built from someone else's edits in a shared tree could
+    # ship as the tag once the edits were gone.
+    $builtBundleBytes = [System.IO.File]::ReadAllBytes($releaseBundle)
+    $builtSbomBytes = [System.IO.File]::ReadAllBytes($releaseSbom)
+    $builtReceiptBytes = [System.IO.File]::ReadAllBytes($releaseReceipt)
+    try {
+        foreach ($stamped in @(
+                @{ Name = 'a bundle built from a tree with uncommitted changes'; Stamp = 0L
+                    Pattern = "*stamped 0*uncommitted changes*isn't a build of commit $releaseCommit*Nothing was patched*" },
+                @{ Name = 'a bundle built from another commit'; Stamp = ($releaseSeconds - 60) * 1000
+                    Pattern = "*stamped $(($releaseSeconds - 60) * 1000), but commit $releaseCommit was made at $($releaseSeconds * 1000)*Nothing was patched*" })) {
+            Remove-Item -LiteralPath $releaseBundle -Force
+            New-TestBundleArchive -Path $releaseBundle -Entries ([ordered]@{
+                'META-INF/MANIFEST.MF' = ("Manifest-Version: 1.0`nVersion: $releaseVersionHere`nTimestamp: $($stamped.Stamp)`n" +
+                    "Patcher-Version: $($releaseToolchain.PatcherVersion)`n`n")
+                'classes.dex' = "dex`n035" + ('patches' * 8)
+                'extensions/facebook.mpe' = "dex`n035" + ('payload' * 8) })
+            # The SBOM that build writes beside it, so nothing but the stamp is out of place.
+            New-TestSbom -Path $releaseSbom -Bundle $releaseBundle
+            Assert-Throws { Invoke-ReceiptBuilder -Fixtures $allFixtures } $stamped.Pattern `
+                "build-release-receipt.ps1 went ahead with $($stamped.Name)."
+            Assert-True (-not (Test-Path -LiteralPath $javaLog)) "build-release-receipt.ps1 patched with $($stamped.Name)."
+        }
+    } finally {
+        [System.IO.File]::WriteAllBytes($releaseBundle, $builtBundleBytes)
+        [System.IO.File]::WriteAllBytes($releaseSbom, $builtSbomBytes)
+        [System.IO.File]::WriteAllBytes($releaseReceipt, $builtReceiptBytes)
+    }
+    # The catalog touched after the build: git sees no change in it, and it's newer than the bundle.
+    $touchedCatalog = Join-Path $releaseRepo 'gradle/libs.versions.toml'
+    $catalogWritten = [System.IO.File]::GetLastWriteTimeUtc($touchedCatalog)
+    try {
+        [System.IO.File]::SetLastWriteTimeUtc($touchedCatalog, [System.IO.File]::GetLastWriteTimeUtc($releaseBundle).AddMinutes(1))
+        Assert-Throws { Invoke-ReceiptBuilder -Fixtures $allFixtures } `
+            "*1 source file(s) changed after the bundle was built, the newest *libs.versions.toml*Nothing was patched*" `
+            'build-release-receipt.ps1 went ahead with a bundle older than a source it was built from.'
+        Assert-True (-not (Test-Path -LiteralPath $javaLog)) 'build-release-receipt.ps1 patched with a bundle older than its sources.'
+    } finally {
+        [System.IO.File]::SetLastWriteTimeUtc($touchedCatalog, $catalogWritten)
+        [System.IO.File]::WriteAllBytes($releaseReceipt, $builtReceiptBytes)
+    }
+    # The control: with the catalog as old as it was, the same run writes its receipt.
+    try {
+        Invoke-ReceiptBuilder -Fixtures $allFixtures
+    } catch {
+        throw "build-release-receipt.ps1 refused the built bundle once its sources were older again: $($_.Exception.Message)"
+    } finally {
+        [System.IO.File]::WriteAllBytes($releaseReceipt, $builtReceiptBytes)
+    }
+
     # patch-for-device.ps1 on the same root and stand-ins. It held every run's report to the
     # newest declared build, so an older declared build (README: 577 works too) was patched and
     # then refused with "unexpected package or version". Each declared build is held to its own
@@ -4205,6 +4272,12 @@ Assert-True ($gradleFile -match 'val releaseBundleName = "patches-\$\{project\.v
     $gradleFile -match 'output\.set\(layout\.buildDirectory\.file\("release/\$releaseSbomName"\)\)' -and
     $gradleFile -match 'finalizedBy\(releaseSbom\)') `
     'patches/build.gradle.kts no longer writes the SBOM beside the bundle in build/release after each buildAndroid.'
+# The stamp names a commit only when the tree is that commit. A tree with uncommitted changes is
+# stamped 0, which the receipt refuses; stamped with HEAD's time, it passed for a clean build.
+# Asked before the commit time is read, and git status is asked with no optional locks.
+Assert-True ($gradleFile -match 'commandLine\("git", "--no-optional-locks", "status", "--porcelain"\)' -and
+    $gradleFile -match '(?s)val sourceDateEpoch: Long = run \{.*?if \(uncommittedChanges\?\.isEmpty\(\) != true\) return@run 0L.*?"log", "-1", "--format=%ct"') `
+    'patches/build.gradle.kts stamps the bundle with the commit time without asking git whether the tree has uncommitted changes.'
 
 # Code only: a comment may say where the bundle used to be read from.
 $libsReaders = New-Object System.Collections.Generic.List[string]

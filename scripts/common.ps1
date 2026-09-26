@@ -112,10 +112,11 @@ function Get-SourcesNewerThanBundle {
         the patches module and its submodules (patches/src/main, patches/<submodule>/src/main,
         the compile-only stubs among them, whose constants can be inlined into patch code), the
         sources of every extension module (extensions/<module>/src/main and
-        extensions/<module>/<submodule>/src/main), the Gradle files that shape them, and the R8
+        extensions/<module>/<submodule>/src/main), the Gradle files that shape them, the R8
         rules (*.pro at extensions/ and in each module, extensions/proguard-rules.pro being the
-        one every extension's R8 step reads). Build output is never under src/main, so it is not
-        walked.
+        one every extension's R8 step reads), and NOTICE, which :extensions:facebook compiles
+        into the payload for its Licenses row. Build output is never under src/main, so it is not
+        walked. build-release-receipt.ps1 refuses a bundle this finds anything newer than.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Root,
@@ -124,7 +125,7 @@ function Get-SourcesNewerThanBundle {
 
     $built = (Get-Item -LiteralPath $Bundle).LastWriteTimeUtc
     $sourceRoots = @()
-    $gradleFiles = @('gradle.properties', 'settings.gradle.kts', 'build.gradle.kts', 'gradle/libs.versions.toml') |
+    $gradleFiles = @('gradle.properties', 'settings.gradle.kts', 'build.gradle.kts', 'gradle/libs.versions.toml', 'NOTICE') |
         ForEach-Object { Join-Path $Root $_ }
     $ruleDirs = @()
     $patches = Join-Path $Root 'patches'

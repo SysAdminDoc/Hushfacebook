@@ -22,6 +22,11 @@
 
     The patched APKs are working files and are deleted on the way out, including after a failure.
 
+    The bundle has to be a build of HEAD from a clean tree, and a clean tree when the receipt is
+    cut doesn't show that. So its stamp has to be HEAD's commit time (the build writes 0 when the
+    tree had uncommitted changes as it started), and no source may be newer than it. Both are
+    checked before anything is patched.
+
     Before any of that, the SBOM :patches:buildAndroid wrote beside the bundle is held to it and
     the libraries it lists are put to OSV (release-advisories.ps1). A high or critical advisory
     that scripts/advisory-exceptions.txt doesn't accept stops the run before anything is patched,
@@ -117,6 +122,32 @@ if ($dirty.Count -gt 0) {
     $shown = @($dirty | Select-Object -First 5 | ForEach-Object { $_.Trim() }) -join '; '
     throw ("The working tree has uncommitted changes, so the commit this receipt would name is " +
         "not what was built: $shown")
+}
+
+# A clean tree now says nothing about the tree the bundle was built from. Edits someone else made
+# in a shared checkout can be in the bundle and gone again by the time the receipt is cut, and the
+# stamp used to be HEAD's commit time whatever the tree held. :patches:buildAndroid stamps a bundle
+# 0 now when the tree had uncommitted changes as it started, and anything but this commit's time
+# means the bundle isn't a build of it. The receipt check at the end refuses that too, but only
+# once every fixture has been patched.
+$expectedStamp = $commitTimestamp * 1000
+if ($bundleManifest.timestamp -ne $expectedStamp) {
+    if ($bundleManifest.timestamp -eq 0) {
+        throw ("The bundle is stamped 0. :patches:buildAndroid writes that when the working tree has uncommitted " +
+            "changes as the build starts, or git can't read it, so this isn't a build of commit $commit. " +
+            'Build it again from a clean tree. Nothing was patched.')
+    }
+    throw ("The bundle is stamped $($bundleManifest.timestamp), but commit $commit was made at $expectedStamp. " +
+        "It was built from another commit, or with SOURCE_DATE_EPOCH set to something else. Build it again " +
+        'from this commit. Nothing was patched.')
+}
+# And what changed after the build started: an edit made and put back since leaves the tree clean
+# and the stamp right, and a file written after the bundle is the trace it leaves.
+$newerSources = @(Get-SourcesNewerThanBundle -Root $Root -Bundle $Bundle)
+if ($newerSources.Count -gt 0) {
+    throw ("$($newerSources.Count) source file(s) changed after the bundle was built, the newest " +
+        "$($newerSources[0].FullName). The bundle may not hold what they hold now, so build it again. " +
+        'Nothing was patched.')
 }
 
 # The SBOM, read with the bundle and for the same reason, and held to it: an SBOM left from another

@@ -283,9 +283,10 @@ function Get-BundleManifestFacts {
     .SYNOPSIS
         Version, timestamp and patcher stamp out of a bundle's META-INF/MANIFEST.MF.
     .DESCRIPTION
-        The Gradle plugin pins the timestamp to the release commit's time in milliseconds, which
-        is what makes a published hash reproducible from a tag. Read back here so a receipt
-        cannot describe a bundle that was built from something other than the commit it names.
+        patches/build.gradle.kts pins the timestamp to the time of the commit it builds, in
+        milliseconds, and to 0 when the tree had uncommitted changes as the build started. That's
+        what makes a published hash reproducible from a tag. Read back here so a receipt cannot
+        describe a bundle that was built from something other than the commit it names.
     #>
     param([Parameter(Mandatory = $true)][string]$BundlePath)
 
@@ -1079,10 +1080,14 @@ function Test-ReleaseReceipt {
             return Fail ("The receipt says the bundle is stamped $($Receipt.bundle.timestamp); " +
                 "$BundlePath is stamped $($manifest.timestamp).")
         }
-        # The one fact that makes a published hash reproducible from a tag. The plugin pins this
-        # to the release commit's time, so anything else means the bundle was built from a
+        # The one fact that makes a published hash reproducible from a tag. patches/build.gradle.kts
+        # pins this to the time of the commit it builds, and to 0 when the tree had uncommitted
+        # changes as the build started, so anything else means the bundle was built from a
         # different commit, or from a tree with uncommitted changes in it, and nobody can rebuild
-        # it from the source the receipt names. v0.28.0 shipped exactly that way.
+        # it from the source the receipt names. v0.28.0 shipped exactly that way. Until 2026-09-26
+        # a tree with changes got HEAD's time as well, so a match didn't rule them out. It still
+        # can't for an edit made after the build started, which build-release-receipt.ps1 catches
+        # by refusing a bundle older than any of its sources.
         $expectedStamp = [long]$Receipt.release.commitTimestamp * 1000
         if ($manifest.timestamp -ne $expectedStamp) {
             return Fail ("The bundle is stamped $($manifest.timestamp) but the commit it is " +

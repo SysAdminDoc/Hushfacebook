@@ -16,6 +16,26 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
+/** SOURCE_DATE_EPOCH, when the environment sets one. It wins over everything below. */
+val sourceDateEpochFromEnvironment: Long? =
+    providers.environmentVariable("SOURCE_DATE_EPOCH").orNull?.trim()?.toLongOrNull()
+
+/**
+ * What `git status --porcelain` says the working tree holds that HEAD doesn't, read once as the
+ * build starts: a line for each change, none for a clean tree, and null when git couldn't say (no
+ * git, no repository). Untracked files count, since a new source compiles in whether or not it's
+ * committed; ignored ones don't. No optional locks, so reading the tree never refreshes the index
+ * under a git command running in the same checkout.
+ */
+val uncommittedChanges: List<String>? = try {
+    providers.exec {
+        commandLine("git", "--no-optional-locks", "status", "--porcelain")
+        workingDir = rootProject.projectDir
+    }.standardOutput.asText.get().lines().filter { it.isNotBlank() }
+} catch (_: Exception) {
+    null
+}
+
 /**
  * The moment the bundle says it was built.
  *
@@ -24,11 +44,18 @@ import java.util.zip.ZipOutputStream
  * attests to one file rather than to the source it came from. This pins the field to
  * SOURCE_DATE_EPOCH when the environment sets one, otherwise to the commit being built,
  * otherwise to zero. Anything read from the clock would put the difference straight back.
+ *
+ * A tree with uncommitted changes isn't the commit, so it gets zero as well. Stamped with HEAD's
+ * time whatever the tree held, a bundle built while someone else had uncommitted edits in a shared
+ * checkout read as a clean build of HEAD, and once the edits were gone nothing could tell. The
+ * release receipt holds the stamp to the commit it names, so it refuses that bundle now. Only the
+ * tree as the build starts is seen here: scripts/build-release-receipt.ps1 also refuses a bundle
+ * older than any of its sources, which is the trace an edit made and put back later leaves.
  */
 val sourceDateEpoch: Long = run {
-    providers.environmentVariable("SOURCE_DATE_EPOCH").orNull?.trim()?.toLongOrNull()?.let {
-        return@run it
-    }
+    sourceDateEpochFromEnvironment?.let { return@run it }
+    // Only a tree git calls clean is the commit its time would name.
+    if (uncommittedChanges?.isEmpty() != true) return@run 0L
     try {
         providers.exec {
             commandLine("git", "log", "-1", "--format=%ct")
@@ -821,6 +848,9 @@ tasks {
         val bundleFile = layout.buildDirectory.file("libs/$releaseBundleName")
         val releaseDirectory = layout.buildDirectory.dir("release")
         val pinnedEpoch = sourceDateEpoch
+        // Why the stamp is zero, when the tree is the reason, said where the stamp is written: the
+        // release receipt refuses such a bundle, and only this build saw the tree it came from.
+        val unheldChanges = if (sourceDateEpochFromEnvironment == null) uncommittedChanges else emptyList()
         doLast {
             // Emptied first, so the directory never holds a bundle of another version or a
             // checksum of another build: the release scripts take the one file they find.
@@ -833,6 +863,16 @@ tasks {
             bundleFile.get().asFile.copyTo(releaseBundle)
             // Before the checksum, so what is recorded is what a rebuild will produce.
             pinBundleTimestamp(releaseBundle, pinnedEpoch)
+            if (unheldChanges == null) {
+                logger.warn("git couldn't say whether the working tree matches HEAD, so $releaseBundleName is " +
+                    "stamped 0 rather than a commit's time, and no release receipt will take it.")
+            } else if (unheldChanges.isNotEmpty()) {
+                val shown = unheldChanges.take(5).joinToString("; ") { it.trim() } +
+                    (if (unheldChanges.size > 5) "; and ${unheldChanges.size - 5} more" else "")
+                logger.warn("The working tree had uncommitted changes as the build started ($shown), so " +
+                    "$releaseBundleName is stamped 0 rather than HEAD's commit time, and no release receipt " +
+                    "will take it. Commit or stash them and build again to release it.")
+            }
             // Record only at the producer boundary. Standalone verification must not
             // bless a modified bundle by generating its own expected checksum.
             val digest = MessageDigest.getInstance("SHA-256")
