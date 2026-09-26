@@ -19,9 +19,10 @@
     an int and an object tested for equality in either order, a move-result the patch separated
     from its invoke, bad try ranges and handlers (a handler at a switch or array payload among
     them), a move-exception the method's entry reaches, the one feed guard doubled, moved or
-    missing, the reels hook deleted from the pre-EOF injector or put after a branch, and the
-    showcase stub left unfilled, calling another class, or calling a class that isn't the only one
-    answering its type name. Each of the five ShortcutManager calls the settings patch sends to the
+    missing, the reels hook deleted from the pre-EOF injector or put after a branch, the showcase
+    stub left unfilled, calling another class, or calling a class that isn't the only one
+    answering its type name, and Clean up Reels' hook deleted from Facebook's Follow check or put
+    after a branch there. Each of the five ShortcutManager calls the settings patch sends to the
     extension is left in Facebook's code by a build of its own, which has to fail that call's no-call
     rule and no other, and the contract file may hold no no-call rule without such a build.
     The good build carries the joins, copies and reads ART accepts, a zero tested against
@@ -568,6 +569,9 @@ try {
     Assert-True (($good.Output -join "`n") -match [regex]::Escape(
         'ReturnRefresh;->skip()Z holding FeedRefreshTriggerController: first in Lfixture/ReturnController;->resumeAfterBackground(')) `
         "The good build's background-return guard was not first in the resume callback.`n$($good.Output -join "`n")"
+    Assert-True (($good.Output -join "`n") -match [regex]::Escape(
+        'ReelDeclutter;->hideFollowButton()Z holding friends_tab_ifu: first in Lfixture/FollowCheck;->offersFollow(')) `
+        "The good build's Follow hook was not first in Facebook's Follow check.`n$($good.Output -join "`n")"
     # The settings patch sends each of these ShortcutManager calls to SettingsEntry, and the fixture's
     # publisher makes each one from a method of its own (Caller). Every no-call rule in the contract
     # file has to be one of them, or a rule with no bad build below would pass on "0 call sites".
@@ -680,6 +684,8 @@ try {
         'bad-showcase-two-classes' = 'contract'
         'bad-return-refresh-hook-missing' = 'contract'
         'bad-return-refresh-hook-late' = 'contract'
+        'bad-follow-hook-missing' = 'contract'
+        'bad-follow-hook-late' = 'contract'
     }
     foreach ($shortcut in $shortcutCalls) { $bad["bad-shortcut-$($shortcut.Case)-left"] = 'contract' }
     $failures = @()

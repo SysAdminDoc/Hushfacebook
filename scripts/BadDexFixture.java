@@ -62,7 +62,9 @@ import java.util.Set;
  * changes are there as well: a renamed feed unit class answering ShowcaseFeedUnit, whose accessor
  * the {@code ShowcaseType} stub calls, and a pre-EOF injector holding its adapter's name, with the
  * call to {@code FeedFilter.hidePreEofReels} first. So is a shortcut publisher making each of the
- * five calls the settings patch sends to {@code SettingsEntry}, which makes the real ones.
+ * five calls the settings patch sends to {@code SettingsEntry}, which makes the real ones, and
+ * Facebook's Follow check for a reel's author row, holding its two surface names, with Clean up
+ * Reels' call to {@code ReelDeclutter.hideFollowButton} first.
  *
  *   java -cp &lt;cli jar&gt; BadDexFixture.java &lt;outDir&gt;
  */
@@ -101,6 +103,11 @@ public class BadDexFixture {
     private static final String RETURN_CONTROLLER = "Lfixture/ReturnController;";
     private static final String RETURN_REFRESH = "Lapp/morphe/extension/facebook/feed/ReturnRefresh;";
     private static final ImmutableMethodReference SKIP_RETURN_REFRESH = method(RETURN_REFRESH, "skip", "Z");
+
+    private static final String FOLLOW_CHECK = "Lfixture/FollowCheck;";
+    private static final String FB_USER_SESSION = "Lcom/facebook/auth/usersession/FbUserSession;";
+    private static final String REEL_DECLUTTER = "Lapp/morphe/extension/facebook/reels/ReelDeclutter;";
+    private static final ImmutableMethodReference HIDE_FOLLOW_BUTTON = method(REEL_DECLUTTER, "hideFollowButton", "Z");
 
     private static final String SHORTCUT_MANAGER = "Landroid/content/pm/ShortcutManager;";
     private static final String SHORTCUT_INFO = "Landroid/content/pm/ShortcutInfo;";
@@ -510,6 +517,46 @@ public class BadDexFixture {
     }
 
     /**
+     * Facebook's Follow check for a reel's author row, static: v0 free, v1 the session. [prefix]
+     * comes first, then the two surface names it holds, then Facebook's own yes.
+     */
+    private static ClassDef followCheck(List<Instruction> prefix) {
+        List<Instruction> instructions = new ArrayList<>(prefix);
+        instructions.add(new ImmutableInstruction21c(Opcode.CONST_STRING, 0, new ImmutableStringReference("friendly_feed")));
+        instructions.add(new ImmutableInstruction21c(Opcode.CONST_STRING, 0, new ImmutableStringReference("friends_tab_ifu")));
+        instructions.add(new ImmutableInstruction11n(Opcode.CONST_4, 0, 1));
+        instructions.add(op(Opcode.RETURN, 0));
+        return new ImmutableClassDef(FOLLOW_CHECK, AccessFlags.PUBLIC.getValue(), OBJECT, null, null, null, null,
+                Collections.singletonList(define(FOLLOW_CHECK, "offersFollow", "Z", true,
+                        new ImmutableMethodImplementation(2, instructions, null, null), FB_USER_SESSION)));
+    }
+
+    /** What Clean up Reels puts first in the check: ask, and answer no when told to. The check's own path lands at 8. */
+    private static List<Instruction> followHook() {
+        return Arrays.asList(
+                invoke(HIDE_FOLLOW_BUTTON),                            // 0
+                op(Opcode.MOVE_RESULT, 0),                             // 3
+                ifEqz(0, 4),                                           // 4 -> 8
+                new ImmutableInstruction11n(Opcode.CONST_4, 0, 0),    // 6
+                op(Opcode.RETURN, 0));                                 // 7
+    }
+
+    private static ClassDef reelDeclutter() {
+        return new ImmutableClassDef(REEL_DECLUTTER, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(),
+                OBJECT, null, null, null, null, Collections.singletonList(define(REEL_DECLUTTER,
+                        "hideFollowButton", "Z", true, body(1,
+                                new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN, 0)))));
+    }
+
+    /** [classes] with the Follow check replaced by one whose prefix is [prefix]. */
+    private static List<ClassDef> withFollowCheck(List<ClassDef> classes, List<Instruction> prefix) {
+        List<ClassDef> replaced = new ArrayList<>(classes);
+        replaced.removeIf(cd -> cd.getType().equals(FOLLOW_CHECK));
+        replaced.add(followCheck(prefix));
+        return replaced;
+    }
+
+    /**
      * [call] made on a method's parameters, the manager first: the framework's virtual call, or,
      * when [sent], the stand-in's static one, as the settings patch writes it. A method that
      * answers keeps its answer in v0, so its parameters start at v1.
@@ -727,7 +774,7 @@ public class BadDexFixture {
             ClassDef adapters, ClassDef showcaseType, ClassDef preEof) {
         return Arrays.asList(host, adapters, filter(), genAiLabel, recommendationLabel, showcaseUnit(), showcaseType,
                 preEof, returnController(returnHook()), returnRefresh(), shortcuts(Collections.<String>emptySet()),
-                settingsEntry());
+                settingsEntry(), followCheck(followHook()), reelDeclutter());
     }
 
     /** A patched build that breaks only the reels patch's changes, as [showcaseType] and [preEof]. */
@@ -810,7 +857,7 @@ public class BadDexFixture {
         Map<String, List<ClassDef>> dexes = new LinkedHashMap<>();
         dexes.put("clean", Arrays.asList(cleanHost(), cleanAdapters(), showcaseUnit(),
                 preEof(Collections.<Instruction>emptyList()), returnController(Collections.<Instruction>emptyList()),
-                shortcuts(allShortcutCalls())));
+                shortcuts(allShortcutCalls()), followCheck(Collections.<Instruction>emptyList())));
         dexes.put("secondary", Collections.singletonList(secondary()));
         dexes.put("good", good());
         List<ClassDef> goodWithSecondary = new ArrayList<>(good());
@@ -1151,6 +1198,15 @@ public class BadDexFixture {
         lateReturn.removeIf(cd -> cd.getType().equals(RETURN_CONTROLLER));
         lateReturn.add(returnController(lateReturnHook));
         dexes.put("bad-return-refresh-hook-late", lateReturn);
+
+        // contract: the Follow check left without Clean up Reels' call, the hook deleted.
+        dexes.put("bad-follow-hook-missing", withFollowCheck(good(), Collections.<Instruction>emptyList()));
+        // contract: the check's call after a branch on the session, not first.
+        List<Instruction> lateFollowHook = new ArrayList<>();
+        lateFollowHook.add(ifEqz(1, 3));                                  // 0 -> 3
+        lateFollowHook.add(op(Opcode.NOP));                               // 2
+        lateFollowHook.addAll(followHook());                              // 3
+        dexes.put("bad-follow-hook-late", withFollowCheck(good(), lateFollowHook));
 
         // contract: one of Facebook's shortcut calls left as it was, not sent to the extension's
         // stand-in, one build for each call. The other four go to theirs.
