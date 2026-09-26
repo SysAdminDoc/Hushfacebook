@@ -12,8 +12,10 @@ import app.morphe.patches.facebook.misc.extension.facebookExtensionPatch
 import app.morphe.patches.facebook.misc.settings.settingsPatch
 import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.util.addInstructionsAtControlFlowLabel
+import app.morphe.util.singleOrPatchException
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 
 private const val SANITIZE =
@@ -52,16 +54,9 @@ val sanitizeSharingLinksPatch = bytecodePatch(
             // The link a share hands out, with mibextid added for its source and destination.
             ExternalShareTrackerFingerprint.method,
             // The same for a /share/ link, and Send in Messenger calls it directly.
-            tracker.methods.single {
-                it.returnType == "Ljava/lang/String;" && AccessFlags.PUBLIC.isSet(it.accessFlags) &&
-                    it.parameterTypes == listOf(FB_USER_SESSION, "Ljava/lang/Integer;", "Ljava/lang/String;")
-            },
+            shareLinkTracker(tracker.methods),
             // extid: a random id, new on every share, logged beside the link under the sharer.
-            tracker.methods.single {
-                val parameters = it.parameterTypes.map(CharSequence::toString)
-                it.returnType == "Ljava/lang/String;" && parameters.size == 5 &&
-                    parameters[1] == FB_USER_SESSION && parameters.drop(2).all { type -> type == "Ljava/lang/String;" }
-            },
+            extidTracker(tracker.methods),
         )
 
         (trackerMethods + listOf(
@@ -74,6 +69,23 @@ val sanitizeSharingLinksPatch = bytecodePatch(
         enableStatus("sanitizeSharingLinks")
     }
 }
+
+/** ExternalShareTracker's public (session, Integer, String) method that returns a /share/ link. */
+internal fun <T : Method> shareLinkTracker(methods: Iterable<T>): T = methods.filter {
+    it.returnType == "Ljava/lang/String;" && AccessFlags.PUBLIC.isSet(it.accessFlags) &&
+        it.parameterTypes.map(CharSequence::toString) == listOf(FB_USER_SESSION, "Ljava/lang/Integer;", "Ljava/lang/String;")
+}.singleOrPatchException(
+    "Sanitize sharing links: ExternalShareTracker's public (FbUserSession, Integer, String)String method for a /share/ link",
+)
+
+/** ExternalShareTracker's (?, session, String, String, String) method that adds extid to a link. */
+internal fun <T : Method> extidTracker(methods: Iterable<T>): T = methods.filter {
+    val parameters = it.parameterTypes.map(CharSequence::toString)
+    it.returnType == "Ljava/lang/String;" && parameters.size == 5 &&
+        parameters[1] == FB_USER_SESSION && parameters.drop(2).all { type -> type == "Ljava/lang/String;" }
+}.singleOrPatchException(
+    "Sanitize sharing links: ExternalShareTracker's (object, FbUserSession, String, String, String)String method that adds extid",
+)
 
 /**
  * Sends each link this method returns through the extension. The hooks go in from last to first,
