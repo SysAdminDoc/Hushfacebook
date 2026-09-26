@@ -21,7 +21,10 @@
     them), a move-exception the method's entry reaches, the one feed guard doubled, moved or
     missing, the reels hook deleted from the pre-EOF injector or put after a branch, and the
     showcase stub left unfilled, calling another class, or calling a class that isn't the only one
-    answering its type name. The good build carries the joins, copies and reads ART accepts, a zero tested against
+    answering its type name. Each of the five ShortcutManager calls the settings patch sends to the
+    extension is left in Facebook's code by a build of its own, which has to fail that call's no-call
+    rule and no other, and the contract file may hold no no-call rule without such a build.
+    The good build carries the joins, copies and reads ART accepts, a zero tested against
     an object among them, so a check made stricter still has to pass them. Each bad build has to
     fail with findings of its own category only, so a check that fires for the wrong reason fails
     here too. Removed methods and DEX entries, the removal allowlist, and the device tally
@@ -565,10 +568,34 @@ try {
     Assert-True (($good.Output -join "`n") -match [regex]::Escape(
         'ReturnRefresh;->skip()Z holding FeedRefreshTriggerController: first in Lfixture/ReturnController;->resumeAfterBackground(')) `
         "The good build's background-return guard was not first in the resume callback.`n$($good.Output -join "`n")"
-    Assert-True (($good.Output -join "`n") -match [regex]::Escape(
-        'no-call Landroid/content/pm/ShortcutManager;->pushDynamicShortcut(Landroid/content/pm/ShortcutInfo;)V ' +
-        'outside Lapp/morphe/extension/: 0 call sites')) `
-        "The good build's shortcut push, sent to the stand-in whose own push is inside the extension, was not reported clean.`n$($good.Output -join "`n")"
+    # The settings patch sends each of these ShortcutManager calls to SettingsEntry, and the fixture's
+    # publisher makes each one from a method of its own (Caller). Every no-call rule in the contract
+    # file has to be one of them, or a rule with no bad build below would pass on "0 call sites".
+    $shortcutCalls = @(
+        [pscustomobject]@{ Case = 'push'; Call = 'pushDynamicShortcut'; Takes = 'Landroid/content/pm/ShortcutInfo;'; Answers = 'V'; Caller = 'push' }
+        [pscustomobject]@{ Case = 'add'; Call = 'addDynamicShortcuts'; Takes = 'Ljava/util/List;'; Answers = 'Z'; Caller = 'add' }
+        [pscustomobject]@{ Case = 'set'; Call = 'setDynamicShortcuts'; Takes = 'Ljava/util/List;'; Answers = 'Z'; Caller = 'set' }
+        [pscustomobject]@{ Case = 'update'; Call = 'updateShortcuts'; Takes = 'Ljava/util/List;'; Answers = 'Z'; Caller = 'update' }
+        [pscustomobject]@{ Case = 'remove-all'; Call = 'removeAllDynamicShortcuts'; Takes = ''; Answers = 'V'; Caller = 'removeAll' }
+    )
+    foreach ($shortcut in $shortcutCalls) {
+        $shortcut | Add-Member -NotePropertyName Callee -NotePropertyValue (
+            "Landroid/content/pm/ShortcutManager;->$($shortcut.Call)($($shortcut.Takes))$($shortcut.Answers)")
+        $shortcut | Add-Member -NotePropertyName Site -NotePropertyValue (
+            "Lfixture/Shortcuts;->$($shortcut.Caller)(Landroid/content/pm/ShortcutManager;$($shortcut.Takes))$($shortcut.Answers)")
+    }
+    $noCallRules = @(Get-Content -LiteralPath $contracts | Where-Object { $_ -match '^\s*no-call\s' } |
+        ForEach-Object { ($_.Trim() -split '\s+')[1] } | Sort-Object)
+    $shortcutCallees = @($shortcutCalls | ForEach-Object { $_.Callee } | Sort-Object)
+    Assert-True (($noCallRules -join "`n") -ceq ($shortcutCallees -join "`n")) `
+        ("The contract file's no-call rules and this suite's shortcut builds name different calls.`n" +
+        "Contract file:`n$($noCallRules -join "`n")`nThis suite:`n$($shortcutCallees -join "`n")")
+    foreach ($shortcut in $shortcutCalls) {
+        Assert-True (($good.Output -join "`n") -match [regex]::Escape(
+            "no-call $($shortcut.Callee) outside Lapp/morphe/extension/: 0 call sites")) `
+            ("The good build's $($shortcut.Call), sent to the stand-in whose own call is inside the extension, " +
+            "was not reported clean.`n$($good.Output -join "`n")")
+    }
 
     $bad = [ordered]@{
         'bad-branch' = 'branch'
@@ -653,13 +680,15 @@ try {
         'bad-showcase-two-classes' = 'contract'
         'bad-return-refresh-hook-missing' = 'contract'
         'bad-return-refresh-hook-late' = 'contract'
-        'bad-shortcut-call-left' = 'contract'
     }
+    foreach ($shortcut in $shortcutCalls) { $bad["bad-shortcut-$($shortcut.Case)-left"] = 'contract' }
     $failures = @()
+    $badResults = @{}
     foreach ($case in $bad.GetEnumerator()) {
         $apk = New-DexApk -Name $case.Key -Entries ([ordered]@{ 'classes.dex' = (Get-Dex $case.Key) })
         $result = Invoke-DexDiff -Clean $cleanApk -Patched $apk -Allowlist $emptyAllowlist `
             -Name $case.Key -Contracts $contracts
+        $badResults[$case.Key] = $result
         $findings = Get-Findings $result
         $others = @($findings.Categories | Where-Object { $_ -ne $case.Value })
         if ($result.ExitCode -eq 0) {
@@ -673,6 +702,22 @@ try {
         }
     }
     if ($failures.Count -ne 0) { throw ($failures -join "`n") }
+
+    # Each shortcut build fails on its own call's no-call rule alone, naming the one method that still
+    # makes the call, so a rule that fires for another call, or for every call, fails here too.
+    foreach ($shortcut in $shortcutCalls) {
+        $name = "bad-shortcut-$($shortcut.Case)-left"
+        $fails = @((Get-Findings $badResults[$name]).Fails)
+        $expected = "[diff] FAIL: contract: $($shortcut.Callee) is still called outside Lapp/morphe/extension/, in $($shortcut.Site)"
+        Assert-True ($fails.Count -eq 1 -and $fails[0] -ceq $expected) `
+            "$name did not fail with its own no-call finding alone.`nExpected: $expected`nGot:`n$($fails -join "`n")"
+        foreach ($other in $shortcutCalls) {
+            $count = if ($other.Call -eq $shortcut.Call) { '1 call site, in ' } else { '0 call sites' }
+            Assert-True (($badResults[$name].Output -join "`n") -match [regex]::Escape(
+                "no-call $($other.Callee) outside Lapp/morphe/extension/: $count")) `
+                "$name reported $($other.Call) wrong: expected '$count'.`n$($badResults[$name].Output -join "`n")"
+        }
+    }
 
     # Without a contract file the structural checks still run; only the call-site rule is off.
     $noContract = Invoke-DexDiff -Clean $cleanApk -Patched (Join-Path $caseRoot 'bad-no-guard.apk') `

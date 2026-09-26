@@ -41,8 +41,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Writes the dex files scripts/test-injected-registers.ps1 holds DexDiff.java to: a clean host,
@@ -59,8 +61,8 @@ import java.util.Map;
  * call to {@code FeedFilter.hideStoriesTray} first in the patched builds. The reels patch's two
  * changes are there as well: a renamed feed unit class answering ShowcaseFeedUnit, whose accessor
  * the {@code ShowcaseType} stub calls, and a pre-EOF injector holding its adapter's name, with the
- * call to {@code FeedFilter.hidePreEofReels} first. So is a shortcut publisher whose push the
- * settings patch sends to {@code SettingsEntry}, which makes the real one.
+ * call to {@code FeedFilter.hidePreEofReels} first. So is a shortcut publisher making each of the
+ * five calls the settings patch sends to {@code SettingsEntry}, which makes the real ones.
  *
  *   java -cp &lt;cli jar&gt; BadDexFixture.java &lt;outDir&gt;
  */
@@ -102,12 +104,54 @@ public class BadDexFixture {
 
     private static final String SHORTCUT_MANAGER = "Landroid/content/pm/ShortcutManager;";
     private static final String SHORTCUT_INFO = "Landroid/content/pm/ShortcutInfo;";
+    private static final String SHORTCUT_LIST = "Ljava/util/List;";
     private static final String SHORTCUTS = "Lfixture/Shortcuts;";
     private static final String SETTINGS_ENTRY = "Lapp/morphe/extension/facebook/settings/SettingsEntry;";
-    private static final ImmutableMethodReference PUSH_SHORTCUT =
-            method(SHORTCUT_MANAGER, "pushDynamicShortcut", "V", SHORTCUT_INFO);
-    private static final ImmutableMethodReference PUSH_STAND_IN =
-            method(SETTINGS_ENTRY, "pushDynamicShortcut", "V", SHORTCUT_MANAGER, SHORTCUT_INFO);
+
+    /**
+     * One of the ShortcutManager calls the settings patch sends to SettingsEntry: its name, what it
+     * takes after the manager and what it answers, the publisher method that makes it and whether
+     * that method makes it as a range call. Its bad build is "bad-shortcut-[caseName]-left".
+     */
+    private static final class ShortcutCall {
+        final String name;
+        final String takes;
+        final String answers;
+        final String caller;
+        final String caseName;
+        final boolean range;
+
+        ShortcutCall(String name, String takes, String answers, String caller, String caseName, boolean range) {
+            this.name = name;
+            this.takes = takes;
+            this.answers = answers;
+            this.caller = caller;
+            this.caseName = caseName;
+            this.range = range;
+        }
+
+        /** The manager, then what the call takes. */
+        String[] parameters() {
+            return takes == null ? new String[]{SHORTCUT_MANAGER} : new String[]{SHORTCUT_MANAGER, takes};
+        }
+
+        ImmutableMethodReference framework() {
+            return takes == null ? method(SHORTCUT_MANAGER, name, answers) : method(SHORTCUT_MANAGER, name, answers, takes);
+        }
+
+        /** The stand-in: static, of the same name, the manager first, the same answer. */
+        ImmutableMethodReference standIn() {
+            return method(SETTINGS_ENTRY, name, answers, parameters());
+        }
+    }
+
+    /** All five, as the contract file names them. The update goes as a range call. */
+    private static final List<ShortcutCall> SHORTCUT_CALLS = Arrays.asList(
+            new ShortcutCall("pushDynamicShortcut", SHORTCUT_INFO, "V", "push", "push", false),
+            new ShortcutCall("addDynamicShortcuts", SHORTCUT_LIST, "Z", "add", "add", false),
+            new ShortcutCall("setDynamicShortcuts", SHORTCUT_LIST, "Z", "set", "set", false),
+            new ShortcutCall("updateShortcuts", SHORTCUT_LIST, "Z", "update", "update", true),
+            new ShortcutCall("removeAllDynamicShortcuts", null, "V", "removeAll", "remove-all", false));
 
     private static final ImmutableTypeReference STRING_TYPE = new ImmutableTypeReference("Ljava/lang/String;");
     private static final ImmutableTypeReference INT_ARRAY = new ImmutableTypeReference("[I");
@@ -466,24 +510,68 @@ public class BadDexFixture {
     }
 
     /**
-     * Facebook's shortcut publisher, {@code static void publish(ShortcutManager, ShortcutInfo)}: v0
-     * the manager, v1 the shortcut. The settings patch sends its push to the extension's stand-in.
+     * [call] made on a method's parameters, the manager first: the framework's virtual call, or,
+     * when [sent], the stand-in's static one, as the settings patch writes it. A method that
+     * answers keeps its answer in v0, so its parameters start at v1.
      */
-    private static ClassDef shortcuts(boolean sent) {
-        Instruction push = sent ? invoke(PUSH_STAND_IN, 0, 1)
-                : new ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 2, 0, 1, 0, 0, 0, PUSH_SHORTCUT);
-        return new ImmutableClassDef(SHORTCUTS, AccessFlags.PUBLIC.getValue(), OBJECT, null, null, null, null,
-                Collections.singletonList(define(SHORTCUTS, "publish", "V", true,
-                        body(2, push, op(Opcode.RETURN_VOID)), SHORTCUT_MANAGER, SHORTCUT_INFO)));
+    private static Instruction shortcutInvoke(ShortcutCall call, boolean sent) {
+        int first = call.answers.equals("V") ? 0 : 1;
+        int count = call.parameters().length;
+        ImmutableMethodReference callee = sent ? call.standIn() : call.framework();
+        if (call.range) {
+            return new ImmutableInstruction3rc(sent ? Opcode.INVOKE_STATIC_RANGE : Opcode.INVOKE_VIRTUAL_RANGE,
+                    first, count, callee);
+        }
+        int[] r = new int[5];
+        for (int i = 0; i < count; i++) r[i] = first + i;
+        return new ImmutableInstruction35c(sent ? Opcode.INVOKE_STATIC : Opcode.INVOKE_VIRTUAL, count,
+                r[0], r[1], r[2], r[3], r[4], callee);
     }
 
-    /** The extension's stand-in, which makes the real push. The no-call rule lets its package call it. */
+    /** A static method of [owner] taking what [call] takes, the manager first: [invoke], then its answer returned. */
+    private static Method shortcutMethod(String owner, String name, ShortcutCall call, Instruction invoke) {
+        boolean answers = !call.answers.equals("V");
+        List<Instruction> instructions = new ArrayList<>();
+        instructions.add(invoke);
+        if (answers) {
+            instructions.add(op(Opcode.MOVE_RESULT, 0));
+            instructions.add(op(Opcode.RETURN, 0));
+        } else {
+            instructions.add(op(Opcode.RETURN_VOID));
+        }
+        int registers = call.parameters().length + (answers ? 1 : 0);
+        return define(owner, name, call.answers, true,
+                new ImmutableMethodImplementation(registers, instructions, null, null), call.parameters());
+    }
+
+    /**
+     * Facebook's shortcut publisher, a static method for each call the settings patch sends to the
+     * extension's stand-in. The calls named in [left] are made as Facebook makes them, the rest go
+     * to the stand-ins.
+     */
+    private static ClassDef shortcuts(Set<String> left) {
+        List<Method> methods = new ArrayList<>();
+        for (ShortcutCall call : SHORTCUT_CALLS) {
+            methods.add(shortcutMethod(SHORTCUTS, call.caller, call, shortcutInvoke(call, !left.contains(call.name))));
+        }
+        return new ImmutableClassDef(SHORTCUTS, AccessFlags.PUBLIC.getValue(), OBJECT, null, null, null, null, methods);
+    }
+
+    /** Every call of [SHORTCUT_CALLS] by name, which the clean build makes as Facebook does. */
+    private static Set<String> allShortcutCalls() {
+        Set<String> names = new LinkedHashSet<>();
+        for (ShortcutCall call : SHORTCUT_CALLS) names.add(call.name);
+        return names;
+    }
+
+    /** The extension's stand-ins, each making the real call. The no-call rule lets its package make them. */
     private static ClassDef settingsEntry() {
+        List<Method> methods = new ArrayList<>();
+        for (ShortcutCall call : SHORTCUT_CALLS) {
+            methods.add(shortcutMethod(SETTINGS_ENTRY, call.name, call, shortcutInvoke(call, false)));
+        }
         return new ImmutableClassDef(SETTINGS_ENTRY, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(),
-                OBJECT, null, null, null, null, Collections.singletonList(define(SETTINGS_ENTRY,
-                        "pushDynamicShortcut", "V", true, body(2,
-                                new ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 2, 0, 1, 0, 0, 0, PUSH_SHORTCUT),
-                                op(Opcode.RETURN_VOID)), SHORTCUT_MANAGER, SHORTCUT_INFO)));
+                OBJECT, null, null, null, null, methods);
     }
 
     private static ClassDef cleanHost() {
@@ -638,7 +726,8 @@ public class BadDexFixture {
     private static List<ClassDef> bundle(ClassDef host, ClassDef genAiLabel, ClassDef recommendationLabel,
             ClassDef adapters, ClassDef showcaseType, ClassDef preEof) {
         return Arrays.asList(host, adapters, filter(), genAiLabel, recommendationLabel, showcaseUnit(), showcaseType,
-                preEof, returnController(returnHook()), returnRefresh(), shortcuts(true), settingsEntry());
+                preEof, returnController(returnHook()), returnRefresh(), shortcuts(Collections.<String>emptySet()),
+                settingsEntry());
     }
 
     /** A patched build that breaks only the reels patch's changes, as [showcaseType] and [preEof]. */
@@ -721,7 +810,7 @@ public class BadDexFixture {
         Map<String, List<ClassDef>> dexes = new LinkedHashMap<>();
         dexes.put("clean", Arrays.asList(cleanHost(), cleanAdapters(), showcaseUnit(),
                 preEof(Collections.<Instruction>emptyList()), returnController(Collections.<Instruction>emptyList()),
-                shortcuts(false)));
+                shortcuts(allShortcutCalls())));
         dexes.put("secondary", Collections.singletonList(secondary()));
         dexes.put("good", good());
         List<ClassDef> goodWithSecondary = new ArrayList<>(good());
@@ -1063,11 +1152,14 @@ public class BadDexFixture {
         lateReturn.add(returnController(lateReturnHook));
         dexes.put("bad-return-refresh-hook-late", lateReturn);
 
-        // contract: Facebook's shortcut push left as it was, not sent to the extension's stand-in.
-        List<ClassDef> shortcutLeft = new ArrayList<>(good());
-        shortcutLeft.removeIf(cd -> cd.getType().equals(SHORTCUTS));
-        shortcutLeft.add(shortcuts(false));
-        dexes.put("bad-shortcut-call-left", shortcutLeft);
+        // contract: one of Facebook's shortcut calls left as it was, not sent to the extension's
+        // stand-in, one build for each call. The other four go to theirs.
+        for (ShortcutCall call : SHORTCUT_CALLS) {
+            List<ClassDef> shortcutLeft = new ArrayList<>(good());
+            shortcutLeft.removeIf(cd -> cd.getType().equals(SHORTCUTS));
+            shortcutLeft.add(shortcuts(Collections.singleton(call.name)));
+            dexes.put("bad-shortcut-" + call.caseName + "-left", shortcutLeft);
+        }
 
         for (Map.Entry<String, List<ClassDef>> e : dexes.entrySet()) {
             File dex = new File(out, e.getKey() + ".dex");
