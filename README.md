@@ -100,7 +100,7 @@ While a save runs, a notification shows how far it's got, with a Cancel button. 
 
 ## Settings
 
-Long-press Facebook's icon on your home screen and tap **Hushfacebook**. The screen lists the features this build carries:
+Long-press Facebook's icon on your home screen and tap **Hushfacebook**. Related controls sit in rounded groups, with the build's status at the top. The screen lists the features this build carries:
 
 - A switch for each filter. Opening links in your browser and the download features have switches too. They take effect straight away, with no restart and no new patching, though a reel already on screen keeps the buttons it was built with. The Stories tray comes or goes the next time the feed is built, such as when you come back to it, and a row of reels already in the feed stays until the feed loads fresh posts. While Hushfacebook is paused, a change waits until it's back on.
 - **Save folder**, the one folder every save goes to. Videos land in `Movies/Facebook` and photos in `Pictures/Facebook` until you pick another name. It takes a folder name, not a path, so slashes and other characters a folder can't hold become underscores, and dots or spaces at either end are dropped.

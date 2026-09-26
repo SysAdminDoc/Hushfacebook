@@ -16,7 +16,10 @@ import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Switch;
@@ -77,20 +80,21 @@ public class ScreenColorsTest {
     /** Every pair on the screen and in its dialogs, by where it's drawn. */
     static Map<String, int[]> pairs(ScreenColors c) {
         Map<String, int[]> text = new LinkedHashMap<>();
-        text.put("row title on the page", new int[]{c.title, c.background});
-        text.put("row summary on the page", new int[]{c.summary, c.background});
+        text.put("row title on its card", new int[]{c.title, c.card});
+        text.put("row summary on its card", new int[]{c.summary, c.card});
         text.put("section title on the page", new int[]{c.heading, c.background});
         text.put("title bar and back arrow on the page", new int[]{c.title, c.background});
         text.put("dialog title on the dialog", new int[]{c.title, c.dialog});
         text.put("dialog message on the dialog", new int[]{c.summary, c.dialog});
-        text.put("dialog button on the dialog", new int[]{c.accent, c.dialog});
+        text.put("primary action text on its fill", new int[]{c.onAccent, c.accent});
+        text.put("secondary action on the dialog", new int[]{c.accent, c.dialog});
         return text;
     }
 
     static Map<String, int[]> controls(ScreenColors c) {
         Map<String, int[]> parts = new LinkedHashMap<>();
-        parts.put("switch on, against the page", new int[]{c.accent, c.background});
-        parts.put("switch off, against the page", new int[]{c.switchOff, c.background});
+        parts.put("switch on, against its card", new int[]{c.accent, c.card});
+        parts.put("switch off, against its card", new int[]{c.switchOff, c.card});
         return parts;
     }
 
@@ -247,11 +251,7 @@ public class ScreenColorsTest {
         }
     }
 
-    /**
-     * The save folder's field. The framework theme draws its underline, cursor and selection in
-     * Facebook's teal, which clashes with every wallpaper, so they take the accent the dialog's
-     * buttons have, and the underline reads against the dialog at the ratio a control needs.
-     */
+    /** The save folder's outlined field and the filled primary action use the same accent. */
     @Test
     public void theFolderDialogsFieldTakesTheAccent() {
         PatchFamily.inBuildForTests = EnumSet.allOf(PatchFamily.class);
@@ -268,10 +268,17 @@ public class ScreenColorsTest {
                 ScreenColors colors = ScreenColors.shown;
                 assertNotNull(colors);
                 EditText field = row.getEditText();
-                assertNotNull("the underline keeps the framework's colour", field.getBackgroundTintList());
-                assertEquals(colors.accent, field.getBackgroundTintList().getDefaultColor());
+                assertNull("the old underline tint remains", field.getBackgroundTintList());
+                assertTrue("the field has no outlined surface", field.getBackground() instanceof GradientDrawable);
+                assertEquals(colors.dialog, ((GradientDrawable) field.getBackground()).getColor().getDefaultColor());
                 assertEquals(ScreenColors.half(colors.accent), field.getHighlightColor());
                 assertTrue(contrast(colors.accent, colors.dialog) >= NON_TEXT);
+                Button primary = ((android.app.AlertDialog) row.getDialog())
+                        .getButton(android.app.AlertDialog.BUTTON_POSITIVE);
+                assertEquals(colors.onAccent, primary.getCurrentTextColor());
+                assertTrue(primary.getBackground() instanceof RippleDrawable);
+                assertEquals(colors.accent, ((GradientDrawable) ((RippleDrawable) primary.getBackground())
+                        .getDrawable(0)).getColor().getDefaultColor());
                 // The message on show is the preference layout's own, below a GONE one of AlertDialog's.
                 List<TextView> shownMessages = new ArrayList<>();
                 collectMessages(row.getDialog().getWindow().getDecorView(), shownMessages);

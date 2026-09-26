@@ -94,7 +94,7 @@ public final class SettingsDialog extends DialogFragment {
         bar.setGravity(Gravity.CENTER_VERTICAL);
         int pad = dp(16);
         // Start and end, not left and right: in a right-to-left language the bar is mirrored.
-        bar.setPaddingRelative(dp(4), dp(8), pad, dp(8));
+        bar.setPaddingRelative(dp(4), dp(12), pad, dp(12));
 
         TextView back = new TextView(getContext());
         back.setText(rightToLeft() ? BACK_ARROW_RIGHT_TO_LEFT : BACK_ARROW);
@@ -122,7 +122,7 @@ public final class SettingsDialog extends DialogFragment {
         title.setText("Hushfacebook");
         title.setTextColor(foreground());
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
         title.setPaddingRelative(dp(8), 0, 0, 0);
         title.setAccessibilityHeading(true);
         bar.addView(title);

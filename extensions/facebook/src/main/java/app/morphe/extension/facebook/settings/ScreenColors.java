@@ -8,7 +8,15 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
+import android.graphics.drawable.RippleDrawable;
+import android.preference.Preference;
+import android.preference.PreferenceCategory;
+import android.preference.PreferenceGroup;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -51,10 +59,30 @@ final class ScreenColors {
     final int accent;
     /** A switch that's off. */
     final int switchOff;
+    /** Grouped preference rows and their edge. */
+    final int card;
+    final int outline;
+    /** Text on the filled primary dialog action. */
+    final int onAccent;
 
     /** The colours the screen on show was built with, or null for the black page. */
     @Nullable
     static volatile ScreenColors shown;
+    private static final ScreenColors DEFAULT = new ScreenColors();
+
+    private ScreenColors() {
+        light = false;
+        background = Color.BLACK;
+        dialog = 0xFF171A20;
+        title = Color.WHITE;
+        summary = 0xFFBFC4D0;
+        heading = 0xFF69A4FF;
+        accent = 0xFF1769E0;
+        switchOff = 0xFF858D9C;
+        card = 0xFF141820;
+        outline = 0xFF333A46;
+        onAccent = Color.WHITE;
+    }
 
     private ScreenColors(TonePalette palette, boolean light) {
         this.light = light;
@@ -66,6 +94,9 @@ final class ScreenColors {
             heading = palette.tone(TonePalette.ACCENT, 40);
             accent = palette.tone(TonePalette.ACCENT, 40);
             switchOff = palette.tone(TonePalette.NEUTRAL_VARIANT, 50);
+            card = palette.tone(TonePalette.NEUTRAL, 95);
+            outline = palette.tone(TonePalette.NEUTRAL_VARIANT, 80);
+            onAccent = Color.WHITE;
         } else {
             background = palette.tone(TonePalette.NEUTRAL, 10);
             dialog = palette.tone(TonePalette.NEUTRAL, 20);
@@ -74,6 +105,9 @@ final class ScreenColors {
             heading = palette.tone(TonePalette.ACCENT, 80);
             accent = palette.tone(TonePalette.ACCENT, 80);
             switchOff = palette.tone(TonePalette.NEUTRAL_VARIANT, 60);
+            card = palette.tone(TonePalette.NEUTRAL, 20);
+            outline = palette.tone(TonePalette.NEUTRAL_VARIANT, 30);
+            onAccent = background;
         }
     }
 
@@ -104,7 +138,7 @@ final class ScreenColors {
     }
 
     /** A row's title and summary, and its switch if it has one. */
-    void paintRow(View row) {
+    void paintRow(View row, Preference preference) {
         TextView title = row.findViewById(android.R.id.title);
         if (title != null) title.setTextColor(this.title);
         TextView summary = row.findViewById(android.R.id.summary);
@@ -116,12 +150,30 @@ final class ScreenColors {
             toggle.setThumbTintList(new ColorStateList(states, new int[]{accent, switchOff}));
             toggle.setTrackTintList(new ColorStateList(states, new int[]{half(accent), half(switchOff)}));
         }
+        PreferenceGroup parent = preference.getParent();
+        boolean grouped = parent instanceof PreferenceCategory;
+        boolean first = !grouped || parent.getPreference(0) == preference;
+        boolean last = !grouped || parent.getPreference(parent.getPreferenceCount() - 1) == preference;
+        float radius = dp(row, 18);
+        GradientDrawable surface = new GradientDrawable();
+        surface.setColor(card);
+        surface.setStroke(dp(row, 1), outline);
+        surface.setCornerRadii(new float[]{
+                first ? radius : 0, first ? radius : 0,
+                first ? radius : 0, first ? radius : 0,
+                last ? radius : 0, last ? radius : 0,
+                last ? radius : 0, last ? radius : 0});
+        Drawable inset = new InsetDrawable(surface, dp(row, 10), first ? dp(row, 6) : 0,
+                dp(row, 10), last ? dp(row, 6) : 0);
+        row.setBackground(preference.isSelectable()
+                ? new RippleDrawable(ColorStateList.valueOf(half(accent)), inset, null) : inset);
     }
 
     /** A section title. */
     void paintHeading(View row) {
         TextView title = row.findViewById(android.R.id.title);
         if (title != null) title.setTextColor(heading);
+        row.setPaddingRelative(dp(row, 16), dp(row, 16), dp(row, 16), dp(row, 2));
     }
 
     /**
@@ -132,8 +184,11 @@ final class ScreenColors {
         if (dialog == null) return;
         Window window = dialog.getWindow();
         if (window != null) {
-            Drawable background = window.getDecorView().getBackground();
-            if (background != null) background.mutate().setTint(this.dialog);
+            GradientDrawable panel = new GradientDrawable();
+            panel.setColor(this.dialog);
+            panel.setCornerRadius(dp(window.getDecorView(), 22));
+            panel.setStroke(dp(window.getDecorView(), 1), outline);
+            window.setBackgroundDrawable(panel);
         }
         @SuppressWarnings("DiscouragedApi")
         int titleId = dialog.getContext().getResources().getIdentifier("alertTitle", "id", "android");
@@ -144,7 +199,17 @@ final class ScreenColors {
         if (window != null) paintMessages(window.getDecorView());
         for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL}) {
             Button button = dialog.getButton(which);
-            if (button != null) button.setTextColor(accent);
+            if (button == null) continue;
+            boolean primary = which == AlertDialog.BUTTON_POSITIVE;
+            GradientDrawable pill = new GradientDrawable();
+            pill.setColor(primary ? accent : this.dialog);
+            pill.setCornerRadius(dp(button, 22));
+            pill.setStroke(dp(button, 1), primary ? accent : outline);
+            button.setBackground(new RippleDrawable(ColorStateList.valueOf(half(primary ? onAccent : accent)),
+                    pill, null));
+            button.setTextColor(primary ? onAccent : accent);
+            button.setAllCaps(false);
+            button.setPaddingRelative(dp(button, 18), dp(button, 6), dp(button, 18), dp(button, 6));
         }
         View field = dialog.findViewById(android.R.id.edit);
         if (field instanceof EditText) paintField((EditText) field);
@@ -156,7 +221,14 @@ final class ScreenColors {
      */
     void paintField(EditText field) {
         field.setHintTextColor(summary);
-        field.setBackgroundTintList(ColorStateList.valueOf(accent));
+        GradientDrawable outline = new GradientDrawable();
+        outline.setColor(dialog);
+        outline.setCornerRadius(dp(field, 12));
+        outline.setStroke(dp(field, 2), accent);
+        field.setBackgroundTintList(null);
+        field.setBackground(outline);
+        field.setPaddingRelative(dp(field, 12), dp(field, 10), dp(field, 12), dp(field, 10));
+        field.setTextColor(title);
         field.setHighlightColor(half(accent));
         Drawable cursor = field.getTextCursorDrawable();
         if (cursor != null) {
@@ -193,21 +265,26 @@ final class ScreenColors {
     }
 
     /** Paints a row with the colours on show, if there are any. */
-    static void row(View row) {
+    static void row(View row, Preference preference) {
         ScreenColors colors = shown;
-        if (colors != null) colors.paintRow(row);
+        (colors == null ? DEFAULT : colors).paintRow(row, preference);
     }
 
     /** Paints a section title with the colours on show, if there are any. */
     static void heading(View row) {
         ScreenColors colors = shown;
-        if (colors != null) colors.paintHeading(row);
+        (colors == null ? DEFAULT : colors).paintHeading(row);
     }
 
     /** Paints a dialog with the colours on show, if there are any. */
     static void dialog(@Nullable AlertDialog dialog) {
         ScreenColors colors = shown;
-        if (colors != null) colors.paint(dialog);
+        (colors == null ? DEFAULT : colors).paint(dialog);
+    }
+
+    private static int dp(View view, int value) {
+        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
+                view.getResources().getDisplayMetrics()));
     }
 
     /** A switch's track: the thumb's colour at half strength, as Material's own switch draws it. */

@@ -10,6 +10,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -27,6 +33,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -80,6 +87,18 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
     public void onCreate(Bundle savedInstanceState) {
         if (savedInstanceState != null) pendingImport = savedInstanceState.getBundle(PENDING_IMPORT_STATE);
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ListView list = view.findViewById(android.R.id.list);
+        if (list != null) {
+            list.setDivider(null);
+            list.setDividerHeight(0);
+            ScreenColors colors = ScreenColors.shown;
+            list.setBackgroundColor(colors == null ? Color.BLACK : colors.background);
+        }
     }
 
     @Override
@@ -336,7 +355,31 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
     private Preference statusCard(Context context) {
         Preference card = new Row(context);
         card.setPersistent(false);
-        if (!HushfacebookPause.isPaused()) {
+        ScreenColors colors = ScreenColors.shown;
+        boolean paused = HushfacebookPause.isPaused();
+        int fill = paused
+                ? (colors == null ? 0xFF858D9C : colors.switchOff)
+                : (colors == null ? 0xFF1769E0 : colors.accent);
+        int diameter = Math.round(40 * context.getResources().getDisplayMetrics().density);
+        Bitmap mark = Bitmap.createBitmap(diameter, diameter, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(mark);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(fill);
+        canvas.drawCircle(diameter / 2f, diameter / 2f, diameter / 2f, paint);
+        if (!paused) {
+            paint.setColor(colors != null && !colors.light ? colors.background : Color.WHITE);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(diameter / 10f);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeJoin(Paint.Join.ROUND);
+            Path check = new Path();
+            check.moveTo(diameter * .24f, diameter * .52f);
+            check.lineTo(diameter * .43f, diameter * .70f);
+            check.lineTo(diameter * .77f, diameter * .32f);
+            canvas.drawPath(check, paint);
+        }
+        card.setIcon(new BitmapDrawable(context.getResources(), mark));
+        if (!paused) {
             card.setTitle(L10n.t("Hushfacebook is on"));
             card.setSummary(L10n.f("Version %1$s for Facebook %2$s",
                     L10n.isolate(Utils.getPatchesReleaseVersion()), L10n.isolate(Utils.getAppVersionName())));
@@ -502,7 +545,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
-            ScreenColors.row(view);
+            ScreenColors.row(view, this);
             view.setAccessibilityDelegate(isSelectable() ? new RowSemantics(this, Button.class) : null);
         }
     }
@@ -517,7 +560,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
-            ScreenColors.row(view);
+            ScreenColors.row(view, this);
             view.setAccessibilityDelegate(new RowSemantics(this, Switch.class));
         }
     }
@@ -541,7 +584,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
-            ScreenColors.row(view);
+            ScreenColors.row(view, this);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
 
@@ -567,7 +610,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
-            ScreenColors.row(view);
+            ScreenColors.row(view, this);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
     }
@@ -581,7 +624,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
-            ScreenColors.row(view);
+            ScreenColors.row(view, this);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
     }
@@ -596,7 +639,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         protected void onBindView(View view) {
             super.onBindView(view);
             showAllText(view);
-            ScreenColors.row(view);
+            ScreenColors.row(view, this);
             view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
         }
     }

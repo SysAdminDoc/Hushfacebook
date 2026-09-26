@@ -4,6 +4,7 @@ Every Hushfacebook release, newest first.
 
 ## Unreleased
 
+* **Facebook:** The Hushfacebook settings screen groups controls into rounded cards, gives its status a stronger header, and uses clearer blue controls in the default dark theme.
 * **Facebook:** A new, opt-in switch keeps the feed in place when you return to Facebook within ten minutes. Pull to refresh and a fresh launch still work.
 * **Facebook:** Hide Reels in the feed now catches Reels showcase rows filed under other feed categories and the row Facebook injects just before the feed ends. Other showcases and reels posted by people you follow stay.
 
