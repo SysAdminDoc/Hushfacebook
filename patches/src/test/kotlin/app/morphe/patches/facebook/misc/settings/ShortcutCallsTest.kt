@@ -142,6 +142,30 @@ class ShortcutCallsTest {
     }
 
     /**
+     * The receipt refuses a patched build that still makes one of these calls outside the extension,
+     * by a no-call rule per call in scripts/injected-mutation-contracts.txt. A rule spelled wrong
+     * matches no call and reports "0 call sites" for ever, and a call added to [SHORTCUT_CALLS]
+     * without a rule is never looked for. So the ShortcutManager rules and the calls the rewrite
+     * sends are the same set, each allowed only under the prefix the rewrite leaves alone.
+     */
+    @Test
+    fun theContractFileHoldsEveryCallTheRewriteSends() {
+        val rules = File(RepoFiles.root, "scripts/injected-mutation-contracts.txt").readLines()
+            .map { it.trim() }
+            .filter { it.startsWith("no-call ") }
+            .map { it.split(Regex("""\s+""")) }
+            .filter { it.getOrNull(1).orEmpty().startsWith("$SHORTCUT_MANAGER->") }
+        assertEquals(
+            "the no-call rules for ShortcutManager against the calls the rewrite sends",
+            SHORTCUT_CALLS.map { (name, shape) -> "$SHORTCUT_MANAGER->$name$shape" }.sorted(),
+            rules.map { it[1] }.sorted(),
+        )
+        rules.forEach { rule ->
+            assertEquals("${rule[1]}: where the call is allowed", listOf("outside", EXTENSION_ROOT), rule.drop(2))
+        }
+    }
+
+    /**
      * Both declared builds push through the AndroidX helper and the Messenger chat shortcuts, and
      * update through the helper and two account switcher paths. Every one of them is sent.
      */

@@ -2060,13 +2060,16 @@ try {
         "The index push compared something other than the release copy: $routed"
     Remove-Item -LiteralPath (Join-Path $hookRoot 'patches') -Recurse -Force
 
-    # The root files the runtime tests read. ReadmePatchNamesTest holds the README's patch rows to
-    # the catalog, ProvenanceTest holds NOTICE and every source's header to provenance.json, and
-    # PatchFamilyTest reads the catalog. The Gradle files declare them as test inputs, and a push
-    # of one alone still never started the tests. Files no test reads still don't start them.
+    # The files outside the source trees that the runtime tests read. ReadmePatchNamesTest holds the
+    # README's patch rows to the catalog, ProvenanceTest holds NOTICE and every source's header to
+    # provenance.json, PatchFamilyTest reads the catalog, and ShortcutCallsTest reads the mutation
+    # contracts. The Gradle files declare them as test inputs, and a push of one alone still never
+    # started the tests. Files no test reads still don't start them.
     foreach ($route in @(
             @{ Path = 'README.md'; Build = $true }, @{ Path = 'NOTICE'; Build = $true },
             @{ Path = 'provenance.json'; Build = $true }, @{ Path = 'patches-list.json'; Build = $true },
+            @{ Path = 'scripts/injected-mutation-contracts.txt'; Build = $true },
+            @{ Path = 'scripts/injected-register-removal-allowlist.txt'; Build = $false },
             @{ Path = 'CHANGELOG.md'; Build = $false }, @{ Path = 'docs/sources.md'; Build = $false },
             @{ Path = 'sources/facebook-sources.json'; Build = $false }, @{ Path = 'patches-bundle.json'; Build = $false },
             @{ Path = 'assets/icons/icon-16.png'; Build = $false }, @{ Path = 'CONTRIBUTING.md'; Build = $false })) {

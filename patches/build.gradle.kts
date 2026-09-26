@@ -742,6 +742,10 @@ tasks {
         inputs.file(rootProject.file("NOTICE"))
             .withPropertyName("notice")
             .withPathSensitivity(PathSensitivity.RELATIVE)
+        // ShortcutCallsTest holds the settings patch's shortcut rewrite to the no-call rules there.
+        inputs.file(rootProject.file("scripts/injected-mutation-contracts.txt"))
+            .withPropertyName("mutationContracts")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(
             rootProject.fileTree("patches/src/main"),
             rootProject.fileTree("patches/stub/src/main"),

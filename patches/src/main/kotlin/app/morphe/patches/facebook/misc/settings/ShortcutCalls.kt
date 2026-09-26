@@ -17,8 +17,11 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 internal const val SHORTCUT_MANAGER = "Landroid/content/pm/ShortcutManager;"
 
-/** Every extension class sits under here, and the stand-ins make the real calls, so none is sent. */
-private const val EXTENSION_ROOT = "Lapp/morphe/extension/"
+/**
+ * Every extension class sits under here, and the stand-ins make the real calls, so none is sent.
+ * The receipt's no-call rules allow the calls under the same prefix.
+ */
+internal const val EXTENSION_ROOT = "Lapp/morphe/extension/"
 
 /**
  * The ShortcutManager calls that add, replace, rank again or clear an app's dynamic shortcuts, by

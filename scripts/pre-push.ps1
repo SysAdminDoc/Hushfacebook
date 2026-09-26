@@ -377,12 +377,15 @@ try {
         exit 0
     }
 
-    # The root files the runtime tests read. ReadmePatchNamesTest holds the README's patch rows to
-    # the catalog, ProvenanceTest holds NOTICE and every source's header to provenance.json, and
-    # PatchFamilyTest and LicenseNoticeTest read the catalog and NOTICE. The Gradle files declare
-    # them as test inputs, so the tests rerun when one moves, but a push of one alone never
-    # started them: a README patch row went out with ReadmePatchNamesTest never run on it.
-    $runtimeTestInputs = @('README.md', 'NOTICE', 'provenance.json', 'patches-list.json')
+    # The files outside the source trees that the runtime tests read. ReadmePatchNamesTest holds the
+    # README's patch rows to the catalog, ProvenanceTest holds NOTICE and every source's header to
+    # provenance.json, PatchFamilyTest and LicenseNoticeTest read the catalog and NOTICE, and
+    # ShortcutCallsTest holds the settings patch's shortcut rewrite to the no-call rules in the
+    # mutation contracts. The Gradle files declare them as test inputs, so the tests rerun when one
+    # moves, but a push of one alone never started them: a README patch row went out with
+    # ReadmePatchNamesTest never run on it.
+    $runtimeTestInputs = @('README.md', 'NOTICE', 'provenance.json', 'patches-list.json',
+        'scripts/injected-mutation-contracts.txt')
     $touchesCode = @($paths | Where-Object {
         $_ -like 'extensions/*' -or $_ -like 'patches/*' -or
         # The pins and the reviewed checksums. Two Gradle tasks hold the Bouncy Castle graphs to
