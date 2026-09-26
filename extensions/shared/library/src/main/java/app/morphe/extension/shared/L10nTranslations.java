@@ -438,20 +438,20 @@ public final class L10nTranslations {
                 "Du hast Hushfacebook pausiert.");
         table.put("Your switches already match that file, so nothing will change.",
                 "Deine Schalter entsprechen bereits dieser Datei, es \u00e4ndert sich also nichts.");
-        table.put("the AMOLED black theme",
-                "das schwarze AMOLED-Design");
         table.put("the Audience Network block",
                 "die Sperre f\u00fcr das Audience Network");
-        table.put("the Material You theme",
-                "das Material-You-Design");
-        table.put("the ad telemetry block",
-                "die Sperre f\u00fcr Werbe-Telemetrie");
-        table.put("the background ad prefetch block",
-                "die Sperre f\u00fcr das Vorabladen von Werbung im Hintergrund");
+        table.put("the black background in dark mode",
+                "der schwarze Hintergrund im Dunkelmodus");
+        table.put("the block on downloading ads in the background",
+                "die Sperre f\u00fcr das Herunterladen von Werbung im Hintergrund");
+        table.put("the block on reports of ad screenshots and app installs",
+                "die Sperre f\u00fcr Meldungen \u00fcber Screenshots von Werbung und installierte Apps");
         table.put("the part of the Reels ad block patched into the app",
                 "der in die App gepatchte Teil der Reels-Werbesperre");
         table.put("the re-signed build fix",
                 "der Fix f\u00fcr neu signierte Builds");
+        table.put("the recoloured dark mode",
+                "die Umf\u00e4rbung des Dunkelmodus");
     }
 
     private static Map<String, String> buildEs() {
@@ -849,20 +849,20 @@ public final class L10nTranslations {
                 "Pausaste Hushfacebook.");
         table.put("Your switches already match that file, so nothing will change.",
                 "Tus interruptores ya coinciden con ese archivo, as\u00ed que no cambiar\u00e1 nada.");
-        table.put("the AMOLED black theme",
-                "el tema negro AMOLED");
         table.put("the Audience Network block",
                 "el bloqueo de Audience Network");
-        table.put("the Material You theme",
-                "el tema Material You");
-        table.put("the ad telemetry block",
-                "el bloqueo de telemetr\u00eda de anuncios");
-        table.put("the background ad prefetch block",
-                "el bloqueo de precarga de anuncios en segundo plano");
+        table.put("the black background in dark mode",
+                "el fondo negro del modo oscuro");
+        table.put("the block on downloading ads in the background",
+                "el bloqueo de la descarga de anuncios en segundo plano");
+        table.put("the block on reports of ad screenshots and app installs",
+                "el bloqueo de los informes sobre capturas de pantalla de anuncios y apps instaladas");
         table.put("the part of the Reels ad block patched into the app",
                 "la parte del bloqueo de anuncios de Reels integrada en la app");
         table.put("the re-signed build fix",
                 "el arreglo para la nueva firma");
+        table.put("the recoloured dark mode",
+                "el cambio de colores del modo oscuro");
     }
 
     private static Map<String, String> buildIn() {
@@ -1260,20 +1260,20 @@ public final class L10nTranslations {
                 "Anda menjeda Hushfacebook.");
         table.put("Your switches already match that file, so nothing will change.",
                 "Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang akan berubah.");
-        table.put("the AMOLED black theme",
-                "tema hitam AMOLED");
         table.put("the Audience Network block",
                 "pemblokir Audience Network");
-        table.put("the Material You theme",
-                "tema Material You");
-        table.put("the ad telemetry block",
-                "pemblokir telemetri iklan");
-        table.put("the background ad prefetch block",
-                "pemblokir pramuat iklan di latar belakang");
+        table.put("the black background in dark mode",
+                "latar belakang hitam dalam mode gelap");
+        table.put("the block on downloading ads in the background",
+                "pemblokir unduhan iklan di latar belakang");
+        table.put("the block on reports of ad screenshots and app installs",
+                "pemblokir laporan tangkapan layar iklan dan aplikasi yang dipasang");
         table.put("the part of the Reels ad block patched into the app",
                 "bagian pemblokir iklan Reels yang ditambalkan ke aplikasi");
         table.put("the re-signed build fix",
                 "perbaikan build yang ditandatangani ulang");
+        table.put("the recoloured dark mode",
+                "mode gelap yang diwarnai ulang");
     }
 
     private static Map<String, String> buildPt_rBR() {
@@ -1671,20 +1671,20 @@ public final class L10nTranslations {
                 "Voc\u00ea pausou o Hushfacebook.");
         table.put("Your switches already match that file, so nothing will change.",
                 "Suas op\u00e7\u00f5es j\u00e1 correspondem a esse arquivo, ent\u00e3o nada vai mudar.");
-        table.put("the AMOLED black theme",
-                "o tema preto AMOLED");
         table.put("the Audience Network block",
                 "o bloqueio do Audience Network");
-        table.put("the Material You theme",
-                "o tema Material You");
-        table.put("the ad telemetry block",
-                "o bloqueio da telemetria de an\u00fancios");
-        table.put("the background ad prefetch block",
-                "o bloqueio do pr\u00e9-carregamento de an\u00fancios em segundo plano");
+        table.put("the black background in dark mode",
+                "o fundo preto do modo escuro");
+        table.put("the block on downloading ads in the background",
+                "o bloqueio do download de an\u00fancios em segundo plano");
+        table.put("the block on reports of ad screenshots and app installs",
+                "o bloqueio dos relat\u00f3rios sobre capturas de tela de an\u00fancios e apps instalados");
         table.put("the part of the Reels ad block patched into the app",
                 "a parte do bloqueio de an\u00fancios do Reels aplicada no app");
         table.put("the re-signed build fix",
                 "a corre\u00e7\u00e3o para vers\u00e3o reassinada");
+        table.put("the recoloured dark mode",
+                "a nova colora\u00e7\u00e3o do modo escuro");
     }
 
     private static Map<String, String> buildTr() {
@@ -2082,19 +2082,19 @@ public final class L10nTranslations {
                 "Hushfacebook'u duraklatt\u0131n.");
         table.put("Your switches already match that file, so nothing will change.",
                 "Anahtarlar\u0131n zaten o dosyayla ayn\u0131, bu y\u00fczden hi\u00e7bir \u015fey de\u011fi\u015fmeyecek.");
-        table.put("the AMOLED black theme",
-                "AMOLED siyah tema");
         table.put("the Audience Network block",
                 "Audience Network engeli");
-        table.put("the Material You theme",
-                "Material You temas\u0131");
-        table.put("the ad telemetry block",
-                "reklam telemetrisi engeli");
-        table.put("the background ad prefetch block",
+        table.put("the black background in dark mode",
+                "karanl\u0131k moddaki siyah arka plan");
+        table.put("the block on downloading ads in the background",
                 "arka planda reklam indirme engeli");
+        table.put("the block on reports of ad screenshots and app installs",
+                "reklam ekran g\u00f6r\u00fcnt\u00fcleri ve uygulama y\u00fcklemeleriyle ilgili raporlar\u0131n engellenmesi");
         table.put("the part of the Reels ad block patched into the app",
                 "Reels reklam engelinin uygulamaya yamalanan k\u0131sm\u0131");
         table.put("the re-signed build fix",
                 "yeniden imzalanm\u0131\u015f s\u00fcr\u00fcm d\u00fczeltmesi");
+        table.put("the recoloured dark mode",
+                "yeniden renklendirilmi\u015f karanl\u0131k mod");
     }
 }

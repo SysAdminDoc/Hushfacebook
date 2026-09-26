@@ -135,16 +135,16 @@ That isn't a Hushfacebook settings file. Nothing was changed.	Eso no es un archi
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	Ese archivo de configuración contiene un valor que Hushfacebook no puede leer. No se cambió nada.
 That settings file is damaged or only partly downloaded. Nothing was changed.	Ese archivo de configuración está dañado o solo se descargó en parte. No se cambió nada.
 That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Ese archivo de configuración lo escribió una versión de Hushfacebook más reciente que esta. No se cambió nada.
-the ad telemetry block	el bloqueo de telemetría de anuncios
-the AMOLED black theme	el tema negro AMOLED
 the Audience Network block	el bloqueo de Audience Network
-the background ad prefetch block	el bloqueo de precarga de anuncios en segundo plano
+the black background in dark mode	el fondo negro del modo oscuro
+the block on downloading ads in the background	el bloqueo de la descarga de anuncios en segundo plano
+the block on reports of ad screenshots and app installs	el bloqueo de los informes sobre capturas de pantalla de anuncios y apps instaladas
 The diagnostic report couldn't be saved yet. Try again in a moment.	Todavía no se pudo guardar el informe de diagnóstico. Inténtalo de nuevo en un momento.
 The diagnostic report couldn't be saved. Try again.	No se pudo guardar el informe de diagnóstico. Inténtalo de nuevo.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	No se pudo eliminar el archivo %1$s. Bórralo de %2$s para volver a activar Hushfacebook.
-the Material You theme	el tema Material You
 the part of the Reels ad block patched into the app	la parte del bloqueo de anuncios de Reels integrada en la app
 the re-signed build fix	el arreglo para la nueva firma
+the recoloured dark mode	el cambio de colores del modo oscuro
 The row of friend suggestions between posts.	La fila de sugerencias de amistad entre las publicaciones.
 The row of stories at the top of the feed, Create story included.	La fila de historias en la parte superior del feed, con “Crear historia” incluida.
 The rows of reels between posts, and the reels Facebook adds where your feed ends.	Las filas de reels entre las publicaciones y los reels que Facebook añade donde termina tu feed.

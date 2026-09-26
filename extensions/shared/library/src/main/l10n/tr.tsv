@@ -135,16 +135,16 @@ That isn't a Hushfacebook settings file. Nothing was changed.	Bu bir Hushfaceboo
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	Bu ayar dosyasında Hushfacebook'un okuyamadığı bir değer var. Hiçbir şey değiştirilmedi.
 That settings file is damaged or only partly downloaded. Nothing was changed.	Bu ayar dosyası hasarlı ya da yalnızca bir kısmı indirilmiş. Hiçbir şey değiştirilmedi.
 That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Bu ayar dosyası, Hushfacebook'un bu sürümünden daha yeni bir sürümüyle oluşturulmuş. Hiçbir şey değiştirilmedi.
-the ad telemetry block	reklam telemetrisi engeli
-the AMOLED black theme	AMOLED siyah tema
 the Audience Network block	Audience Network engeli
-the background ad prefetch block	arka planda reklam indirme engeli
+the black background in dark mode	karanlık moddaki siyah arka plan
+the block on downloading ads in the background	arka planda reklam indirme engeli
+the block on reports of ad screenshots and app installs	reklam ekran görüntüleri ve uygulama yüklemeleriyle ilgili raporların engellenmesi
 The diagnostic report couldn't be saved yet. Try again in a moment.	Tanılama raporu henüz kaydedilemedi. Birazdan tekrar dene.
 The diagnostic report couldn't be saved. Try again.	Tanılama raporu kaydedilemedi. Tekrar dene.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	%1$s dosyası kaldırılamadı. Hushfacebook'u yeniden açmak için onu %2$s içinden sil.
-the Material You theme	Material You teması
 the part of the Reels ad block patched into the app	Reels reklam engelinin uygulamaya yamalanan kısmı
 the re-signed build fix	yeniden imzalanmış sürüm düzeltmesi
+the recoloured dark mode	yeniden renklendirilmiş karanlık mod
 The row of friend suggestions between posts.	Gönderilerin arasındaki arkadaş önerileri satırı.
 The row of stories at the top of the feed, Create story included.	Akışın en üstündeki hikaye şeridi, “Hikaye oluştur” da dahil.
 The rows of reels between posts, and the reels Facebook adds where your feed ends.	Gönderilerin arasındaki Reels sıraları ve Facebook'un akışının bittiği yere eklediği Reels videoları.

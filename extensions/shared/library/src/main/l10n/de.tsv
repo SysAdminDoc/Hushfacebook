@@ -135,16 +135,16 @@ That isn't a Hushfacebook settings file. Nothing was changed.	Das ist keine Hush
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	Diese Einstellungsdatei enthält einen Wert, den Hushfacebook nicht lesen kann. Es wurde nichts geändert.
 That settings file is damaged or only partly downloaded. Nothing was changed.	Diese Einstellungsdatei ist beschädigt oder nur teilweise heruntergeladen. Es wurde nichts geändert.
 That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	Diese Einstellungsdatei stammt aus einer neueren Hushfacebook-Version als dieser. Es wurde nichts geändert.
-the ad telemetry block	die Sperre für Werbe-Telemetrie
-the AMOLED black theme	das schwarze AMOLED-Design
 the Audience Network block	die Sperre für das Audience Network
-the background ad prefetch block	die Sperre für das Vorabladen von Werbung im Hintergrund
+the black background in dark mode	der schwarze Hintergrund im Dunkelmodus
+the block on downloading ads in the background	die Sperre für das Herunterladen von Werbung im Hintergrund
+the block on reports of ad screenshots and app installs	die Sperre für Meldungen über Screenshots von Werbung und installierte Apps
 The diagnostic report couldn't be saved yet. Try again in a moment.	Der Diagnosebericht ließ sich noch nicht speichern. Versuche es gleich noch einmal.
 The diagnostic report couldn't be saved. Try again.	Der Diagnosebericht ließ sich nicht speichern. Versuche es noch einmal.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	Die Datei %1$s ließ sich nicht entfernen. Lösche sie aus %2$s, um Hushfacebook wieder einzuschalten.
-the Material You theme	das Material-You-Design
 the part of the Reels ad block patched into the app	der in die App gepatchte Teil der Reels-Werbesperre
 the re-signed build fix	der Fix für neu signierte Builds
+the recoloured dark mode	die Umfärbung des Dunkelmodus
 The row of friend suggestions between posts.	Die Reihe mit Freundschaftsvorschlägen zwischen den Beiträgen.
 The row of stories at the top of the feed, Create story included.	Die Reihe mit Stories oben im Feed, „Story erstellen“ eingeschlossen.
 The rows of reels between posts, and the reels Facebook adds where your feed ends.	Die Reihen mit Reels zwischen den Beiträgen und die Reels, die Facebook dort anhängt, wo dein Feed endet.

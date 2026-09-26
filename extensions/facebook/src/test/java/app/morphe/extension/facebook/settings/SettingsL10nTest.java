@@ -267,6 +267,51 @@ public class SettingsL10nTest {
         }
     }
 
+    /**
+     * Each stays item is followed by its patch's name in brackets, so an item that was the name
+     * read it twice: "the AMOLED black theme (AMOLED black theme)". In English and in each shipped
+     * language the name shows once, in the brackets, and the item says what stays in with words of
+     * its own. Every word of the name in another order repeats it just the same: "the ad telemetry
+     * block (Block ad telemetry)".
+     */
+    @Test
+    public void noStaysItemRepeatsItsPatchNameInAnyLanguage() {
+        // The check has to be able to say yes, to the name itself and to its words reordered.
+        assertTrue(repeatsItsName("The AMOLED black theme (" + L10n.isolate("AMOLED black theme") + ").",
+                "AMOLED black theme"));
+        assertTrue(repeatsItsName("The ad telemetry block (" + L10n.isolate("Block ad telemetry") + ").",
+                "Block ad telemetry"));
+        assertFalse(repeatsItsName("The Audience Network block (" + L10n.isolate("Disable Audience Network") + ").",
+                "Disable Audience Network"));
+
+        List<String> repeats = new ArrayList<>();
+        for (String language : new String[]{"en", "de", "es", "in-rID", "pt-rBR", "tr"}) {
+            RuntimeEnvironment.setQualifiers("+" + language);
+            for (PatchFamily family : PatchFamily.values()) {
+                if (family.staysWhilePaused == null) continue;
+                String shown = PatchFamily.staysWhilePausedSummary(EnumSet.of(family));
+                if (repeatsItsName(shown, family.patchName)) repeats.add(language + ": " + shown);
+            }
+        }
+        assertEquals("items that say their patch's name again: " + repeats, 0, repeats.size());
+    }
+
+    /**
+     * Whether [shown], a stays item with [patchName] in brackets after it, says the name again:
+     * more than once anywhere, or every word of it before the bracket.
+     */
+    private static boolean repeatsItsName(String shown, String patchName) {
+        int bracket = shown.indexOf(" (" + L10n.isolate(patchName) + ")");
+        assertTrue("no bracketed " + patchName + " in: " + shown, bracket > 0);
+        String name = patchName.toLowerCase(Locale.ROOT);
+        String lower = shown.toLowerCase(Locale.ROOT);
+        int count = 0;
+        for (int at = lower.indexOf(name); at >= 0; at = lower.indexOf(name, at + 1)) count++;
+        Set<String> itemWords = new java.util.HashSet<>(Arrays.asList(
+                shown.substring(0, bracket).toLowerCase(Locale.ROOT).split("[^\\p{L}\\p{N}-]+")));
+        return count > 1 || itemWords.containsAll(Arrays.asList(name.split(" ")));
+    }
+
     private static String row(Map<String, String> table, String english) {
         return table == null ? english : table.get(english);
     }

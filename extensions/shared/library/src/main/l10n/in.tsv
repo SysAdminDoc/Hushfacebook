@@ -135,16 +135,16 @@ That isn't a Hushfacebook settings file. Nothing was changed.	Itu bukan file pen
 That settings file holds a value Hushfacebook can't read. Nothing was changed.	File pengaturan itu memuat nilai yang tidak dapat dibaca Hushfacebook. Tidak ada yang diubah.
 That settings file is damaged or only partly downloaded. Nothing was changed.	File pengaturan itu rusak atau hanya terunduh sebagian. Tidak ada yang diubah.
 That settings file was written by a newer Hushfacebook than this one. Nothing was changed.	File pengaturan itu dibuat oleh versi Hushfacebook yang lebih baru daripada versi ini. Tidak ada yang diubah.
-the ad telemetry block	pemblokir telemetri iklan
-the AMOLED black theme	tema hitam AMOLED
 the Audience Network block	pemblokir Audience Network
-the background ad prefetch block	pemblokir pramuat iklan di latar belakang
+the black background in dark mode	latar belakang hitam dalam mode gelap
+the block on downloading ads in the background	pemblokir unduhan iklan di latar belakang
+the block on reports of ad screenshots and app installs	pemblokir laporan tangkapan layar iklan dan aplikasi yang dipasang
 The diagnostic report couldn't be saved yet. Try again in a moment.	Laporan diagnostik belum dapat disimpan. Coba lagi dalam beberapa saat.
 The diagnostic report couldn't be saved. Try again.	Laporan diagnostik tidak dapat disimpan. Coba lagi.
 The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.	File %1$s tidak dapat dihapus. Hapus file itu dari %2$s untuk mengaktifkan Hushfacebook lagi.
-the Material You theme	tema Material You
 the part of the Reels ad block patched into the app	bagian pemblokir iklan Reels yang ditambalkan ke aplikasi
 the re-signed build fix	perbaikan build yang ditandatangani ulang
+the recoloured dark mode	mode gelap yang diwarnai ulang
 The row of friend suggestions between posts.	Deretan saran pertemanan di antara postingan.
 The row of stories at the top of the feed, Create story included.	Deretan cerita di bagian atas Kabar Beranda, termasuk “Buat cerita”.
 The rows of reels between posts, and the reels Facebook adds where your feed ends.	Deretan Reels di antara postingan, dan Reels yang ditambahkan Facebook di akhir Kabar Beranda Anda.

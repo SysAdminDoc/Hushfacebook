@@ -67,11 +67,11 @@ public enum PatchFamily {
             Settings.DOWNLOAD_REELS),
     VIDEO_DOWNLOAD(FamilyNames.VIDEO_DOWNLOAD, "videoDownload", null,
             Settings.DOWNLOAD_VIDEOS),
-    AD_PREFETCH(FamilyNames.AD_PREFETCH, "adPrefetch", "the background ad prefetch block"),
-    AD_TELEMETRY(FamilyNames.AD_TELEMETRY, "adTelemetry", "the ad telemetry block"),
+    AD_PREFETCH(FamilyNames.AD_PREFETCH, "adPrefetch", "the block on downloading ads in the background"),
+    AD_TELEMETRY(FamilyNames.AD_TELEMETRY, "adTelemetry", "the block on reports of ad screenshots and app installs"),
     AUDIENCE_NETWORK(FamilyNames.AUDIENCE_NETWORK, "audienceNetwork", "the Audience Network block"),
-    AMOLED_THEME(FamilyNames.AMOLED_THEME, "amoledTheme", "the AMOLED black theme"),
-    MATERIAL_YOU_THEME(FamilyNames.MATERIAL_YOU_THEME, "materialYouTheme", "the Material You theme"),
+    AMOLED_THEME(FamilyNames.AMOLED_THEME, "amoledTheme", "the black background in dark mode"),
+    MATERIAL_YOU_THEME(FamilyNames.MATERIAL_YOU_THEME, "materialYouTheme", "the recoloured dark mode"),
     RESTORE_TRUST(FamilyNames.RESTORE_TRUST, "restoreTrust", "the re-signed build fix");
 
     /** The patch's name in Morphe Manager. */
@@ -84,6 +84,8 @@ public enum PatchFamily {
      * What of this patch stays in while Hushfacebook is paused, or null when nothing does. One
      * thing, never a plural: alone on the screen it's followed by its patch's name in brackets and
      * "It was set when you patched".
+     * It says what stays in, not what the patch is called. The name follows it in brackets, so an
+     * item that was the name read it twice: "the AMOLED black theme (AMOLED black theme)".
      * The English is also a key of {@link L10n}: the screen shows it translated, and the report
      * keeps it in English.
      */

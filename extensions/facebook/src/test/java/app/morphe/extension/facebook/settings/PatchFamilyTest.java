@@ -118,9 +118,9 @@ public class PatchFamilyTest {
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_POSTS, PatchFamily.EXTERNAL_BROWSER)));
         // Each item names the patch Morphe Manager lists it under, so the reader knows which one
         // to leave out.
-        assertEquals("The background ad prefetch block (" + L10n.isolate("Block background ad prefetch") + "). It was "
-                        + "set when you patched, so Pause can't turn it off. To rule it out, patch again and leave "
-                        + "out that patch.",
+        assertEquals("The block on downloading ads in the background (" + L10n.isolate("Block background ad prefetch")
+                        + "). It was set when you patched, so Pause can't turn it off. To rule it out, patch again "
+                        + "and leave out that patch.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.AD_PREFETCH)));
         // Every download asks its switch before it goes in, so a pause takes them out whole.
         assertNull(PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD, PatchFamily.STORY_DOWNLOAD,
@@ -132,7 +132,8 @@ public class PatchFamilyTest {
                         + "and leave out that patch.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS)));
         assertEquals("The part of the Reels ad block patched into the app (" + L10n.isolate("Hide sponsored reels")
-                        + ") and the ad telemetry block (" + L10n.isolate("Block ad telemetry") + "). They were set "
+                        + ") and the block on reports of ad screenshots and app installs ("
+                        + L10n.isolate("Block ad telemetry") + "). They were set "
                         + "when you patched, so Pause can't turn them off. To rule one out, patch again and leave out "
                         + "the patch in brackets after it.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS, PatchFamily.AD_TELEMETRY,
@@ -159,7 +160,8 @@ public class PatchFamilyTest {
                 "Hide sponsored posts: on (hushfacebook_hide_sponsored_posts=on, hushfacebook_hide_promoted_posts=off)",
                 "Hide sponsored reels: on (hushfacebook_hide_sponsored_reels=on); stays in while paused: "
                         + "the part of the Reels ad block patched into the app",
-                "Block background ad prefetch: no switch, stays in while paused: the background ad prefetch block",
+                "Block background ad prefetch: no switch, stays in while paused: the block on downloading ads in "
+                        + "the background",
                 "not in this build: Hide suggested and promoted posts, Hide Stories tray, Hide Reels in the feed, "
                         + "Block background-return feed refresh, Hide AI-detected posts, "
                         + "Hide sponsored stories, Stop Story auto-advance, Clean up Reels, Open links in "
