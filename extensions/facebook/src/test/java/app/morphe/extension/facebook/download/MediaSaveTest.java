@@ -36,6 +36,7 @@ import org.robolectric.shadows.util.DataSource;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -145,6 +146,38 @@ public class MediaSaveTest {
         assertArrayEquals(body, published.toByteArray());
         String[] left = DashSave.workFolder(context).list();
         assertEquals(0, left == null ? 0 : left.length);
+    }
+
+    @Test
+    public void aGalleryThatDoesNotPublishThePendingRowIsReportedAsAFailedSave() {
+        byte[] body = mp4(4096);
+        serve("/not-published.mp4", "video/mp4", body, body.length);
+        gallery.refuseUpdate = true;
+
+        Downloader.Result result = save("/not-published.mp4", Downloader.MAX_BYTES);
+
+        assertEquals(result.toString(), Downloader.Status.WRITE_ERROR, result.status);
+        assertEquals(1, gallery.inserts.size());
+        assertTrue("the unpublished row was left behind", gallery.rows.isEmpty());
+    }
+
+    @Test
+    public void aGalleryStreamThatFailsOnCloseDoesNotPublishItsRow() {
+        byte[] body = mp4(4096);
+        serve("/close-fails.mp4", "video/mp4", body, body.length);
+        Shadows.shadowOf(context.getContentResolver()).registerOutputStream(gallery.videoUri(1), new OutputStream() {
+            @Override public void write(int value) { published.write(value); }
+            @Override public void write(byte[] bytes, int offset, int length) {
+                published.write(bytes, offset, length);
+            }
+            @Override public void close() throws IOException { throw new IOException("gallery write did not finish"); }
+        });
+
+        Downloader.Result result = save("/close-fails.mp4", Downloader.MAX_BYTES);
+
+        assertEquals(result.toString(), Downloader.Status.WRITE_ERROR, result.status);
+        assertEquals(1, gallery.inserts.size());
+        assertTrue("the unfinished row was left behind", gallery.rows.isEmpty());
     }
 
     @Test
@@ -423,6 +456,7 @@ public class MediaSaveTest {
     public static final class Gallery extends ContentProvider {
         final Map<Long, ContentValues> rows = new HashMap<>();
         final List<Uri> inserts = new ArrayList<>();
+        boolean refuseUpdate;
         private long nextId = 1;
 
         Uri videoUri(long id) {
@@ -447,6 +481,7 @@ public class MediaSaveTest {
         }
 
         @Override public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+            if (refuseUpdate) return 0;
             ContentValues row = rows.get(ContentUris.parseId(uri));
             if (row == null) return 0;
             row.putAll(values);

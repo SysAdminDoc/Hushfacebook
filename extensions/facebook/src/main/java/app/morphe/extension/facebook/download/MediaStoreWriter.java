@@ -102,13 +102,19 @@ final class MediaStoreWriter implements Downloader.Sink {
 
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.IS_PENDING, 0);
-        context.getContentResolver().update(item, values, null, null);
+        if (context.getContentResolver().update(item, values, null, null) != 1) {
+            throw new IOException("the gallery did not publish the pending entry");
+        }
         SaveLeftovers.settled(context, item);
     }
 
     @Override
     public void abandon() {
-        close();
+        try {
+            close();
+        } catch (Throwable ignored) {
+            // A failed close must not keep the pending row from being removed.
+        }
 
         if (item == null) return;
         Uri row = item;
@@ -123,13 +129,11 @@ final class MediaStoreWriter implements Downloader.Sink {
         }
     }
 
-    private void close() {
+    private void close() throws IOException {
         if (stream == null) return;
 
         try {
             stream.close();
-        } catch (Throwable ignored) {
-            // The bytes are already written or already lost.
         } finally {
             stream = null;
         }

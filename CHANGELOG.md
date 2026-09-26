@@ -5,6 +5,7 @@ Every Hushfacebook release, newest first.
 ## Unreleased
 
 * **Facebook:** Saved photos and videos now use the file type found in their bytes when the server labels them incorrectly, so the gallery gets the right extension.
+* **Facebook:** A save now reports a gallery write failure when the file stream cannot close or the pending entry cannot be published. Unfinished entries are removed.
 
 ## 0.1.6 (2026-09-26)
 
