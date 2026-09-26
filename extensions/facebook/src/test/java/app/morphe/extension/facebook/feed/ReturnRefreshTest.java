@@ -14,8 +14,10 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.SettingsContextRule;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.PauseForTests;
 
@@ -52,5 +54,21 @@ public class ReturnRefreshTest {
     @Test public void clocksMovingBackCannotHoldTheFeed() {
         ReturnRefresh.uiHidden(2_000);
         assertFalse(ReturnRefresh.skipAt(1_999));
+    }
+
+    /**
+     * Every other hook counts its calls in the report. This one didn't, so a report from someone
+     * whose feed still refreshed couldn't say whether the callback ever ran.
+     */
+    @Test public void eachResumeCountsInTheReport() {
+        HookStatus.clear();
+        try {
+            ReturnRefresh.skip();
+            ReturnRefresh.skip();
+            String report = String.join("\n", HookStatus.report());
+            assertTrue(report, report.contains(FamilyNames.RETURN_REFRESH + ": invoked 2"));
+        } finally {
+            HookStatus.clear();
+        }
     }
 }

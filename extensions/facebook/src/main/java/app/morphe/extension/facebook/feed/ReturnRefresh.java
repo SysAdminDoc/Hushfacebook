@@ -10,8 +10,10 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.SystemClock;
 
+import app.morphe.extension.facebook.settings.FamilyNames;
 import app.morphe.extension.facebook.settings.Settings;
 import app.morphe.extension.shared.Utils;
+import app.morphe.extension.shared.diagnostics.HookStatus;
 
 /** A one-use marker for a return after all Facebook UI was hidden. */
 public final class ReturnRefresh {
@@ -41,9 +43,19 @@ public final class ReturnRefresh {
         hiddenAt = now;
     }
 
-    /** Called only from the feed's resume callback, never from swipe refresh or cold start. */
+    /**
+     * Called only from the feed's resume callback, never from swipe refresh or cold start. Counts
+     * each call in the report, so a report can tell a callback that moved, which never calls, from
+     * one that ran and let Facebook refresh. A failure lets Facebook refresh, as it would unpatched.
+     */
     public static boolean skip() {
-        return skipAt(SystemClock.elapsedRealtime());
+        try {
+            HookStatus.invoked(FamilyNames.RETURN_REFRESH);
+            return skipAt(SystemClock.elapsedRealtime());
+        } catch (Throwable failure) {
+            HookStatus.threw(FamilyNames.RETURN_REFRESH, "feed resume", failure);
+            return false;
+        }
     }
 
     static synchronized boolean skipAt(long now) {
