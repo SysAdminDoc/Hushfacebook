@@ -2,6 +2,10 @@
 
 Every Hushfacebook release, newest first.
 
+## Unreleased
+
+* **Facebook:** Saved photos and videos now use the file type found in their bytes when the server labels them incorrectly, so the gallery gets the right extension.
+
 ## 0.1.6 (2026-09-26)
 
 * **Facebook:** Settings cards and actions read more clearly in the default dark theme. Recovery actions and dialogs are easier to pick out.

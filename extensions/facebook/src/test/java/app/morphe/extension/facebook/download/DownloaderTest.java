@@ -159,6 +159,21 @@ public class DownloaderTest {
     }
 
     @Test
+    public void aWrongImageTypeDoesNotGiveTheSavedFileTheWrongExtension() throws IOException {
+        byte[] png = new byte[40];
+        byte[] signature = { (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
+        System.arraycopy(signature, 0, png, 0, signature.length);
+        serve("/picture", "image/jpeg", png);
+        File into = temp.newFile();
+
+        Downloader.Result result = fetch("/picture", Downloader.Kind.IMAGE, into, Downloader.MAX_BYTES);
+
+        assertEquals(result.toString(), Downloader.Status.OK, result.status);
+        assertEquals("image/png", result.mime);
+        assertArrayEquals(png, Files.readAllBytes(into.toPath()));
+    }
+
+    @Test
     public void aRedirectWithinTheAllowedServerIsFollowed() throws IOException {
         serve("/final.mp4", "video/mp4", mp4(4000));
         redirect("/hop", origin + "/final.mp4");

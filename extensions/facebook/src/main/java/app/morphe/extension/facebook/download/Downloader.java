@@ -302,7 +302,11 @@ final class Downloader {
             }
 
             kept = true;
-            return Result.ok(isSpecific(declared) ? declared : sniffed);
+            // The bytes decide the gallery file type. A server can call PNG bytes JPEG (or WebM
+            // bytes MP4); using that header leaves a valid save with the wrong extension. DASH
+            // audio is fetched only for joining, and Meta calls its audio track video/mp4, so keep
+            // that reported type for the track.
+            return Result.ok(kind == Kind.AUDIO && isSpecific(declared) ? declared : sniffed);
         } catch (IOException e) {
             // A cancel closes the connection under the read, which surfaces here as a socket
             // error. It's still the person's cancel, not a network failure.
