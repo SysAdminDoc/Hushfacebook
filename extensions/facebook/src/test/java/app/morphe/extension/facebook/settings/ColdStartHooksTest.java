@@ -124,6 +124,7 @@ public class ColdStartHooksTest {
         assertFalse(ReelDownload.showsButton());
         assertNull(ReelDeclutter.filterChips(Arrays.asList(new TypedFeedUnit("XFBFBShortsRemixAttribution"))));
         assertFalse(ReelDeclutter.hideFollowButton());
+        assertFalse(ReelDeclutter.hideFollowingButton());
         assertFalse(ReelDeclutter.skipHotComment());
         assertFalse(ReelDeclutter.skipSocialBubbles());
         assertFalse(PlayerSourcesForTests.recordsAPlayer());

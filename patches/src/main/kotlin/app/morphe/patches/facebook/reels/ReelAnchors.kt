@@ -27,11 +27,24 @@ import com.android.tools.smali.dexlib2.iface.reference.StringReference
  *   ImmutableList, switches on each one's getTypeName() over the XFBFBShorts*Attribution literals,
  *   and returns the ones it will draw from an ImmutableList$Builder (580 LX/AyX;->A00, 577
  *   LX/B1d;->A00). Both builds end it in one `return-object` after `build()`.
- * - The Follow button: the bug report dumper (the method holding "WatchFeedData.txt") writes each
- *   Reels viewer config value beside its name, and the value beside the name ending
+ * - The Following button: the bug report dumper (the method holding "WatchFeedData.txt") writes
+ *   each Reels viewer config value beside its name, and the value beside the name ending
  *   "removeFollowingButton" comes from a no-argument boolean getter (580 LX/4Xa;->A1c, written
  *   twice, under getPlayerTabGrowthConfig and getUDDConfig; 577 LX/52v;->A1b, after a split
  *   ".removeFollowingButton"). Its only other readers are the reel author row's two renderers.
+ *   The main one (580 LX/AyA;->A1F, 577 LX/B1B;->A1N) reads it only when the author wasn't
+ *   followable as the row's state was made: the state keeps whether the owner's subscribe status
+ *   was CAN_SUBSCRIBE (580 LX/AyD;->A0H), and the getter is skipped when it was. So it takes the
+ *   Following button off an author you already follow and never runs for one you can follow,
+ *   which is why 0.1.7 left the Follow button on the S22's Reels tab.
+ * - The Follow button: the same renderer builds it through the method holding
+ *   "video_author_follow_button" (580 LX/AyO;->A01, 577 LX/B1T;->A01), and only when Facebook's
+ *   Follow check answers yes (580 LX/8O4;->A0B, 577 LX/8qp;->A0B). The check is static, answers a
+ *   boolean, takes the session first and names the two surfaces where it holds Follow back for a
+ *   friend, "friendly_feed" and "friends_tab_ifu". It's asked before any Follow button is built:
+ *   by this renderer, both ads author rows (580 LX/BF0;->render, which calls the same builder, and
+ *   LX/RtQ;->render) and a feed lambda that checks a reel attached to a post (580 LX/Ru9).
+ *   The profile's own Follow button doesn't ask it.
  * - The footer previews: two runnables whose Redex names are kept, each of which only starts one
  *   query and attaches its callback (580 LX/Aw3 and LX/XZu, 577 LX/B8E and LX/h8J).
  */
@@ -70,6 +83,15 @@ internal const val AUTHOR_COMPONENT = "FbShortsViewerVideoAuthorComponentSpec:pl
 
 /** The author row's second renderer: a Litho component's `render`, a name the framework keeps. */
 internal const val RENDER = "render"
+
+/** The session Facebook's Follow check takes first. The class keeps its name. */
+internal const val FB_USER_SESSION = "Lcom/facebook/auth/usersession/FbUserSession;"
+
+/** The two surfaces Facebook's Follow check names, where it holds the button back for a friend. */
+internal val FOLLOW_CHECK_SURFACES = listOf("friendly_feed", "friends_tab_ifu")
+
+/** The test key Facebook gives the Follow button it builds for a reel's author. */
+internal const val FOLLOW_BUTTON_KEY = "video_author_follow_button"
 
 internal const val HOT_COMMENT_RUNNABLE = "FbShortsViewerFooterHotCommentHelper\$createHotCommentQueryRunnable\$1"
 internal const val SOCIAL_BUBBLES_RUNNABLE =
@@ -261,6 +283,50 @@ internal fun followReaderProblem(readers: List<Method>, dumper: Method): String?
     val second = others.single { it !== author.single() }
     if (second.name != RENDER) return "the Follow getter's last reader isn't a render method: ${describe()}"
     return null
+}
+
+/** The reel author row's renderer among [readers]: the one reader besides [dumper] holding [AUTHOR_COMPONENT]. */
+internal fun authorRow(readers: List<Method>, dumper: Method): Method? = readers
+    .filterNot { it.definingClass == dumper.definingClass && it.name == dumper.name }
+    .singleOrNull { holdsString(it, AUTHOR_COMPONENT) }
+
+/** The methods [method] calls with `invoke-static`, each once, in the order it first calls them. */
+internal fun staticCalls(method: Method): List<MethodReference> = method.body()
+    .filter { it.opcode == Opcode.INVOKE_STATIC || it.opcode == Opcode.INVOKE_STATIC_RANGE }
+    .mapNotNull { it.methodReference }
+    .distinctBy { it.toString() }
+
+/**
+ * Whether [method] has the shape of Facebook's Follow check: static, a boolean answer, the session
+ * first, and both [FOLLOW_CHECK_SURFACES] named.
+ */
+internal fun isFollowCheck(method: Method): Boolean =
+    AccessFlags.STATIC.isSet(method.accessFlags) && method.returnType == "Z" &&
+        method.parameterTypes.firstOrNull()?.toString() == FB_USER_SESSION &&
+        stringsOf(method).containsAll(FOLLOW_CHECK_SURFACES)
+
+/** What the author row says about the Follow check: the check, or why none was taken. */
+internal class FollowCheck(val check: Method?, val problem: String?)
+
+/**
+ * The Follow check [author], the reel author row's renderer, asks before it builds the Follow
+ * button. [resolve] finds the method a static call reaches, or null for one outside the APK.
+ *
+ * <p>The row has to build the button itself, through a call holding [FOLLOW_BUTTON_KEY], or the
+ * check it asks may no longer be what decides the button. And it has to ask exactly one check: a
+ * second would mean the rule that picks it no longer tells them apart.
+ */
+internal fun followCheck(author: Method, resolve: (MethodReference) -> Method?): FollowCheck {
+    val callees = staticCalls(author).mapNotNull(resolve)
+    if (callees.none { holdsString(it, FOLLOW_BUTTON_KEY) }) {
+        return FollowCheck(null, "the author row doesn't build the Follow button itself: none of its calls holds \"$FOLLOW_BUTTON_KEY\"")
+    }
+    val checks = callees.filter(::isFollowCheck)
+    return checks.singleOrNull()?.let { FollowCheck(it, null) } ?: FollowCheck(null,
+        "the author row asks ${checks.size} Follow checks, expected 1 (static, a boolean, the session first, " +
+            "naming ${FOLLOW_CHECK_SURFACES.joinToString(" and ") { "\"$it\"" }})" +
+            checks.joinToString(prefix = if (checks.isEmpty()) "" else ": ") { "${it.definingClass}->${it.name}" },
+    )
 }
 
 /**

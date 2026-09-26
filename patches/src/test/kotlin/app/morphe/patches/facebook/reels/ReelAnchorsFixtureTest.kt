@@ -8,6 +8,8 @@ import app.morphe.Fixtures
 import app.morphe.RepoFiles
 import app.morphe.patches.facebook.feed.FixtureDex
 import app.morphe.patches.facebook.feed.holdsString
+import app.morphe.patches.facebook.feed.methodsHolding
+import app.morphe.patches.facebook.feed.resolveStatic
 import app.morphe.patches.facebook.shared.redexOriginalName
 import app.morphe.patches.shared.compat.AppCompatibilities
 import com.android.tools.smali.dexlib2.AccessFlags
@@ -128,6 +130,39 @@ class ReelAnchorsFixtureTest {
                     assertTrue("$name: $run has no local for the hook", locals(run) >= 1)
                 }
                 checked[version] = "${follow.literals} Follow literal(s), getter ${getter.definingClass}->${getter.name}"
+            }
+        }
+        assertEquals("a declared build went unchecked: $checked", versions.toSet(), checked.keys)
+    }
+
+    /**
+     * The Follow check, found the way the patch finds it: from the dump to the Following getter, to
+     * its readers, to the author row among them, to the one check that row asks beside the Follow
+     * button it builds. The getter alone missed the Reels tab on 0.1.7, since the row reads it only
+     * for an author you already follow.
+     */
+    @Test
+    fun `every declared build's author row asks one Follow check, with a local for its hook`() {
+        val versions = AppCompatibilities.facebook().single().targets.mapNotNull { it.version }
+        assertTrue("the bundle declares no Facebook build", versions.isNotEmpty())
+        val checked = mutableMapOf<String, String>()
+        for (version in versions) {
+            for (bundle in Fixtures.files { it.extension == "apkm" && it.name.contains("-$version-") }) {
+                val name = bundle.name
+                val dumpers = FixtureDex.classesHolding(bundle, WATCH_FEED_DUMP).flatMap { methodsHolding(it, WATCH_FEED_DUMP) }
+                assertEquals("$name: $dumpers", 1, dumpers.size)
+                val dumper = dumpers.single()
+                val getter = requireNotNull(followButtonGetter(dumper).getter) { "$name: the dump names no Following getter" }
+                val (readers, _) = readers(bundle, getter)
+                val author = requireNotNull(authorRow(readers, dumper)) { "$name: no author row among $readers" }
+
+                val owners = FixtureDex.classes(bundle, staticCalls(author).map { it.definingClass }.toSet())
+                val asked = followCheck(author) { call -> owners[call.definingClass]?.let { resolveStatic(it, call) } }
+                assertNull("$name: ${asked.problem}", asked.problem)
+                val check = asked.check!!
+                assertTrue("$name: ${check.name} isn't static", AccessFlags.STATIC.isSet(check.accessFlags))
+                assertTrue("$name: ${check.name} has no local for the hook", locals(check) >= 1)
+                checked[version] = "${check.definingClass}->${check.name}"
             }
         }
         assertEquals("a declared build went unchecked: $checked", versions.toSet(), checked.keys)

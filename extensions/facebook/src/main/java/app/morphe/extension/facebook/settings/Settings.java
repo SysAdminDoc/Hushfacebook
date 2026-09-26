@@ -96,7 +96,11 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting HIDE_REEL_CHIPS =
             new BooleanSetting("hushfacebook_hide_reel_chips", TRUE);
 
-    /** The Follow button in a reel's author row, through Facebook's own config for removing it. */
+    /**
+     * The Follow button in a reel's author row, through Facebook's own check for offering it, and
+     * the Following button an author you already follow gets there, through its config for
+     * removing that one.
+     */
     public static final BooleanSetting HIDE_REEL_FOLLOW_BUTTON =
             new BooleanSetting("hushfacebook_hide_reel_follow_button", TRUE);
 

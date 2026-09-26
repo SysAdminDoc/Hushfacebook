@@ -32,6 +32,7 @@ import app.morphe.extension.shared.diagnostics.HookStatus;
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.HushfacebookPause;
 import app.morphe.extension.shared.settings.PauseForTests;
+import app.morphe.extension.shared.settings.SettingReadsForTests;
 import app.morphe.extension.shared.settings.preference.LogBufferManager;
 
 /**
@@ -165,13 +166,65 @@ public class ReelDeclutterTest {
                 HookStatus.report().contains(FamilyNames.REEL_DECLUTTER + ": invoked 2, 0 found, 0 missing"));
     }
 
+    /**
+     * Facebook's Follow check answers no while the switch is on, so the author row is built with no
+     * Follow button, on the Reels tab as anywhere else. The report counts the check under its kind.
+     */
     @Test
-    public void theFollowButtonGoesWhileItsSwitchIsOn() {
+    public void theFollowCheckAnswersNoWhileTheSwitchIsOn() {
         assertTrue(ReelDeclutter.hideFollowButton());
+        assertEquals(ReelDeclutter.FOLLOW_ROUTE + ": 1 lists, 1 items, 1 removed. Last reason: " + ReelDeclutter.FOLLOW
+                + ". Removed: " + ReelDeclutter.FOLLOW + " 1. Kinds: " + ReelDeclutter.FOLLOW + " 1",
+                line(ReelDeclutter.FOLLOW_ROUTE));
+        assertTrue(String.join("\n", HookStatus.report()),
+                HookStatus.report().contains(FamilyNames.REEL_DECLUTTER + ": invoked 1, 0 found, 0 missing"));
+    }
+
+    /** The mutation control: off, Facebook's own check runs, and only the asking is counted. */
+    @Test
+    public void switchedOffFacebooksFollowCheckRuns() {
         Settings.HIDE_REEL_FOLLOW_BUTTON.save(false);
         assertFalse(ReelDeclutter.hideFollowButton());
-        assertEquals(ReelDeclutter.FOLLOW_ROUTE + ": 2 lists, 2 items, 1 removed. Last reason: Follow button. "
-                + "Removed: Follow button 1", line(ReelDeclutter.FOLLOW_ROUTE));
+        assertEquals(ReelDeclutter.FOLLOW_ROUTE + ": 1 lists, 1 items, 0 removed. Kinds: " + ReelDeclutter.FOLLOW + " 1",
+                line(ReelDeclutter.FOLLOW_ROUTE));
+    }
+
+    /**
+     * One switch runs both of the row's hooks: the Follow check, and the getter that removes the
+     * Following button an author you already follow gets. Each is counted under its own kind, so a
+     * report says which of them Facebook asked.
+     */
+    @Test
+    public void bothFollowButtonsGoWhileTheSwitchIsOn() {
+        assertTrue(ReelDeclutter.hideFollowButton());
+        assertTrue(ReelDeclutter.hideFollowingButton());
+        Settings.HIDE_REEL_FOLLOW_BUTTON.save(false);
+        assertFalse(ReelDeclutter.hideFollowButton());
+        assertFalse(ReelDeclutter.hideFollowingButton());
+        assertEquals(ReelDeclutter.FOLLOW_ROUTE + ": 4 lists, 4 items, 2 removed. Last reason: " + ReelDeclutter.FOLLOWING
+                + ". Removed: " + ReelDeclutter.FOLLOW + " 1, " + ReelDeclutter.FOLLOWING + " 1. Kinds: "
+                + ReelDeclutter.FOLLOW + " 2, " + ReelDeclutter.FOLLOWING + " 2", line(ReelDeclutter.FOLLOW_ROUTE));
+    }
+
+    /**
+     * A Follow switch that can't be read leaves both of Facebook's answers alone, and the report
+     * names each hook that threw. The read fails after the call is counted, which stands in for
+     * anything that can throw there.
+     */
+    @Test
+    public void aFollowSwitchThatCantBeReadLeavesFacebooksAnswers() {
+        SettingReadsForTests.breakReads(Settings.HIDE_REEL_FOLLOW_BUTTON);
+        try {
+            assertFalse(ReelDeclutter.hideFollowButton());
+            assertFalse(ReelDeclutter.hideFollowingButton());
+        } finally {
+            SettingReadsForTests.mend(Settings.HIDE_REEL_FOLLOW_BUTTON);
+        }
+        String threw = " hook (it threw " + NullPointerException.class.getName() + ")";
+        assertEquals(Arrays.asList("a working '" + ReelDeclutter.FOLLOW + "'" + threw,
+                        "a working '" + ReelDeclutter.FOLLOWING + "'" + threw),
+                HookStatus.missing(FamilyNames.REEL_DECLUTTER));
+        assertTrue("the Follow hook didn't come back once its switch could be read", ReelDeclutter.hideFollowButton());
     }
 
     @Test
@@ -192,6 +245,7 @@ public class ReelDeclutterTest {
     public void eachSwitchRunsOnlyItsOwnHooks() {
         Settings.HIDE_REEL_CHIPS.save(false);
         assertTrue(ReelDeclutter.hideFollowButton());
+        assertTrue(ReelDeclutter.hideFollowingButton());
         assertTrue(ReelDeclutter.skipHotComment());
         Settings.HIDE_REEL_CHIPS.save(true);
         Settings.HIDE_REEL_FOLLOW_BUTTON.save(false);
@@ -200,6 +254,7 @@ public class ReelDeclutterTest {
         Settings.HIDE_REEL_FOLLOW_BUTTON.save(true);
         Settings.HIDE_REEL_SOCIAL_FOOTER.save(false);
         assertTrue(ReelDeclutter.hideFollowButton());
+        assertTrue(ReelDeclutter.hideFollowingButton());
         assertEquals(1, ReelDeclutter.filterChips(Arrays.asList(chip(REMIX), chip(SONG))).length);
     }
 
@@ -211,11 +266,13 @@ public class ReelDeclutterTest {
             PauseForTests.pause(why);
             assertNull(why + " filtered the chips", ReelDeclutter.filterChips(Arrays.asList(chip(REMIX))));
             assertFalse(why + " hid the Follow button", ReelDeclutter.hideFollowButton());
+            assertFalse(why + " hid the Following button", ReelDeclutter.hideFollowingButton());
             assertFalse(why + " skipped the hot comment", ReelDeclutter.skipHotComment());
             assertFalse(why + " skipped the bubbles", ReelDeclutter.skipSocialBubbles());
         }
         PauseForTests.resume();
         assertTrue("the Follow hook didn't come back after the pause", ReelDeclutter.hideFollowButton());
+        assertTrue("the Following hook didn't come back after the pause", ReelDeclutter.hideFollowingButton());
     }
 
     @Test
@@ -223,6 +280,7 @@ public class ReelDeclutterTest {
         SettingsContextRule.withoutContext(() -> {
             assertNull(ReelDeclutter.filterChips(Arrays.asList(chip(REMIX))));
             assertFalse(ReelDeclutter.hideFollowButton());
+            assertFalse(ReelDeclutter.hideFollowingButton());
             assertFalse(ReelDeclutter.skipHotComment());
             assertFalse(ReelDeclutter.skipSocialBubbles());
         });
@@ -244,17 +302,20 @@ public class ReelDeclutterTest {
         LogBufferManager.clearLogBuffer();
         try {
             ReelDeclutter.hideFollowButton();
+            ReelDeclutter.hideFollowingButton();
             BaseSettings.DEBUG.save(true);
             for (int i = 0; i < 3; i++) {
                 ReelDeclutter.filterChips(Arrays.asList(chip(REMIX), chip(STARS)));
                 ReelDeclutter.hideFollowButton();
+                ReelDeclutter.hideFollowingButton();
                 ReelDeclutter.skipHotComment();
                 ReelDeclutter.skipSocialBubbles();
             }
             String log = LogBufferManager.buildExportText();
             assertEquals(log, 1, occurrences(log, "Reel chips: hid " + REMIX));
             assertEquals(log, 1, occurrences(log, "Reel chips: hid " + STARS));
-            assertEquals(log, 1, occurrences(log, "Reel Follow button: hidden"));
+            assertEquals(log, 1, occurrences(log, "Reel Follow button: hid the Follow button"));
+            assertEquals(log, 1, occurrences(log, "Reel Follow button: hid the Following button"));
             assertEquals(log, 1, occurrences(log, "Reel footer: skipped the " + ReelDeclutter.HOT_COMMENT + " query"));
             assertEquals(log, 1, occurrences(log, "Reel footer: skipped the " + ReelDeclutter.SOCIAL_BUBBLES + " query"));
         } finally {

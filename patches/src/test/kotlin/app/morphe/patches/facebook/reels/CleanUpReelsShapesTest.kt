@@ -160,6 +160,113 @@ class CleanUpReelsShapesTest {
             listOf(reader("Lfixture/Row;", RENDER, AUTHOR_COMPONENT), dumper, author), dumper))
     }
 
+    /** The author row the Follow check is read from: the reader holding its literal, never the dump. */
+    @Test
+    fun `the author row is the one reader besides the dump holding its literal`() {
+        val dumper = reader("Lfixture/Dump;", "getExtraFileFromWorkerThread", WATCH_FEED_DUMP, AUTHOR_COMPONENT)
+        val author = reader("Lfixture/Author;", "A1F", AUTHOR_COMPONENT)
+        val render = reader("Lfixture/Row;", RENDER)
+        assertEquals(author, authorRow(listOf(render, dumper, author), dumper))
+        assertNull("no author row", authorRow(listOf(render, dumper), dumper))
+        assertNull("two author rows", authorRow(listOf(reader("Lfixture/Row;", RENDER, AUTHOR_COMPONENT), dumper, author), dumper))
+    }
+
+    /** A method a static call can reach: its owner, name and shape, and the strings it loads. */
+    private fun callee(owner: String, name: String, returnType: String, first: String, vararg strings: String,
+                       static: Boolean = true): Method = ImmutableMethod(
+        owner, name, listOf(ImmutableMethodParameter(first, null, null)), returnType,
+        AccessFlags.PUBLIC.value or (if (static) AccessFlags.STATIC.value else 0), null, null,
+        ImmutableMethodImplementation(
+            2,
+            strings.map {
+                com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction21c(
+                    Opcode.CONST_STRING, 0, com.android.tools.smali.dexlib2.immutable.reference.ImmutableStringReference(it),
+                )
+            } + com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction10x(Opcode.RETURN_VOID),
+            null,
+            null,
+        ),
+    )
+
+    private fun reference(method: Method) = com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference(
+        method.definingClass, method.name, method.parameterTypes, method.returnType,
+    )
+
+    /** An author row whose body makes each of [calls] with invoke-static, the first as a range call. */
+    private fun authorCalling(vararg calls: Method): Method = ImmutableMethod(
+        "Lfixture/Author;", "A1F", emptyList(), "V", AccessFlags.PUBLIC.value, null, null,
+        ImmutableMethodImplementation(
+            2,
+            calls.mapIndexed { index, call ->
+                if (index == 0) {
+                    com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction3rc(
+                        Opcode.INVOKE_STATIC_RANGE, 1, 1, reference(call),
+                    )
+                } else {
+                    com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction35c(
+                        Opcode.INVOKE_STATIC, 1, 1, 0, 0, 0, 0, reference(call),
+                    )
+                }
+            } + com.android.tools.smali.dexlib2.immutable.instruction.ImmutableInstruction10x(Opcode.RETURN_VOID),
+            null,
+            null,
+        ),
+    )
+
+    private val surfaces = FOLLOW_CHECK_SURFACES.toTypedArray()
+    private val builder = callee("Lfixture/Button;", "build", "Ljava/lang/Object;", FB_USER_SESSION, FOLLOW_BUTTON_KEY)
+    private val check = callee("Lfixture/Check;", "offersFollow", "Z", FB_USER_SESSION, *surfaces)
+
+    /** Every lookalike the rule has to pass over, each short of the check by one thing. */
+    private val lookalikes = listOf(
+        callee("Lfixture/Check;", "oneSurface", "Z", FB_USER_SESSION, surfaces.first()),
+        callee("Lfixture/Check;", "sessionNotFirst", "Z", "Landroid/content/Context;", *surfaces),
+        callee("Lfixture/Check;", "notABoolean", "Ljava/lang/String;", FB_USER_SESSION, *surfaces),
+        callee("Lfixture/Check;", "notStatic", "Z", FB_USER_SESSION, *surfaces, static = false),
+    )
+
+    private fun resolver(vararg methods: Method): (MethodReference) -> Method? = { call ->
+        methods.firstOrNull { it.definingClass == call.definingClass && it.name == call.name }
+    }
+
+    /**
+     * The check the author row asks: static, a boolean, the session first and both surfaces named,
+     * picked out of lookalikes that miss one of those each, wherever it sits among the row's calls.
+     */
+    @Test
+    fun `the Follow check is the one the author row asks beside the button it builds`() {
+        val resolve = resolver(builder, check, *lookalikes.toTypedArray())
+        for (at in 0..lookalikes.size) {
+            val calls = lookalikes.toMutableList<Method>().apply { add(at, check) } + builder
+            val found = followCheck(authorCalling(*calls.toTypedArray()), resolve)
+            assertNull(found.problem)
+            assertEquals("the check at call $at", check, found.check)
+        }
+        // Asked twice, it's still one check.
+        assertEquals(check, followCheck(authorCalling(check, builder, check), resolve).check)
+    }
+
+    @Test
+    fun `an author row that doesn't show one Follow check beside its button stops the patch with why`() {
+        val second = callee("Lfixture/Check;", "alsoOffersFollow", "Z", FB_USER_SESSION, *surfaces)
+        val resolve = resolver(builder, check, second, *lookalikes.toTypedArray())
+
+        // The button built somewhere else: the check this row asks may not decide it any more.
+        val noButton = followCheck(authorCalling(check), resolve)
+        assertNull(noButton.check)
+        assertTrue(noButton.problem!!, noButton.problem!!.contains(FOLLOW_BUTTON_KEY))
+        // No check asked.
+        val none = followCheck(authorCalling(builder, *lookalikes.toTypedArray()), resolve)
+        assertNull(none.check)
+        assertTrue(none.problem!!, none.problem!!.contains("0 Follow checks"))
+        // Two: which one decides the button is a guess.
+        val two = followCheck(authorCalling(check, builder, second), resolve)
+        assertNull(two.check)
+        assertTrue(two.problem!!, two.problem!!.contains("2 Follow checks"))
+        // Calls the patch can't resolve count for nothing.
+        assertNotNull(followCheck(authorCalling(builder, check)) { null }.problem)
+    }
+
     private fun MutableMethod.body(): List<Instruction> = implementation!!.instructions.toList()
 
     /** The index a branch at [index] lands on. */
@@ -233,9 +340,9 @@ class CleanUpReelsShapesTest {
                 const/4 v0, 0x0
                 return v0
             """)
-        getter.returnTrueWhen(HIDE_FOLLOW_BUTTON)
+        getter.returnTrueWhen(HIDE_FOLLOWING_BUTTON)
         val body = getter.body()
-        assertEquals(HIDE_FOLLOW_BUTTON, body[0].call)
+        assertEquals(HIDE_FOLLOWING_BUTTON, body[0].call)
         assertEquals(Opcode.MOVE_RESULT, body[1].opcode)
         assertEquals("off runs Facebook's own getter", 5, getter.target(2))
         assertEquals(Opcode.CONST_4, body[3].opcode)
@@ -244,7 +351,37 @@ class CleanUpReelsShapesTest {
         assertEquals(7, body.size)
 
         val noLocal = method("A1c", emptyList(), "Z", 1, static = false, "const/4 p0, 0x0\nreturn p0")
-        assertThrows(PatchException::class.java) { noLocal.returnTrueWhen(HIDE_FOLLOW_BUTTON) }
+        assertThrows(PatchException::class.java) { noLocal.returnTrueWhen(HIDE_FOLLOWING_BUTTON) }
+    }
+
+    /**
+     * The Follow check asks first and answers no when told to, in a local of its own: the session,
+     * the other arguments and the check's own answer stay where Facebook put them.
+     */
+    @Test
+    fun `the Follow check answers false first when the extension says so`() {
+        val parameters = listOf(FB_USER_SESSION, "Ljava/lang/String;", "Z")
+        val check = method("A0B", parameters, "Z", 5, static = true,
+            """
+                const/4 v0, 0x1
+                return v0
+            """)
+        check.returnFalseWhen(HIDE_FOLLOW_BUTTON)
+        val body = check.body()
+        assertEquals(HIDE_FOLLOW_BUTTON, body[0].call)
+        assertEquals(Opcode.MOVE_RESULT, body[1].opcode)
+        assertEquals(0, (body[1] as OneRegisterInstruction).registerA)
+        assertEquals(Opcode.IF_EQZ, body[2].opcode)
+        assertEquals("off runs Facebook's own check", 5, check.target(2))
+        assertEquals(Opcode.CONST_4, body[3].opcode)
+        assertEquals("the hook answers no", 0, (body[3] as NarrowLiteralInstruction).narrowLiteral)
+        assertEquals(Opcode.RETURN, body[4].opcode)
+        assertEquals(0, (body[4] as OneRegisterInstruction).registerA)
+        assertEquals(7, body.size)
+
+        // Every register a parameter: nothing is free to hold the extension's answer.
+        val noLocal = method("A0B", parameters, "Z", 3, static = true, "return p2")
+        assertThrows(PatchException::class.java) { noLocal.returnFalseWhen(HIDE_FOLLOW_BUTTON) }
     }
 
     @Test

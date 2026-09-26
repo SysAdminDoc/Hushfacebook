@@ -2,6 +2,10 @@
 
 Every Hushfacebook release, newest first.
 
+## Unreleased
+
+* **Facebook:** Clean up Reels now takes the Follow button off reels on the Reels tab too. It only caught the Following button next to people you already follow, so a reel from anyone else kept its Follow button.
+
 ## 0.1.7 (2026-09-26)
 
 * **Facebook:** New patch, Clean up Reels. It takes the Follow button off reels and stops the comment and friends' reactions Facebook previews under them. The Remix, Use template, Add yours and Edits buttons go as well, along with the ones for Stars, games, partner apps and links out of Facebook. Each part has its own switch under Reels and Watch. The patch starts off in Morphe Manager, and its switches start on once you pick it.

@@ -13,6 +13,7 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patches.facebook.feed.methodsHolding
+import app.morphe.patches.facebook.feed.resolveStatic
 import app.morphe.patches.facebook.misc.extension.EXTENSION_PACKAGE
 import app.morphe.patches.facebook.misc.extension.enableStatus
 import app.morphe.patches.facebook.misc.extension.facebookExtensionPatch
@@ -29,6 +30,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 private const val DECLUTTER = "$EXTENSION_PACKAGE/reels/ReelDeclutter;"
 internal const val FILTER_CHIPS = "$DECLUTTER->filterChips(Ljava/lang/Object;)[Ljava/lang/Object;"
 internal const val HIDE_FOLLOW_BUTTON = "$DECLUTTER->hideFollowButton()Z"
+internal const val HIDE_FOLLOWING_BUTTON = "$DECLUTTER->hideFollowingButton()Z"
 internal const val SKIP_HOT_COMMENT = "$DECLUTTER->skipHotComment()Z"
 internal const val SKIP_SOCIAL_BUBBLES = "$DECLUTTER->skipSocialBubbles()Z"
 
@@ -37,7 +39,8 @@ private const val PATCH = "Clean up Reels"
 /**
  * Takes three things off the Reels viewer, each behind its own switch, all on once the patch is in:
  * the chips under a reel that prompt you to make something or promote something, the Follow button
- * in the author row, and the comment and friends' reaction previews in the footer.
+ * in the author row (with the Following button an author you already follow gets there), and the
+ * comment and friends' reaction previews in the footer.
  *
  * Every anchor is a kept name or literal (see ReelAnchors.kt), and every one of them is required: a
  * build where one can't be found stops the patch with what's missing, rather than shipping a switch
@@ -60,7 +63,7 @@ val cleanUpReelsPatch = bytecodePatch(
 
     execute {
         filterChips()
-        hideFollowButton()
+        hideFollowButtons()
         skipFooterQueries()
         enableStatus("reelDeclutter")
     }
@@ -115,8 +118,13 @@ internal fun MutableMethod.filterChipsBeforeEveryReturn() {
     }
 }
 
-/** Facebook's config getter for removing the Follow button answers true when the switch is on. */
-private fun BytecodePatchContext.hideFollowButton() {
+/**
+ * The author row's two buttons for following, both behind the Follow switch. Facebook's Follow
+ * check answers no when the switch is on, so no Follow button is built for an author you don't
+ * follow, and its config getter for removing the Following button answers true, so an author you
+ * already follow gets none either. See ReelAnchors.kt for why one hook alone missed the first.
+ */
+private fun BytecodePatchContext.hideFollowButtons() {
     val dumpers = classDefByStrings(WATCH_FEED_DUMP, StringComparisonType.EQUALS)
         .flatMap { methodsHolding(it, WATCH_FEED_DUMP) }
     val dumper = dumpers.singleOrNull()
@@ -128,18 +136,30 @@ private fun BytecodePatchContext.hideFollowButton() {
     classDefForEach { classDef -> classDef.methods.filterTo(readers) { calls(it, getter) } }
     followReaderProblem(readers, dumper)?.let { throw PatchException("$PATCH: $it") }
 
+    val author = authorRow(readers, dumper)
+        ?: throw PatchException("$PATCH: no single reader of the Follow getter holds \"$AUTHOR_COMPONENT\"")
+    val asked = followCheck(author) { call -> classDefByOrNull(call.definingClass)?.let { resolveStatic(it, call) } }
+    val check = asked.check ?: throw PatchException("$PATCH: ${asked.problem}")
+
     val method = mutableClassDefByOrNull(getter.definingClass)?.methods?.singleOrNull {
         it.name == getter.name && it.returnType == "Z" && it.parameterTypes.isEmpty() &&
             !AccessFlags.STATIC.isSet(it.accessFlags) && it.implementation != null
     } ?: throw PatchException("$PATCH: ${getter.definingClass} declares no ${getter.name}()Z with a body")
-    method.returnTrueWhen(HIDE_FOLLOW_BUTTON)
+    method.returnTrueWhen(HIDE_FOLLOWING_BUTTON)
+    mutableClassDefBy(check.definingClass).methods.first { it.sameSignatureAs(check) }.returnFalseWhen(HIDE_FOLLOW_BUTTON)
 }
 
+/** Asks [hook] first thing and answers true when it says so. */
+internal fun MutableMethod.returnTrueWhen(hook: String) = answerWhen(hook, true)
+
+/** Asks [hook] first thing and answers false when it says so. */
+internal fun MutableMethod.returnFalseWhen(hook: String) = answerWhen(hook, false)
+
 /**
- * Asks [hook] first thing and answers true when it says so. At the first instruction no local holds
- * anything yet, so v0 is free, and `const/4` and `return` both reach it.
+ * Asks [hook] first thing and answers [answer] when it says so. At the first instruction no local
+ * holds anything yet, so v0 is free, and `const/4` and `return` both reach it.
  */
-internal fun MutableMethod.returnTrueWhen(hook: String) {
+private fun MutableMethod.answerWhen(hook: String, answer: Boolean) {
     requireLocals(PATCH, 1)
     addInstructionsWithLabels(
         0,
@@ -147,7 +167,7 @@ internal fun MutableMethod.returnTrueWhen(hook: String) {
             invoke-static { }, $hook
             move-result v0
             if-eqz v0, :facebooks_answer
-            const/4 v0, 0x1
+            const/4 v0, ${if (answer) "0x1" else "0x0"}
             return v0
         """,
         ExternalLabel("facebooks_answer", getInstruction(0)),

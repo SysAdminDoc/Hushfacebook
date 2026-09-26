@@ -21,7 +21,7 @@ import app.morphe.extension.shared.settings.BaseSettings;
 /**
  * What the Clean up Reels patch asks before a reel's footer is built.
  *
- * <p>Three switches, four hooks, all in the Reels viewer of Facebook 577 and 580:
+ * <p>Three switches, five hooks, all in the Reels viewer of Facebook 577 and 580:
  *
  * <ul>
  *   <li>The chips under a reel come from one method that walks the reel's attribution models and
@@ -29,8 +29,14 @@ import app.morphe.extension.shared.settings.BaseSettings;
  *       and {@link #filterChips} answers the chips to keep, or null to keep the list as it came.
  *       Each chip is a generated model that answers its GraphQL type with {@code getTypeName()},
  *       and only the types in {@link #HIDDEN_CHIPS} go. A type this doesn't know stays.
- *   <li>The Follow button beside a reel's author is left out when Facebook's own config getter for
- *       removing it answers true. {@link #hideFollowButton} is asked first thing in that getter.
+ *   <li>The Follow button beside a reel's author is built only when Facebook's Follow check
+ *       answers yes, and {@link #hideFollowButton} is asked first thing in that check. The author
+ *       row asks it on every surface, the Reels tab included. So do the author rows of sponsored
+ *       reels and the feed, about a reel attached to a post.
+ *   <li>An author you already follow gets a Following button there instead, which Facebook's own
+ *       config getter for removing it takes away when it answers true. {@link #hideFollowingButton}
+ *       is asked first thing in that getter. The row reads the getter only for such an author,
+ *       which is why it alone left the Follow button on everyone else's reels.
  *   <li>The comment Facebook picks to show under a reel and the bubbles of friends who reacted each
  *       come from a query a runnable starts. {@link #skipHotComment} and {@link #skipSocialBubbles}
  *       are asked first thing in each, and true makes the runnable return before it queries.
@@ -65,6 +71,10 @@ public final class ReelDeclutter {
 
     /** The kind a chip is counted under when its type can't be read. It stays. */
     static final String UNREADABLE = "unreadable type";
+
+    /** The author row's buttons in the report, each counted under the hook that asked. */
+    static final String FOLLOW = "Follow button";
+    static final String FOLLOWING = "Following button";
 
     /** The footer queries' kinds in the report. */
     static final String HOT_COMMENT = "hot comment";
@@ -123,23 +133,38 @@ public final class ReelDeclutter {
     }
 
     /**
-     * Injection point, first thing in Facebook's config getter for removing the Follow button from a
-     * reel's author row. True makes the getter answer true, so the row is built without the button.
-     * Never throws: false runs Facebook's own getter.
+     * Injection point, first thing in Facebook's check for whether a reel's author row offers a
+     * Follow button. True makes the check answer no, so the row is built without one, as it is
+     * for an author Facebook won't let you follow. Never throws: false runs Facebook's own check.
      */
     public static boolean hideFollowButton() {
+        return hideAuthorButton(FOLLOW);
+    }
+
+    /**
+     * Injection point, first thing in Facebook's config getter for removing the Following button
+     * an author you already follow gets in a reel's author row. True makes the getter answer true,
+     * so the row is built without it. Never throws: false runs Facebook's own getter.
+     */
+    public static boolean hideFollowingButton() {
+        return hideAuthorButton(FOLLOWING);
+    }
+
+    /** Both of the Follow switch's hooks: [button] names the one that asked. */
+    private static boolean hideAuthorButton(String button) {
         try {
             HookStatus.invoked(FamilyNames.REEL_DECLUTTER);
             FeedFilterCounters.sawList(FOLLOW_ROUTE, 1);
+            FeedFilterCounters.sawKind(FOLLOW_ROUTE, button);
             boolean hide = Utils.settingsReady() && Settings.HIDE_REEL_FOLLOW_BUTTON.get();
             if (hide) {
-                FeedFilterCounters.removed(FOLLOW_ROUTE, 1, "Follow button");
-                logOnce("follow", () -> "Reel Follow button: hidden");
+                FeedFilterCounters.removed(FOLLOW_ROUTE, 1, button);
+                logOnce(button, () -> "Reel Follow button: hid the " + button);
             }
             return hide;
         } catch (Throwable failure) {
-            HookStatus.threw(FamilyNames.REEL_DECLUTTER, "Follow button", failure);
-            Logger.printException(() -> "Reel Follow button: could not read its switch", failure);
+            HookStatus.threw(FamilyNames.REEL_DECLUTTER, button, failure);
+            Logger.printException(() -> "Reel Follow button: could not read its switch for the " + button, failure);
             return false;
         }
     }

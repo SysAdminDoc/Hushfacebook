@@ -162,10 +162,12 @@ public class PausedHooksTest {
                     ReelsAdFilter.withoutAdSections(Collections.singletonList(section), AD);
                     return !section.items.contains(ad);
                 }));
-        // A Remix chip under a reel, the Follow button beside its author, and both footer queries.
+        // A Remix chip under a reel, the Follow and Following buttons beside its author, and both
+        // footer queries.
         probes.put(PatchFamily.REEL_DECLUTTER, Arrays.asList(
                 () -> ReelDeclutter.filterChips(Arrays.asList(new TypedFeedUnit("XFBFBShortsRemixAttribution"))) != null,
                 ReelDeclutter::hideFollowButton,
+                ReelDeclutter::hideFollowingButton,
                 ReelDeclutter::skipHotComment,
                 ReelDeclutter::skipSocialBubbles));
         probes.put(PatchFamily.EXTERNAL_BROWSER, Collections.singletonList(() -> {
