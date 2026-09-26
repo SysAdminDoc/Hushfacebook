@@ -24,7 +24,7 @@ Back	Kembali
 Background ad prefetch blocked	Pramuat iklan di latar belakang diblokir
 Cancel	Batal
 Changing these	Mengubah pilihan ini
-Choose a settings file and preview what would change before importing.	Pilih berkas pengaturan dan lihat perubahan sebelum mengimpornya.
+Choose a settings file and preview what would change before importing.	Pilih file pengaturan dan lihat perubahan sebelum mengimpornya.
 Clear diagnostic data	Hapus data diagnostik
 Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Salin laporan singkat atau simpan laporan lengkap di Download/Morphe. Nama, ID, tautan, dan cookie dihilangkan.
 Copy quick report	Salin laporan singkat
@@ -56,7 +56,7 @@ Facebook closed three times within a minute of starting, so Hushfacebook paused 
 Facebook doesn't download ads or its ad model in the background.	Facebook tidak mengunduh iklan atau model iklannya di latar belakang.
 Facebook doesn't serve ads to other apps on this phone.	Facebook tidak menayangkan iklan ke aplikasi lain di ponsel ini.
 Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	Mode gelap Facebook dan halaman ini memakai warna wallpaper Anda. Android 11 memakai biru. Aktifkan mode gelap Facebook untuk melihatnya.
-From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Mulai pembukaan berikutnya, tombol di atas berhenti bekerja dan perilaku Facebook kembali. Pencatatan debug tetap berjalan dan pilihan Anda tersimpan.
+From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Mulai pembukaan berikutnya, sakelar di atas berhenti bekerja dan perilaku Facebook kembali. Pencatatan debug tetap berjalan dan pilihan Anda tersimpan.
 Full report saved to %1$s	Laporan lengkap disimpan ke %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya
 Hide "People you may know"	Sembunyikan “Orang yang Mungkin Anda Kenal”
@@ -96,7 +96,7 @@ Paid ads in the feed. They're dropped before Facebook adds them, so no gap is le
 Pause Hushfacebook	Jeda Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Postingan dari orang dan Halaman yang tidak Anda ikuti serta dari grup tempat Anda belum bergabung, yang diselipkan Facebook ke Kabar Beranda Anda.
-Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Postingan yang ditandai Facebook sebagai buatan AI. Label yang hanya ditambahkan pengunggah tetap ada. Tombol ini awalnya mati sampai diuji di beranda sungguhan.
+Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Postingan yang ditandai Facebook sebagai buatan AI. Label yang hanya ditambahkan pengunggah tetap ada. Sakelar ini awalnya mati sampai diuji di beranda sungguhan.
 Profiles and some Settings pages open again on this re-signed build.	Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.
 Re-signed build fix	Perbaikan build yang ditandatangani ulang
 Reading the settings file	Membaca file pengaturan
@@ -110,7 +110,7 @@ Save full report	Simpan laporan lengkap
 Saved to %1$s	Disimpan ke %1$s
 Saved to the gallery	Disimpan ke galeri
 Saved. Restart Facebook to apply this change.	Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.
-Save your switches and download settings to a file. Pause and debug logging aren't included.	Simpan tombol dan pengaturan unduhan Anda ke sebuah berkas. Jeda dan pencatatan debug tidak disertakan.
+Save your switches and download settings to a file. Pause and debug logging aren't included.	Simpan sakelar dan pengaturan unduhan Anda ke sebuah file. Jeda dan pencatatan debug tidak disertakan.
 Saves will go to a folder named %1$s.	Semua yang Anda simpan akan masuk ke folder bernama %1$s.
 Saving a photo	Menyimpan foto
 Saving a video	Menyimpan video

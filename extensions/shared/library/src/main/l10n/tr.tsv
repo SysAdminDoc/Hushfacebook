@@ -24,9 +24,9 @@ Back	Geri
 Background ad prefetch blocked	Arka planda reklam indirme engellendi
 Cancel	İptal
 Changing these	Bunları değiştirmek
-Choose a settings file and preview what would change before importing.	Bir ayar dosyası seçin ve içe aktarmadan önce nelerin değişeceğini görün.
+Choose a settings file and preview what would change before importing.	Bir ayar dosyası seç ve içe aktarmadan önce nelerin değişeceğini gör.
 Clear diagnostic data	Tanılama verilerini temizle
-Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Kısa raporu kopyalayın veya tam raporu Download/Morphe konumuna kaydedin. Adlar, kimlikler, bağlantılar ve çerezler çıkarılır.
+Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Kısa raporu kopyala veya tam raporu Download/Morphe konumuna kaydet. Adlar, kimlikler, bağlantılar ve çerezler çıkarılır.
 Copy quick report	Hızlı raporu kopyala
 Couldn't import every setting. Check the switches on this screen.	Bazı ayarlar içe aktarılamadı. Bu ekrandaki anahtarları kontrol et.
 Couldn't import the settings. Nothing was changed.	Ayarlar içe aktarılamadı. Hiçbir şey değiştirilmedi.
@@ -55,8 +55,8 @@ Export settings	Ayarları dışa aktar
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook açıldıktan sonraki bir dakika içinde üç kez kapandı, bu yüzden Hushfacebook kendini duraklattı.
 Facebook doesn't download ads or its ad model in the background.	Facebook reklamları veya reklam modelini arka planda indirmez.
 Facebook doesn't serve ads to other apps on this phone.	Facebook bu telefondaki diğer uygulamalara reklam sunmaz.
-Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	Facebook koyu modu ve bu ekran duvar kâğıdınızın renklerini kullanır. Android 11 bunun yerine mavi kullanır. Görmek için Facebook koyu modunu açın.
-From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Sonraki açılıştan itibaren yukarıdaki anahtarlar çalışmaz ve Facebook'un kendi davranışı geri gelir. Hata ayıklama günlüğü çalışmaya devam eder ve seçimleriniz korunur.
+Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	Facebook karanlık modu ve bu ekran duvar kâğıdının renklerini kullanır. Android 11 bunun yerine mavi kullanır. Görmek için Facebook karanlık modunu aç.
+From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Sonraki açılıştan itibaren yukarıdaki anahtarlar çalışmaz ve Facebook'un kendi davranışı geri gelir. Hata ayıklama günlüğü çalışmaya devam eder ve seçimlerin korunur.
 Full report saved to %1$s	Tam rapor şuraya kaydedildi: %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, üzerine kurulduğu projelerin lisans bildirimleriyle
 Hide "People you may know"	“Tanıyor olabileceğin kişiler” bölümünü gizle
@@ -90,7 +90,7 @@ No screenshot watching for ads, and no reports of which apps you install.	Reklam
 Not saved: that isn't a Facebook photo or video	Kaydedilmedi: Bu bir Facebook fotoğrafı veya videosu değil
 Not saved: the file is over 512 MB	Kaydedilmedi: Dosya 512 MB'tan büyük
 OK	Tamam
-Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.	Movies ve Pictures altında bir klasör adı seçin. Geçersiz karakterler alt çizgiye dönüşür. %1$s için boş bırakın.
+Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.	Movies ve Pictures altında bir klasör adı seç. Geçersiz karakterler alt çizgiye dönüşür. %1$s için boş bırak.
 Open links in your browser	Bağlantıları tarayıcında aç
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Akıştaki ücretli reklamlar. Facebook eklemeden önce çıkarıldıkları için yerlerinde boşluk kalmaz.
 Pause Hushfacebook	Hushfacebook'u duraklat
@@ -110,7 +110,7 @@ Save full report	Tam raporu kaydet
 Saved to %1$s	Şuraya kaydedildi: %1$s
 Saved to the gallery	Galeriye kaydedildi
 Saved. Restart Facebook to apply this change.	Kaydedildi. Bu değişikliği uygulamak için Facebook'u yeniden başlat.
-Save your switches and download settings to a file. Pause and debug logging aren't included.	Anahtarlarınızı ve indirme ayarlarınızı bir dosyaya kaydedin. Duraklatma ve hata ayıklama günlüğü dahil edilmez.
+Save your switches and download settings to a file. Pause and debug logging aren't included.	Anahtarlarını ve indirme ayarlarını bir dosyaya kaydet. Duraklatma ve hata ayıklama günlüğü dahil edilmez.
 Saves will go to a folder named %1$s.	Kaydettiklerin %1$s adlı bir klasöre gidecek.
 Saving a photo	Fotoğraf kaydediliyor
 Saving a video	Video kaydediliyor
@@ -163,8 +163,8 @@ You paused Hushfacebook.	Hushfacebook'u duraklattın.
 Your switches already match that file, so nothing will change.	Anahtarların zaten o dosyayla aynı, bu yüzden hiçbir şey değişmeyecek.
 Keep feed position on return	Geri dönünce akış konumunu koru
 Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Facebook'a on dakika içinde dönersen kaldığın yer korunur. Yenilemek için aşağı çekmeye devam edebilirsin.
-A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Biten bir hikâye, dokunana veya kaydırana kadar ekranda kalır. Facebook'un zamanlamasını kullanmak için bunu kapatın.
-Stop Story auto-advance	Hikâyelerin otomatik ilerlemesini durdur
+A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Biten bir hikaye, dokunana veya kaydırana kadar ekranda kalır. Facebook'un zamanlamasını kullanmak için bunu kapat.
+Stop Story auto-advance	Hikayelerin otomatik ilerlemesini durdur
 Copy a short report to the clipboard.	Kısa raporu panoya kopyalar.
 Save the full report in Download/Morphe.	Tam raporu Download/Morphe konumuna kaydeder.
 Folder set to %1$s.	Klasör %1$s olarak ayarlandı.
@@ -187,7 +187,7 @@ Videos will save at their lowest quality, for the smallest files.	Videolar en d�
 Videos will save at %1$s, or the closest quality each one has.	Videolar %1$s kalitesinde ya da her birinin sahip olduğu en yakın kalitede kaydedilecek.
 Settings imported.	Ayarlar içe aktarıldı.
 Video file name	Video dosya adı
-%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s kaydetme tarihine ve saatine, %2$s ise videonun Facebook'taki numarasına dönüşür. İkisini de içermeyen bir ada tarih eklenir. Geçersiz karakterler alt çizgiye dönüşür. %3$s için boş bırakın.
+%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s kaydetme tarihine ve saatine, %2$s ise videonun Facebook'taki numarasına dönüşür. İkisini de içermeyen bir ada tarih eklenir. Geçersiz karakterler alt çizgiye dönüşür. %3$s için boş bırak.
 Videos are named %1$s. Photos keep Facebook's own %2$s names.	Videoların adı %1$s olur. Fotoğraflar Facebook'un kendi %2$s adlarını korur.
 Saved videos will be named %1$s.	Kaydedilen videoların adı %1$s olacak.
 File name	Dosya adı

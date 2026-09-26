@@ -15,7 +15,7 @@ A file named %1$s in %2$s paused Hushfacebook.	Um arquivo chamado %1$s em %2$s p
 About	Sobre
 Ad cards between the stories people posted.	Anúncios entre os stories que as pessoas postaram.
 Ad telemetry blocked	Telemetria de anúncios bloqueada
-Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Adiciona Baixar no telefone aos menus de vídeo do feed e do Watch. Salva na qualidade definida abaixo. Desligado ou em pausa, o menu do Facebook volta.
+Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Adiciona Baixar no celular aos menus de vídeo do feed e do Watch. Salva na qualidade definida abaixo. Desligado ou em pausa, o menu do Facebook volta.
 Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Adiciona o item Salvar ao menu do story de qualquer pessoa e salva na qualidade definida em Downloads. Com esta opção desligada ou durante a pausa, o item Salvar só aparece nos seus próprios stories, e quem salva é o próprio Facebook.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Anúncios dentro dos Reels. Banners, anúncios no meio do vídeo e anúncios inseridos pelo app continuam bloqueados mesmo durante a pausa.
 AMOLED black theme	Tema preto AMOLED
@@ -56,7 +56,7 @@ Facebook closed three times within a minute of starting, so Hushfacebook paused 
 Facebook doesn't download ads or its ad model in the background.	O Facebook não baixa anúncios nem o modelo de anúncios dele em segundo plano.
 Facebook doesn't serve ads to other apps on this phone.	O Facebook não envia anúncios para outros apps deste celular.
 Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	O modo escuro do Facebook e esta tela usam as cores do seu papel de parede. O Android 11 usa azul. Ative o modo escuro do Facebook para ver.
-From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Na próxima abertura, os botões acima deixam de agir e o comportamento do Facebook volta. O registro de depuração continua funcionando e suas escolhas ficam salvas.
+From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Na próxima abertura, as opções acima deixam de agir e o comportamento do Facebook volta. O Registro de depuração continua funcionando e suas escolhas ficam salvas.
 Full report saved to %1$s	Relatório completo salvo em %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia
 Hide "People you may know"	Ocultar “Pessoas que você talvez conheça”
@@ -96,7 +96,7 @@ Paid ads in the feed. They're dropped before Facebook adds them, so no gap is le
 Pause Hushfacebook	Pausar o Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Posts que o Facebook classifica como promoções, e não como anúncios.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Publicações de pessoas e Páginas que você não segue e de grupos dos quais você não participa, que o Facebook coloca no seu feed.
-Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Publicações que o Facebook marca como feitas por IA. Rótulos adicionados só por quem compartilhou permanecem. Este botão começa desligado até ser testado em um feed real.
+Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Publicações que o Facebook marca como feitas por IA. Rótulos adicionados só por quem compartilhou permanecem. Esta opção começa desligada até ser testada em um feed real.
 Profiles and some Settings pages open again on this re-signed build.	Perfis e algumas páginas de Configurações voltam a abrir nesta versão reassinada.
 Re-signed build fix	Correção para versão reassinada
 Reading the settings file	Lendo o arquivo de configurações
@@ -110,7 +110,7 @@ Save full report	Salvar relatório completo
 Saved to %1$s	Salvo em %1$s
 Saved to the gallery	Salvo na galeria
 Saved. Restart Facebook to apply this change.	Salvo. Reinicie o Facebook para aplicar esta alteração.
-Save your switches and download settings to a file. Pause and debug logging aren't included.	Salve seus botões e as configurações de download em um arquivo. Pausa e registro de depuração não são incluídos.
+Save your switches and download settings to a file. Pause and debug logging aren't included.	Salve suas opções e as configurações de download em um arquivo. Pausa e registro de depuração não são incluídos.
 Saves will go to a folder named %1$s.	O que você salvar vai para uma pasta chamada %1$s.
 Saving a photo	Salvando uma foto
 Saving a video	Salvando um vídeo
@@ -163,8 +163,8 @@ You paused Hushfacebook.	Você pausou o Hushfacebook.
 Your switches already match that file, so nothing will change.	Suas opções já correspondem a esse arquivo, então nada vai mudar.
 Keep feed position on return	Manter a posição no feed ao voltar
 Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Se você voltar ao Facebook em até dez minutos, continuará de onde parou. Puxe para baixo para atualizar quando quiser.
-A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Uma história concluída fica na tela até você tocar ou deslizar. Desative para usar o tempo padrão do Facebook.
-Stop Story auto-advance	Parar avanço automático das histórias
+A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Um story concluído fica na tela até você tocar ou deslizar. Desative para usar o tempo padrão do Facebook.
+Stop Story auto-advance	Parar o avanço automático dos stories
 Copy a short report to the clipboard.	Copie um relatório curto para a área de transferência.
 Save the full report in Download/Morphe.	Salve o relatório completo em Download/Morphe.
 Folder set to %1$s.	Pasta definida como %1$s.

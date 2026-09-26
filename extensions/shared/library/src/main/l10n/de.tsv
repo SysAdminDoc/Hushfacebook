@@ -15,7 +15,7 @@ A file named %1$s in %2$s paused Hushfacebook.	Eine Datei namens %1$s in %2$s ha
 About	Info
 Ad cards between the stories people posted.	Werbekarten zwischen den Stories, die Leute gepostet haben.
 Ad telemetry blocked	Werbe-Telemetrie blockiert
-Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Fügt den Video-Menüs im Feed und in Watch „Auf Telefon herunterladen“ hinzu. Speichert in der Qualität, die weiter unten eingestellt ist. Ausgeschaltet oder pausiert erscheint wieder Facebooks Menü.
+Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Fügt den Video-Menüs im Feed und in Watch „Aufs Handy herunterladen“ hinzu. Speichert in der Qualität, die weiter unten eingestellt ist. Ausgeschaltet oder pausiert erscheint wieder Facebooks Menü.
 Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Fügt „Speichern“ zum Menü jeder Story hinzu, egal von wem, und speichert sie in der Qualität, die unter „Downloads“ eingestellt ist. Ist der Schalter aus oder Hushfacebook pausiert, gibt es „Speichern“ nur bei deinen eigenen Stories, und dort läuft Facebooks eigene Speicherfunktion.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Anzeigen in Reels. Banner, Werbeunterbrechungen und von der App eingefügte Anzeigen bleiben auch während einer Pause blockiert.
 AMOLED black theme	Schwarzes AMOLED-Design
@@ -56,7 +56,7 @@ Facebook closed three times within a minute of starting, so Hushfacebook paused 
 Facebook doesn't download ads or its ad model in the background.	Facebook lädt im Hintergrund weder Werbung noch sein Werbemodell herunter.
 Facebook doesn't serve ads to other apps on this phone.	Facebook liefert keine Werbung an andere Apps auf diesem Handy aus.
 Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	Facebooks Dunkelmodus und diese Seite nutzen die Farben deines Hintergrundbilds. Android 11 nutzt stattdessen Blau. Aktiviere Facebooks Dunkelmodus, um es zu sehen.
-From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Ab dem nächsten Start wirken die obigen Schalter nicht mehr und Facebooks eigenes Verhalten kehrt zurück. Das Debug-Protokoll läuft weiter, und deine Auswahl bleibt erhalten.
+From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Ab dem nächsten Start wirken die obigen Schalter nicht mehr und Facebooks eigenes Verhalten kehrt zurück. Die Debug-Protokollierung läuft weiter, und deine Auswahl bleibt erhalten.
 Full report saved to %1$s	Vollständiger Bericht gespeichert unter %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut
 Hide "People you may know"	„Personen, die du kennen könntest“ ausblenden
@@ -110,7 +110,7 @@ Save full report	Vollständigen Bericht speichern
 Saved to %1$s	Gespeichert unter %1$s
 Saved to the gallery	In der Galerie gespeichert
 Saved. Restart Facebook to apply this change.	Gespeichert. Starte Facebook neu, um diese Änderung zu übernehmen.
-Save your switches and download settings to a file. Pause and debug logging aren't included.	Speichert deine Schalter und die Download-Einstellungen in einer Datei. Pause und Debug-Protokoll sind nicht enthalten.
+Save your switches and download settings to a file. Pause and debug logging aren't included.	Speichert deine Schalter und die Download-Einstellungen in einer Datei. Pause und Debug-Protokollierung sind nicht enthalten.
 Saves will go to a folder named %1$s.	Was du speicherst, landet dann in einem Ordner namens %1$s.
 Saving a photo	Foto wird gespeichert
 Saving a video	Video wird gespeichert
