@@ -2,9 +2,10 @@
 
 Every Hushfacebook release, newest first.
 
-## Unreleased
+## 0.1.8 (2026-09-26)
 
 * **Facebook:** Clean up Reels now takes the Follow button off reels on the Reels tab too. It only caught the Following button next to people you already follow, so a reel from anyone else kept its Follow button.
+* **Facebook:** The 22 patches target Facebook 580.0.0.51.74 and 577.0.0.50.72. Morphe Manager 1.32.0 or newer is required.
 
 ## 0.1.7 (2026-09-26)
 
