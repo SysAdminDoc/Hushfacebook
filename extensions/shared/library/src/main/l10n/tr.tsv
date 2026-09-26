@@ -96,7 +96,7 @@ Paid ads in the feed. They're dropped before Facebook adds them, so no gap is le
 Pause Hushfacebook	Hushfacebook'u duraklat
 Posts Facebook files as promotions rather than as ads.	Facebook'un reklam yerine tanıtım olarak saydığı gönderiler.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Takip etmediğin kişi ve sayfalardan ve katılmadığın gruplardan Facebook'un akışına kattığı gönderiler.
-Posts Facebook's own detection flags as made with AI. A post that only its creator labelled as AI stays. It's off by default because it hasn't been tested on a real feed yet.	Facebook'un kendi tespitinin yapay zekâ ile üretildiğini işaretlediği gönderiler. Yalnızca oluşturan kişinin yapay zekâ olarak etiketlediği bir gönderi kalır. Bu anahtar henüz gerçek bir akışta test edilmediği için varsayılan olarak kapalıdır.
+Posts that Facebook's own detection marks as made with AI. A post that only its creator labelled as AI stays. It's off by default because it hasn't been tested on a real feed yet.	Facebook'un kendi tespitinin yapay zekâ ile üretildiğini işaretlediği gönderiler. Yalnızca oluşturan kişinin yapay zekâ olarak etiketlediği bir gönderi kalır. Bu anahtar henüz gerçek bir akışta test edilmediği için varsayılan olarak kapalıdır.
 Profiles and some Settings pages open again on this re-signed build.	Profiller ve bazı Ayarlar sayfaları bu yeniden imzalanmış sürümde tekrar açılır.
 Re-signed build fix	Yeniden imzalanmış sürüm düzeltmesi
 Reading the settings file	Ayar dosyası okunuyor

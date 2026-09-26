@@ -220,9 +220,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.AI_DETECTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_AI_DETECTED_POSTS, L10n.t("Hide AI-detected posts"),
-                        L10n.t("Posts Facebook's own detection flags as made with AI. A post that only its creator "
-                                + "labelled as AI stays. It's off by default because it hasn't been tested on a "
-                                + "real feed yet.")));
+                        L10n.t("Posts that Facebook's own detection marks as made with AI. A post that only its "
+                                + "creator labelled as AI stays. It's off by default because it hasn't been tested "
+                                + "on a real feed yet.")));
             }
         }
 

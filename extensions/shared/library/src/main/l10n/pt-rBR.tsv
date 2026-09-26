@@ -96,7 +96,7 @@ Paid ads in the feed. They're dropped before Facebook adds them, so no gap is le
 Pause Hushfacebook	Pausar o Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Posts que o Facebook classifica como promoções, e não como anúncios.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Publicações de pessoas e Páginas que você não segue e de grupos dos quais você não participa, que o Facebook coloca no seu feed.
-Posts Facebook's own detection flags as made with AI. A post that only its creator labelled as AI stays. It's off by default because it hasn't been tested on a real feed yet.	Posts que a detecção do próprio Facebook marca como feitos com IA. Um post que só o autor marcou como IA continua aparecendo. Esta opção vem desligada porque ainda não foi testada em um feed real.
+Posts that Facebook's own detection marks as made with AI. A post that only its creator labelled as AI stays. It's off by default because it hasn't been tested on a real feed yet.	Posts que a detecção do próprio Facebook marca como feitos com IA. Um post que só o autor marcou como IA continua aparecendo. Esta opção vem desligada porque ainda não foi testada em um feed real.
 Profiles and some Settings pages open again on this re-signed build.	Perfis e algumas páginas de Configurações voltam a abrir nesta versão reassinada.
 Re-signed build fix	Correção para versão reassinada
 Reading the settings file	Lendo o arquivo de configurações
