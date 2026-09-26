@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.HookStatus;
 import app.morphe.extension.shared.settings.BooleanSetting;
@@ -115,20 +116,25 @@ public class PatchFamilyTest {
     public void theStaysRowNamesWhatPauseCantReach() {
         assertNull("a build of switches alone has nothing that stays in",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_POSTS, PatchFamily.EXTERNAL_BROWSER)));
-        assertEquals("The background ad prefetch block. It was set when you patched, so Pause can't turn it off. "
-                        + "To rule it out, patch again without the patch it comes from.",
+        // Each item names the patch Morphe Manager lists it under, so the reader knows which one
+        // to leave out.
+        assertEquals("The background ad prefetch block (" + L10n.isolate("Block background ad prefetch") + "). It was "
+                        + "set when you patched, so Pause can't turn it off. To rule it out, patch again and leave "
+                        + "out that patch.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.AD_PREFETCH)));
         // Every download asks its switch before it goes in, so a pause takes them out whole.
         assertNull(PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.REEL_DOWNLOAD, PatchFamily.STORY_DOWNLOAD,
                 PatchFamily.VIDEO_DOWNLOAD)));
         // Alone, a family's text is followed by "It was set", so a text naming several parts still
         // has to be one thing. 4a7bba9 made the Reels one plural and this sentence stopped reading.
-        assertEquals("The part of the Reels ad block patched into the app. It was set when you patched, so "
-                        + "Pause can't turn it off. To rule it out, patch again without the patch it comes from.",
+        assertEquals("The part of the Reels ad block patched into the app (" + L10n.isolate("Hide sponsored reels")
+                        + "). It was set when you patched, so Pause can't turn it off. To rule it out, patch again "
+                        + "and leave out that patch.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS)));
-        assertEquals("The part of the Reels ad block patched into the app and the ad telemetry block. They "
-                        + "were set when you patched, so Pause can't turn them off. To rule one out, patch again "
-                        + "without the patch it comes from.",
+        assertEquals("The part of the Reels ad block patched into the app (" + L10n.isolate("Hide sponsored reels")
+                        + ") and the ad telemetry block (" + L10n.isolate("Block ad telemetry") + "). They were set "
+                        + "when you patched, so Pause can't turn them off. To rule one out, patch again and leave out "
+                        + "the patch in brackets after it.",
                 PatchFamily.staysWhilePausedSummary(EnumSet.of(PatchFamily.SPONSORED_REELS, PatchFamily.AD_TELEMETRY,
                         PatchFamily.SPONSORED_POSTS, PatchFamily.STORY_DOWNLOAD)));
 
@@ -137,6 +143,8 @@ public class PatchFamilyTest {
             if (family.staysWhilePaused == null) continue;
             assertTrue(family.patchName + " is missing from: " + everything,
                     everything.toLowerCase().contains(family.staysWhilePaused.toLowerCase()));
+            assertTrue(family.patchName + " isn't named in: " + everything,
+                    everything.contains("(" + L10n.isolate(family.patchName) + ")"));
         }
     }
 

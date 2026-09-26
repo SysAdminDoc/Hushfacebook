@@ -1,21 +1,21 @@
 # Brazilian Portuguese for Hushfacebook: the English key, a tab, the translation. One row per string.
 # After editing, run python scripts/gen-l10n.py from the repository root.
-"Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Páginas que você talvez curta” e os blocos de autopromoção do Facebook. As pesquisas no feed também somem.
+"Pages you may like" cards and the cards Facebook uses to push its own features. In-feed surveys go too.	“Páginas que você talvez curta” e os blocos em que o Facebook divulga os próprios recursos. As pesquisas no feed também somem.
 %1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	%1$d item desse arquivo não é uma configuração que esta versão do Hushfacebook conhece, então vai ficar de fora.
 %1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	%1$d itens desse arquivo não são configurações que esta versão do Hushfacebook conhece, então vão ficar de fora.
 %1$d switch will change.	%1$d opção vai mudar.
 %1$d switches will change.	%1$d opções vão mudar.
 %1$s of %2$s	%1$s de %2$s
 %1$s so far	%1$s até agora
-%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Isso foi definido quando você aplicou os patches, então a pausa não consegue desligá-lo. Para descartar isso como causa, aplique os patches de novo sem o patch responsável.
-%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Tudo isso foi definido quando você aplicou os patches, então a pausa não consegue desligar nada disso. Para descartar um desses itens como causa, aplique os patches de novo sem o patch responsável por ele.
+%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again and leave out that patch.	%1$s. Isso foi definido quando você aplicou os patches, então a pausa não consegue desligá-lo. Para descartar isso como causa, aplique os patches de novo sem esse patch.
+%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again and leave out the patch in brackets after it.	%1$s. Tudo isso foi definido quando você aplicou os patches, então a pausa não consegue desligar nada disso. Para descartar um desses itens como causa, aplique os patches de novo sem o patch que aparece entre parênteses depois dele.
 A diagnostic report is already being saved.	Um relatório de diagnóstico já está sendo salvo.
 A Download button in the sidebar of every reel saves it at the quality set under Downloads. Off or paused, reels show only Facebook's own buttons.	Um botão de download na barra lateral de cada reel salva o reel na qualidade definida em Downloads. Com esta opção desligada ou durante a pausa, os reels só mostram os botões do próprio Facebook.
 A file named %1$s in %2$s paused Hushfacebook.	Um arquivo chamado %1$s em %2$s pausou o Hushfacebook.
 About	Sobre
 Ad cards between the stories people posted.	Anúncios entre os stories que as pessoas postaram.
 Ad telemetry blocked	Telemetria de anúncios bloqueada
-Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Adiciona Baixar no celular aos menus de vídeo do feed e do Watch. Salva na qualidade definida abaixo. Desligado ou em pausa, o menu do Facebook volta.
+Adds "Download to phone" to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Adiciona “Baixar no celular” aos menus de vídeo do feed e do Watch. Salva na qualidade definida abaixo. Desligado ou em pausa, o menu do Facebook volta.
 Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Adiciona o item Salvar ao menu do story de qualquer pessoa e salva na qualidade definida em Downloads. Com esta opção desligada ou durante a pausa, o item Salvar só aparece nos seus próprios stories, e quem salva é o próprio Facebook.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Anúncios dentro dos Reels. Banners, anúncios no meio do vídeo e anúncios inseridos pelo app continuam bloqueados mesmo durante a pausa.
 AMOLED black theme	Tema preto AMOLED
@@ -24,7 +24,7 @@ Back	Voltar
 Background ad prefetch blocked	Pré-carregamento de anúncios em segundo plano bloqueado
 Cancel	Cancelar
 Changing these	Como mudar esses itens
-Choose a settings file and preview what would change before importing.	Escolha um arquivo de configurações e veja as mudanças antes de importar.
+Choose a settings file. Before anything is imported, you'll see how many switches it changes and any new download settings.	Escolha um arquivo de configurações. Antes de importar, você vê quantas opções ele muda e quais configurações de download são novas.
 Clear diagnostic data	Limpar dados de diagnóstico
 Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Copie um relatório rápido ou salve o completo em Download/Morphe. Nomes, IDs, links e cookies são omitidos.
 Copy quick report	Copiar relatório rápido
@@ -52,7 +52,7 @@ Empties the log and the filter counts a report would include.	Apaga o registro e
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Todas as opções, menos o Registro de depuração, funcionam como se estivessem desligadas, e o que foi definido ao aplicar os patches continua ativo. Suas configurações ficam como estão.
 Export diagnostic report	Exportar relatório de diagnóstico
 Export settings	Exportar configurações
-Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	O Facebook fechou três vezes no primeiro minuto depois de abrir, então o Hushfacebook entrou em pausa automaticamente.
+Facebook crashed or froze within a minute of starting three times in a row, so Hushfacebook paused itself.	O Facebook fechou com erro ou travou no primeiro minuto depois de abrir, três vezes seguidas, então o Hushfacebook entrou em pausa automaticamente.
 Facebook doesn't download ads or its ad model in the background.	O Facebook não baixa anúncios nem o modelo de anúncios dele em segundo plano.
 Facebook doesn't serve ads to other apps on this phone.	O Facebook não envia anúncios para outros apps deste celular.
 Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	O modo escuro do Facebook e esta tela usam as cores do seu papel de parede. O Android 11 usa azul. Ative o modo escuro do Facebook para ver.
@@ -67,7 +67,7 @@ Hide Reels in the feed	Ocultar reels no feed
 Hide sponsored posts	Ocultar posts patrocinados
 Hide sponsored reels	Ocultar reels patrocinados
 Hide sponsored stories	Ocultar stories patrocinados
-Hide suggested and promoted units	Ocultar blocos de sugestões e promoções
+Hide page suggestions and Facebook's own promos	Ocultar sugestões de páginas e autopromoções do Facebook
 Hide the Stories tray	Ocultar a bandeja de stories
 How far a photo or video you're saving has got, with a button to cancel it	O progresso da foto ou do vídeo que você está salvando, com um botão para cancelar
 Hushfacebook %1$s on Facebook %2$s	Hushfacebook %1$s no Facebook %2$s
@@ -85,18 +85,18 @@ Link expired. Reopen the item and try again	Link expirado. Reabra o item e tente
 Links	Links
 Material You theme	Tema Material You
 News feed	Feed de notícias
-No matching diagnostics found.	Nenhum diagnóstico correspondente encontrado.
+There's nothing to report yet. Turn on Debug logging, repeat what went wrong, then export again.	Ainda não há nada para relatar. Ative o Registro de depuração, repita o que deu errado e exporte de novo.
 No screenshot watching for ads, and no reports of which apps you install.	Sem monitoramento de capturas de tela de anúncios e sem relatórios sobre quais apps você instala.
 Not saved: that isn't a Facebook photo or video	Não foi salvo: isso não é uma foto nem um vídeo do Facebook
 Not saved: the file is over 512 MB	Não foi salvo: o arquivo tem mais de 512 MB
 OK	OK
-Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.	Escolha o nome da pasta em Movies e Pictures. Caracteres inválidos viram sublinhados. Deixe em branco para usar %1$s.
+Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave it blank to use the default folder, %1$s.	Escolha o nome da pasta em Movies e Pictures. Caracteres inválidos viram sublinhados. Deixe em branco para usar a pasta padrão, %1$s.
 Open links in your browser	Abrir links no seu navegador
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Anúncios pagos no feed. São removidos antes de o Facebook adicioná-los, então não fica nenhum espaço vazio.
 Pause Hushfacebook	Pausar o Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Posts que o Facebook classifica como promoções, e não como anúncios.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Publicações de pessoas e Páginas que você não segue e de grupos dos quais você não participa, que o Facebook coloca no seu feed.
-Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Publicações que o Facebook marca como feitas por IA. Rótulos adicionados só por quem compartilhou permanecem. Esta opção começa desligada até ser testada em um feed real.
+Posts Facebook's own detection flags as made with AI. A post that only its creator labelled as AI stays. It's off by default because it hasn't been tested on a real feed yet.	Posts que a detecção do próprio Facebook marca como feitos com IA. Um post que só o autor marcou como IA continua aparecendo. Esta opção vem desligada porque ainda não foi testada em um feed real.
 Profiles and some Settings pages open again on this re-signed build.	Perfis e algumas páginas de Configurações voltam a abrir nesta versão reassinada.
 Re-signed build fix	Correção para versão reassinada
 Reading the settings file	Lendo o arquivo de configurações
@@ -110,7 +110,7 @@ Save full report	Salvar relatório completo
 Saved to %1$s	Salvo em %1$s
 Saved to the gallery	Salvo na galeria
 Saved. Restart Facebook to apply this change.	Salvo. Reinicie o Facebook para aplicar esta alteração.
-Save your switches and download settings to a file. Pause and debug logging aren't included.	Salve suas opções e as configurações de download em um arquivo. Pausa e registro de depuração não são incluídos.
+Save your switches and download settings to a file. Pause and Debug logging aren't included.	Salve suas opções e as configurações de download em um arquivo. A pausa e o Registro de depuração não são incluídos.
 Saves will go to a folder named %1$s.	O que você salvar vai para uma pasta chamada %1$s.
 Saving a photo	Salvando uma foto
 Saving a video	Salvando um vídeo
@@ -149,8 +149,8 @@ The row of friend suggestions between posts.	A fileira de sugestões de amizade 
 The row of stories at the top of the feed, Create story included.	A fileira de stories no topo do feed, incluindo “Criar story”.
 The rows of reels between posts, and the reels Facebook adds where your feed ends.	As fileiras de reels entre as publicações e os reels que o Facebook adiciona onde o seu feed termina.
 The setting couldn't finish updating. Its saved value is shown.	Não foi possível concluir a atualização da configuração. O valor salvo está sendo mostrado.
-There is no diagnostic data to clear.	Não há dados de diagnóstico para limpar.
-There is no diagnostic data to put back.	Não há dados de diagnóstico para restaurar.
+There's no diagnostic data to clear.	Não há dados de diagnóstico para limpar.
+There's no diagnostic data to put back.	Não há dados de diagnóstico para restaurar.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Eles são escolhidos no Morphe Manager quando você aplica os patches, e a pausa não os desliga. Aplique os patches de novo para mudá-los.
 This phone has no file picker, so there's no way to choose a file here.	Este celular não tem seletor de arquivos, então não dá para escolher um arquivo aqui.
 Try again, or go back to Facebook.	Tente de novo ou volte para o Facebook.
@@ -158,12 +158,12 @@ Version	Versão
 Version %1$s for Facebook %2$s	Versão %1$s para o Facebook %2$s
 Videos go to %1$s and photos to %2$s.	Os vídeos vão para %1$s e as fotos para %2$s.
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Os links da web deixam de abrir no navegador interno do Facebook. As páginas do próprio Facebook continuam abrindo no app.
-Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Grava no registro do Android o que cada patch faz. Deixe desligado, a não ser que esteja relatando um problema.
+Writes what each patch does to the Android log and the diagnostic report, and shows errors on screen. Leave it off unless you're reporting a problem.	Grava no registro do Android e no relatório de diagnóstico o que cada patch faz, e mostra os erros na tela. Deixe desligado, a não ser que esteja relatando um problema.
 You paused Hushfacebook.	Você pausou o Hushfacebook.
 Your switches already match that file, so nothing will change.	Suas opções já correspondem a esse arquivo, então nada vai mudar.
 Keep feed position on return	Manter a posição no feed ao voltar
 Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Se você voltar ao Facebook em até dez minutos, continuará de onde parou. Puxe para baixo para atualizar quando quiser.
-A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Um story concluído fica na tela até você tocar ou deslizar. Desative para usar o tempo padrão do Facebook.
+A finished story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Um story concluído fica na tela até você tocar ou deslizar. Desative para usar o tempo padrão do Facebook.
 Stop Story auto-advance	Parar o avanço automático dos stories
 Copy a short report to the clipboard.	Copie um relatório curto para a área de transferência.
 Save the full report in Download/Morphe.	Salve o relatório completo em Download/Morphe.
@@ -187,10 +187,11 @@ Videos will save at their lowest quality, for the smallest files.	Os vídeos vã
 Videos will save at %1$s, or the closest quality each one has.	Os vídeos vão ser salvos em %1$s ou na qualidade mais próxima que cada um tiver.
 Settings imported.	Configurações importadas.
 Video file name	Nome do arquivo de vídeo
-%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s vira a data e a hora em que o vídeo foi salvo, e %2$s vira o número do vídeo no Facebook. Um nome sem nenhum dos dois recebe a data. Caracteres inválidos viram sublinhados. Deixe em branco para usar %3$s.
+%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave it blank to use the default, %3$s.	%1$s vira a data e a hora em que o vídeo foi salvo, e %2$s vira o número do vídeo no Facebook. Um nome sem nenhum dos dois recebe a data. Caracteres inválidos viram sublinhados. Deixe em branco para usar o nome padrão, %3$s.
 Videos are named %1$s. Photos keep Facebook's own %2$s names.	Os vídeos se chamam %1$s. As fotos mantêm os nomes %2$s do próprio Facebook.
 Saved videos will be named %1$s.	Os vídeos salvos vão se chamar %1$s.
 File name	Nome do arquivo
 File name set to %1$s.	Nome do arquivo definido como %1$s.
 No app on this phone can open the link. The address is %1$s.	Nenhum app deste celular consegue abrir o link. O endereço é %1$s.
 Hushfacebook pauses when Facebook restarts.	O Hushfacebook será pausado quando o Facebook reiniciar.
+Pause, backup and diagnostics	Pausa, backup e diagnóstico

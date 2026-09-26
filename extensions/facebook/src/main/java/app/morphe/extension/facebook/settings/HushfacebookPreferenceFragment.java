@@ -195,8 +195,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.SUGGESTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_POSTS,
-                        L10n.t("Hide suggested and promoted units"),
-                        L10n.t("\"Pages you may like\" and Facebook's own upsell cards. The in-feed surveys go too.")));
+                        L10n.t("Hide page suggestions and Facebook's own promos"),
+                        L10n.t("\"Pages you may like\" cards and the cards Facebook uses to push its own features. "
+                                + "In-feed surveys go too.")));
                 feed.addPreference(toggle(context, Settings.HIDE_SUGGESTED_FOR_YOU,
                         L10n.t("Hide \"Suggested for you\" posts"),
                         L10n.t("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.")));
@@ -219,8 +220,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.AI_DETECTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_AI_DETECTED_POSTS, L10n.t("Hide AI-detected posts"),
-                        L10n.t("Posts Facebook marks as AI-made. Labels added only by the person sharing stay. "
-                                + "This switch starts off until it's tested on a real feed.")));
+                        L10n.t("Posts Facebook's own detection flags as made with AI. A post that only its creator "
+                                + "labelled as AI stays. It's off by default because it hasn't been tested on a "
+                                + "real feed yet.")));
             }
         }
 
@@ -234,7 +236,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             if (build.contains(PatchFamily.STORY_AUTO_ADVANCE)) {
                 stories.addPreference(toggle(context, Settings.BLOCK_STORY_AUTO_ADVANCE,
                         L10n.t("Stop Story auto-advance"),
-                        L10n.t("A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.")));
+                        L10n.t("A finished story stays on screen until you tap or swipe. Turn this off for Facebook's timing.")));
             }
             if (build.contains(PatchFamily.STORY_DOWNLOAD)) {
                 stories.addPreference(toggle(context, Settings.DOWNLOAD_STORIES, L10n.t("Save any story"),
@@ -276,7 +278,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             PreferenceCategory downloads = category(screen, L10n.t("Downloads"));
             if (build.contains(PatchFamily.VIDEO_DOWNLOAD)) {
                 downloads.addPreference(toggle(context, Settings.DOWNLOAD_VIDEOS, L10n.t("Download feed and Watch videos"),
-                        L10n.t("Adds Download to phone to feed and Watch video menus. Saves at the quality set "
+                        L10n.t("Adds \"Download to phone\" to feed and Watch video menus. Saves at the quality set "
                                 + "below. Off or paused, Facebook's menu returns.")));
             }
             downloads.addPreference(qualityRow(context));
@@ -332,7 +334,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
                             + "Patch again to change them.")));
         }
 
-        PreferenceCategory hushfacebook = category(screen, "Hushfacebook");
+        // Named for its rows: the screen's own title already says Hushfacebook.
+        PreferenceCategory hushfacebook = category(screen, L10n.t("Pause, backup and diagnostics"));
         hushfacebook.addPreference(toggle(context, BaseSettings.PAUSED, L10n.t("Pause Hushfacebook"),
                 L10n.t("From the next start, the switches above stop running and Facebook's own behaviour returns. "
                         + "Debug logging keeps working, and your choices stay.")));
@@ -341,12 +344,17 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         // Morphe Manager can export the patch choices and the signing key, not these switches.
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.EXPORT,
                 L10n.t("Export settings"),
-                L10n.t("Save your switches and download settings to a file. Pause and debug logging aren't included.")));
+                L10n.t("Save your switches and download settings to a file. Pause and Debug logging aren't included.")));
+        // The preview gives a count of the switches and the download settings' new values, not
+        // each switch by name.
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.IMPORT,
                 L10n.t("Import settings"),
-                L10n.t("Choose a settings file and preview what would change before importing.")));
+                L10n.t("Choose a settings file. Before anything is imported, you'll see how many switches it "
+                        + "changes and any new download settings.")));
+        // Debug logging also fills the exported report and turns on error toasts (Logger).
         hushfacebook.addPreference(toggle(context, BaseSettings.DEBUG, L10n.t("Debug logging"),
-                L10n.t("Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.")));
+                L10n.t("Writes what each patch does to the Android log and the diagnostic report, and shows "
+                        + "errors on screen. Leave it off unless you're reporting a problem.")));
         // Both rows come without a title of their own: Hushfeed's gave them one from string
         // resources that Facebook's APK doesn't have, and untitled they showed as blank rows.
         ExportDiagnosticReportPreference export = new ExportRow(context);
@@ -489,7 +497,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         String why;
         switch (reason) {
             case CRASH_LOOP:
-                why = L10n.t("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.");
+                // Only a crash, a native crash or a hang counts toward safe mode (HushfacebookPause).
+                why = L10n.t("Facebook crashed or froze within a minute of starting three times in a row, so "
+                        + "Hushfacebook paused itself.");
                 break;
             case MARKER_FILE:
                 why = L10n.f("A file named %1$s in %2$s paused Hushfacebook.",
@@ -612,7 +622,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         row.setTitle(L10n.t("Save folder"));
         row.setDialogTitle(L10n.t("Save folder"));
         row.setDialogMessage(L10n.f("Choose a folder name under Movies and Pictures. Invalid characters become "
-                + "underscores. Leave blank for %1$s.", L10n.isolate(SaveFolder.DEFAULT)));
+                + "underscores. Leave it blank to use the default folder, %1$s.", L10n.isolate(SaveFolder.DEFAULT)));
         row.setPositiveButtonText(L10n.t("Save"));
         // Unset, Android fills in its own Cancel in the activity's language, which can differ
         // from Facebook's, and the dialog read "Speichern" next to "Cancel".
@@ -646,7 +656,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         row.setDialogTitle(L10n.t("Video file name"));
         row.setDialogMessage(L10n.f("%1$s becomes the date and time of the save, %2$s the video's number on "
                         + "Facebook. A name with neither gets the date added. Invalid characters become underscores. "
-                        + "Leave blank for %3$s.",
+                        + "Leave it blank to use the default, %3$s.",
                 L10n.isolate(FileNameTemplate.DATE), L10n.isolate(FileNameTemplate.VIDEO_ID),
                 L10n.isolate(FileNameTemplate.DEFAULT)));
         row.setPositiveButtonText(L10n.t("Save"));

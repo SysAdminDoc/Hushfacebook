@@ -80,6 +80,16 @@ public final class LogBufferManager {
         return set == null ? fallback : set.toString();
     }
 
+    /**
+     * What an export with nothing in it says, with the way to get something in it: a report is
+     * empty until a hook logs, and most of what hooks log waits for Debug logging. It's a long
+     * toast, since it carries steps.
+     */
+    private static String nothingToReport() {
+        return L10n.t("There's nothing to report yet. Turn on Debug logging, repeat what went wrong, "
+                + "then export again.");
+    }
+
     private static final int BUFFER_MAX_CHARS = 250_000;
     private static final int BUFFER_MAX_SIZE = 10_000;
     private static final int CLIPBOARD_MAX_CHARS = 60_000;
@@ -167,7 +177,7 @@ public final class LogBufferManager {
         try {
             String exportText = clipboardText(CLIPBOARD_MAX_CHARS);
             if (exportText.isEmpty()) {
-                Utils.showToastShort(say(nothingToExportMessage, L10n.t("No matching diagnostics found.")));
+                Utils.showToastLong(say(nothingToExportMessage, nothingToReport()));
                 return;
             }
             Utils.setClipboard(exportText);
@@ -197,7 +207,7 @@ public final class LogBufferManager {
                 try {
                     String exportText = buildExportText();
                     if (exportText.isEmpty()) {
-                        Utils.showToastShort(say(nothingToExportMessage, L10n.t("No matching diagnostics found.")));
+                        Utils.showToastLong(say(nothingToExportMessage, nothingToReport()));
                     } else {
                         String saved = writeToFile(app, exportText);
                         Utils.showToastLong(String.format(say(savedToMessage, L10n.t("Full report saved to %1$s")), L10n.isolate(saved)));
@@ -736,7 +746,7 @@ public final class LogBufferManager {
         }
         Utils.showToastShort(restorable
                 ? say(clearedMessage, L10n.t("Diagnostic data cleared. Tap again to put it back."))
-                : say(nothingToClearMessage, L10n.t("There is no diagnostic data to clear.")));
+                : say(nothingToClearMessage, L10n.t("There's no diagnostic data to clear.")));
     }
 
     /** True while the clear row's next tap can restore what its previous tap removed. */
@@ -774,7 +784,7 @@ public final class LogBufferManager {
             Utils.showToastShort(say(restoredMessage, L10n.t("Diagnostic data put back.")));
         } else if (result == UndoResult.NOTHING_TO_RESTORE) {
             Utils.showToastShort(say(nothingToRestoreMessage,
-                    L10n.t("There is no diagnostic data to put back.")));
+                    L10n.t("There's no diagnostic data to put back.")));
         } else {
             Utils.showToastLong(say(restoreFailedMessage,
                     L10n.t("Couldn't put back the diagnostic data. Try again.")));

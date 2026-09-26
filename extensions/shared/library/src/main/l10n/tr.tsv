@@ -1,21 +1,21 @@
 # Turkish for Hushfacebook: the English key, a tab, the translation. One row per string.
 # After editing, run python scripts/gen-l10n.py from the repository root.
-"Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Beğenebileceğin Sayfalar” ve Facebook'un kendi tanıtım kartları. Akıştaki anketler de kalkar.
+"Pages you may like" cards and the cards Facebook uses to push its own features. In-feed surveys go too.	“Beğenebileceğin Sayfalar” kartları ve Facebook'un kendi özelliklerini öne çıkardığı kartlar. Akıştaki anketler de kalkar.
 %1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	O dosyadaki %1$d öğe, Hushfacebook'un bu sürümünün tanıdığı ayarlardan değil, bu yüzden atlanacak.
 %1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	O dosyadaki %1$d öğe, Hushfacebook'un bu sürümünün tanıdığı ayarlardan değil, bu yüzden atlanacak.
 %1$d switch will change.	%1$d anahtar değişecek.
 %1$d switches will change.	%1$d anahtar değişecek.
 %1$s of %2$s	%1$s / %2$s
 %1$s so far	Şimdiye kadar %1$s
-%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Yamaladığında ayarlandığı için Duraklatma bunu kapatamaz. Bunu elemek için, ait olduğu yama olmadan yeniden yamala.
-%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Yamaladığında ayarlandıkları için Duraklatma bunları kapatamaz. Bunlardan birini elemek için, ait olduğu yama olmadan yeniden yamala.
+%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again and leave out that patch.	%1$s. Yamaladığında ayarlandığı için Duraklatma bunu kapatamaz. Bunu elemek için yeniden yamala ve o yamayı dışarıda bırak.
+%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again and leave out the patch in brackets after it.	%1$s. Yamaladığında ayarlandıkları için Duraklatma bunları kapatamaz. Birini elemek için yeniden yamala ve onun ardından parantez içinde yazan yamayı dışarıda bırak.
 A diagnostic report is already being saved.	Bir tanılama raporu zaten kaydediliyor.
 A Download button in the sidebar of every reel saves it at the quality set under Downloads. Off or paused, reels show only Facebook's own buttons.	Her Reels videosunun kenar çubuğundaki İndir düğmesi, videoyu İndirmeler bölümünde seçilen kalitede kaydeder. Kapalıyken veya duraklatılmışken Reels videolarında yalnızca Facebook'un kendi düğmeleri görünür.
 A file named %1$s in %2$s paused Hushfacebook.	%2$s içindeki %1$s adlı bir dosya Hushfacebook'u duraklattı.
 About	Hakkında
 Ad cards between the stories people posted.	İnsanların paylaştığı hikayeler arasındaki reklam kartları.
 Ad telemetry blocked	Reklam telemetrisi engellendi
-Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Akış ve Watch video menülerine Telefona indir seçeneğini ekler. Aşağıda seçilen kalitede kaydeder. Kapalıyken veya duraklatıldığında Facebook menüsü geri gelir.
+Adds "Download to phone" to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Akış ve Watch video menülerine “Telefona indir” seçeneğini ekler. Aşağıda seçilen kalitede kaydeder. Kapalıyken veya duraklatıldığında Facebook menüsü geri gelir.
 Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Kimin olursa olsun her hikayenin menüsüne Kaydet seçeneğini ekler ve hikayeyi İndirmeler bölümünde seçilen kalitede kaydeder. Kapalıyken veya duraklatılmışken Kaydet seçeneği yalnızca kendi hikayelerinde bulunur ve Facebook'un kendi kaydetme işlevini çalıştırır.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Reels içindeki reklamlar. Banner'lar, video ortası reklamlar ve uygulamanın eklediği reklamlar duraklatıldığında da engellenir.
 AMOLED black theme	AMOLED siyah tema
@@ -24,7 +24,7 @@ Back	Geri
 Background ad prefetch blocked	Arka planda reklam indirme engellendi
 Cancel	İptal
 Changing these	Bunları değiştirmek
-Choose a settings file and preview what would change before importing.	Bir ayar dosyası seç ve içe aktarmadan önce nelerin değişeceğini gör.
+Choose a settings file. Before anything is imported, you'll see how many switches it changes and any new download settings.	Bir ayar dosyası seç. İçe aktarmadan önce kaç anahtarın değişeceğini ve yeni indirme ayarlarını görürsün.
 Clear diagnostic data	Tanılama verilerini temizle
 Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Kısa raporu kopyala veya tam raporu Download/Morphe konumuna kaydet. Adlar, kimlikler, bağlantılar ve çerezler çıkarılır.
 Copy quick report	Hızlı raporu kopyala
@@ -52,7 +52,7 @@ Empties the log and the filter counts a report would include.	Bir raporun içere
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Hata ayıklama günlüğü dışındaki her anahtar kapalıymış gibi davranır, yamaladığında ayarlananlar ise devrede kalır. Ayarların olduğu gibi kalır.
 Export diagnostic report	Tanılama raporunu dışa aktar
 Export settings	Ayarları dışa aktar
-Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook açıldıktan sonraki bir dakika içinde üç kez kapandı, bu yüzden Hushfacebook kendini duraklattı.
+Facebook crashed or froze within a minute of starting three times in a row, so Hushfacebook paused itself.	Facebook açıldıktan sonraki bir dakika içinde üst üste üç kez çöktü veya dondu, bu yüzden Hushfacebook kendini duraklattı.
 Facebook doesn't download ads or its ad model in the background.	Facebook reklamları veya reklam modelini arka planda indirmez.
 Facebook doesn't serve ads to other apps on this phone.	Facebook bu telefondaki diğer uygulamalara reklam sunmaz.
 Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	Facebook karanlık modu ve bu ekran duvar kâğıdının renklerini kullanır. Android 11 bunun yerine mavi kullanır. Görmek için Facebook karanlık modunu aç.
@@ -67,7 +67,7 @@ Hide Reels in the feed	Akıştaki Reels videolarını gizle
 Hide sponsored posts	Sponsorlu gönderileri gizle
 Hide sponsored reels	Sponsorlu Reels videolarını gizle
 Hide sponsored stories	Sponsorlu hikayeleri gizle
-Hide suggested and promoted units	Önerilen ve tanıtılan kartları gizle
+Hide page suggestions and Facebook's own promos	Sayfa önerilerini ve Facebook'un kendi tanıtımlarını gizle
 Hide the Stories tray	Hikaye şeridini gizle
 How far a photo or video you're saving has got, with a button to cancel it	Kaydettiğin fotoğraf veya videonun ilerleme durumu ve iptal etmek için bir düğme
 Hushfacebook %1$s on Facebook %2$s	Facebook %2$s üzerinde Hushfacebook %1$s
@@ -85,18 +85,18 @@ Link expired. Reopen the item and try again	Bağlantının süresi doldu. Öğey
 Links	Bağlantılar
 Material You theme	Material You teması
 News feed	Akış
-No matching diagnostics found.	Eşleşen tanılama bulunamadı.
+There's nothing to report yet. Turn on Debug logging, repeat what went wrong, then export again.	Henüz raporlanacak bir şey yok. Hata ayıklama günlüğünü aç, sorunu yeniden oluştur, sonra tekrar dışa aktar.
 No screenshot watching for ads, and no reports of which apps you install.	Reklamlarda ekran görüntüsü takibi yok, hangi uygulamaları yüklediğine dair rapor da yok.
 Not saved: that isn't a Facebook photo or video	Kaydedilmedi: Bu bir Facebook fotoğrafı veya videosu değil
 Not saved: the file is over 512 MB	Kaydedilmedi: Dosya 512 MB'tan büyük
 OK	Tamam
-Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.	Movies ve Pictures altında bir klasör adı seç. Geçersiz karakterler alt çizgiye dönüşür. %1$s için boş bırak.
+Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave it blank to use the default folder, %1$s.	Movies ve Pictures altında bir klasör adı seç. Geçersiz karakterler alt çizgiye dönüşür. Varsayılan %1$s klasörünü kullanmak için boş bırak.
 Open links in your browser	Bağlantıları tarayıcında aç
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Akıştaki ücretli reklamlar. Facebook eklemeden önce çıkarıldıkları için yerlerinde boşluk kalmaz.
 Pause Hushfacebook	Hushfacebook'u duraklat
 Posts Facebook files as promotions rather than as ads.	Facebook'un reklam yerine tanıtım olarak saydığı gönderiler.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Takip etmediğin kişi ve sayfalardan ve katılmadığın gruplardan Facebook'un akışına kattığı gönderiler.
-Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Facebook'un yapay zekâ ile üretildiğini işaretlediği gönderiler. Yalnızca paylaşan kişinin eklediği etiketler kalır. Bu anahtar gerçek bir akışta test edilene kadar kapalı başlar.
+Posts Facebook's own detection flags as made with AI. A post that only its creator labelled as AI stays. It's off by default because it hasn't been tested on a real feed yet.	Facebook'un kendi tespitinin yapay zekâ ile üretildiğini işaretlediği gönderiler. Yalnızca oluşturan kişinin yapay zekâ olarak etiketlediği bir gönderi kalır. Bu anahtar henüz gerçek bir akışta test edilmediği için varsayılan olarak kapalıdır.
 Profiles and some Settings pages open again on this re-signed build.	Profiller ve bazı Ayarlar sayfaları bu yeniden imzalanmış sürümde tekrar açılır.
 Re-signed build fix	Yeniden imzalanmış sürüm düzeltmesi
 Reading the settings file	Ayar dosyası okunuyor
@@ -110,7 +110,7 @@ Save full report	Tam raporu kaydet
 Saved to %1$s	Şuraya kaydedildi: %1$s
 Saved to the gallery	Galeriye kaydedildi
 Saved. Restart Facebook to apply this change.	Kaydedildi. Bu değişikliği uygulamak için Facebook'u yeniden başlat.
-Save your switches and download settings to a file. Pause and debug logging aren't included.	Anahtarlarını ve indirme ayarlarını bir dosyaya kaydet. Duraklatma ve hata ayıklama günlüğü dahil edilmez.
+Save your switches and download settings to a file. Pause and Debug logging aren't included.	Anahtarlarını ve indirme ayarlarını bir dosyaya kaydet. Duraklatma ve Hata ayıklama günlüğü dahil edilmez.
 Saves will go to a folder named %1$s.	Kaydettiklerin %1$s adlı bir klasöre gidecek.
 Saving a photo	Fotoğraf kaydediliyor
 Saving a video	Video kaydediliyor
@@ -149,8 +149,8 @@ The row of friend suggestions between posts.	Gönderilerin arasındaki arkadaş 
 The row of stories at the top of the feed, Create story included.	Akışın en üstündeki hikaye şeridi, “Hikaye oluştur” da dahil.
 The rows of reels between posts, and the reels Facebook adds where your feed ends.	Gönderilerin arasındaki Reels sıraları ve Facebook'un akışının bittiği yere eklediği Reels videoları.
 The setting couldn't finish updating. Its saved value is shown.	Ayarın güncellenmesi tamamlanamadı. Kayıtlı değeri gösteriliyor.
-There is no diagnostic data to clear.	Temizlenecek tanılama verisi yok.
-There is no diagnostic data to put back.	Geri getirilecek tanılama verisi yok.
+There's no diagnostic data to clear.	Temizlenecek tanılama verisi yok.
+There's no diagnostic data to put back.	Geri getirilecek tanılama verisi yok.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Bunlar yamalarken Morphe Manager'da seçilir ve Duraklatma bunları kapatmaz. Değiştirmek için yeniden yamala.
 This phone has no file picker, so there's no way to choose a file here.	Bu telefonda dosya seçici yok, bu yüzden burada dosya seçmenin bir yolu yok.
 Try again, or go back to Facebook.	Tekrar dene veya Facebook'a geri dön.
@@ -158,12 +158,12 @@ Version	Sürüm
 Version %1$s for Facebook %2$s	Facebook %2$s için %1$s sürümü
 Videos go to %1$s and photos to %2$s.	Videolar %1$s klasörüne, fotoğraflar %2$s klasörüne kaydedilir.
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Web bağlantıları Facebook'un uygulama içi tarayıcısında açılmaz. Facebook'un kendi sayfaları yine uygulamada açılır.
-Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Her yamanın ne yaptığını Android günlüğüne yazar. Bir sorun bildirmiyorsan kapalı bırak.
+Writes what each patch does to the Android log and the diagnostic report, and shows errors on screen. Leave it off unless you're reporting a problem.	Her yamanın ne yaptığını Android günlüğüne ve tanılama raporuna yazar, hataları da ekranda gösterir. Bir sorun bildirmiyorsan kapalı bırak.
 You paused Hushfacebook.	Hushfacebook'u duraklattın.
 Your switches already match that file, so nothing will change.	Anahtarların zaten o dosyayla aynı, bu yüzden hiçbir şey değişmeyecek.
 Keep feed position on return	Geri dönünce akış konumunu koru
 Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Facebook'a on dakika içinde dönersen kaldığın yer korunur. Yenilemek için aşağı çekmeye devam edebilirsin.
-A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Biten bir hikaye, dokunana veya kaydırana kadar ekranda kalır. Facebook'un zamanlamasını kullanmak için bunu kapat.
+A finished story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Biten bir hikaye, dokunana veya kaydırana kadar ekranda kalır. Facebook'un zamanlamasını kullanmak için bunu kapat.
 Stop Story auto-advance	Hikayelerin otomatik ilerlemesini durdur
 Copy a short report to the clipboard.	Kısa raporu panoya kopyalar.
 Save the full report in Download/Morphe.	Tam raporu Download/Morphe konumuna kaydeder.
@@ -187,10 +187,11 @@ Videos will save at their lowest quality, for the smallest files.	Videolar en d�
 Videos will save at %1$s, or the closest quality each one has.	Videolar %1$s kalitesinde ya da her birinin sahip olduğu en yakın kalitede kaydedilecek.
 Settings imported.	Ayarlar içe aktarıldı.
 Video file name	Video dosya adı
-%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s kaydetme tarihine ve saatine, %2$s ise videonun Facebook'taki numarasına dönüşür. İkisini de içermeyen bir ada tarih eklenir. Geçersiz karakterler alt çizgiye dönüşür. %3$s için boş bırak.
+%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave it blank to use the default, %3$s.	%1$s kaydetme tarihine ve saatine, %2$s ise videonun Facebook'taki numarasına dönüşür. İkisini de içermeyen bir ada tarih eklenir. Geçersiz karakterler alt çizgiye dönüşür. Varsayılan %3$s adını kullanmak için boş bırak.
 Videos are named %1$s. Photos keep Facebook's own %2$s names.	Videoların adı %1$s olur. Fotoğraflar Facebook'un kendi %2$s adlarını korur.
 Saved videos will be named %1$s.	Kaydedilen videoların adı %1$s olacak.
 File name	Dosya adı
 File name set to %1$s.	Dosya adı %1$s olarak ayarlandı.
 No app on this phone can open the link. The address is %1$s.	Bu telefondaki hiçbir uygulama bağlantıyı açamıyor. Adres: %1$s.
 Hushfacebook pauses when Facebook restarts.	Hushfacebook, Facebook yeniden başladığında duraklatılır.
+Pause, backup and diagnostics	Duraklatma, yedekleme ve tanılama

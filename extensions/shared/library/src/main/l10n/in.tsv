@@ -1,21 +1,21 @@
 # Indonesian for Hushfacebook: the English key, a tab, the translation. One row per string.
 # After editing, run python scripts/gen-l10n.py from the repository root.
-"Pages you may like" and Facebook's own upsell cards. The in-feed surveys go too.	“Halaman yang mungkin Anda sukai” dan kartu penawaran dari Facebook sendiri. Survei di Kabar Beranda ikut hilang.
+"Pages you may like" cards and the cards Facebook uses to push its own features. In-feed surveys go too.	Kartu “Halaman yang mungkin Anda sukai” dan kartu yang dipakai Facebook untuk menawarkan fiturnya sendiri. Survei di Kabar Beranda ikut hilang.
 %1$d item in that file isn't a setting this version of Hushfacebook knows, so it'll be left out.	%1$d item dalam file itu bukan pengaturan yang dikenali versi Hushfacebook ini, jadi tidak akan disertakan.
 %1$d items in that file aren't settings this version of Hushfacebook knows, so they'll be left out.	%1$d item dalam file itu bukan pengaturan yang dikenali versi Hushfacebook ini, jadi tidak akan disertakan.
 %1$d switch will change.	%1$d sakelar akan berubah.
 %1$d switches will change.	%1$d sakelar akan berubah.
 %1$s of %2$s	%1$s dari %2$s
 %1$s so far	%1$s terunduh
-%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
-%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again without the patch it comes from.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan asalnya.
+%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again and leave out that patch.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan yang tertera dalam kurung setelahnya.
+%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch again and leave out the patch in brackets after it.	%1$s. Ini diatur saat Anda menambal, jadi Jeda tidak dapat mematikannya. Untuk memastikan bukan ini penyebabnya, tambal ulang tanpa tambalan yang tertera dalam kurung setelahnya.
 A diagnostic report is already being saved.	Sudah ada laporan diagnostik yang sedang disimpan.
 A Download button in the sidebar of every reel saves it at the quality set under Downloads. Off or paused, reels show only Facebook's own buttons.	Tombol Unduh di bilah samping setiap reel menyimpannya dengan kualitas yang diatur di bagian Unduhan. Jika nonaktif atau dijeda, reel hanya menampilkan tombol bawaan Facebook.
 A file named %1$s in %2$s paused Hushfacebook.	File bernama %1$s di %2$s menjeda Hushfacebook.
 About	Tentang
 Ad cards between the stories people posted.	Kartu iklan di antara cerita yang diposting orang.
 Ad telemetry blocked	Telemetri iklan diblokir
-Adds Download to phone to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Menambahkan Unduh ke ponsel ke menu video beranda dan Watch. Menyimpan dengan kualitas yang diatur di bawah. Saat mati atau dijeda, menu Facebook kembali.
+Adds "Download to phone" to feed and Watch video menus. Saves at the quality set below. Off or paused, Facebook's menu returns.	Menambahkan “Unduh ke ponsel” ke menu video Kabar Beranda dan Watch. Menyimpan dengan kualitas yang diatur di bawah. Jika nonaktif atau dijeda, menu Facebook kembali.
 Adds Save to the menu of anyone's story, and saves at the quality set under Downloads. Off or paused, only your own stories have Save, and it's Facebook's own.	Menambahkan opsi Simpan ke menu cerita siapa pun dan menyimpannya dengan kualitas yang diatur di bagian Unduhan. Jika nonaktif atau dijeda, opsi Simpan hanya ada di cerita Anda sendiri dan memakai fitur simpan bawaan Facebook.
 Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Iklan di dalam Reels. Banner, iklan di tengah video, dan iklan yang disisipkan aplikasi tetap diblokir saat dijeda.
 AMOLED black theme	Tema hitam AMOLED
@@ -24,7 +24,7 @@ Back	Kembali
 Background ad prefetch blocked	Pramuat iklan di latar belakang diblokir
 Cancel	Batal
 Changing these	Mengubah pilihan ini
-Choose a settings file and preview what would change before importing.	Pilih file pengaturan dan lihat perubahan sebelum mengimpornya.
+Choose a settings file. Before anything is imported, you'll see how many switches it changes and any new download settings.	Pilih file pengaturan. Sebelum apa pun diimpor, Anda akan melihat berapa sakelar yang berubah dan pengaturan unduhan yang baru.
 Clear diagnostic data	Hapus data diagnostik
 Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Salin laporan singkat atau simpan laporan lengkap di Download/Morphe. Nama, ID, tautan, dan cookie dihilangkan.
 Copy quick report	Salin laporan singkat
@@ -52,7 +52,7 @@ Empties the log and the filter counts a report would include.	Mengosongkan log d
 Every switch but Debug logging acts as if it were off, and what was set when you patched stays in. Your settings stay as they are.	Semua sakelar kecuali Pencatatan debug dianggap nonaktif, dan yang diatur saat Anda menambal tetap aktif. Pengaturan Anda tetap seperti semula.
 Export diagnostic report	Ekspor laporan diagnostik
 Export settings	Ekspor pengaturan
-Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook tertutup tiga kali dalam satu menit setelah dibuka, jadi Hushfacebook menjeda dirinya sendiri.
+Facebook crashed or froze within a minute of starting three times in a row, so Hushfacebook paused itself.	Facebook berhenti mendadak atau macet dalam satu menit setelah dibuka, tiga kali berturut-turut, jadi Hushfacebook menjeda dirinya sendiri.
 Facebook doesn't download ads or its ad model in the background.	Facebook tidak mengunduh iklan atau model iklannya di latar belakang.
 Facebook doesn't serve ads to other apps on this phone.	Facebook tidak menayangkan iklan ke aplikasi lain di ponsel ini.
 Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	Mode gelap Facebook dan halaman ini memakai warna wallpaper Anda. Android 11 memakai biru. Aktifkan mode gelap Facebook untuk melihatnya.
@@ -67,7 +67,7 @@ Hide Reels in the feed	Sembunyikan Reels di Kabar Beranda
 Hide sponsored posts	Sembunyikan postingan bersponsor
 Hide sponsored reels	Sembunyikan Reels bersponsor
 Hide sponsored stories	Sembunyikan cerita bersponsor
-Hide suggested and promoted units	Sembunyikan kartu saran dan promosi
+Hide page suggestions and Facebook's own promos	Sembunyikan saran Halaman dan promosi Facebook sendiri
 Hide the Stories tray	Sembunyikan deretan Cerita
 How far a photo or video you're saving has got, with a button to cancel it	Progres foto atau video yang sedang Anda simpan, dengan tombol untuk membatalkannya
 Hushfacebook %1$s on Facebook %2$s	Hushfacebook %1$s di Facebook %2$s
@@ -85,18 +85,18 @@ Link expired. Reopen the item and try again	Tautan kedaluwarsa. Buka ulang konte
 Links	Tautan
 Material You theme	Tema Material You
 News feed	Kabar Beranda
-No matching diagnostics found.	Tidak ditemukan diagnostik yang cocok.
+There's nothing to report yet. Turn on Debug logging, repeat what went wrong, then export again.	Belum ada yang bisa dilaporkan. Aktifkan Pencatatan debug, ulangi hal yang bermasalah, lalu ekspor lagi.
 No screenshot watching for ads, and no reports of which apps you install.	Tangkapan layar iklan tidak dipantau, dan aplikasi yang Anda pasang tidak dilaporkan.
 Not saved: that isn't a Facebook photo or video	Tidak disimpan: itu bukan foto atau video Facebook
 Not saved: the file is over 512 MB	Tidak disimpan: file lebih dari 512 MB
 OK	Oke
-Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.	Pilih nama folder di Movies dan Pictures. Karakter yang tidak valid menjadi garis bawah. Kosongkan untuk memakai %1$s.
+Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave it blank to use the default folder, %1$s.	Pilih nama folder di Movies dan Pictures. Karakter yang tidak valid menjadi garis bawah. Kosongkan untuk memakai folder bawaan, %1$s.
 Open links in your browser	Buka tautan di browser Anda
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Iklan berbayar di Kabar Beranda. Iklannya dibuang sebelum ditambahkan Facebook, jadi tidak meninggalkan ruang kosong.
 Pause Hushfacebook	Jeda Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Postingan dari orang dan Halaman yang tidak Anda ikuti serta dari grup tempat Anda belum bergabung, yang diselipkan Facebook ke Kabar Beranda Anda.
-Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Postingan yang ditandai Facebook sebagai buatan AI. Label yang hanya ditambahkan pengunggah tetap ada. Sakelar ini awalnya mati sampai diuji di beranda sungguhan.
+Posts Facebook's own detection flags as made with AI. A post that only its creator labelled as AI stays. It's off by default because it hasn't been tested on a real feed yet.	Postingan yang ditandai deteksi Facebook sendiri sebagai buatan AI. Postingan yang hanya diberi label AI oleh pembuatnya tetap ada. Sakelar ini nonaktif secara default karena belum diuji di Kabar Beranda sungguhan.
 Profiles and some Settings pages open again on this re-signed build.	Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.
 Re-signed build fix	Perbaikan build yang ditandatangani ulang
 Reading the settings file	Membaca file pengaturan
@@ -110,7 +110,7 @@ Save full report	Simpan laporan lengkap
 Saved to %1$s	Disimpan ke %1$s
 Saved to the gallery	Disimpan ke galeri
 Saved. Restart Facebook to apply this change.	Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.
-Save your switches and download settings to a file. Pause and debug logging aren't included.	Simpan sakelar dan pengaturan unduhan Anda ke sebuah file. Jeda dan pencatatan debug tidak disertakan.
+Save your switches and download settings to a file. Pause and Debug logging aren't included.	Simpan sakelar dan pengaturan unduhan Anda ke sebuah file. Jeda dan Pencatatan debug tidak disertakan.
 Saves will go to a folder named %1$s.	Semua yang Anda simpan akan masuk ke folder bernama %1$s.
 Saving a photo	Menyimpan foto
 Saving a video	Menyimpan video
@@ -149,8 +149,8 @@ The row of friend suggestions between posts.	Deretan saran pertemanan di antara 
 The row of stories at the top of the feed, Create story included.	Deretan cerita di bagian atas Kabar Beranda, termasuk “Buat cerita”.
 The rows of reels between posts, and the reels Facebook adds where your feed ends.	Deretan Reels di antara postingan, dan Reels yang ditambahkan Facebook di akhir Kabar Beranda Anda.
 The setting couldn't finish updating. Its saved value is shown.	Pengaturan ini tidak dapat selesai diperbarui. Nilai yang tersimpan ditampilkan.
-There is no diagnostic data to clear.	Tidak ada data diagnostik yang dapat dihapus.
-There is no diagnostic data to put back.	Tidak ada data diagnostik yang dapat dikembalikan.
+There's no diagnostic data to clear.	Tidak ada data diagnostik yang dapat dihapus.
+There's no diagnostic data to put back.	Tidak ada data diagnostik yang dapat dikembalikan.
 They're chosen in Morphe Manager when you patch, and Pause doesn't turn them off. Patch again to change them.	Semua ini dipilih di Morphe Manager saat Anda menambal, dan Jeda tidak mematikannya. Tambal ulang untuk mengubahnya.
 This phone has no file picker, so there's no way to choose a file here.	Ponsel ini tidak memiliki pemilih file, jadi file tidak dapat dipilih di sini.
 Try again, or go back to Facebook.	Coba lagi, atau kembali ke Facebook.
@@ -158,12 +158,12 @@ Version	Versi
 Version %1$s for Facebook %2$s	Versi %1$s untuk Facebook %2$s
 Videos go to %1$s and photos to %2$s.	Video disimpan ke %1$s dan foto ke %2$s.
 Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.	Tautan web tidak lagi dibuka di browser dalam aplikasi Facebook. Tautan ke Facebook sendiri tetap dibuka di aplikasi.
-Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.	Mencatat ke log Android apa yang dilakukan setiap tambalan. Biarkan nonaktif kecuali Anda sedang melaporkan masalah.
+Writes what each patch does to the Android log and the diagnostic report, and shows errors on screen. Leave it off unless you're reporting a problem.	Mencatat apa yang dilakukan setiap tambalan ke log Android dan laporan diagnostik, serta menampilkan pesan kesalahan di layar. Biarkan nonaktif kecuali Anda sedang melaporkan masalah.
 You paused Hushfacebook.	Anda menjeda Hushfacebook.
 Your switches already match that file, so nothing will change.	Sakelar Anda sudah sesuai dengan file itu, jadi tidak ada yang akan berubah.
 Keep feed position on return	Pertahankan posisi beranda saat kembali
 Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Jika kembali ke Facebook dalam sepuluh menit, posisi beranda tetap sama. Tarik ke bawah untuk memuat ulang masih berfungsi.
-A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Cerita yang selesai tetap di layar sampai Anda mengetuk atau menggeser. Matikan ini untuk memakai waktu bawaan Facebook.
+A finished story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Cerita yang selesai tetap di layar sampai Anda mengetuk atau menggeser. Matikan ini untuk memakai waktu bawaan Facebook.
 Stop Story auto-advance	Hentikan perpindahan otomatis Cerita
 Copy a short report to the clipboard.	Salin laporan singkat ke papan klip.
 Save the full report in Download/Morphe.	Simpan laporan lengkap di Download/Morphe.
@@ -187,10 +187,11 @@ Videos will save at their lowest quality, for the smallest files.	Video akan dis
 Videos will save at %1$s, or the closest quality each one has.	Video akan disimpan dalam %1$s, atau kualitas terdekat yang dimiliki tiap video.
 Settings imported.	Pengaturan diimpor.
 Video file name	Nama file video
-%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s diganti dengan tanggal dan waktu penyimpanan, %2$s dengan nomor video di Facebook. Nama tanpa keduanya akan ditambahi tanggal. Karakter yang tidak valid menjadi garis bawah. Kosongkan untuk memakai %3$s.
+%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave it blank to use the default, %3$s.	%1$s diganti dengan tanggal dan waktu penyimpanan, %2$s dengan nomor video di Facebook. Nama tanpa keduanya akan ditambahi tanggal. Karakter yang tidak valid menjadi garis bawah. Kosongkan untuk memakai nama bawaan, %3$s.
 Videos are named %1$s. Photos keep Facebook's own %2$s names.	Video diberi nama %1$s. Foto tetap memakai nama %2$s bawaan Facebook.
 Saved videos will be named %1$s.	Video yang disimpan akan diberi nama %1$s.
 File name	Nama file
 File name set to %1$s.	Nama file diatur menjadi %1$s.
 No app on this phone can open the link. The address is %1$s.	Tidak ada aplikasi di ponsel ini yang dapat membuka tautan ini. Alamatnya %1$s.
 Hushfacebook pauses when Facebook restarts.	Hushfacebook dijeda saat Facebook dimulai ulang.
+Pause, backup and diagnostics	Jeda, cadangan, dan diagnostik

@@ -82,7 +82,8 @@ public enum PatchFamily {
 
     /**
      * What of this patch stays in while Hushfacebook is paused, or null when nothing does. One
-     * thing, never a plural: alone on the screen it's followed by "It was set when you patched".
+     * thing, never a plural: alone on the screen it's followed by its patch's name in brackets and
+     * "It was set when you patched".
      * The English is also a key of {@link L10n}: the screen shows it translated, and the report
      * keeps it in English.
      */
@@ -129,19 +130,25 @@ public enum PatchFamily {
      * What of these families stays in while Hushfacebook is paused, as a sentence in the phone's
      * language, or null when a pause turns every one of them off. The list leads the sentence, so
      * its first letter is raised the way that language does it.
+     *
+     * <p>Each item is followed by its patch's name in brackets, the name Morphe Manager lists it
+     * under, which stays English there. "The part of the Reels ad block patched into the app" is
+     * found in Manager as Hide sponsored reels, and nothing in the item's own words said so.
      */
     @Nullable
     static String staysWhilePausedSummary(Set<PatchFamily> inBuild) {
         List<String> parts = new ArrayList<>();
         for (PatchFamily family : values()) {
-            if (inBuild.contains(family) && family.staysWhilePaused != null) parts.add(L10n.t(family.staysWhilePaused));
+            if (inBuild.contains(family) && family.staysWhilePaused != null) {
+                parts.add(L10n.t(family.staysWhilePaused) + " (" + L10n.isolate(family.patchName) + ")");
+            }
         }
         if (parts.isEmpty()) return null;
         return L10n.capitalize(L10n.quantity(parts.size(),
                 "%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch again "
-                        + "without the patch it comes from.",
+                        + "and leave out that patch.",
                 "%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, patch "
-                        + "again without the patch it comes from.",
+                        + "again and leave out the patch in brackets after it.",
                 L10n.join(parts)));
     }
 

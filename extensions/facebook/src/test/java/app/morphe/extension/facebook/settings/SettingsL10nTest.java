@@ -233,9 +233,9 @@ public class SettingsL10nTest {
     @Test
     public void theStaysRowReadsAsOneSentenceInEveryLanguage() {
         String one = "%1$s. It was set when you patched, so Pause can't turn it off. To rule it out, patch "
-                + "again without the patch it comes from.";
+                + "again and leave out that patch.";
         String other = "%1$s. They were set when you patched, so Pause can't turn them off. To rule one out, "
-                + "patch again without the patch it comes from.";
+                + "patch again and leave out the patch in brackets after it.";
         String[][] languages = {{"en", null}, {"de", "de"}, {"es", "es"}, {"in-rID", "in"}, {"pt-rBR", "pt-rbr"},
                 {"tr", "tr"}};
         for (String[] language : languages) {
