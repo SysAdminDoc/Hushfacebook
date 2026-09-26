@@ -111,7 +111,7 @@ body:
     attributes:
       label: Diagnostic report
       description: |
-        This answers most of our questions, so please add it if you can. Long-press Facebook's icon, tap Hushfacebook, turn on Debug logging, do the thing that goes wrong, then come back and tap Export diagnostic report. Drag the file into this box.
+        This answers most of our questions, so please add it if you can. Long-press Facebook's icon, tap Hushfacebook, turn on Debug logging, do the thing that goes wrong, then come back, tap Export diagnostic report and pick Save full report. That saves a text file in Download/Morphe on your phone. Drag it into this box. If you can't get the file off your phone, pick Copy quick report instead and paste the shorter report here.
         The report leaves out links, account and post ids, session cookies and names, but please look it over before you post it.
   - type: textarea
     id: additional_context
