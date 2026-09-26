@@ -25,10 +25,13 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.preference.TwoStatePreference;
+import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
+import android.text.util.Linkify;
+import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -751,14 +754,23 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
      */
     private static void showNotice(Context context) {
         TextView text = new TextView(context);
-        text.setText(LicenseNotice.TEXT);
+        // NOTICE is hard-wrapped for a source file. Reflow prose on a narrow screen while keeping
+        // blank lines, headings, lists and the generated notice itself intact.
+        String notice = LicenseNotice.TEXT.replaceAll("(?<=[\\p{L}.,;])\\n(?=\\p{L})", " ")
+                .replaceAll("(?m)^(  .+?) {2,}(https?://[^\\n]+)$", "$1\n$2\n");
+        text.setText(notice);
         text.setTextIsSelectable(true);
+        text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        text.setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY);
         int pad = Math.round(16 * context.getResources().getDisplayMetrics().density);
         text.setPadding(pad, pad, pad, pad);
+        text.setLineSpacing(Math.round(2 * context.getResources().getDisplayMetrics().density), 1.04f);
         ScrollView scroll = new ScrollView(context);
         scroll.addView(text);
-        ScreenColors colors = ScreenColors.shown;
-        if (colors != null) text.setTextColor(colors.summary);
+        ScreenColors colors = ScreenColors.shown == null ? ScreenColors.DEFAULT : ScreenColors.shown;
+        text.setTextColor(colors.summary);
+        text.setLinkTextColor(colors.heading);
+        Linkify.addLinks(text, Linkify.WEB_URLS);
         ScreenColors.dialog(new AlertDialog.Builder(context)
                 .setTitle(L10n.t("Licenses"))
                 .setView(scroll)
