@@ -4,6 +4,7 @@
  */
 package app.morphe.patches.facebook.misc.settings
 
+import app.morphe.ExtensionDex
 import app.morphe.Fixtures
 import app.morphe.RepoFiles
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
@@ -26,6 +27,7 @@ import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodRefere
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -128,16 +130,27 @@ class ShortcutCallsTest {
         assertNull(ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 2, 1, 2, 0, 0, 0, remove).shortcutCall())
     }
 
-    /** Each call sent has its stand-in in SettingsEntry, public and static, the manager first. */
+    /**
+     * Each call sent has its stand-in in the SettingsEntry the bundle ships, public and static, with
+     * exactly the descriptor the rewrite writes: the manager, then the framework call's own
+     * parameters, then its answer. Read from the compiled extension, so a Java parameter that
+     * compiles to another type fails here. A match on the source's name and first parameter let
+     * that through to a NoSuchMethodError in Facebook's notification code.
+     */
     @Test
     fun everyCallSentHasAStandIn() {
-        val entry = File(RepoFiles.root, "extensions/facebook/src/main/java/app/morphe/extension/facebook/settings/SettingsEntry.java")
-            .readText()
-        val javaTypes = mapOf("V" to "void", "Z" to "boolean")
+        val declared = ExtensionDex.classDef(ENTRY).methods
+            .filter { AccessFlags.PUBLIC.isSet(it.accessFlags) && AccessFlags.STATIC.isSet(it.accessFlags) }
+            .map { "$ENTRY->${it.name}(${it.parameterTypes.joinToString("")})${it.returnType}" }
+            .toSet()
         SHORTCUT_CALLS.forEach { (name, shape) ->
-            val answer = javaTypes.getValue(shape.substringAfter(')'))
-            val declared = Regex("""public static $answer $name\(ShortcutManager manager\b""").containsMatchIn(entry)
-            assertEquals("SettingsEntry has no public static $answer $name(ShortcutManager manager, ...)", true, declared)
+            val descriptor = "$ENTRY->$name($SHORTCUT_MANAGER${shape.substringAfter('(')}"
+            assertEquals("what the rewrite writes for $name", descriptor, standIn(call(name)))
+            assertTrue(
+                "SettingsEntry declares no public static $descriptor. Its methods of that name: " +
+                    declared.filter { it.contains("->$name(") },
+                descriptor in declared,
+            )
         }
     }
 
