@@ -8,6 +8,7 @@ package app.morphe.extension.facebook.settings;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -54,6 +55,7 @@ import app.morphe.extension.facebook.download.DownloadQuality;
 import app.morphe.extension.facebook.download.FileNameTemplate;
 import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.L10n;
+import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.settings.BooleanSetting;
@@ -73,12 +75,18 @@ import app.morphe.extension.shared.settings.preference.ExportDiagnosticReportPre
  */
 @SuppressWarnings("deprecation")
 public final class HushfacebookPreferenceFragment extends AbstractPreferenceFragment {
+    /** The repository as a link, and as a person reads it. ExtensionHostsTest reads the link. */
     static final String SOURCE_URL = "https://github.com/SysAdminDoc/Hushfacebook";
+    static final String SOURCE_ADDRESS = SOURCE_URL.substring(SOURCE_URL.indexOf("://") + 3);
     /** The English of the row listing what Pause can't reach, and its key in {@link L10n}. */
     static final String STAYS_WHILE_PAUSED = "Stays in while paused";
 
     /** Thrown by the next initialize() and then cleared: how a test reaches the recovery page. */
     static volatile RuntimeException failNextInitialization;
+
+    /** The first row, which says whether Hushfacebook runs now and whether the next start changes that. */
+    @Nullable
+    private Preference statusCard;
 
     /** Where a settings file waiting on the person's answer is kept across the page being rebuilt. */
     static final String PENDING_IMPORT_STATE = "hushfacebook_pending_import";
@@ -107,7 +115,10 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         if (list != null) {
             list.setDivider(null);
             list.setDividerHeight(0);
-            ScreenColors colors = ScreenColors.shown;
+            // From the context, not from what initialize() stores: a page whose initialize() failed
+            // before it got that far kept an earlier screen's colours, or none, and a light Material
+            // You error page drew its dark message on black.
+            ScreenColors colors = ScreenColors.forScreen(getContext());
             list.setBackgroundColor(colors == null ? Color.BLACK : colors.background);
         }
     }
@@ -355,10 +366,17 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
 
         Preference source = new Row(context);
         source.setTitle(L10n.t("Source code and issues"));
-        source.setSummary("github.com/SysAdminDoc/Hushfacebook");
+        source.setSummary(SOURCE_ADDRESS);
         source.setPersistent(false);
         source.setOnPreferenceClickListener(p -> {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_URL)));
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_URL)));
+            } catch (ActivityNotFoundException | SecurityException missing) {
+                // No browser, or none switched on. Uncaught, Android's exception closed Facebook.
+                Logger.printInfo(() -> "No app opened the source code link");
+                Utils.showToastLong(L10n.f("No app on this phone can open the link. The address is %1$s.",
+                        L10n.isolate(SOURCE_ADDRESS)));
+            }
             return true;
         });
         about.addPreference(source);
@@ -412,28 +430,55 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             canvas.drawPath(check, paint);
         }
         card.setIcon(new BitmapDrawable(context.getResources(), mark));
+        statusCard = card;
         if (!paused) {
             card.setTitle(L10n.t("Hushfacebook is on"));
-            card.setSummary(L10n.f("Version %1$s for Facebook %2$s",
-                    L10n.isolate(Utils.getPatchesReleaseVersion()), L10n.isolate(Utils.getAppVersionName())));
             card.setSelectable(false);
+            showStatus(card, context);
             return card;
         }
         card.setTitle(L10n.t("Hushfacebook is paused"));
-        card.setSummary(pausedSummary(HushfacebookPause.reason(), context.getPackageName())
-                + " " + L10n.t("Tap to turn it back on."));
+        showStatus(card, context);
         card.setOnPreferenceClickListener(p -> {
             boolean markerGone = HushfacebookPause.turnBackOn(context);
             Preference pause = findPreference(BaseSettings.PAUSED.key);
             if (pause instanceof SwitchPreference) ((SwitchPreference) pause).setChecked(false);
-            card.setSummary(markerGone
-                    ? L10n.t("Hushfacebook turns back on when Facebook restarts.")
-                    : L10n.f("The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.",
-                            L10n.isolate(HushfacebookPause.MARKER_FILE_NAME),
-                            L10n.isolate(markerFolder(context.getPackageName()))));
+            if (markerGone) {
+                showStatus(card, context);
+            } else {
+                card.setSummary(L10n.f("The file %1$s couldn't be removed. Delete it from %2$s to turn Hushfacebook back on.",
+                        L10n.isolate(HushfacebookPause.MARKER_FILE_NAME),
+                        L10n.isolate(markerFolder(context.getPackageName()))));
+            }
             return true;
         });
         return card;
+    }
+
+    /**
+     * The card's line under its title: this start's state, and the next start's when a change on
+     * this screen makes it differ. Pause switched on said "Hushfacebook is on" and nothing more,
+     * and Pause switched back on after a tap on the card still said it turns back on at restart.
+     */
+    private void showStatus(Preference card, Context context) {
+        boolean pausedNext = HushfacebookPause.pausesNextStart(context);
+        if (!HushfacebookPause.isPaused()) {
+            String version = L10n.f("Version %1$s for Facebook %2$s",
+                    L10n.isolate(Utils.getPatchesReleaseVersion()), L10n.isolate(Utils.getAppVersionName()));
+            card.setSummary(pausedNext ? version + " " + L10n.t("Hushfacebook pauses when Facebook restarts.") : version);
+        } else if (pausedNext) {
+            card.setSummary(pausedSummary(HushfacebookPause.reason(), context.getPackageName())
+                    + " " + L10n.t("Tap to turn it back on."));
+        } else {
+            card.setSummary(L10n.t("Hushfacebook turns back on when Facebook restarts."));
+        }
+    }
+
+    @Override
+    protected void onRestartPendingChanged() {
+        Preference card = statusCard;
+        Context context = getContext();
+        if (card != null && context != null) showStatus(card, context);
     }
 
     /**
@@ -569,6 +614,9 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         row.setDialogMessage(L10n.f("Choose a folder name under Movies and Pictures. Invalid characters become "
                 + "underscores. Leave blank for %1$s.", L10n.isolate(SaveFolder.DEFAULT)));
         row.setPositiveButtonText(L10n.t("Save"));
+        // Unset, Android fills in its own Cancel in the activity's language, which can differ
+        // from Facebook's, and the dialog read "Speichern" next to "Cancel".
+        row.setNegativeButtonText(L10n.t("Cancel"));
         EditText field = row.getEditText();
         field.setSingleLine(true);
         field.setHint(L10n.t("Folder name"));

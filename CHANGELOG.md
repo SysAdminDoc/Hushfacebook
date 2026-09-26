@@ -8,6 +8,9 @@ Every Hushfacebook release, newest first.
 * **Facebook:** Saved photos and videos now use the file type found in their bytes when the server labels them incorrectly, so the gallery gets the right extension.
 * **Facebook:** A save now reports a gallery write failure when the file stream can't close or the pending entry can't be published. Unfinished entries are removed.
 * **Facebook:** If the gallery won't remove an unfinished save, Hushfacebook remembers it and tries again the next time Facebook starts.
+* **Facebook:** With Open links in external browser on, links to fb.watch, fb.me, m.me and Facebook's other short addresses open in Facebook again, not on the web in your browser.
+* **Facebook:** The settings screen lost a few rough edges. Cancel is easier to read on the black page, and a row you can't tap right now looks dimmed. The status card tells you when a Pause change waits for the next restart. Tapping Source code and issues on a phone without a browser shows the address instead of closing Facebook.
+* **Facebook:** The diagnostic report counts the Block background-return feed refresh hook, like every other one.
 * **Facebook:** The Hushfacebook item now stays first when you long-press Facebook's icon. Facebook adds its own Notifications, Friends and Reels shortcuts ahead of it whenever it posts some notifications, and a launcher that shows only a few shortcuts, or fewer next to a notification, left Hushfacebook off the end (#2).
 * **Facebook:** Download any reel is on by default now, so a fresh patch puts a Download button beside every reel. Its switch in Hushfacebook's settings still takes it out.
 * **Facebook:** A new Download quality setting holds story, reel and feed video saves to 1080p, 720p, 480p or 360p, or picks the smallest file. Best stays the default. A video with nothing at or under your pick saves at the closest quality above it, so a save never fails over the setting.

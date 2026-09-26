@@ -66,6 +66,7 @@ public class HushfacebookPreferenceFragmentTest {
         PatchFamily.inBuildForTests = null;
         ScreenColors.shown = null;
         PauseForTests.resume();
+        BaseSettings.SAFE_MODE.resetToDefault();
         Settings.SAVE_FOLDER.resetToDefault();
         Settings.DOWNLOAD_QUALITY.resetToDefault();
         Settings.FILENAME_TEMPLATE.resetToDefault();
@@ -143,6 +144,9 @@ public class HushfacebookPreferenceFragmentTest {
                 .contains("in " + L10n.isolate("Android/data/" + pkg + "/files") + " paused Hushfacebook"));
 
         PauseForTests.pause(HushfacebookPause.Reason.CRASH_LOOP);
+        // A crash-loop pause comes from safe mode, which stays on for the next start too. The card
+        // reads that to say whether the next start still runs paused.
+        BaseSettings.SAFE_MODE.save(true);
         try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
             Preference card = rowsOf(controller).get(0);
             assertEquals("Hushfacebook is paused", String.valueOf(card.getTitle()));

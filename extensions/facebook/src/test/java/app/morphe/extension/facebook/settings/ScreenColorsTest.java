@@ -88,7 +88,8 @@ public class ScreenColorsTest {
         text.put("dialog title on the dialog", new int[]{c.title, c.dialog});
         text.put("dialog message on the dialog", new int[]{c.summary, c.dialog});
         text.put("primary action text on its fill", new int[]{c.onAccent, c.accent});
-        text.put("secondary action on the dialog", new int[]{c.accent, c.dialog});
+        text.put("secondary action on the dialog", new int[]{c.secondaryActionText(), c.dialog});
+        text.put("secondary recovery action on its card", new int[]{c.secondaryActionText(), c.card});
         return text;
     }
 
@@ -129,6 +130,16 @@ public class ScreenColorsTest {
                 assertMeets(name, controls(colors), NON_TEXT);
             }
         }
+    }
+
+    /**
+     * The black page, which every build without the Material You theme shows. Nothing held it to
+     * AA, and its dialogs' Cancel read at 3.4:1, accent blue on the dialog's grey.
+     */
+    @Test
+    public void theBlackPageMeetsAa() {
+        assertMeets("black page", pairs(ScreenColors.DEFAULT), TEXT);
+        assertMeets("black page", controls(ScreenColors.DEFAULT), NON_TEXT);
     }
 
     /** The framework's own wallpaper palette, as a phone on Android 12 and newer reads it. */

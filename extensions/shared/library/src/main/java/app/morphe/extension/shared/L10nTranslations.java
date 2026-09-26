@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(384);
+        Map<String, String> table = new HashMap<>(388);
         fillDe0(table);
         fillDe1(table);
         fillDe2(table);
@@ -234,6 +234,8 @@ public final class L10nTranslations {
                 "Hushfacebook ist aktiv");
         table.put("Hushfacebook is paused",
                 "Hushfacebook ist pausiert");
+        table.put("Hushfacebook pauses when Facebook restarts.",
+                "Hushfacebook pausiert, sobald Facebook neu startet.");
         table.put("Hushfacebook saves",
                 "Speichern mit Hushfacebook");
         table.put("Hushfacebook settings",
@@ -260,6 +262,8 @@ public final class L10nTranslations {
                 "Material-You-Design");
         table.put("News feed",
                 "Newsfeed");
+        table.put("No app on this phone can open the link. The address is %1$s.",
+                "Keine App auf diesem Handy kann den Link \u00f6ffnen. Die Adresse ist %1$s.");
         table.put("No matching diagnostics found.",
                 "Keine passenden Diagnosedaten gefunden.");
         table.put("No screenshot watching for ads, and no reports of which apps you install.",
@@ -292,13 +296,13 @@ public final class L10nTranslations {
                 "Reels und Watch");
         table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
                 "Die Buttons Remix, Vorlage verwenden, \u201eDu bist dran\u201c und Edits sowie die f\u00fcr Sterne, Spiele, Partner-Apps und externe Links. Der Song und andere Hinweise bleiben.");
+    }
+
+    private static void fillDe2(Map<String, String> table) {
         table.put("Remove tracking from shared links",
                 "Tracking aus geteilten Links entfernen");
         table.put("Retry",
                 "Erneut versuchen");
-    }
-
-    private static void fillDe2(Map<String, String> table) {
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Wenn du innerhalb von zehn Minuten zu Facebook zur\u00fcckkehrst, bleibst du an derselben Stelle. Zum Aktualisieren kannst du weiter nach unten ziehen.");
         table.put("Save",
@@ -415,13 +419,13 @@ public final class L10nTranslations {
                 "Videos hei\u00dfen %1$s. Fotos behalten Facebooks eigene Namen mit %2$s.");
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Videos landen in %1$s und Fotos in %2$s.");
+    }
+
+    private static void fillDe3(Map<String, String> table) {
         table.put("Videos will save at %1$s, or the closest quality each one has.",
                 "Videos werden dann in %1$s gespeichert oder in der n\u00e4chstliegenden Qualit\u00e4t, die das jeweilige Video hat.");
         table.put("Videos will save at the best quality.",
                 "Videos werden dann in der besten Qualit\u00e4t gespeichert.");
-    }
-
-    private static void fillDe3(Map<String, String> table) {
         table.put("Videos will save at their lowest quality, for the smallest files.",
                 "Videos werden dann in ihrer niedrigsten Qualit\u00e4t gespeichert, damit die Dateien so klein wie m\u00f6glich sind.");
         table.put("Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.",
@@ -449,7 +453,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(384);
+        Map<String, String> table = new HashMap<>(388);
         fillEs0(table);
         fillEs1(table);
         fillEs2(table);
@@ -639,6 +643,8 @@ public final class L10nTranslations {
                 "Hushfacebook est\u00e1 activado");
         table.put("Hushfacebook is paused",
                 "Hushfacebook est\u00e1 en pausa");
+        table.put("Hushfacebook pauses when Facebook restarts.",
+                "Hushfacebook se pausa cuando Facebook se reinicie.");
         table.put("Hushfacebook saves",
                 "Descargas de Hushfacebook");
         table.put("Hushfacebook settings",
@@ -665,6 +671,8 @@ public final class L10nTranslations {
                 "Tema Material You");
         table.put("News feed",
                 "Feed");
+        table.put("No app on this phone can open the link. The address is %1$s.",
+                "Ninguna app de este tel\u00e9fono puede abrir el enlace. La direcci\u00f3n es %1$s.");
         table.put("No matching diagnostics found.",
                 "No se encontraron datos de diagn\u00f3stico que coincidan.");
         table.put("No screenshot watching for ads, and no reports of which apps you install.",
@@ -697,13 +705,13 @@ public final class L10nTranslations {
                 "Reels y Watch");
         table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
                 "Los botones para hacer un remix, usar la plantilla, sumar el tuyo o abrir Edits, y los de estrellas, juegos, apps asociadas y enlaces externos. La canci\u00f3n y las dem\u00e1s etiquetas se quedan.");
+    }
+
+    private static void fillEs2(Map<String, String> table) {
         table.put("Remove tracking from shared links",
                 "Quitar el seguimiento de los enlaces compartidos");
         table.put("Retry",
                 "Reintentar");
-    }
-
-    private static void fillEs2(Map<String, String> table) {
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Si vuelves a Facebook en menos de diez minutos, seguir\u00e1s donde estabas. Puedes deslizar hacia abajo para actualizar.");
         table.put("Save",
@@ -820,13 +828,13 @@ public final class L10nTranslations {
                 "Los videos se llaman %1$s. Las fotos conservan los nombres %2$s propios de Facebook.");
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Los videos van a %1$s y las fotos a %2$s.");
+    }
+
+    private static void fillEs3(Map<String, String> table) {
         table.put("Videos will save at %1$s, or the closest quality each one has.",
                 "Los videos se guardar\u00e1n en %1$s o en la calidad m\u00e1s cercana que tenga cada uno.");
         table.put("Videos will save at the best quality.",
                 "Los videos se guardar\u00e1n con la mejor calidad.");
-    }
-
-    private static void fillEs3(Map<String, String> table) {
         table.put("Videos will save at their lowest quality, for the smallest files.",
                 "Los videos se guardar\u00e1n con su calidad m\u00e1s baja, para que los archivos sean lo m\u00e1s peque\u00f1os posible.");
         table.put("Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.",
@@ -854,7 +862,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(384);
+        Map<String, String> table = new HashMap<>(388);
         fillIn0(table);
         fillIn1(table);
         fillIn2(table);
@@ -1044,6 +1052,8 @@ public final class L10nTranslations {
                 "Hushfacebook aktif");
         table.put("Hushfacebook is paused",
                 "Hushfacebook dijeda");
+        table.put("Hushfacebook pauses when Facebook restarts.",
+                "Hushfacebook dijeda saat Facebook dimulai ulang.");
         table.put("Hushfacebook saves",
                 "Penyimpanan Hushfacebook");
         table.put("Hushfacebook settings",
@@ -1070,6 +1080,8 @@ public final class L10nTranslations {
                 "Tema Material You");
         table.put("News feed",
                 "Kabar Beranda");
+        table.put("No app on this phone can open the link. The address is %1$s.",
+                "Tidak ada aplikasi di ponsel ini yang dapat membuka tautan ini. Alamatnya %1$s.");
         table.put("No matching diagnostics found.",
                 "Tidak ditemukan diagnostik yang cocok.");
         table.put("No screenshot watching for ads, and no reports of which apps you install.",
@@ -1102,13 +1114,13 @@ public final class L10nTranslations {
                 "Reels dan Watch");
         table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
                 "Tombol untuk Remix, memakai templat, menambahkan milik Anda, dan Edits, serta tombol Bintang, game, aplikasi mitra, dan tautan eksternal. Lagu dan label lainnya tetap ada.");
+    }
+
+    private static void fillIn2(Map<String, String> table) {
         table.put("Remove tracking from shared links",
                 "Hapus pelacakan dari tautan yang dibagikan");
         table.put("Retry",
                 "Coba lagi");
-    }
-
-    private static void fillIn2(Map<String, String> table) {
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Jika kembali ke Facebook dalam sepuluh menit, posisi beranda tetap sama. Tarik ke bawah untuk memuat ulang masih berfungsi.");
         table.put("Save",
@@ -1225,13 +1237,13 @@ public final class L10nTranslations {
                 "Video diberi nama %1$s. Foto tetap memakai nama %2$s bawaan Facebook.");
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Video disimpan ke %1$s dan foto ke %2$s.");
+    }
+
+    private static void fillIn3(Map<String, String> table) {
         table.put("Videos will save at %1$s, or the closest quality each one has.",
                 "Video akan disimpan dalam %1$s, atau kualitas terdekat yang dimiliki tiap video.");
         table.put("Videos will save at the best quality.",
                 "Video akan disimpan dengan kualitas terbaik.");
-    }
-
-    private static void fillIn3(Map<String, String> table) {
         table.put("Videos will save at their lowest quality, for the smallest files.",
                 "Video akan disimpan dengan kualitas terendahnya, agar ukuran filenya sekecil mungkin.");
         table.put("Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.",
@@ -1259,7 +1271,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(384);
+        Map<String, String> table = new HashMap<>(388);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         fillPt_rBR2(table);
@@ -1449,6 +1461,8 @@ public final class L10nTranslations {
                 "O Hushfacebook est\u00e1 ativo");
         table.put("Hushfacebook is paused",
                 "O Hushfacebook est\u00e1 pausado");
+        table.put("Hushfacebook pauses when Facebook restarts.",
+                "O Hushfacebook ser\u00e1 pausado quando o Facebook reiniciar.");
         table.put("Hushfacebook saves",
                 "Salvamentos do Hushfacebook");
         table.put("Hushfacebook settings",
@@ -1475,6 +1489,8 @@ public final class L10nTranslations {
                 "Tema Material You");
         table.put("News feed",
                 "Feed de not\u00edcias");
+        table.put("No app on this phone can open the link. The address is %1$s.",
+                "Nenhum app deste celular consegue abrir o link. O endere\u00e7o \u00e9 %1$s.");
         table.put("No matching diagnostics found.",
                 "Nenhum diagn\u00f3stico correspondente encontrado.");
         table.put("No screenshot watching for ads, and no reports of which apps you install.",
@@ -1507,13 +1523,13 @@ public final class L10nTranslations {
                 "Reels e Watch");
         table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
                 "Os bot\u00f5es de remix, usar modelo, adicionar o seu e Edits, e os de estrelas, jogos, apps parceiros e links externos. A m\u00fasica e as outras etiquetas continuam.");
+    }
+
+    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Remove tracking from shared links",
                 "Remover o rastreamento dos links compartilhados");
         table.put("Retry",
                 "Tentar novamente");
-    }
-
-    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Se voc\u00ea voltar ao Facebook em at\u00e9 dez minutos, continuar\u00e1 de onde parou. Puxe para baixo para atualizar quando quiser.");
         table.put("Save",
@@ -1630,13 +1646,13 @@ public final class L10nTranslations {
                 "Os v\u00eddeos se chamam %1$s. As fotos mant\u00eam os nomes %2$s do pr\u00f3prio Facebook.");
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Os v\u00eddeos v\u00e3o para %1$s e as fotos para %2$s.");
+    }
+
+    private static void fillPt_rBR3(Map<String, String> table) {
         table.put("Videos will save at %1$s, or the closest quality each one has.",
                 "Os v\u00eddeos v\u00e3o ser salvos em %1$s ou na qualidade mais pr\u00f3xima que cada um tiver.");
         table.put("Videos will save at the best quality.",
                 "Os v\u00eddeos v\u00e3o ser salvos na melhor qualidade.");
-    }
-
-    private static void fillPt_rBR3(Map<String, String> table) {
         table.put("Videos will save at their lowest quality, for the smallest files.",
                 "Os v\u00eddeos v\u00e3o ser salvos na qualidade mais baixa deles, para os arquivos ficarem os menores poss\u00edveis.");
         table.put("Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.",
@@ -1664,7 +1680,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(384);
+        Map<String, String> table = new HashMap<>(388);
         fillTr0(table);
         fillTr1(table);
         fillTr2(table);
@@ -1854,6 +1870,8 @@ public final class L10nTranslations {
                 "Hushfacebook a\u00e7\u0131k");
         table.put("Hushfacebook is paused",
                 "Hushfacebook duraklat\u0131ld\u0131");
+        table.put("Hushfacebook pauses when Facebook restarts.",
+                "Hushfacebook, Facebook yeniden ba\u015flad\u0131\u011f\u0131nda duraklat\u0131l\u0131r.");
         table.put("Hushfacebook saves",
                 "Hushfacebook kaydetme i\u015flemleri");
         table.put("Hushfacebook settings",
@@ -1880,6 +1898,8 @@ public final class L10nTranslations {
                 "Material You temas\u0131");
         table.put("News feed",
                 "Ak\u0131\u015f");
+        table.put("No app on this phone can open the link. The address is %1$s.",
+                "Bu telefondaki hi\u00e7bir uygulama ba\u011flant\u0131y\u0131 a\u00e7am\u0131yor. Adres: %1$s.");
         table.put("No matching diagnostics found.",
                 "E\u015fle\u015fen tan\u0131lama bulunamad\u0131.");
         table.put("No screenshot watching for ads, and no reports of which apps you install.",
@@ -1912,13 +1932,13 @@ public final class L10nTranslations {
                 "Reels ve Watch");
         table.put("Remix, Use template, Add yours and Edits buttons, plus Stars, games, partner apps and outside links. The song and other labels stay.",
                 "Remix, \u015fablon kullanma, kendi videonu ekleme ve Edits d\u00fc\u011fmeleri ile y\u0131ld\u0131z, oyun, i\u015f orta\u011f\u0131 uygulamas\u0131 ve d\u0131\u015f ba\u011flant\u0131 d\u00fc\u011fmeleri. \u015eark\u0131 ve di\u011fer etiketler kal\u0131r.");
+    }
+
+    private static void fillTr2(Map<String, String> table) {
         table.put("Remove tracking from shared links",
                 "Payla\u015f\u0131lan ba\u011flant\u0131lardan izlemeyi kald\u0131r");
         table.put("Retry",
                 "Yeniden dene");
-    }
-
-    private static void fillTr2(Map<String, String> table) {
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Facebook'a on dakika i\u00e7inde d\u00f6nersen kald\u0131\u011f\u0131n yer korunur. Yenilemek i\u00e7in a\u015fa\u011f\u0131 \u00e7ekmeye devam edebilirsin.");
         table.put("Save",
@@ -2035,13 +2055,13 @@ public final class L10nTranslations {
                 "Videolar\u0131n ad\u0131 %1$s olur. Foto\u011fraflar Facebook'un kendi %2$s adlar\u0131n\u0131 korur.");
         table.put("Videos go to %1$s and photos to %2$s.",
                 "Videolar %1$s klas\u00f6r\u00fcne, foto\u011fraflar %2$s klas\u00f6r\u00fcne kaydedilir.");
+    }
+
+    private static void fillTr3(Map<String, String> table) {
         table.put("Videos will save at %1$s, or the closest quality each one has.",
                 "Videolar %1$s kalitesinde ya da her birinin sahip oldu\u011fu en yak\u0131n kalitede kaydedilecek.");
         table.put("Videos will save at the best quality.",
                 "Videolar en iyi kalitede kaydedilecek.");
-    }
-
-    private static void fillTr3(Map<String, String> table) {
         table.put("Videos will save at their lowest quality, for the smallest files.",
                 "Videolar en d\u00fc\u015f\u00fck kalitelerinde kaydedilecek, b\u00f6ylece dosyalar en k\u00fc\u00e7\u00fck olur.");
         table.put("Web links leave Facebook's in-app browser. Facebook's own pages still open in the app.",

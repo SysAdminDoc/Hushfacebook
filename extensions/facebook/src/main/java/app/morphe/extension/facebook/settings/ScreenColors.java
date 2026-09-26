@@ -118,6 +118,25 @@ final class ScreenColors {
     }
 
     /**
+     * [color], at Material's 38% on a disabled row. A plain colour replaced the theme's own
+     * disabled state, so a row that ignored taps, such as Import while an export runs, looked
+     * the same as one that would take them.
+     */
+    static ColorStateList dimmedWhenDisabled(int color) {
+        int dimmed = (color & 0x00FFFFFF) | 0x61000000;
+        return new ColorStateList(new int[][]{{-android.R.attr.state_enabled}, {}}, new int[]{dimmed, color});
+    }
+
+    /**
+     * The text of a dialog's outlined actions, such as Cancel. The black page's accent reads at
+     * 3.4:1 on its dialog, under the 4.5:1 text needs, so these take the heading colour. The
+     * Material You palettes draw both in one tone, so only the black page changes.
+     */
+    int secondaryActionText() {
+        return heading;
+    }
+
+    /**
      * The colours for a screen shown in this context: the phone's palette, dark or light as the
      * context's configuration says. Null when the Material You theme isn't in this build.
      */
@@ -145,10 +164,10 @@ final class ScreenColors {
         if (title != null) {
             boolean action = preference.isSelectable() && !(preference instanceof TwoStatePreference)
                     && preference.getIcon() == null;
-            title.setTextColor(action ? heading : this.title);
+            title.setTextColor(dimmedWhenDisabled(action ? heading : this.title));
         }
         TextView summary = row.findViewById(android.R.id.summary);
-        if (summary != null) summary.setTextColor(this.summary);
+        if (summary != null) summary.setTextColor(dimmedWhenDisabled(this.summary));
         View widget = row.findViewById(android.R.id.switch_widget);
         if (widget instanceof Switch) {
             int[][] states = {{android.R.attr.state_checked}, {}};
@@ -187,7 +206,7 @@ final class ScreenColors {
     private void paintRecoveryAction(View row, boolean primary) {
         TextView title = row.findViewById(android.R.id.title);
         if (title != null) {
-            title.setTextColor(primary ? onAccent : accent);
+            title.setTextColor(primary ? onAccent : secondaryActionText());
             title.setTypeface(Typeface.DEFAULT_BOLD);
         }
         GradientDrawable surface = new GradientDrawable();
@@ -230,7 +249,7 @@ final class ScreenColors {
             surface.setStroke(dp(button, 1), primary ? accent : outline);
             button.setBackground(new RippleDrawable(ColorStateList.valueOf(half(primary ? onAccent : accent)),
                     surface, null));
-            button.setTextColor(primary ? onAccent : accent);
+            button.setTextColor(primary ? onAccent : secondaryActionText());
             button.setAllCaps(false);
             button.setMinHeight(dp(button, 48));
             button.setPaddingRelative(dp(button, 16), dp(button, 6), dp(button, 16), dp(button, 6));
