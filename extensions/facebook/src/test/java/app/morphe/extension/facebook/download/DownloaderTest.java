@@ -235,6 +235,94 @@ public class DownloaderTest {
         };
     }
 
+    /**
+     * mif1 and msf1 only say "a HEIF", and the brands listed after them say how it's coded. An
+     * AVIF encoder can put mif1 first and list avif later: read by its first brand alone it was
+     * called HEIC, and since the bytes pick the saved type it saved as .heic.
+     */
+    @Test
+    public void aHeifImageIsNamedByTheBrandsItLists() {
+        byte[] mif1Avif = ftyp("mif1", "mif1", "avif", "miaf");
+        assertEquals("image/avif", Downloader.sniff(Downloader.Kind.IMAGE, mif1Avif, mif1Avif.length));
+        byte[] mif1Heic = ftyp("mif1", "mif1", "heic");
+        assertEquals("image/heic", Downloader.sniff(Downloader.Kind.IMAGE, mif1Heic, mif1Heic.length));
+        byte[] avif = ftyp("avif", "avif", "mif1", "miaf", "MA1B");
+        assertEquals("image/avif", Downloader.sniff(Downloader.Kind.IMAGE, avif, avif.length));
+        byte[] avifSequence = ftyp("msf1", "msf1", "iso8", "avis");
+        assertEquals("image/avif", Downloader.sniff(Downloader.Kind.IMAGE, avifSequence, avifSequence.length));
+
+        // One that names no coding says only that it's a HEIF.
+        byte[] generic = ftyp("mif1", "mif1", "miaf");
+        assertEquals("image/heif", Downloader.sniff(Downloader.Kind.IMAGE, generic, generic.length));
+        // Past the end of the box is the next box, whatever its bytes spell.
+        byte[] next = startingWith(generic, 40);
+        put(next, 28, "avif");
+        assertEquals("image/heif", Downloader.sniff(Downloader.Kind.IMAGE, next, next.length));
+
+        // Whatever its coding, a picture asked for as a video is refused.
+        assertEquals(null, Downloader.sniff(Downloader.Kind.VIDEO, mif1Avif, mif1Avif.length));
+    }
+
+    /** The case that saved as .heic: an AVIF typed image/avif, with mif1 first and avif after it. */
+    @Test
+    public void anAvifThatListsMif1FirstSavesAsAvif() throws IOException {
+        serve("/a.avif", "image/avif", startingWith(ftyp("mif1", "mif1", "avif", "miaf"), 3000));
+        Downloader.Result result = fetch("/a.avif", Downloader.Kind.IMAGE, temp.newFile(), Downloader.MAX_BYTES);
+        assertEquals(result.toString(), Downloader.Status.OK, result.status);
+        assertEquals("image/avif", result.mime);
+
+        // Untyped, the brand that names the coding counts even fifth, past the 32 bytes the sniff
+        // used to read.
+        serve("/late", "application/octet-stream",
+                startingWith(ftyp("mif1", "mif1", "miaf", "MA1B", "MA1A", "avif"), 3000));
+        result = fetch("/late", Downloader.Kind.IMAGE, temp.newFile(), Downloader.MAX_BYTES);
+        assertEquals(result.toString(), Downloader.Status.OK, result.status);
+        assertEquals("image/avif", result.mime);
+    }
+
+    /**
+     * A HEIF that names no coding can't say whether it's AVIF or HEIC, and the server's type can.
+     * One of the three stands. Anything else saves as a HEIF, not as the HEIC it may not be.
+     */
+    @Test
+    public void aHeifThatNamesNoCodingKeepsTheServersHeifType() throws IOException {
+        byte[] body = startingWith(ftyp("mif1", "mif1", "miaf"), 3000);
+        String[][] cases = {
+                {"image/avif", "image/avif"}, {"image/heic", "image/heic"}, {"image/heif", "image/heif"},
+                {"application/octet-stream", "image/heif"}, {"image/jpeg", "image/heif"},
+        };
+        for (int i = 0; i < cases.length; i++) {
+            serve("/generic" + i, cases[i][0], body);
+            Downloader.Result result = fetch("/generic" + i, Downloader.Kind.IMAGE, temp.newFile(), Downloader.MAX_BYTES);
+            assertEquals(cases[i][0] + ": " + result, Downloader.Status.OK, result.status);
+            assertEquals(cases[i][0], cases[i][1], result.mime);
+        }
+    }
+
+    /** An ftyp box with [major] (version 0) and the [compatible] brands after it, sized to hold them. */
+    private static byte[] ftyp(String major, String... compatible) {
+        int size = 16 + 4 * compatible.length;
+        byte[] box = new byte[size];
+        box[3] = (byte) size;
+        put(box, 4, "ftyp");
+        put(box, 8, major);
+        for (int i = 0; i < compatible.length; i++) put(box, 16 + 4 * i, compatible[i]);
+        return box;
+    }
+
+    /** [start], then made-up bytes up to [size] in all. */
+    private static byte[] startingWith(byte[] start, int size) {
+        byte[] body = new byte[size];
+        System.arraycopy(start, 0, body, 0, start.length);
+        for (int i = start.length; i < size; i++) body[i] = (byte) (i * 11);
+        return body;
+    }
+
+    private static void put(byte[] into, int at, String ascii) {
+        byte[] bytes = ascii.getBytes(StandardCharsets.US_ASCII);
+        System.arraycopy(bytes, 0, into, at, bytes.length);
+    }
+
     @Test
     public void aPictureAskedForAsVideoIsRefused() throws IOException {
         serve("/typed.jpg", "image/jpeg", jpeg(5000));

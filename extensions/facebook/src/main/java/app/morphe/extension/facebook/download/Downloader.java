@@ -194,8 +194,16 @@ final class Downloader {
     static final long MAX_BYTES = 512L * 1024L * 1024L;
     private static final int MAX_REDIRECTS = 5;
 
-    /** Enough of the start of a file to tell a container from a page. */
-    private static final int HEAD = 32;
+    /**
+     * Enough of the start of a file to tell a container from a page, and to read the first twelve
+     * compatible brands of an ftyp box. At 32 bytes only four fit, and an image can list miaf and a
+     * profile or two before the brand that names its coding.
+     */
+    private static final int HEAD = 64;
+
+    private static final String AVIF = "image/avif";
+    private static final String HEIC = "image/heic";
+    private static final String HEIF = "image/heif";
 
     /**
      * Fetch [url] into a new file in [folder], check it, and publish it through [sink]. Blocking.
@@ -305,8 +313,11 @@ final class Downloader {
             // The bytes decide the gallery file type. A server can call PNG bytes JPEG (or WebM
             // bytes MP4); using that header leaves a valid save with the wrong extension. DASH
             // audio is fetched only for joining, and Meta calls its audio track video/mp4, so keep
-            // that reported type for the track.
-            return Result.ok(kind == Kind.AUDIO && isSpecific(declared) ? declared : sniffed);
+            // that reported type for the track. A HEIF whose brands don't say how it's coded
+            // keeps a declared AVIF, HEIC or HEIF type, which says more than the bytes did.
+            if (kind == Kind.AUDIO && isSpecific(declared)) return Result.ok(declared);
+            if (HEIF.equals(sniffed) && isHeifType(declared)) return Result.ok(declared);
+            return Result.ok(sniffed);
         } catch (IOException e) {
             // A cancel closes the connection under the read, which surfaces here as a socket
             // error. It's still the person's cancel, not a network failure.
@@ -455,6 +466,11 @@ final class Downloader {
         return mime != null && !mime.equals("application/octet-stream") && !mime.equals("binary/octet-stream");
     }
 
+    /** One of the types a HEIF file can be: AVIF, HEIC or HEIF itself. */
+    private static boolean isHeifType(String mime) {
+        return AVIF.equals(mime) || HEIC.equals(mime) || HEIF.equals(mime);
+    }
+
     /**
      * The type these first bytes are, if they are a [kind] at all, else {@code null}.
      *
@@ -468,8 +484,8 @@ final class Downloader {
             || box.equals("mdat") || box.equals("free") || box.equals("skip") || box.equals("wide")
             || box.equals("sidx") || box.equals("moof"));
         String brand = isoMedia && box.equals("ftyp") && length >= 12 ? ascii(head, 8, 4) : "";
-        boolean imageBrand = brand.equals("heic") || brand.equals("heix") || brand.equals("hevc")
-            || brand.equals("mif1") || brand.equals("msf1") || brand.equals("avif") || brand.equals("avis");
+        boolean imageBrand = isAvifBrand(brand) || isHeicBrand(brand)
+            || brand.equals("mif1") || brand.equals("msf1");
 
         switch (kind) {
             case VIDEO:
@@ -487,9 +503,41 @@ final class Downloader {
                 if (starts(head, length, 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)) return "image/png";
                 if (length >= 6 && (ascii(head, 0, 6).equals("GIF87a") || ascii(head, 0, 6).equals("GIF89a"))) return "image/gif";
                 if (length >= 12 && ascii(head, 0, 4).equals("RIFF") && ascii(head, 8, 4).equals("WEBP")) return "image/webp";
-                if (imageBrand) return brand.startsWith("avi") ? "image/avif" : "image/heic";
+                if (imageBrand) return imageType(brand, head, length);
                 return null;
         }
+    }
+
+    /**
+     * The type of a HEIF-family image, from its ftyp box. An AVIF or HEIC major brand names the
+     * coding. mif1 and msf1 only say "a HEIF image" (or sequence), and the compatible brands after
+     * them say how it's coded: an AVIF encoder can put mif1 first and list avif later, and read by
+     * its first brand alone such a file saved as .heic. One that lists neither is a HEIF of some
+     * other coding, and {@link #fetch} keeps a declared AVIF, HEIC or HEIF type for it.
+     */
+    private static String imageType(String major, byte[] head, int length) {
+        if (isAvifBrand(major)) return AVIF;
+        if (isHeicBrand(major)) return HEIC;
+        // The compatible brands run from the 17th byte to the end of the box: past the size, the
+        // name, the major brand and its version.
+        long size = boxSize(head);
+        long end = size == 0 ? length : Math.min(size, length);
+        for (int at = 16; at + 4 <= end; at += 4) {
+            String compatible = ascii(head, at, 4);
+            if (isAvifBrand(compatible)) return AVIF;
+            if (isHeicBrand(compatible)) return HEIC;
+        }
+        return HEIF;
+    }
+
+    /** An AV1 image or image sequence. */
+    private static boolean isAvifBrand(String brand) {
+        return brand.equals("avif") || brand.equals("avis");
+    }
+
+    /** An HEVC image or image sequence, the plain and the extended profiles. */
+    private static boolean isHeicBrand(String brand) {
+        return brand.equals("heic") || brand.equals("heix") || brand.equals("hevc") || brand.equals("hevx");
     }
 
     /**
@@ -499,9 +547,14 @@ final class Downloader {
      * name in its fifth to eighth bytes, as "The free trial has ended" does, isn't a container.
      */
     private static boolean boxSizeFits(byte[] head) {
-        long size = ((head[0] & 0xFFL) << 24) | ((head[1] & 0xFFL) << 16) | ((head[2] & 0xFFL) << 8)
-            | (head[3] & 0xFFL);
+        long size = boxSize(head);
         return size == 0 || size == 1 || (size >= 8 && size <= MAX_BYTES);
+    }
+
+    /** The size the first four bytes give an ISO media box, read as unsigned. */
+    private static long boxSize(byte[] head) {
+        return ((head[0] & 0xFFL) << 24) | ((head[1] & 0xFFL) << 16) | ((head[2] & 0xFFL) << 8)
+            | (head[3] & 0xFFL);
     }
 
     private static boolean starts(byte[] head, int length, int... signature) {
