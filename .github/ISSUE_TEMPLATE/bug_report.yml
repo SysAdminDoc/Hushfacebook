@@ -18,7 +18,7 @@ body:
     attributes:
       label: Hushfacebook and Facebook versions
       description: Long-press Facebook's icon and tap Hushfacebook. The first row says "Hushfacebook is on", with both versions on the line under it. Copy that line here.
-      placeholder: Version 0.1.5 for Facebook 580.0.0.51.74
+      placeholder: Version 0.1.6 for Facebook 580.0.0.51.74
     validations:
       required: true
   - type: input
