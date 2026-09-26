@@ -1,7 +1,7 @@
 ![Hushfacebook. Keep the people. Cut the noise.](assets/readme-hero.png)
 
 <p align="center">
-  <a href="https://github.com/SysAdminDoc/Hushfacebook/releases"><img src="https://img.shields.io/badge/version-0.1.5-0866FF" alt="Version 0.1.5"></a>
+  <a href="https://github.com/SysAdminDoc/Hushfacebook/releases"><img src="https://img.shields.io/badge/version-0.1.6-0866FF" alt="Version 0.1.6"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License GPL-3.0"></a>
   <img src="https://img.shields.io/badge/platform-Android%2011%2B-3DDC84" alt="Platform Android 11+">
   <img src="https://img.shields.io/badge/Facebook-580.0.0.51.74-0866FF" alt="Facebook 580.0.0.51.74">
@@ -107,7 +107,7 @@ Long-press Facebook's icon on your home screen and tap **Hushfacebook**. Related
 - **Save folder**, the one folder every save goes to. Videos land in `Movies/Facebook` and photos in `Pictures/Facebook` until you pick another name. It takes a folder name, not a path, so slashes and other characters a folder can't hold become underscores, and dots or spaces at either end are dropped.
 - **Pause Hushfacebook**. From the next start, every one of those switches acts as if it were off and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are. Pause can't undo what was set when you patched, and the screen lists what stays in.
 - **Debug logging** and **Export diagnostic report**, for bug reports. The report leaves out links, account and post ids, session cookies and names. It names your Facebook build and says, for every patch but the settings entry itself, whether a switch runs it. For each of those whose hooks have run, it gives how often they ran and the first thing they couldn't find. Failed saves and links no browser opened are in it too.
-- **Licenses**, the notices of every project this is built on.
+- **Licenses**, the notices of every project this is built on, with links you can open from the screen.
 
 Morphe Manager can export your patch choices and your signing key, but not the switches on this screen. **Export settings** saves them, with the save folder, to a JSON file wherever you pick, and **Import settings** reads one back, on this phone or a new one. Before anything changes, the screen says how many switches the file would change and how many entries in it this version doesn't know, which it skips. A damaged file or one from a newer Hushfacebook changes nothing. Pause and debug logging stay out of the file, and so does anything about you or your phone.
 

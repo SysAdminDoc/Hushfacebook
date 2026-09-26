@@ -2,6 +2,14 @@
 
 Every Hushfacebook release, newest first.
 
+## 0.1.6 (2026-09-26)
+
+* **Facebook:** Settings cards and actions read more clearly in the default dark theme. Recovery actions and dialogs are easier to pick out.
+* **Facebook:** Shorter settings descriptions in all five translations explain what each control does without hiding important exceptions. Pause has a visible badge when it's on.
+* **Facebook:** The Save folder dialog says where files go and reports the folder name it actually saved when invalid characters need replacing. The diagnostic choices explain the quick and full reports.
+* **Facebook:** The Licenses screen wraps its long notices for a phone and opens the credited projects' links when tapped.
+* **Facebook:** The same 21 patches still target Facebook 580.0.0.51.74 and 577.0.0.50.72. Morphe Manager 1.32.0 or newer is required.
+
 ## 0.1.5 (2026-09-26)
 
 * **Facebook:** The optional Stop Story auto-advance patch keeps a finished Story on screen until you tap or swipe. Its switch restores Facebook's timing at any time.
