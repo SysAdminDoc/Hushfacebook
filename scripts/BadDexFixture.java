@@ -56,7 +56,10 @@ import java.util.Map;
  * under their real names too, filled the way the patches fill them: a call to GraphQLStory's
  * accessor before anything returns. And a second host class stands in for the feed's two Stories
  * tray adapter methods, each holding the string the contract picks it by, with the tray patch's
- * call to {@code FeedFilter.hideStoriesTray} first in the patched builds.
+ * call to {@code FeedFilter.hideStoriesTray} first in the patched builds. The reels patch's two
+ * changes are there as well: a renamed feed unit class answering ShowcaseFeedUnit, whose accessor
+ * the {@code ShowcaseType} stub calls, and a pre-EOF injector holding its adapter's name, with the
+ * call to {@code FeedFilter.hidePreEofReels} first.
  *
  *   java -cp &lt;cli jar&gt; BadDexFixture.java &lt;outDir&gt;
  */
@@ -82,6 +85,15 @@ public class BadDexFixture {
 
     private static final String ADAPTERS = "Lfixture/Adapters;";
     private static final ImmutableMethodReference HIDE_STORIES_TRAY = method(FILTER, "hideStoriesTray", "Z", "I");
+
+    private static final String SHOWCASE_TYPE = "Lapp/morphe/extension/facebook/feed/ShowcaseType;";
+    /** The class whose getTypeName() answers ShowcaseFeedUnit, and its story type accessor. */
+    private static final String SHOWCASE = "Lfixture/Showcase;";
+    private static final String STORY_TYPE = "Lfixture/StoryType;";
+    private static final ImmutableMethodReference SHOWCASE_ACCESSOR = method(SHOWCASE, "A01", STORY_TYPE);
+
+    private static final String PRE_EOF = "Lfixture/PreEof;";
+    private static final ImmutableMethodReference HIDE_PRE_EOF_REELS = method(FILTER, "hidePreEofReels", "Z");
 
     private static final ImmutableTypeReference STRING_TYPE = new ImmutableTypeReference("Ljava/lang/String;");
     private static final ImmutableTypeReference INT_ARRAY = new ImmutableTypeReference("[I");
@@ -370,6 +382,46 @@ public class BadDexFixture {
         return adapters(Collections.<Instruction>emptyList(), Collections.<Instruction>emptyList());
     }
 
+    /**
+     * A feed unit class Redex renamed: its getTypeName() answers [typeName] as a literal, and its
+     * story type accessor answers the enum. Instance methods: v0 free, v1 this.
+     */
+    private static ClassDef showcaseUnit(String type, String typeName) {
+        return new ImmutableClassDef(type, AccessFlags.PUBLIC.getValue() | AccessFlags.FINAL.getValue(), OBJECT,
+                null, null, null, null, Arrays.asList(
+                        define(type, "getTypeName", "Ljava/lang/String;", false, body(2,
+                                new ImmutableInstruction21c(Opcode.CONST_STRING, 0, new ImmutableStringReference(typeName)),
+                                op(Opcode.RETURN_OBJECT, 0))),
+                        define(type, "A01", STORY_TYPE, false, body(2,
+                                new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN_OBJECT, 0)))));
+    }
+
+    private static ClassDef showcaseUnit() {
+        return showcaseUnit(SHOWCASE, "ShowcaseFeedUnit");
+    }
+
+    /**
+     * The pre-EOF injector, an instance method: v0 free, v1 this. [prefix] comes first, then the
+     * adapter name it holds, then its own work, which the fixture leaves as a return.
+     */
+    private static ClassDef preEof(List<Instruction> prefix) {
+        List<Instruction> instructions = new ArrayList<>(prefix);
+        instructions.add(new ImmutableInstruction21c(Opcode.CONST_STRING, 0, new ImmutableStringReference("PreEofIfuSectionAdapter")));
+        instructions.add(op(Opcode.RETURN_VOID));
+        return new ImmutableClassDef(PRE_EOF, AccessFlags.PUBLIC.getValue(), OBJECT, null, null, null, null,
+                Collections.singletonList(define(PRE_EOF, "injectPreEofIfuEdge$fixture", "V", false,
+                        new ImmutableMethodImplementation(2, instructions, null, null))));
+    }
+
+    /** What the reels patch puts first in the injector: ask, and return when told to. The keep path lands at 7. */
+    private static List<Instruction> preEofHook() {
+        return Arrays.asList(
+                invoke(HIDE_PRE_EOF_REELS),        // 0
+                op(Opcode.MOVE_RESULT, 0),         // 3
+                ifEqz(0, 3),                       // 4 -> 7
+                op(Opcode.RETURN_VOID));           // 6
+    }
+
     private static ClassDef hookedAdapters() {
         return adapters(trayHook(0), trayHook(1));
     }
@@ -402,6 +454,8 @@ public class BadDexFixture {
                 define(FILTER, "inspect", "V", true, body(2, op(Opcode.RETURN_VOID)), OBJECT, OBJECT),
                 define(FILTER, "hideStoriesTray", "Z", true, body(2,
                         new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN, 0)), "I"),
+                define(FILTER, "hidePreEofReels", "Z", true, body(1,
+                        new ImmutableInstruction11n(Opcode.CONST_4, 0, 0), op(Opcode.RETURN, 0))),
                 define(FILTER, "wide", "V", true, body(2, op(Opcode.RETURN_VOID)), "J"),
                 define(FILTER, "reuse", "V", true, body(1,
                         new ImmutableInstruction10t(Opcode.GOTO, 5),                            // 0 -> 5
@@ -516,7 +570,22 @@ public class BadDexFixture {
 
     private static List<ClassDef> bundle(ClassDef host, ClassDef genAiLabel, ClassDef recommendationLabel,
             ClassDef adapters) {
-        return Arrays.asList(host, adapters, filter(), genAiLabel, recommendationLabel);
+        return bundle(host, genAiLabel, recommendationLabel, adapters,
+                stub(SHOWCASE_TYPE, "storyType", FILLED_SHOWCASE_STUB), preEof(preEofHook()));
+    }
+
+    /** A patched build with the reels patch's two changes passed in too, and the showcase unit. */
+    private static List<ClassDef> bundle(ClassDef host, ClassDef genAiLabel, ClassDef recommendationLabel,
+            ClassDef adapters, ClassDef showcaseType, ClassDef preEof) {
+        return Arrays.asList(host, adapters, filter(), genAiLabel, recommendationLabel, showcaseUnit(), showcaseType,
+                preEof);
+    }
+
+    /** A patched build that breaks only the reels patch's changes, as [showcaseType] and [preEof]. */
+    private static List<ClassDef> reelsBundle(ClassDef showcaseType, ClassDef preEof) {
+        return bundle(host(feedEdge(GUARDED_FEED_EDGE), staticHost(GOOD_STATIC_HOST), switchHost(7),
+                tryHost(CLEAN_TRY), true), stub(GENAI_LABEL, "detectedInfo", FILLED_STUB),
+                stub(RECOMMENDATION_LABEL, "recommendationContext", FILLED_STUB), hookedAdapters(), showcaseType, preEof);
     }
 
     /**
@@ -533,6 +602,13 @@ public class BadDexFixture {
     private static final ImmutableMethodImplementation FILLED_STUB = body(2,
             new ImmutableInstruction21c(Opcode.CHECK_CAST, 1, new ImmutableTypeReference(STORY)),
             new ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 1, 1, 0, 0, 0, 0, STORY_ACCESSOR),
+            op(Opcode.MOVE_RESULT_OBJECT, 1),
+            op(Opcode.RETURN_OBJECT, 1));
+
+    /** What the reels patch writes: the unit cast to the showcase class, its accessor called. */
+    private static final ImmutableMethodImplementation FILLED_SHOWCASE_STUB = body(2,
+            new ImmutableInstruction21c(Opcode.CHECK_CAST, 1, new ImmutableTypeReference(SHOWCASE)),
+            new ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 1, 1, 0, 0, 0, 0, SHOWCASE_ACCESSOR),
             op(Opcode.MOVE_RESULT_OBJECT, 1),
             op(Opcode.RETURN_OBJECT, 1));
 
@@ -583,7 +659,8 @@ public class BadDexFixture {
         if (!out.isDirectory() && !out.mkdirs()) throw new IllegalStateException("Cannot create " + out);
 
         Map<String, List<ClassDef>> dexes = new LinkedHashMap<>();
-        dexes.put("clean", Arrays.asList(cleanHost(), cleanAdapters()));
+        dexes.put("clean", Arrays.asList(cleanHost(), cleanAdapters(), showcaseUnit(),
+                preEof(Collections.<Instruction>emptyList())));
         dexes.put("secondary", Collections.singletonList(secondary()));
         dexes.put("good", good());
         List<ClassDef> goodWithSecondary = new ArrayList<>(good());
@@ -890,6 +967,26 @@ public class BadDexFixture {
                         op(Opcode.MOVE_RESULT_OBJECT, 1),
                         op(Opcode.RETURN_OBJECT, 1))),
                 filledRecommendation));
+
+        ClassDef filledShowcase = stub(SHOWCASE_TYPE, "storyType", FILLED_SHOWCASE_STUB);
+        // contract: the pre-EOF injector left without the reels patch's call, the hook deleted.
+        dexes.put("bad-preeof-hook-missing", reelsBundle(filledShowcase, preEof(Collections.<Instruction>emptyList())));
+        // contract: the injector's call after a branch, not first.
+        List<Instruction> lateHook = new ArrayList<>();
+        lateHook.add(ifEqz(1, 3));                                        // 0 -> 3
+        lateHook.add(op(Opcode.NOP));                                     // 2
+        lateHook.addAll(preEofHook());                                    // 3
+        dexes.put("bad-preeof-hook-late", reelsBundle(filledShowcase, preEof(lateHook)));
+        // contract: the showcase stub left as the extension ships it, answering its marker.
+        dexes.put("bad-showcase-stub-not-filled", reelsBundle(stub(SHOWCASE_TYPE, "storyType", UNFILLED_STUB),
+                preEof(preEofHook())));
+        // contract: the showcase stub calling a no-argument method of a class that isn't the showcase one.
+        dexes.put("bad-showcase-stub-other-class", reelsBundle(stub(SHOWCASE_TYPE, "storyType", FILLED_STUB),
+                preEof(preEofHook())));
+        // contract: a second class answering the showcase type name, so the stub's class isn't the only one.
+        List<ClassDef> twoShowcases = new ArrayList<>(reelsBundle(filledShowcase, preEof(preEofHook())));
+        twoShowcases.add(showcaseUnit("Lfixture/OtherShowcase;", "ShowcaseFeedUnit"));
+        dexes.put("bad-showcase-two-classes", twoShowcases);
 
         for (Map.Entry<String, List<ClassDef>> e : dexes.entrySet()) {
             File dex = new File(out, e.getKey() + ".dex");

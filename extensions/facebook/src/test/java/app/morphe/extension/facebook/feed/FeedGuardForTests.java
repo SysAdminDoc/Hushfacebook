@@ -36,6 +36,15 @@ public final class FeedGuardForTests {
         return FeedFilter.hideEdge(category, feedUnit, true, true, story -> null, false, GenAiLabel.PATCHED, true);
     }
 
+    /**
+     * The guard with the reels patch in, where the showcase stub answers [storyType] for a unit
+     * whose type name is ShowcaseFeedUnit.
+     */
+    public static boolean hidesShowcaseReels(Object category, Object storyType) {
+        return FeedFilter.hideEdge(category, new TypedFeedUnit(ShowcaseType.UNIT_TYPE), true, true, story -> null,
+                false, GenAiLabel.PATCHED, true, unit -> storyType);
+    }
+
     /** GenAI info of the type Facebook's detection writes, with its flag set to [flagged]. */
     public static BaseModelWithTree detectedInfo(boolean flagged) {
         return new BaseModelWithTree(GenAiLabel.DETECTED_INFO_TYPE_TAG).with(GenAiLabel.DETECTED_FLAG, flagged);

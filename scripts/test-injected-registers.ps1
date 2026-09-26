@@ -18,8 +18,10 @@
     through a copy, a wide move of a conflict, a long and a lone upper half tested against zero,
     an int and an object tested for equality in either order, a move-result the patch separated
     from its invoke, bad try ranges and handlers (a handler at a switch or array payload among
-    them), a move-exception the method's entry reaches, and the one feed guard doubled, moved or
-    missing. The good build carries the joins, copies and reads ART accepts, a zero tested against
+    them), a move-exception the method's entry reaches, the one feed guard doubled, moved or
+    missing, the reels hook deleted from the pre-EOF injector or put after a branch, and the
+    showcase stub left unfilled, calling another class, or calling a class that isn't the only one
+    answering its type name. The good build carries the joins, copies and reads ART accepts, a zero tested against
     an object among them, so a check made stricter still has to pass them. Each bad build has to
     fail with findings of its own category only, so a check that fires for the wrong reason fails
     here too. Removed methods and DEX entries, the removal allowlist, and the device tally
@@ -553,6 +555,13 @@ try {
         Assert-True (($good.Output -join "`n") -match [regex]::Escape("hideStoriesTray(I)Z holding $adapter")) `
             "The good build's tray hook was not reported first in its adapter: $adapter`n$($good.Output -join "`n")"
     }
+    Assert-True (($good.Output -join "`n") -match [regex]::Escape(
+        'hidePreEofReels()Z holding PreEofIfuSectionAdapter: first in Lfixture/PreEof;->injectPreEofIfuEdge$fixture(')) `
+        "The good build's reels hook was not reported first in the pre-EOF injector.`n$($good.Output -join "`n")"
+    Assert-True (($good.Output -join "`n") -match [regex]::Escape(
+        'ShowcaseType;->storyType(Ljava/lang/Object;)Ljava/lang/Object; on-type-named ShowcaseFeedUnit: calls ' +
+        'Lfixture/Showcase;->A01()Lfixture/StoryType; before its first return')) `
+        "The good build's showcase stub was not reported calling the showcase unit's accessor.`n$($good.Output -join "`n")"
 
     $bad = [ordered]@{
         'bad-branch' = 'branch'
@@ -630,6 +639,11 @@ try {
         'bad-stub-call-after-return' = 'contract'
         'bad-tray-hook-missing' = 'contract'
         'bad-tray-hook-late' = 'contract'
+        'bad-preeof-hook-missing' = 'contract'
+        'bad-preeof-hook-late' = 'contract'
+        'bad-showcase-stub-not-filled' = 'contract'
+        'bad-showcase-stub-other-class' = 'contract'
+        'bad-showcase-two-classes' = 'contract'
     }
     $failures = @()
     foreach ($case in $bad.GetEnumerator()) {
@@ -671,7 +685,10 @@ try {
             'first-call detectedInfo on Lcom/facebook/graphql/model/GraphQLStory;',
             'start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z in addStoriesAdapter',
             'start-call hideStoriesTray holding stories_tray_create_adapter_stop',
-            'start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z holding')) {
+            'start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z holding',
+            'first-call Lapp/morphe/extension/facebook/feed/ShowcaseType;->storyType(Ljava/lang/Object;)Ljava/lang/Object; on-type-named Lfixture/Showcase;',
+            'first-call Lapp/morphe/extension/facebook/feed/ShowcaseType;->storyType(Ljava/lang/Object;)Ljava/lang/Object; on-type-named',
+            'first-call storyType on-type-named ShowcaseFeedUnit')) {
         [System.IO.File]::WriteAllText($badContract, "# a comment line first`n$line`n")
         $unreadableFirstCall = Invoke-DexDiff -Clean $cleanApk -Patched (Join-Path $caseRoot 'good.apk') `
             -Allowlist $emptyAllowlist -Name 'bad-first-call-contract' -Contracts $badContract

@@ -73,6 +73,15 @@ public final class FeedFilter {
      */
     static final String[] REELS_CATEGORIES = {"FB_SHORTS", "FB_SHORTS_FALLBACK", "END_OF_FEED_REELS"};
 
+    /**
+     * What the reels rule read beyond the category: the story type of each ShowcaseFeedUnit it
+     * looked at while its switch was on, and every call of the pre-EOF injector, which builds a
+     * "Reels" row of its own and adds it to the feed without passing the edge guard.
+     */
+    static final String REELS_ROUTE = "Reels in feed";
+    /** The kind and the removal reason a pre-EOF injector call counts under. */
+    static final String PRE_EOF_UNIT = "pre-EOF unit";
+
     /** The adapter the patch passes: the classic tray, or the unified one a server gate turns on. */
     public static final int LEGACY_TRAY = 0;
     public static final int UNIFIED_TRAY = 1;
@@ -152,10 +161,18 @@ public final class FeedFilter {
                 aiAccessor, false);
     }
 
-    /** The guard with the reels patch's flag passed in too. */
+    /** The guard with the reels patch's flag passed in too, and the showcase stub it fills. */
     static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
             StoryFlag.Accessor recommendationAccessor, boolean aiPatched, StoryFlag.Accessor aiAccessor,
             boolean reelsPatched) {
+        return hideEdge(category, feedUnit, sponsoredPatched, suggestedPatched, recommendationAccessor, aiPatched,
+                aiAccessor, reelsPatched, ShowcaseType.PATCHED);
+    }
+
+    /** The guard with the showcase story type accessor passed in, so a test can stand in for it. */
+    static boolean hideEdge(Object category, Object feedUnit, boolean sponsoredPatched, boolean suggestedPatched,
+            StoryFlag.Accessor recommendationAccessor, boolean aiPatched, StoryFlag.Accessor aiAccessor,
+            boolean reelsPatched, StoryFlag.Accessor showcaseAccessor) {
         try {
             if (sponsoredPatched) HookStatus.invoked(FamilyNames.SPONSORED_POSTS);
             if (reelsPatched) HookStatus.invoked(FamilyNames.FEED_REELS);
@@ -173,10 +190,14 @@ public final class FeedFilter {
             FeedFilterCounters.sawKind(FEED_ROUTE, categoryName);
             // What kind of post this is, for a report of what reaches the feed: an enum constant, a
             // GraphQL type name and what Facebook's recommendation flag reads, never the post itself.
-            // Built only when debug logging is on, and the flag only read with the patch that fills
-            // its accessor.
-            Logger.printDebug(() -> "Feed edge: " + categoryName + " " + typeName(feedUnit) + " ifr="
-                    + (suggestedPatched ? recommendationFlag(feedUnit, recommendationAccessor) : "none"));
+            // Built only when debug logging is on, and the flag and the showcase type only read with
+            // the patch that fills their accessor.
+            Logger.printDebug(() -> {
+                String type = typeName(feedUnit);
+                return "Feed edge: " + categoryName + " " + type + " ifr="
+                        + (suggestedPatched ? recommendationFlag(feedUnit, recommendationAccessor) : "none")
+                        + (reelsPatched ? " showcase=" + showcaseFor(type, feedUnit, showcaseAccessor) : "");
+            });
             // An edge a prefetch adds before the settings are ready stays: no switch can be read yet.
             if (!Utils.settingsReady()) return false;
 
@@ -184,8 +205,8 @@ public final class FeedFilter {
             if (sponsoredPatched && hiddenCategory(category)) {
                 reason = categoryName;
             }
-            if (reason == null && reelsPatched && isReelsCategory(categoryName) && Settings.HIDE_FEED_REELS.get()) {
-                reason = categoryName;
+            if (reason == null && reelsPatched && Settings.HIDE_FEED_REELS.get()) {
+                reason = isReelsCategory(categoryName) ? categoryName : showcaseReason(feedUnit, showcaseAccessor);
             }
             if (reason == null && suggestedPatched) {
                 if (Settings.HIDE_SUGGESTED_POSTS.get()) reason = suggestedUnitName(feedUnit);
@@ -229,6 +250,30 @@ public final class FeedFilter {
         if (!outcome.hides) return null;
         FeedFilterCounters.removed(route, 1, why);
         return flag.flag;
+    }
+
+    /**
+     * The reels rule for an edge whose category isn't one of the reels categories: a
+     * ShowcaseFeedUnit whose story type is a row of reels. Its reason is the type name and the story
+     * type, such as {@code ShowcaseFeedUnit:SHOWCASE_SHORT_VIDEO}; any other unit, and a showcase
+     * unit of another type or one this can't read, answers null and stays. Every showcase unit it
+     * reads is counted on the reels route under the type it read. Any other unit never reaches the
+     * accessor: the patch fills it for the one class that answers the showcase type name.
+     */
+    private static String showcaseReason(Object feedUnit, StoryFlag.Accessor accessor) {
+        if (!ShowcaseType.UNIT_TYPE.equals(typeName(feedUnit))) return null;
+        String type = ShowcaseType.read(feedUnit, accessor);
+        FeedFilterCounters.sawList(REELS_ROUTE, 1);
+        FeedFilterCounters.sawKind(REELS_ROUTE, type);
+        if (!ShowcaseType.isReels(type)) return null;
+        String reason = ShowcaseType.UNIT_TYPE + ":" + type;
+        FeedFilterCounters.removed(REELS_ROUTE, 1, reason);
+        return reason;
+    }
+
+    /** A showcase unit's story type for the debug line, or none for any other unit. */
+    private static String showcaseFor(String typeName, Object feedUnit, StoryFlag.Accessor accessor) {
+        return ShowcaseType.UNIT_TYPE.equals(typeName) ? ShowcaseType.read(feedUnit, accessor) : "none";
     }
 
     /** Facebook's recommendation flag for the debug line: true, false, or none when it can't say. */
@@ -410,6 +455,47 @@ public final class FeedFilter {
         int bit = 1 << ((adapter == UNIFIED_TRAY ? 2 : 0) + (hide ? 1 : 0));
         if ((TRAY_LOGGED.getAndUpdate(logged -> logged | bit) & bit) != 0) return;
         Logger.printDebug(() -> "Stories tray: " + (hide ? "skipped" : "kept") + " " + kind + " adapter");
+    }
+
+    /**
+     * Injection point, at the start of the pre-EOF injector: the method that builds a "Reels" row of
+     * its own shortly before the feed you follow ends and adds it at the tail of the feed. It never
+     * goes through {@code addNewEdgeToCollection}, so the edge guard can't see that row. True makes
+     * the method return before it builds anything, which is what it does when Facebook's own gate
+     * turns it away.
+     *
+     * <p>Every call is counted on the reels route, and a skipped one as a removal. Until the settings
+     * are ready, and while Hushfacebook is paused, it answers false and Facebook builds the row.
+     */
+    public static boolean hidePreEofReels() {
+        try {
+            HookStatus.invoked(FamilyNames.FEED_REELS);
+            FeedFilterCounters.sawList(REELS_ROUTE, 1);
+            FeedFilterCounters.sawKind(REELS_ROUTE, PRE_EOF_UNIT);
+            boolean hide = Utils.settingsReady() && Settings.HIDE_FEED_REELS.get();
+            if (hide) FeedFilterCounters.removed(REELS_ROUTE, 1, PRE_EOF_UNIT);
+            logPreEofOnce(hide);
+            return hide;
+        } catch (Throwable failure) {
+            HookStatus.threw(FamilyNames.FEED_REELS, "pre-EOF reels injector", failure);
+            Logger.printException(() -> "Reels in feed: could not read its switch", failure);
+            return false;
+        }
+    }
+
+    /** One bit per decision that has had its debug line, so each is logged once. */
+    static final AtomicInteger PRE_EOF_LOGGED = new AtomicInteger();
+
+    /**
+     * A debug line the first time the pre-EOF row is skipped or kept, which says Facebook asks for
+     * that row on this account at all. Only once the settings can be read and debug logging is on,
+     * so turning logging on later still gets the line.
+     */
+    private static void logPreEofOnce(boolean hide) {
+        if (!Utils.settingsReady() || !BaseSettings.DEBUG.get()) return;
+        int bit = hide ? 2 : 1;
+        if ((PRE_EOF_LOGGED.getAndUpdate(logged -> logged | bit) & bit) != 0) return;
+        Logger.printDebug(() -> "Reels in feed: " + (hide ? "skipped" : "kept") + " the pre-EOF Reels unit");
     }
 
     /** Injection point. Whether the story viewer's ad bucket sources contribute nothing. */

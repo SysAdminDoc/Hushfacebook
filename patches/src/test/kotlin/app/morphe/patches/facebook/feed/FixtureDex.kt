@@ -7,7 +7,9 @@ package app.morphe.patches.facebook.feed
 import com.android.tools.smali.dexlib2.Opcodes
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
 import com.android.tools.smali.dexlib2.iface.ClassDef
+import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.immutable.ImmutableClassDef
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.zip.ZipFile
@@ -39,6 +41,24 @@ internal object FixtureDex {
         forEachDex(bundle) { dex ->
             for (classDef in dex.classes) {
                 if (classDef.type in types && classDef.type !in found) found[classDef.type] = ImmutableClassDef.of(classDef)
+            }
+        }
+        return found
+    }
+
+    /**
+     * Every method that [wanted] picks, in the dex files [dexFilter] lets through. The filter is how
+     * a whole-APK search stays quick: a call needs its target in the dex's method section, and a
+     * name needs to be in its string section, so a dex without them can be skipped unread.
+     */
+    fun methodsWhere(bundle: File, dexFilter: (DexBackedDexFile) -> Boolean, wanted: (Method) -> Boolean): List<Method> {
+        val found = mutableListOf<Method>()
+        forEachDex(bundle) { dex ->
+            if (!dexFilter(dex)) return@forEachDex
+            for (classDef in dex.classes) {
+                for (method in classDef.methods) {
+                    if (wanted(method)) found += ImmutableMethod.of(method)
+                }
             }
         }
         return found

@@ -114,21 +114,29 @@ internal fun BytecodePatchContext.requireStoryFlagReaders() {
 
 /**
  * Fills in the extension's `public static Object [stubName](Object)` on [stubClass] with a call to
- * [accessor]. Only the parameter register is used, so the stub's own register count doesn't
- * matter; the extension checks the unit is a GraphQLStory before it calls the stub.
+ * [accessor], a public instance method with no arguments that answers an object. The argument is
+ * cast to the accessor's own class: GraphQLStory for the story flags, and the renamed class that
+ * answers the type name for a unit's accessor. Only the parameter register is used, so the stub's
+ * own register count doesn't matter; the extension checks what the unit is before it calls the stub.
  */
 internal fun BytecodePatchContext.fillStoryModelStub(stubClass: String, stubName: String, accessor: Method) {
+    if (accessor.parameterTypes.isNotEmpty() || AccessFlags.STATIC.isSet(accessor.accessFlags) ||
+        !accessor.returnType.startsWith("L")
+    ) {
+        throw PatchException("${accessor.definingClass}->${accessor.name} isn't an accessor $stubName can call")
+    }
     val stub = mutableClassDefBy(stubClass).methods.singleOrNull {
         it.name == stubName && AccessFlags.STATIC.isSet(it.accessFlags) &&
             it.returnType == "Ljava/lang/Object;" &&
             it.parameterTypes.map { type -> type.toString() } == listOf("Ljava/lang/Object;")
     } ?: throw PatchException("$stubClass has no static Object $stubName(Object)")
 
+    val host = accessor.definingClass
     stub.addInstructions(
         0,
         """
-            check-cast p0, $GRAPHQL_STORY
-            invoke-virtual { p0 }, $GRAPHQL_STORY->${accessor.name}()${accessor.returnType}
+            check-cast p0, $host
+            invoke-virtual { p0 }, $host->${accessor.name}()${accessor.returnType}
             move-result-object p0
             return-object p0
         """,

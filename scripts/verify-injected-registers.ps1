@@ -17,8 +17,9 @@
     added method is also checked for branch and switch targets, invoke registers, the static and
     wide parameter layout, move-result placement and try ranges, and the whole APK is held to
     scripts/injected-mutation-contracts.txt: one feed guard, in addNewEdgeToCollection, each
-    story-flag stub calling GraphQLStory's accessor before it returns, and the Stories tray hook
-    first in both tray adapter methods.
+    story-flag stub calling GraphQLStory's accessor before it returns, the showcase stub calling
+    the accessor of the one class answering ShowcaseFeedUnit, the Stories tray hook first in both
+    tray adapter methods, and the reels hook first in the pre-EOF injector.
 
     On a device. The Android runtime's own verifier is the authority, so with -Serial the
     clean APK and the patched APK are both put through dex2oat with the verify filter and the

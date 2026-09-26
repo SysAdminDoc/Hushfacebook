@@ -2,6 +2,10 @@
 
 Every Hushfacebook release, newest first.
 
+## Unreleased
+
+* **Facebook:** Hide Reels in the feed now catches Reels showcase rows filed under other feed categories and the row Facebook injects just before the feed ends. Other showcases and reels posted by people you follow stay.
+
 ## 0.1.4 (2026-09-25)
 
 * **Facebook:** New patch, Hide Reels in the feed. It takes the rows of reels between posts out of the news feed, and the reels Facebook adds where your feed ends. A reel a friend posts stays. The patch starts off in Morphe Manager, and its switch starts on once you pick it.

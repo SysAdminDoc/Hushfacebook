@@ -57,7 +57,10 @@ import app.morphe.extension.shared.settings.PauseForTests;
 public class ColdStartHooksTest {
 
     /** Stands in for GraphQLFeedStoryCategory: only the constant names matter to the guard. */
-    enum Category { ORGANIC, SPONSORED }
+    enum Category { ORGANIC, SPONSORED, FB_SHORTS, SHOWCASE }
+
+    /** Stands in for the showcase story type enum: only the constant names matter to the rule. */
+    enum ShowcaseStoryType { SHOWCASE_SHORT_VIDEO }
 
     /** Stands in for the obfuscated ad item base class; the patch passes its binary name. */
     public static class AdBase {
@@ -98,6 +101,9 @@ public class ColdStartHooksTest {
         assertFalse(FeedGuardForTests.hides(Category.ORGANIC, TypedFeedUnit.peopleYouMayKnow()));
         assertFalse(FeedFilter.hideStoriesTray(FeedFilter.LEGACY_TRAY));
         assertFalse(FeedFilter.hideStoriesTray(FeedFilter.UNIFIED_TRAY));
+        assertFalse(FeedGuardForTests.hidesReels(Category.FB_SHORTS, new Object()));
+        assertFalse(FeedGuardForTests.hidesShowcaseReels(Category.SHOWCASE, ShowcaseStoryType.SHOWCASE_SHORT_VIDEO));
+        assertFalse(FeedFilter.hidePreEofReels());
         assertFalse(FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true)));
         assertFalse(FeedFilter.hideEdge(Category.SPONSORED, new Object()));
         assertFalse(FeedFilter.hideSponsoredStories());
