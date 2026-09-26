@@ -10,12 +10,16 @@ package app.morphe.patches.facebook.misc.externalbrowser
 import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.patches.facebook.misc.extension.facebookExtensionPatch
 import app.morphe.patches.facebook.misc.extension.enableStatus
+import app.morphe.patches.facebook.misc.extension.localRegisterCount
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.smali.ExternalLabel
+import app.morphe.util.singleOrPatchException
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
@@ -25,6 +29,8 @@ private const val EXTENSION_CLASS = "Lapp/morphe/extension/facebook/misc/Externa
 
 private const val REDIRECT =
     "$EXTENSION_CLASS->redirect(Landroid/app/Activity;Landroid/content/Intent;)Z"
+
+private const val PATCH = "Open links in external browser"
 
 /**
  * Facebook ships **two** in-app browsers. The newer one opens a tapped link.
@@ -65,9 +71,7 @@ val openLinksExternallyPatch = bytecodePatch(
             val classDef = mutableClassDefByOrNull(descriptor) ?: return@sumOf 0
 
             // onCreate: the URL is the data of the launch intent. Read it from the activity.
-            val onCreate = classDef.methods.single {
-                it.name == "onCreate" && it.parameterTypes == listOf("Landroid/os/Bundle;")
-            }
+            val onCreate = lifecycleMethod(classDef.methods, descriptor, "onCreate", "Landroid/os/Bundle;")
             onCreate.hookRedirect(
                 loadIntent = """
                     invoke-virtual { p0 }, Landroid/app/Activity;->getIntent()Landroid/content/Intent;
@@ -77,9 +81,7 @@ val openLinksExternallyPatch = bytecodePatch(
 
             // onNewIntent: the new URL comes in as the parameter. getIntent() still returns the
             // intent that started the browser, which holds the previous link.
-            val onNewIntent = classDef.methods.single {
-                it.name == "onNewIntent" && it.parameterTypes == listOf("Landroid/content/Intent;")
-            }
+            val onNewIntent = lifecycleMethod(classDef.methods, descriptor, "onNewIntent", "Landroid/content/Intent;")
             onNewIntent.hookRedirect(loadIntent = null)
 
             2
@@ -93,6 +95,11 @@ val openLinksExternallyPatch = bytecodePatch(
     }
 }
 
+/** The browser activity's [name] method taking one [parameter], or a refusal naming it. */
+internal fun <T : Method> lifecycleMethod(methods: Iterable<T>, activity: String, name: String, parameter: String): T =
+    methods.filter { it.name == name && it.parameterTypes.map(CharSequence::toString) == listOf(parameter) }
+        .singleOrPatchException("$PATCH: $activity's $name($parameter)")
+
 /**
  * Put the redirect after the superclass call of this method.
  *
@@ -103,12 +110,19 @@ val openLinksExternallyPatch = bytecodePatch(
  * The redirect must go after the superclass call. Before it, the superclass call does not run, and
  * Android answers with `SuperNotCalledException`.
  */
-private fun MutableMethod.hookRedirect(loadIntent: String?) {
-    val superIndex = instructions().indexOfFirst { it.opcode == Opcode.INVOKE_SUPER }
-    check(superIndex >= 0) { "$definingClass->$name makes no super call to inject after" }
-
-    val injectIndex = superIndex + 1
+internal fun MutableMethod.hookRedirect(loadIntent: String?) {
+    val injectIndex = ownSuperCallIndex() + 1
     val intent = if (loadIntent != null) "v0" else "p1"
+
+    // The calls below name p0, and onNewIntent's p1, in operands that only reach v15. The
+    // patcher's smali compiler leaves out an instruction whose register doesn't fit, without a
+    // word, so a method with its parameters higher up has to stop the patch here instead.
+    val highest = localRegisterCount() + if (loadIntent != null) 0 else 1
+    if (highest > 15) {
+        throw PatchException(
+            "$PATCH: $definingClass->$name holds a parameter the redirect names in v$highest, above v15",
+        )
+    }
     val call = """
         ${loadIntent ?: ""}
         invoke-static { p0, $intent }, $REDIRECT
@@ -135,6 +149,24 @@ private fun MutableMethod.hookRedirect(loadIntent: String?) {
         )
     }
 }
+
+/**
+ * Where this method calls the method it overrides: the one `invoke-super` with its own name,
+ * parameters and return type.
+ *
+ * Not simply the first super call. `BrowserLiteDIActivity.onCreate` makes two on both builds,
+ * `onCreate` and then `getResources()`, so the first is only right while they stay in that order.
+ * A redirect after a super call that comes first would finish the activity before
+ * `super.onCreate` ran. None, or two, stops the patch.
+ */
+internal fun MutableMethod.ownSuperCallIndex(): Int =
+    instructions().withIndex().filter { (_, instruction) ->
+        val call = instruction.methodReferenceOrNull()
+        (instruction.opcode == Opcode.INVOKE_SUPER || instruction.opcode == Opcode.INVOKE_SUPER_RANGE) &&
+            call != null && call.name == name && call.returnType == returnType &&
+            call.parameterTypes.map(CharSequence::toString) == parameterTypes.map(CharSequence::toString)
+    }.map { it.index }
+        .singleOrPatchException("$PATCH: $definingClass->$name's call to super.$name")
 
 /**
  * Where the trace section of the method closes, or null when the method opens none.
