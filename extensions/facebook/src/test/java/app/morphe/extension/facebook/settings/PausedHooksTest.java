@@ -47,6 +47,7 @@ import app.morphe.extension.facebook.feed.FeedGuardForTests;
 import app.morphe.extension.facebook.feed.TypedFeedUnit;
 import app.morphe.extension.facebook.misc.ExternalBrowser;
 import app.morphe.extension.facebook.misc.LinkCleaner;
+import app.morphe.extension.facebook.stories.StoryAdvance;
 import app.morphe.extension.shared.SettingsContextRule;
 import app.morphe.extension.shared.diagnostics.FeedFilterCounters;
 import app.morphe.extension.shared.settings.BaseSettings;
@@ -148,6 +149,7 @@ public class PausedHooksTest {
         probes.put(PatchFamily.AI_DETECTED_POSTS, Collections.singletonList(
                 () -> FeedGuardForTests.hides(Category.ORGANIC, new GraphQLStory(), FeedGuardForTests.detectedInfo(true))));
         probes.put(PatchFamily.SPONSORED_STORIES, Collections.singletonList(FeedFilter::hideSponsoredStories));
+        probes.put(PatchFamily.STORY_AUTO_ADVANCE, Collections.singletonList(StoryAdvance::waitForTap));
         probes.put(PatchFamily.SPONSORED_REELS, Arrays.asList(
                 () -> {
                     VideoAd ad = new VideoAd();

@@ -46,6 +46,10 @@ public final class SettingsStatus {
         return false;
     }
 
+    public static boolean storyAutoAdvance() {
+        return false;
+    }
+
     public static boolean sponsoredReels() {
         return false;
     }

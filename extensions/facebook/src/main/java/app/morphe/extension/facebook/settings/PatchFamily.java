@@ -50,6 +50,8 @@ public enum PatchFamily {
             Settings.HIDE_AI_DETECTED_POSTS),
     SPONSORED_STORIES(FamilyNames.SPONSORED_STORIES, "sponsoredStories", null,
             Settings.HIDE_SPONSORED_STORIES),
+    STORY_AUTO_ADVANCE(FamilyNames.STORY_AUTO_ADVANCE, "storyAutoAdvance", null,
+            Settings.BLOCK_STORY_AUTO_ADVANCE),
     SPONSORED_REELS(FamilyNames.SPONSORED_REELS, "sponsoredReels",
             "the part of the Reels ad block patched into the app",
             Settings.HIDE_SPONSORED_REELS),

@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(326);
+        Map<String, String> table = new HashMap<>(330);
         fillDe0(table);
         fillDe1(table);
         fillDe2(table);
@@ -76,6 +76,8 @@ public final class L10nTranslations {
                 "Ein Diagnosebericht wird bereits gespeichert.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
                 "Eine Datei namens %1$s in %2$s hat Hushfacebook pausiert.");
+        table.put("A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.",
+                "Eine abgeschlossene Story bleibt sichtbar, bis du tippst oder wischst. Schalte dies aus, um Facebooks Zeitsteuerung zu nutzen.");
         table.put("AMOLED black theme",
                 "Schwarzes AMOLED-Design");
         table.put("About",
@@ -170,11 +172,11 @@ public final class L10nTranslations {
                 "Vollst\u00e4ndiger Bericht gespeichert unter %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut");
-        table.put("Hide \"People you may know\"",
-                "\u201ePersonen, die du kennen k\u00f6nntest\u201c ausblenden");
     }
 
     private static void fillDe1(Map<String, String> table) {
+        table.put("Hide \"People you may know\"",
+                "\u201ePersonen, die du kennen k\u00f6nntest\u201c ausblenden");
         table.put("Hide \"Suggested for you\" posts",
                 "\u201eVorschl\u00e4ge f\u00fcr dich\u201c ausblenden");
         table.put("Hide AI-detected posts",
@@ -293,11 +295,11 @@ public final class L10nTranslations {
                 "Wird gespeichert \u2026");
         table.put("Set when you patched",
                 "Beim Patchen festgelegt");
-        table.put("Settings couldn't open",
-                "Einstellungen lie\u00dfen sich nicht \u00f6ffnen");
     }
 
     private static void fillDe2(Map<String, String> table) {
+        table.put("Settings couldn't open",
+                "Einstellungen lie\u00dfen sich nicht \u00f6ffnen");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "Die Einstellungen lie\u00dfen sich nicht vollst\u00e4ndig aktualisieren. \u00d6ffne sie neu und versuche es noch einmal.");
         table.put("Settings exported.",
@@ -312,6 +314,8 @@ public final class L10nTranslations {
                 "Quellcode und Issues");
         table.put("Stays in while paused",
                 "Bleibt w\u00e4hrend der Pause aktiv");
+        table.put("Stop Story auto-advance",
+                "Automatisches Weiterspringen bei Stories stoppen");
         table.put("Stories",
                 "Stories");
         table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
@@ -387,7 +391,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(326);
+        Map<String, String> table = new HashMap<>(330);
         fillEs0(table);
         fillEs1(table);
         fillEs2(table);
@@ -419,6 +423,8 @@ public final class L10nTranslations {
                 "Ya se est\u00e1 guardando un informe de diagn\u00f3stico.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
                 "Un archivo llamado %1$s en %2$s paus\u00f3 Hushfacebook.");
+        table.put("A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.",
+                "Una historia terminada permanece en pantalla hasta que toques o deslices. Desactiva esto para usar el tiempo de Facebook.");
         table.put("AMOLED black theme",
                 "Tema negro AMOLED");
         table.put("About",
@@ -513,11 +519,11 @@ public final class L10nTranslations {
                 "Informe completo guardado en %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, con los avisos de los proyectos en los que se basa");
-        table.put("Hide \"People you may know\"",
-                "Ocultar \u201cPersonas que quiz\u00e1 conozcas\u201d");
     }
 
     private static void fillEs1(Map<String, String> table) {
+        table.put("Hide \"People you may know\"",
+                "Ocultar \u201cPersonas que quiz\u00e1 conozcas\u201d");
         table.put("Hide \"Suggested for you\" posts",
                 "Ocultar publicaciones \u201cSugerencias para ti\u201d");
         table.put("Hide AI-detected posts",
@@ -636,11 +642,11 @@ public final class L10nTranslations {
                 "Guardando...");
         table.put("Set when you patched",
                 "Aplicado al parchear");
-        table.put("Settings couldn't open",
-                "No se pudo abrir la configuraci\u00f3n");
     }
 
     private static void fillEs2(Map<String, String> table) {
+        table.put("Settings couldn't open",
+                "No se pudo abrir la configuraci\u00f3n");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "No se pudo actualizar la configuraci\u00f3n por completo. Vuelve a abrirla e int\u00e9ntalo de nuevo.");
         table.put("Settings exported.",
@@ -655,6 +661,8 @@ public final class L10nTranslations {
                 "C\u00f3digo fuente e incidencias");
         table.put("Stays in while paused",
                 "Se mantiene durante la pausa");
+        table.put("Stop Story auto-advance",
+                "Detener el avance autom\u00e1tico de historias");
         table.put("Stories",
                 "Historias");
         table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
@@ -730,7 +738,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(326);
+        Map<String, String> table = new HashMap<>(330);
         fillIn0(table);
         fillIn1(table);
         fillIn2(table);
@@ -762,6 +770,8 @@ public final class L10nTranslations {
                 "Sudah ada laporan diagnostik yang sedang disimpan.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
                 "File bernama %1$s di %2$s menjeda Hushfacebook.");
+        table.put("A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.",
+                "Cerita yang selesai tetap di layar sampai Anda mengetuk atau menggeser. Matikan ini untuk memakai waktu bawaan Facebook.");
         table.put("AMOLED black theme",
                 "Tema hitam AMOLED");
         table.put("About",
@@ -856,11 +866,11 @@ public final class L10nTranslations {
                 "Laporan lengkap disimpan ke %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya");
-        table.put("Hide \"People you may know\"",
-                "Sembunyikan \u201cOrang yang Mungkin Anda Kenal\u201d");
     }
 
     private static void fillIn1(Map<String, String> table) {
+        table.put("Hide \"People you may know\"",
+                "Sembunyikan \u201cOrang yang Mungkin Anda Kenal\u201d");
         table.put("Hide \"Suggested for you\" posts",
                 "Sembunyikan postingan \u201cDisarankan untuk Anda\u201d");
         table.put("Hide AI-detected posts",
@@ -979,11 +989,11 @@ public final class L10nTranslations {
                 "Menyimpan...");
         table.put("Set when you patched",
                 "Diatur saat Anda menambal");
-        table.put("Settings couldn't open",
-                "Pengaturan tidak dapat dibuka");
     }
 
     private static void fillIn2(Map<String, String> table) {
+        table.put("Settings couldn't open",
+                "Pengaturan tidak dapat dibuka");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "Pengaturan tidak dapat dimuat ulang sepenuhnya. Buka kembali pengaturan lalu coba lagi.");
         table.put("Settings exported.",
@@ -998,6 +1008,8 @@ public final class L10nTranslations {
                 "Kode sumber dan laporan masalah");
         table.put("Stays in while paused",
                 "Tetap aktif saat dijeda");
+        table.put("Stop Story auto-advance",
+                "Hentikan perpindahan otomatis Cerita");
         table.put("Stories",
                 "Cerita");
         table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
@@ -1073,7 +1085,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(326);
+        Map<String, String> table = new HashMap<>(330);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         fillPt_rBR2(table);
@@ -1105,6 +1117,8 @@ public final class L10nTranslations {
                 "Um relat\u00f3rio de diagn\u00f3stico j\u00e1 est\u00e1 sendo salvo.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
                 "Um arquivo chamado %1$s em %2$s pausou o Hushfacebook.");
+        table.put("A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.",
+                "Uma hist\u00f3ria conclu\u00edda fica na tela at\u00e9 voc\u00ea tocar ou deslizar. Desative para usar o tempo padr\u00e3o do Facebook.");
         table.put("AMOLED black theme",
                 "Tema preto AMOLED");
         table.put("About",
@@ -1199,11 +1213,11 @@ public final class L10nTranslations {
                 "Relat\u00f3rio completo salvo em %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia");
-        table.put("Hide \"People you may know\"",
-                "Ocultar \u201cPessoas que voc\u00ea talvez conhe\u00e7a\u201d");
     }
 
     private static void fillPt_rBR1(Map<String, String> table) {
+        table.put("Hide \"People you may know\"",
+                "Ocultar \u201cPessoas que voc\u00ea talvez conhe\u00e7a\u201d");
         table.put("Hide \"Suggested for you\" posts",
                 "Ocultar publica\u00e7\u00f5es \u201cSugest\u00f5es para voc\u00ea\u201d");
         table.put("Hide AI-detected posts",
@@ -1322,11 +1336,11 @@ public final class L10nTranslations {
                 "Salvando...");
         table.put("Set when you patched",
                 "Definido ao aplicar os patches");
-        table.put("Settings couldn't open",
-                "N\u00e3o foi poss\u00edvel abrir as configura\u00e7\u00f5es");
     }
 
     private static void fillPt_rBR2(Map<String, String> table) {
+        table.put("Settings couldn't open",
+                "N\u00e3o foi poss\u00edvel abrir as configura\u00e7\u00f5es");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "N\u00e3o foi poss\u00edvel atualizar as configura\u00e7\u00f5es por completo. Reabra as configura\u00e7\u00f5es e tente de novo.");
         table.put("Settings exported.",
@@ -1341,6 +1355,8 @@ public final class L10nTranslations {
                 "C\u00f3digo-fonte e relatos de problemas");
         table.put("Stays in while paused",
                 "O que continua ativo na pausa");
+        table.put("Stop Story auto-advance",
+                "Parar avan\u00e7o autom\u00e1tico das hist\u00f3rias");
         table.put("Stories",
                 "Stories");
         table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",
@@ -1416,7 +1432,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(326);
+        Map<String, String> table = new HashMap<>(330);
         fillTr0(table);
         fillTr1(table);
         fillTr2(table);
@@ -1448,6 +1464,8 @@ public final class L10nTranslations {
                 "Bir tan\u0131lama raporu zaten kaydediliyor.");
         table.put("A file named %1$s in %2$s paused Hushfacebook.",
                 "%2$s i\u00e7indeki %1$s adl\u0131 bir dosya Hushfacebook'u duraklatt\u0131.");
+        table.put("A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.",
+                "Biten bir hik\u00e2ye, dokunana veya kayd\u0131rana kadar ekranda kal\u0131r. Facebook'un zamanlamas\u0131n\u0131 kullanmak i\u00e7in bunu kapat\u0131n.");
         table.put("AMOLED black theme",
                 "AMOLED siyah tema");
         table.put("About",
@@ -1542,11 +1560,11 @@ public final class L10nTranslations {
                 "Tam rapor \u015furaya kaydedildi: %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, \u00fczerine kuruldu\u011fu projelerin lisans bildirimleriyle");
-        table.put("Hide \"People you may know\"",
-                "\u201cTan\u0131yor olabilece\u011fin ki\u015filer\u201d b\u00f6l\u00fcm\u00fcn\u00fc gizle");
     }
 
     private static void fillTr1(Map<String, String> table) {
+        table.put("Hide \"People you may know\"",
+                "\u201cTan\u0131yor olabilece\u011fin ki\u015filer\u201d b\u00f6l\u00fcm\u00fcn\u00fc gizle");
         table.put("Hide \"Suggested for you\" posts",
                 "\u201cSenin i\u00e7in \u00f6nerilenler\u201d g\u00f6nderilerini gizle");
         table.put("Hide AI-detected posts",
@@ -1665,11 +1683,11 @@ public final class L10nTranslations {
                 "Kaydediliyor...");
         table.put("Set when you patched",
                 "Yamalad\u0131\u011f\u0131nda ayarlananlar");
-        table.put("Settings couldn't open",
-                "Ayarlar a\u00e7\u0131lamad\u0131");
     }
 
     private static void fillTr2(Map<String, String> table) {
+        table.put("Settings couldn't open",
+                "Ayarlar a\u00e7\u0131lamad\u0131");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
                 "Ayarlar tamamen yenilenemedi. Ayarlar\u0131 yeniden a\u00e7\u0131p tekrar dene.");
         table.put("Settings exported.",
@@ -1684,6 +1702,8 @@ public final class L10nTranslations {
                 "Kaynak kodu ve sorunlar");
         table.put("Stays in while paused",
                 "Duraklat\u0131lsa da devrede kal\u0131r");
+        table.put("Stop Story auto-advance",
+                "Hik\u00e2yelerin otomatik ilerlemesini durdur");
         table.put("Stories",
                 "Hikayeler");
         table.put("Takes tracking tags such as mibextid off the links you share or copy. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you.",

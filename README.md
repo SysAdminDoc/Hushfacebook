@@ -38,7 +38,7 @@ This project has no connection to Meta or to the Morphe project. Neither endorse
 3. Get Facebook 580.0.0.51.74 for arm64-v8a from [APKMirror](https://www.apkmirror.com/apk/facebook-2/facebook/). Take the Android 11+ bundle (.apkm). Facebook 577.0.0.50.72 works too.
 4. In Morphe Manager, pick that file, keep the default patch selection or change it, and patch.
 
-There are 20 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
+There are 21 patches for `com.facebook.katana`. The arm64-v8a builds are the ones they're checked against. Meta builds the armeabi-v7a and Android 9 variants of each release separately, and those lack code some of the patches need.
 
 Facebook releases a new version about once a week, and each one renames most of its code. Every patch here finds what it changes by names Facebook keeps (its GraphQL model classes, log strings, enum names, manifest components) rather than by the names that change, which is why most of them carry over from one build to the next. When one doesn't, patching stops with a message naming what it couldn't find, instead of producing an app that quietly does nothing. Please report it.
 
@@ -87,8 +87,9 @@ Neither path can be tried against a real block until the check reaches sideloads
 | `Open links in external browser` | Opens web links in your default browser instead of Facebook's in-app browser, without Facebook's click tracker or the fbclid tag it adds. Facebook pages still open in the app. |
 | `Restore screens on re-signed builds` | Makes profiles and some Settings pages open again on a re-signed build. A Root Mount install doesn't need this patch. |
 | `Sanitize sharing links` | Takes Facebook's tracking tags, such as mibextid, off the links you share or copy. The post or reel a link opens stays the same. A facebook.com/share/ link is made for one share, so Facebook can still trace it back to you. |
+| `Stop Story auto-advance` | Keeps each Story on screen until you tap or swipe. Turn the switch off for Facebook's timing. |
 
-`Download any reel`, `Download any video`, `AMOLED black theme`, `Material You theme`, `Hide Stories tray`, `Hide Reels in the feed` and `Block background-return feed refresh` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
+`Download any reel`, `Download any video`, `AMOLED black theme`, `Material You theme`, `Hide Stories tray`, `Hide Reels in the feed`, `Block background-return feed refresh` and `Stop Story auto-advance` are off by default. Everything else is on, though `Hide AI-detected posts` goes in with its switch off. Nobody has checked it on a signed-in feed yet, so it waits until you turn it on in Hushfacebook's settings.
 
 ### Dark mode themes
 
@@ -124,6 +125,7 @@ Hushfacebook pauses itself when Facebook crashes within a minute of starting thr
 | Hide Reels in the feed | Off. The rows of reels come back. |
 | Hide AI-detected posts | Off. Posts Facebook detected as made with AI come back. |
 | Hide sponsored stories | Off. |
+| Stop Story auto-advance | Off. Stories use Facebook's timing. |
 | Hide sponsored reels | Partly. Ads inside a page of reels come back. Banners over a reel and mid-roll ads stay blocked, and so do ads the app adds on its own. |
 | Open links in external browser | Off. Links open in Facebook's own browser. |
 | Sanitize sharing links | Off. Links you share keep Facebook's tracking tags. |

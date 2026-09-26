@@ -203,11 +203,17 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
         }
 
-        if (build.contains(PatchFamily.SPONSORED_STORIES) || build.contains(PatchFamily.STORY_DOWNLOAD)) {
+        if (build.contains(PatchFamily.SPONSORED_STORIES) || build.contains(PatchFamily.STORY_AUTO_ADVANCE)
+                || build.contains(PatchFamily.STORY_DOWNLOAD)) {
             PreferenceCategory stories = category(screen, L10n.t("Stories"));
             if (build.contains(PatchFamily.SPONSORED_STORIES)) {
                 stories.addPreference(toggle(context, Settings.HIDE_SPONSORED_STORIES, L10n.t("Hide sponsored stories"),
                         L10n.t("Ad cards between the stories people posted.")));
+            }
+            if (build.contains(PatchFamily.STORY_AUTO_ADVANCE)) {
+                stories.addPreference(toggle(context, Settings.BLOCK_STORY_AUTO_ADVANCE,
+                        L10n.t("Stop Story auto-advance"),
+                        L10n.t("A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.")));
             }
             if (build.contains(PatchFamily.STORY_DOWNLOAD)) {
                 stories.addPreference(toggle(context, Settings.DOWNLOAD_STORIES, L10n.t("Save any story"),

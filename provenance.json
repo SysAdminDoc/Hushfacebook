@@ -180,6 +180,16 @@
       ],
       "license": "GPL-3.0-only",
       "changes": "Written for Hushfacebook: the shared feed hook and filter (the chokepoint and getters follow andrewliang25/morphe-patches, the PROMOTION rule follows FroggoMorphePatches), the extension context hook, the settings switches and status flags, and the launcher-shortcut settings screen built the way Hushfeed's settings are."
+    },
+    {
+      "paths": [
+        "extensions/facebook/src/main/java/app/morphe/extension/facebook/stories/StoryAdvance.java",
+        "patches/src/main/kotlin/app/morphe/patches/facebook/stories/autoadvance/BlockStoryAutoAdvancePatch.kt"
+      ],
+      "origin": "original",
+      "upstream": "https://github.com/SysAdminDoc/Hushfacebook",
+      "license": "GPL-3.0-only",
+      "changes": "Written for Hushfacebook: a Story progress-completion guard on Facebook 577 and 580 that leaves manual navigation alone."
     }
   ]
 }

@@ -77,6 +77,10 @@ public class Settings extends BaseSettings {
     public static final BooleanSetting HIDE_SPONSORED_STORIES =
             new BooleanSetting("hushfacebook_hide_sponsored_stories", TRUE);
 
+    /** Keep a finished Story visible until the user navigates. */
+    public static final BooleanSetting BLOCK_STORY_AUTO_ADVANCE =
+            new BooleanSetting("hushfacebook_block_story_auto_advance", TRUE);
+
     /** The two page filters that take server-inlined ads out of Reels and Watch. */
     public static final BooleanSetting HIDE_SPONSORED_REELS =
             new BooleanSetting("hushfacebook_hide_sponsored_reels", TRUE);

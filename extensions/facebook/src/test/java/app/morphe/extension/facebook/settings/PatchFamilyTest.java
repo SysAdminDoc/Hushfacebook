@@ -153,7 +153,7 @@ public class PatchFamilyTest {
                 "Block background ad prefetch: no switch, stays in while paused: the background ad prefetch block",
                 "not in this build: Hide suggested and promoted posts, Hide Stories tray, Hide Reels in the feed, "
                         + "Block background-return feed refresh, Hide AI-detected posts, "
-                        + "Hide sponsored stories, Open links in "
+                        + "Hide sponsored stories, Stop Story auto-advance, Open links in "
                         + "external browser, Sanitize sharing links, Download any story, Download any reel, "
                         + "Download any video, Block ad telemetry, Disable Audience Network, AMOLED black theme, Material You theme, "
                         + "Restore screens on re-signed builds"),
