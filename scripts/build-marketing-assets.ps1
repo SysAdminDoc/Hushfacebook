@@ -1,11 +1,20 @@
+<#
+.SYNOPSIS
+    Rebuild the icons, lockups, README hero and social preview in assets/ from the source art.
+.DESCRIPTION
+    The source art (the icon master and the hero background) isn't in the repository. The
+    maintainer keeps it in concepts/marketing/2026-09-25 under the repository root, which
+    .gitignore leaves out, or passes another folder with the same selected/ and source/ layout.
+#>
 [CmdletBinding()]
-param()
+param([string] $SourceDir)
 
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$iconSource = Join-Path $root 'concepts/marketing/2026-09-25/selected/icon-master.png'
-$heroSource = Join-Path $root 'concepts/marketing/2026-09-25/source/hero-background.png'
+if (-not $SourceDir) { $SourceDir = Join-Path $root 'concepts/marketing/2026-09-25' }
+$iconSource = Join-Path $SourceDir 'selected/icon-master.png'
+$heroSource = Join-Path $SourceDir 'source/hero-background.png'
 $assets = Join-Path $root 'assets'
 $iconDirectory = Join-Path $assets 'icons'
 $iconOutput = Join-Path $assets 'icon.png'
@@ -16,7 +25,7 @@ $darkLockupOutput = Join-Path $assets 'brand-lockup-dark.png'
 
 foreach ($source in @($iconSource, $heroSource)) {
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
-        throw "Missing marketing source: $source"
+        throw "Missing marketing source: $source. The source art isn't in the repository; pass -SourceDir with the maintainer's copy."
     }
 }
 

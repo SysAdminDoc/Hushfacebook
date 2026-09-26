@@ -56,6 +56,9 @@ fixtures/
 /sources/*
 !/sources/facebook-sources.json
 
+# Marketing source art and rejected candidates stay with the maintainer; assets/ holds what ships
+/concepts/
+
 # Local working notes
 CLAUDE.md
 CODEX_CHANGELOG.md

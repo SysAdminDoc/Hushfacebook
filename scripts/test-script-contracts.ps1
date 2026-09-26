@@ -5,8 +5,8 @@
 .DESCRIPTION
     Ported from Hushfeed's suite on 2026-09-25 and held to Facebook's facts: two declared builds,
     both of Meta's signers, and .apkm split bundles. The pre-push hook runs it for changes under
-    scripts/, assets/ or concepts/marketing/, and for README.md, patches-list.json or
-    patches/build.gradle.kts. A missing suite stops the push.
+    scripts/ or assets/, and for README.md, patches-list.json or patches/build.gradle.kts. A
+    missing suite stops the push.
 #>
 [CmdletBinding()]
 param([string]$Root)
@@ -2016,7 +2016,7 @@ try {
     # These tests end with the marketing asset check, which holds the artwork and the README's hero
     # and links. A push of only an icon ran no gate, and one of only the README ran the release
     # check alone.
-    foreach ($artwork in 'assets/icons/icon-16.png', 'concepts/marketing/2026-09-25/selected/icon-master.png', 'README.md') {
+    foreach ($artwork in 'assets/icons/icon-16.png', 'assets/readme-hero.png', 'README.md') {
         Invoke-Hook -Paths @($artwork)
         Assert-True (Test-Path -LiteralPath $contractsMarker) `
             "A push that changed only $artwork did not run the script contract tests, which hold the marketing assets."
