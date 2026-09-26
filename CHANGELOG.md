@@ -2,7 +2,7 @@
 
 Every Hushfacebook release, newest first.
 
-## Unreleased
+## 0.1.7 (2026-09-26)
 
 * **Facebook:** New patch, Clean up Reels. It takes the Follow button off reels and stops the comment and friends' reactions Facebook previews under them. The Remix, Use template, Add yours and Edits buttons go as well, along with the ones for Stars, games, partner apps and links out of Facebook. Each part has its own switch under Reels and Watch. The patch starts off in Morphe Manager, and its switches start on once you pick it.
 * **Facebook:** Saved photos and videos now use the file type found in their bytes when the server labels them incorrectly, so the gallery gets the right extension.
@@ -15,7 +15,8 @@ Every Hushfacebook release, newest first.
 * **Facebook:** Download any reel is on by default now, so a fresh patch puts a Download button beside every reel. Its switch in Hushfacebook's settings still takes it out.
 * **Facebook:** A new Download quality setting holds story, reel and feed video saves to 1080p, 720p, 480p or 360p, or picks the smallest file. Best stays the default. A video with nothing at or under your pick saves at the closest quality above it, so a save never fails over the setting.
 * **Facebook:** A new Video file name setting names saved videos from a template with `{date}` and `{video_id}`. It starts as Facebook's own `FB_VID_{date}`, and photos keep their `FB_IMG_` names. A name that would repeat on every save gets the date added. The quality and the file name travel in settings files, and an import refuses a value this version can't use.
-* **Facebook:** Clearer settings wording. Hide AI-detected posts now says a post only its creator labelled as AI stays, and the crash pause says Facebook crashed or froze. An empty diagnostic export tells you how to fill it. Each translation also uses the same words for the same things throughout, and the Download quality and Video file name dialogs show Cancel in Facebook's language, as Save folder does.
+* **Facebook:** Clearer settings wording. Hide AI-detected posts now says a post only its creator labelled as AI stays, and the crash pause says Facebook crashed or froze. An empty diagnostic export tells you how to fill it. Each translation also uses the same words for the same things throughout, and the Download quality and Video file name dialogs show Cancel in Facebook's language, as Save folder does. The list of what stays in while paused names the patch to leave out for each item.
+* **Facebook:** The 22 patches target Facebook 580.0.0.51.74 and 577.0.0.50.72. Morphe Manager 1.32.0 or newer is required.
 
 ## 0.1.6 (2026-09-26)
 
