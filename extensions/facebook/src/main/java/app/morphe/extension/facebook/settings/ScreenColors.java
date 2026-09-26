@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.InsetDrawable;
@@ -16,6 +17,7 @@ import android.graphics.drawable.RippleDrawable;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
+import android.preference.TwoStatePreference;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -140,7 +142,11 @@ final class ScreenColors {
     /** A row's title and summary, and its switch if it has one. */
     void paintRow(View row, Preference preference) {
         TextView title = row.findViewById(android.R.id.title);
-        if (title != null) title.setTextColor(this.title);
+        if (title != null) {
+            boolean action = preference.isSelectable() && !(preference instanceof TwoStatePreference)
+                    && preference.getIcon() == null;
+            title.setTextColor(action ? heading : this.title);
+        }
         TextView summary = row.findViewById(android.R.id.summary);
         if (summary != null) summary.setTextColor(this.summary);
         View widget = row.findViewById(android.R.id.switch_widget);
@@ -154,7 +160,7 @@ final class ScreenColors {
         boolean grouped = parent instanceof PreferenceCategory;
         boolean first = !grouped || parent.getPreference(0) == preference;
         boolean last = !grouped || parent.getPreference(parent.getPreferenceCount() - 1) == preference;
-        float radius = dp(row, 18);
+        float radius = dp(row, 12);
         GradientDrawable surface = new GradientDrawable();
         surface.setColor(card);
         surface.setStroke(dp(row, 1), outline);
@@ -167,6 +173,7 @@ final class ScreenColors {
                 dp(row, 10), last ? dp(row, 6) : 0);
         row.setBackground(preference.isSelectable()
                 ? new RippleDrawable(ColorStateList.valueOf(half(accent)), inset, null) : inset);
+        row.setMinimumHeight(dp(row, 56));
     }
 
     /** A section title. */
@@ -174,6 +181,22 @@ final class ScreenColors {
         TextView title = row.findViewById(android.R.id.title);
         if (title != null) title.setTextColor(heading);
         row.setPaddingRelative(dp(row, 16), dp(row, 16), dp(row, 16), dp(row, 2));
+    }
+
+    /** Recovery is a choice, not another pair of settings rows. */
+    private void paintRecoveryAction(View row, boolean primary) {
+        TextView title = row.findViewById(android.R.id.title);
+        if (title != null) {
+            title.setTextColor(primary ? onAccent : accent);
+            title.setTypeface(Typeface.DEFAULT_BOLD);
+        }
+        GradientDrawable surface = new GradientDrawable();
+        surface.setColor(primary ? accent : card);
+        surface.setCornerRadius(dp(row, 8));
+        surface.setStroke(dp(row, 1), primary ? accent : outline);
+        row.setBackground(new RippleDrawable(ColorStateList.valueOf(half(primary ? onAccent : accent)),
+                new InsetDrawable(surface, dp(row, 16), dp(row, 4), dp(row, 16), dp(row, 4)), null));
+        row.setMinimumHeight(dp(row, 56));
     }
 
     /**
@@ -186,7 +209,7 @@ final class ScreenColors {
         if (window != null) {
             GradientDrawable panel = new GradientDrawable();
             panel.setColor(this.dialog);
-            panel.setCornerRadius(dp(window.getDecorView(), 22));
+            panel.setCornerRadius(dp(window.getDecorView(), 12));
             panel.setStroke(dp(window.getDecorView(), 1), outline);
             window.setBackgroundDrawable(panel);
         }
@@ -201,15 +224,16 @@ final class ScreenColors {
             Button button = dialog.getButton(which);
             if (button == null) continue;
             boolean primary = which == AlertDialog.BUTTON_POSITIVE;
-            GradientDrawable pill = new GradientDrawable();
-            pill.setColor(primary ? accent : this.dialog);
-            pill.setCornerRadius(dp(button, 22));
-            pill.setStroke(dp(button, 1), primary ? accent : outline);
+            GradientDrawable surface = new GradientDrawable();
+            surface.setColor(primary ? accent : this.dialog);
+            surface.setCornerRadius(dp(button, 8));
+            surface.setStroke(dp(button, 1), primary ? accent : outline);
             button.setBackground(new RippleDrawable(ColorStateList.valueOf(half(primary ? onAccent : accent)),
-                    pill, null));
+                    surface, null));
             button.setTextColor(primary ? onAccent : accent);
             button.setAllCaps(false);
-            button.setPaddingRelative(dp(button, 18), dp(button, 6), dp(button, 18), dp(button, 6));
+            button.setMinHeight(dp(button, 48));
+            button.setPaddingRelative(dp(button, 16), dp(button, 6), dp(button, 16), dp(button, 6));
         }
         View field = dialog.findViewById(android.R.id.edit);
         if (field instanceof EditText) paintField((EditText) field);
@@ -223,7 +247,7 @@ final class ScreenColors {
         field.setHintTextColor(summary);
         GradientDrawable outline = new GradientDrawable();
         outline.setColor(dialog);
-        outline.setCornerRadius(dp(field, 12));
+        outline.setCornerRadius(dp(field, 8));
         outline.setStroke(dp(field, 2), accent);
         field.setBackgroundTintList(null);
         field.setBackground(outline);
@@ -274,6 +298,12 @@ final class ScreenColors {
     static void heading(View row) {
         ScreenColors colors = shown;
         (colors == null ? DEFAULT : colors).paintHeading(row);
+    }
+
+    /** Paints both recovery actions even if the ordinary settings page failed to initialize. */
+    static void recoveryAction(View row, boolean primary) {
+        ScreenColors colors = forScreen(row.getContext());
+        (colors == null ? DEFAULT : colors).paintRecoveryAction(row, primary);
     }
 
     /** Paints a dialog with the colours on show, if there are any. */

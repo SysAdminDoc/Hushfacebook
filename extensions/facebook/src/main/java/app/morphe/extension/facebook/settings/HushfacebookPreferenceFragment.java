@@ -453,6 +453,11 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         return themed(activity);
     }
 
+    @Override
+    protected ErrorActionStyler errorActionStyler() {
+        return ScreenColors::recoveryAction;
+    }
+
     private static PreferenceCategory category(PreferenceScreen screen, String title) {
         PreferenceCategory category = new Heading(screen.getContext());
         category.setTitle(title);
