@@ -143,6 +143,10 @@ public class DexDiff {
      *   <li>"start-call &lt;method reference&gt; holding &lt;string&gt;": of the method's call sites,
      *       exactly one is in a method that loads &lt;string&gt;, and there nothing comes before it
      *       but plain instructions: no other call, branch, switch, return or throw.
+     *   <li>"no-call &lt;method reference&gt; outside &lt;class prefix&gt;": no class but those whose
+     *       type starts with &lt;class prefix&gt; calls it. For a call the patch sends to the
+     *       extension everywhere, where the extension makes the real one and a call left anywhere
+     *       else would undo what the patch is for.
      * </ul>
      */
     /** The kind a first-call rule that names its class by GraphQL type is read into. */
@@ -176,12 +180,15 @@ public class DexDiff {
             boolean firstCallTyped = parts.length == 4 && parts[0].equals("first-call")
                     && parts[2].equals("on-type-named") && parts[3].matches("[A-Za-z][A-Za-z0-9_]*");
             boolean startCall = parts.length == 4 && parts[0].equals("start-call") && parts[2].equals("holding");
-            if ((!singleCall && !firstCall && !firstCallTyped && !startCall) || !parts[1].contains("->")) {
+            boolean noCall = parts.length == 4 && parts[0].equals("no-call") && parts[2].equals("outside")
+                    && parts[3].startsWith("L") && parts[3].endsWith("/");
+            if ((!singleCall && !firstCall && !firstCallTyped && !startCall && !noCall) || !parts[1].contains("->")) {
                 throw new IllegalArgumentException("Invalid contract line " + lineNumber
                         + ": expected single-call <method reference> in <caller method name>,"
                         + " first-call <method reference> on <class>,"
                         + " first-call <method reference> on-type-named <GraphQL type>,"
-                        + " or start-call <method reference> holding <string>");
+                        + " start-call <method reference> holding <string>,"
+                        + " or no-call <method reference> outside <package prefix ending in />");
             }
             contracts.add(new Contract(firstCallTyped ? TYPED_FIRST_CALL : parts[0], parts[1], parts[3]));
         }
@@ -1003,12 +1010,19 @@ public class DexDiff {
         // start-call: every call site of the method, with whether the call comes first there and
         // the strings its method loads.
         Map<String, List<StartSite>> startSites = new LinkedHashMap<>();
+        // no-call: the package prefix whose classes may call the method, and the methods of every
+        // other class that do.
+        Map<String, String> noCallInside = new HashMap<>();
+        Map<String, List<String>> noCallSites = new LinkedHashMap<>();
         for (Contract contract : contracts) {
             if (contract.kind.equals("single-call")) callSites.put(contract.callee, new ArrayList<>());
             else if (contract.kind.equals("first-call")) firstCallTargets.put(contract.callee, contract.target);
             else if (contract.kind.equals(TYPED_FIRST_CALL)) {
                 typedFirstCallTargets.put(contract.callee, contract.target);
                 typeNamedClasses.put(contract.target, new TreeSet<>());
+            } else if (contract.kind.equals("no-call")) {
+                noCallInside.put(contract.callee, contract.target);
+                noCallSites.put(contract.callee, new ArrayList<>());
             } else startSites.put(contract.callee, new ArrayList<>());
         }
         MultiDexContainer<? extends DexFile> container =
@@ -1026,19 +1040,32 @@ public class DexDiff {
                     if (typedFirstCallTargets.containsKey(s)) firstCalls.put(s, firstCallBeforeReturn(m, null));
                     if (!typeNamedClasses.isEmpty()) recordTypeNamed(cd, m, typeNamedClasses);
                     if (!startSites.isEmpty()) recordStartSites(s, m, startSites);
-                    if (callSites.isEmpty() || m.getImplementation() == null) continue;
+                    if ((callSites.isEmpty() && noCallSites.isEmpty()) || m.getImplementation() == null) continue;
                     for (Instruction i : m.getImplementation().getInstructions()) {
                         if (!(i instanceof ReferenceInstruction)) continue;
                         Reference r = ((ReferenceInstruction) i).getReference();
                         if (!(r instanceof MethodReference)) continue;
                         List<String> sites = callSites.get(r.toString());
                         if (sites != null) sites.add(s);
+                        String inside = noCallInside.get(r.toString());
+                        if (inside != null && !cd.getType().startsWith(inside)) noCallSites.get(r.toString()).add(s);
                     }
                 }
             }
         }
         List<String> contractFindings = new ArrayList<>();
         for (Contract contract : contracts) {
+            if (contract.kind.equals("no-call")) {
+                List<String> left = noCallSites.get(contract.callee);
+                System.out.println("[diff] contract no-call " + contract.callee + " outside " + contract.target + ": "
+                        + left.size() + " call site" + (left.size() == 1 ? "" : "s")
+                        + (left.isEmpty() ? "" : ", in " + String.join(", ", left)));
+                if (!left.isEmpty()) {
+                    contractFindings.add("contract: " + contract.callee + " is still called outside "
+                            + contract.target + ", in " + String.join(", ", left));
+                }
+                continue;
+            }
             if (contract.kind.equals("start-call")) {
                 String rule = "contract start-call " + contract.callee + " holding " + contract.target;
                 List<StartSite> holding = new ArrayList<>();

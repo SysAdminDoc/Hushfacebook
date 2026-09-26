@@ -3,6 +3,7 @@
 #   first-call <method reference> on <class>
 #   first-call <method reference> on-type-named <GraphQL type>
 #   start-call <method reference> holding <string>
+#   no-call <method reference> outside <package prefix>
 # Two feed guards stacked on addNewEdgeToCollection is the shape that broke builds before, and a
 # guard anywhere else filters nothing.
 single-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideEdge(Ljava/lang/Object;Ljava/lang/Object;)Z in addNewEdgeToCollection
@@ -23,3 +24,11 @@ start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hidePreEofReels()Z h
 # The background-return gate starts the controller's resume callback, which is distinct from the
 # NewsFeedFragment swipe-refresh callback. A later call would refresh before asking the switch.
 start-call Lapp/morphe/extension/facebook/feed/ReturnRefresh;->skip()Z holding FeedRefreshTriggerController
+# Facebook ranks its own launcher shortcuts ahead of the Hushfacebook one with these calls, so the
+# settings patch sends every one to SettingsEntry, which makes it and puts the Hushfacebook shortcut
+# back in front (#2). One left in Facebook's code would let it drop out of the long-press menu.
+no-call Landroid/content/pm/ShortcutManager;->pushDynamicShortcut(Landroid/content/pm/ShortcutInfo;)V outside Lapp/morphe/extension/
+no-call Landroid/content/pm/ShortcutManager;->addDynamicShortcuts(Ljava/util/List;)Z outside Lapp/morphe/extension/
+no-call Landroid/content/pm/ShortcutManager;->setDynamicShortcuts(Ljava/util/List;)Z outside Lapp/morphe/extension/
+no-call Landroid/content/pm/ShortcutManager;->updateShortcuts(Ljava/util/List;)Z outside Lapp/morphe/extension/
+no-call Landroid/content/pm/ShortcutManager;->removeAllDynamicShortcuts()V outside Lapp/morphe/extension/

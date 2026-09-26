@@ -565,6 +565,10 @@ try {
     Assert-True (($good.Output -join "`n") -match [regex]::Escape(
         'ReturnRefresh;->skip()Z holding FeedRefreshTriggerController: first in Lfixture/ReturnController;->resumeAfterBackground(')) `
         "The good build's background-return guard was not first in the resume callback.`n$($good.Output -join "`n")"
+    Assert-True (($good.Output -join "`n") -match [regex]::Escape(
+        'no-call Landroid/content/pm/ShortcutManager;->pushDynamicShortcut(Landroid/content/pm/ShortcutInfo;)V ' +
+        'outside Lapp/morphe/extension/: 0 call sites')) `
+        "The good build's shortcut push, sent to the stand-in whose own push is inside the extension, was not reported clean.`n$($good.Output -join "`n")"
 
     $bad = [ordered]@{
         'bad-branch' = 'branch'
@@ -649,6 +653,7 @@ try {
         'bad-showcase-two-classes' = 'contract'
         'bad-return-refresh-hook-missing' = 'contract'
         'bad-return-refresh-hook-late' = 'contract'
+        'bad-shortcut-call-left' = 'contract'
     }
     $failures = @()
     foreach ($case in $bad.GetEnumerator()) {
@@ -693,7 +698,11 @@ try {
             'start-call Lapp/morphe/extension/facebook/feed/FeedFilter;->hideStoriesTray(I)Z holding',
             'first-call Lapp/morphe/extension/facebook/feed/ShowcaseType;->storyType(Ljava/lang/Object;)Ljava/lang/Object; on-type-named Lfixture/Showcase;',
             'first-call Lapp/morphe/extension/facebook/feed/ShowcaseType;->storyType(Ljava/lang/Object;)Ljava/lang/Object; on-type-named',
-            'first-call storyType on-type-named ShowcaseFeedUnit')) {
+            'first-call storyType on-type-named ShowcaseFeedUnit',
+            'no-call Landroid/content/pm/ShortcutManager;->pushDynamicShortcut(Landroid/content/pm/ShortcutInfo;)V in Lapp/morphe/extension/',
+            'no-call pushDynamicShortcut outside Lapp/morphe/extension/',
+            'no-call Landroid/content/pm/ShortcutManager;->pushDynamicShortcut(Landroid/content/pm/ShortcutInfo;)V outside',
+            'no-call Landroid/content/pm/ShortcutManager;->pushDynamicShortcut(Landroid/content/pm/ShortcutInfo;)V outside Lapp/morphe/extension')) {
         [System.IO.File]::WriteAllText($badContract, "# a comment line first`n$line`n")
         $unreadableFirstCall = Invoke-DexDiff -Clean $cleanApk -Patched (Join-Path $caseRoot 'good.apk') `
             -Allowlist $emptyAllowlist -Name 'bad-first-call-contract' -Contracts $badContract
