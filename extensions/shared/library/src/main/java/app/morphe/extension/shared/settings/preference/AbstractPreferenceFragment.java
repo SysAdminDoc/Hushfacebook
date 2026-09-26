@@ -269,7 +269,8 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
 
     /**
      * Restores both the visible row and its persisted preference from the typed Setting value.
-     * The listener guard stays raised while a Preference setter writes the saved value back.
+     * The row takes the value without writing it, then persistSettingValue writes it, with the
+     * listener guard raised.
      */
     private boolean restorePreferenceFromSetting(@NonNull Preference pref,
                                                  @NonNull Setting<?> setting,
@@ -492,6 +493,25 @@ public abstract class AbstractPreferenceFragment extends PreferenceFragment {
     protected void syncSettingWithPreference(@NonNull Preference pref,
                                              @NonNull Setting<?> setting,
                                              boolean applySettingToPreference) {
+        if (!applySettingToPreference || !pref.isPersistent()) {
+            syncSettingWithPreferenceNow(pref, setting, applySettingToPreference);
+            return;
+        }
+        // A row shows the setting, and showing it writes nothing. A persistent row stores the value
+        // it's given when its key is missing, so opening the screen once stored every default, and
+        // a later release that changed a default never reached anyone who had looked. The setting
+        // already holds its own value, so the row takes it without persisting.
+        pref.setPersistent(false);
+        try {
+            syncSettingWithPreferenceNow(pref, setting, true);
+        } finally {
+            pref.setPersistent(true);
+        }
+    }
+
+    private void syncSettingWithPreferenceNow(@NonNull Preference pref,
+                                              @NonNull Setting<?> setting,
+                                              boolean applySettingToPreference) {
         if (pref instanceof SwitchPreference switchPref) {
             BooleanSetting boolSetting = (BooleanSetting) setting;
             if (applySettingToPreference) {
