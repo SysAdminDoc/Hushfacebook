@@ -10,9 +10,11 @@ package app.morphe.patches.facebook.misc.resignedtrust
 import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.patches.facebook.misc.extension.facebookExtensionPatch
 import app.morphe.patches.facebook.misc.extension.enableStatus
+import app.morphe.patches.facebook.misc.extension.requireLocals
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patches.facebook.misc.settings.settingsPatch
 
@@ -53,26 +55,37 @@ val restoreTrustPatch = bytecodePatch(
         }
         check(constructor != null) { "$signers has no (List, boolean, boolean) constructor" }
 
-        // For Facebook itself, answer with the original certificate and skip the body. For any
-        // other package, the extension answers null and the body runs as before. The two flags
-        // are false, as the body sets them for a single signer.
-        //
-        // The injection is at index 0, where no local is live yet, so v0 to v2 are free.
-        method.addInstructionsWithLabels(
-            0,
-            """
-                iget-object v0, p0, ${method.definingClass}->$packageInfo:$PACKAGE_INFO
-                invoke-static { v0 }, $ORIGINAL_SIGNERS
-                move-result-object v1
-                if-eqz v1, :original
-                new-instance v0, $signers
-                const/4 v2, 0x0
-                invoke-direct { v0, v1, v2, v2 }, $signers-><init>(Ljava/util/List;ZZ)V
-                return-object v0
-            """,
-            ExternalLabel("original", method.getInstruction(0)),
-        )
+        method.answerOriginalSigners(packageInfo, signers)
 
         enableStatus("restoreTrust")
     }
+}
+
+/**
+ * For Facebook itself, answer with the original certificate and skip the body. For any other
+ * package, the extension answers null and the body runs as before. The two flags are false, as the
+ * body sets them for a single signer.
+ *
+ * The injection is at index 0, where no local is live yet, so v0 to v2 are free once the method is
+ * known to have three locals. `iget-object` takes 4-bit registers, so `this` is copied down into v0
+ * first: in a method with more than sixteen registers `p0` sits above v15, and the patcher's smali
+ * compiler leaves out an instruction whose register doesn't fit, without a word.
+ */
+internal fun MutableMethod.answerOriginalSigners(packageInfo: String, signers: String) {
+    requireLocals("Restore screens on re-signed builds", 3)
+    addInstructionsWithLabels(
+        0,
+        """
+            move-object/from16 v0, p0
+            iget-object v0, v0, $definingClass->$packageInfo:$PACKAGE_INFO
+            invoke-static { v0 }, $ORIGINAL_SIGNERS
+            move-result-object v1
+            if-eqz v1, :original
+            new-instance v0, $signers
+            const/4 v2, 0x0
+            invoke-direct { v0, v1, v2, v2 }, $signers-><init>(Ljava/util/List;ZZ)V
+            return-object v0
+        """,
+        ExternalLabel("original", getInstruction(0)),
+    )
 }
