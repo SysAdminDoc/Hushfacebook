@@ -15,18 +15,18 @@ A file named %1$s in %2$s paused Hushfacebook.	Um arquivo chamado %1$s em %2$s p
 About	Sobre
 Ad cards between the stories people posted.	Anúncios entre os stories que as pessoas postaram.
 Ad telemetry blocked	Telemetria de anúncios bloqueada
-Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.	Adiciona o item Baixar no celular ao menu de um vídeo no feed ou no Watch, abaixo dos itens do próprio Facebook, e salva na melhor qualidade que o player reproduz. Com esta opção desligada ou durante a pausa, o menu só mostra os itens do próprio Facebook.
+Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.	Adiciona Baixar no telefone aos menus de vídeo do feed e do Watch. Salva na maior qualidade transmitida pelo Facebook. Desligado ou em pausa, o menu do Facebook volta.
 Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Adiciona o item Salvar ao menu do story de qualquer pessoa e salva na melhor qualidade que o player reproduz. Com esta opção desligada ou durante a pausa, o item Salvar só aparece nos seus próprios stories, e quem salva é o próprio Facebook.
-Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Anúncios que chegam dentro de um lote de reels. Banners e anúncios no meio do vídeo continuam bloqueados enquanto o patch estiver aplicado, independentemente desta opção ou da pausa. O mesmo vale para os anúncios que o app adiciona por conta própria.
+Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Anúncios dentro dos Reels. Banners, anúncios no meio do vídeo e anúncios inseridos pelo app continuam bloqueados mesmo durante a pausa.
 AMOLED black theme	Tema preto AMOLED
 Audience Network off	Audience Network desativado
 Back	Voltar
 Background ad prefetch blocked	Pré-carregamento de anúncios em segundo plano bloqueado
 Cancel	Cancelar
 Changing these	Como mudar esses itens
-Choose a settings file. You'll see how many switches it changes before anything does.	Escolha um arquivo de configurações. Você vai ver quantas opções ele muda antes de qualquer alteração.
+Choose a settings file and preview what would change before importing.	Escolha um arquivo de configurações e veja as mudanças antes de importar.
 Clear diagnostic data	Limpar dados de diagnóstico
-Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Copie um relatório curto ou salve o completo em Download/Morphe. Links, IDs de conta e de post, cookies de sessão e nomes ficam de fora.
+Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Copie um relatório rápido ou salve o completo em Download/Morphe. Nomes, IDs, links e cookies são omitidos.
 Copy quick report	Copiar relatório rápido
 Couldn't import every setting. Check the switches on this screen.	Não foi possível importar todas as configurações. Confira as opções nesta tela.
 Couldn't import the settings. Nothing was changed.	Não foi possível importar as configurações. Nada foi alterado.
@@ -55,8 +55,8 @@ Export settings	Exportar configurações
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	O Facebook fechou três vezes no primeiro minuto depois de abrir, então o Hushfacebook entrou em pausa automaticamente.
 Facebook doesn't download ads or its ad model in the background.	O Facebook não baixa anúncios nem o modelo de anúncios dele em segundo plano.
 Facebook doesn't serve ads to other apps on this phone.	O Facebook não envia anúncios para outros apps deste celular.
-Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.	O modo escuro do Facebook usa as cores do seu plano de fundo, e esta tela também. O Android 11 não tem cores de plano de fundo, então usa uma paleta azul fixa. Ative o modo escuro no Facebook para ver.
-From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	A partir da próxima abertura, todas as opções acima funcionam como se estivessem desligadas, e o código do próprio Facebook roda no lugar. O Registro de depuração continua funcionando, e suas configurações ficam como estão.
+Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	O modo escuro do Facebook e esta tela usam as cores do seu papel de parede. O Android 11 usa azul. Ative o modo escuro do Facebook para ver.
+From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Na próxima abertura, os botões acima deixam de agir e o comportamento do Facebook volta. O registro de depuração continua funcionando e suas escolhas ficam salvas.
 Full report saved to %1$s	Relatório completo salvo em %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia
 Hide "People you may know"	Ocultar “Pessoas que você talvez conheça”
@@ -90,13 +90,13 @@ No screenshot watching for ads, and no reports of which apps you install.	Sem mo
 Not saved: that isn't a Facebook photo or video	Não foi salvo: isso não é uma foto nem um vídeo do Facebook
 Not saved: the file is over 512 MB	Não foi salvo: o arquivo tem mais de 512 MB
 OK	OK
-One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.	Um nome de pasta para o que você salvar. Barras e outros caracteres que um nome de pasta não aceita viram sublinhados. Deixe em branco para usar %1$s.
+Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.	Escolha o nome da pasta em Movies e Pictures. Caracteres inválidos viram sublinhados. Deixe em branco para usar %1$s.
 Open links in your browser	Abrir links no seu navegador
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Anúncios pagos no feed. São removidos antes de o Facebook adicioná-los, então não fica nenhum espaço vazio.
 Pause Hushfacebook	Pausar o Hushfacebook
 Posts Facebook files as promotions rather than as ads.	Posts que o Facebook classifica como promoções, e não como anúncios.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Publicações de pessoas e Páginas que você não segue e de grupos dos quais você não participa, que o Facebook coloca no seu feed.
-Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Posts que a própria detecção do Facebook marcou como feitos com IA. Um post que só quem compartilhou marcou como IA continua aparecendo. Esta opção começa desligada porque ainda não foi testada em um feed de verdade.
+Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Publicações que o Facebook marca como feitas por IA. Rótulos adicionados só por quem compartilhou permanecem. Este botão começa desligado até ser testado em um feed real.
 Profiles and some Settings pages open again on this re-signed build.	Perfis e algumas páginas de Configurações voltam a abrir nesta versão reassinada.
 Re-signed build fix	Correção para versão reassinada
 Reading the settings file	Lendo o arquivo de configurações
@@ -110,7 +110,7 @@ Save full report	Salvar relatório completo
 Saved to %1$s	Salvo em %1$s
 Saved to the gallery	Salvo na galeria
 Saved. Restart Facebook to apply this change.	Salvo. Reinicie o Facebook para aplicar esta alteração.
-Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.	Salva as opções e a pasta de destino das seções acima em um arquivo que você escolher. A pausa e o Registro de depuração ficam de fora.
+Save your switches and folder to a file. Pause and debug logging aren't included.	Salve seus botões e a pasta em um arquivo. Pausa e registro de depuração não são incluídos.
 Saves will go to a folder named %1$s.	O que você salvar vai para uma pasta chamada %1$s.
 Saving a photo	Salvando uma foto
 Saving a video	Salvando um vídeo
@@ -165,3 +165,8 @@ Keep feed position on return	Manter a posição no feed ao voltar
 Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Se você voltar ao Facebook em até dez minutos, continuará de onde parou. Puxe para baixo para atualizar quando quiser.
 A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Uma história concluída fica na tela até você tocar ou deslizar. Desative para usar o tempo padrão do Facebook.
 Stop Story auto-advance	Parar avanço automático das histórias
+Copy a short report to the clipboard.	Copie um relatório curto para a área de transferência.
+Save the full report in Download/Morphe.	Salve o relatório completo em Download/Morphe.
+Folder set to %1$s.	Pasta definida como %1$s.
+Save	Salvar
+Folder name	Nome da pasta

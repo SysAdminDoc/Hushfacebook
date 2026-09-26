@@ -70,7 +70,7 @@ final class ScreenColors {
     /** The colours the screen on show was built with, or null for the black page. */
     @Nullable
     static volatile ScreenColors shown;
-    private static final ScreenColors DEFAULT = new ScreenColors();
+    static final ScreenColors DEFAULT = new ScreenColors();
 
     private ScreenColors() {
         light = false;

@@ -44,7 +44,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildDe() {
-        Map<String, String> table = new HashMap<>(330);
+        Map<String, String> table = new HashMap<>(340);
         fillDe0(table);
         fillDe1(table);
         fillDe2(table);
@@ -86,12 +86,12 @@ public final class L10nTranslations {
                 "Werbekarten zwischen den Stories, die Leute gepostet haben.");
         table.put("Ad telemetry blocked",
                 "Werbe-Telemetrie blockiert");
-        table.put("Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.",
-                "F\u00fcgt \u201eAufs Handy herunterladen\u201c unter Facebooks eigenen Eintr\u00e4gen zum Men\u00fc eines Videos im Feed oder in Watch hinzu und speichert das Video in der besten Qualit\u00e4t, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, zeigt das Men\u00fc nur Facebooks eigene Eintr\u00e4ge.");
+        table.put("Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.",
+                "F\u00fcgt den Video-Men\u00fcs im Feed und in Watch \u201eAuf Telefon herunterladen\u201c hinzu. Speichert die h\u00f6chste von Facebook gestreamte Qualit\u00e4t. Ausgeschaltet oder pausiert erscheint wieder Facebooks Men\u00fc.");
         table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
                 "F\u00fcgt \u201eSpeichern\u201c zum Men\u00fc jeder Story hinzu, egal von wem, und speichert sie in der besten Qualit\u00e4t, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, gibt es \u201eSpeichern\u201c nur bei deinen eigenen Stories, und dort l\u00e4uft Facebooks eigene Speicherfunktion.");
-        table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
-                "Anzeigen, die in einem Schwung Reels mitkommen. Banner und Werbeunterbrechungen bleiben blockiert, solange der Patch eingebaut ist, unabh\u00e4ngig von diesem Schalter und der Pause. Das gilt auch f\u00fcr Anzeigen, die die App selbst einf\u00fcgt.");
+        table.put("Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.",
+                "Anzeigen in Reels. Banner, Werbeunterbrechungen und von der App eingef\u00fcgte Anzeigen bleiben auch w\u00e4hrend einer Pause blockiert.");
         table.put("Audience Network off",
                 "Audience Network aus");
         table.put("Back",
@@ -102,12 +102,16 @@ public final class L10nTranslations {
                 "Abbrechen");
         table.put("Changing these",
                 "So \u00e4nderst du sie");
-        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
-                "W\u00e4hle eine Einstellungsdatei. Du siehst, wie viele Schalter sie \u00e4ndert, bevor sich etwas \u00e4ndert.");
+        table.put("Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.",
+                "W\u00e4hle einen Ordnernamen unter Movies und Pictures. Ung\u00fcltige Zeichen werden zu Unterstrichen. Leer lassen f\u00fcr %1$s.");
+        table.put("Choose a settings file and preview what would change before importing.",
+                "W\u00e4hle eine Einstellungsdatei und sieh dir vor dem Import an, was sich \u00e4ndern w\u00fcrde.");
         table.put("Clear diagnostic data",
                 "Diagnosedaten l\u00f6schen");
-        table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
-                "Kopiere einen Kurzbericht oder speichere den vollst\u00e4ndigen unter Download/Morphe. Links, Konto- und Beitrags-IDs, Sitzungscookies und Namen werden weggelassen.");
+        table.put("Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.",
+                "Kopiere einen Kurzbericht oder speichere den vollst\u00e4ndigen Bericht unter Download/Morphe. Namen, IDs, Links und Cookies werden ausgelassen.");
+        table.put("Copy a short report to the clipboard.",
+                "Kurzen Bericht in die Zwischenablage kopieren.");
         table.put("Copy quick report",
                 "Kurzbericht kopieren");
         table.put("Couldn't import every setting. Check the switches on this screen.",
@@ -160,21 +164,25 @@ public final class L10nTranslations {
                 "Einstellungen exportieren");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook wurde dreimal innerhalb einer Minute nach dem Start beendet, deshalb hat sich Hushfacebook selbst pausiert.");
+        table.put("Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.",
+                "Facebooks Dunkelmodus und diese Seite nutzen die Farben deines Hintergrundbilds. Android 11 nutzt stattdessen Blau. Aktiviere Facebooks Dunkelmodus, um es zu sehen.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
                 "Facebook l\u00e4dt im Hintergrund weder Werbung noch sein Werbemodell herunter.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook liefert keine Werbung an andere Apps auf diesem Handy aus.");
-        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
-                "Facebooks Dunkelmodus \u00fcbernimmt die Farben deines Hintergrundbilds, und dieser Bildschirm ebenso. Android 11 hat keine Farben aus dem Hintergrundbild, daher gibt es dort eine feste blaue Palette. Schalte in Facebook den Dunkelmodus ein, um das zu sehen.");
-        table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
-                "Ab dem n\u00e4chsten Start verh\u00e4lt sich jeder Schalter weiter oben, als w\u00e4re er aus, und stattdessen l\u00e4uft Facebooks eigener Code. Die Debug-Protokollierung funktioniert weiter, und deine Einstellungen bleiben, wie sie sind.");
+        table.put("Folder name",
+                "Ordnername");
+    }
+
+    private static void fillDe1(Map<String, String> table) {
+        table.put("Folder set to %1$s.",
+                "Ordner auf %1$s gesetzt.");
+        table.put("From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.",
+                "Ab dem n\u00e4chsten Start wirken die obigen Schalter nicht mehr und Facebooks eigenes Verhalten kehrt zur\u00fcck. Das Debug-Protokoll l\u00e4uft weiter, und deine Auswahl bleibt erhalten.");
         table.put("Full report saved to %1$s",
                 "Vollst\u00e4ndiger Bericht gespeichert unter %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut");
-    }
-
-    private static void fillDe1(Map<String, String> table) {
         table.put("Hide \"People you may know\"",
                 "\u201ePersonen, die du kennen k\u00f6nntest\u201c ausblenden");
         table.put("Hide \"Suggested for you\" posts",
@@ -239,8 +247,6 @@ public final class L10nTranslations {
                 "Nicht gespeichert: Die Datei ist \u00fcber 512 MB gro\u00df");
         table.put("OK",
                 "OK");
-        table.put("One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.",
-                "Ein Ordnername f\u00fcr alles, was du speicherst. Schr\u00e4gstriche und andere Zeichen, die in einem Ordnernamen nicht stehen d\u00fcrfen, werden zu Unterstrichen. Lass das Feld leer, um %1$s zu verwenden.");
         table.put("Open links in your browser",
                 "Links in deinem Browser \u00f6ffnen");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -249,10 +255,10 @@ public final class L10nTranslations {
                 "Hushfacebook pausieren");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Beitr\u00e4ge, die Facebook als beworben statt als Anzeige einstuft.");
+        table.put("Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.",
+                "Beitr\u00e4ge, die Facebook als KI-generiert markiert. Nur vom Verfasser hinzugef\u00fcgte Kennzeichnungen bleiben. Der Schalter bleibt aus, bis er in einem echten Feed getestet wurde.");
         table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
                 "Beitr\u00e4ge von Personen und Seiten, denen du nicht folgst, und aus Gruppen, denen du nicht beigetreten bist, die Facebook in deinen Feed schiebt.");
-        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
-                "Beitr\u00e4ge, die Facebooks eigene Erkennung als mit KI erstellt markiert hat. Hat nur die Person, die einen Beitrag geteilt hat, ihn als KI gekennzeichnet, bleibt er sichtbar. Dieser Schalter ist anfangs aus, weil er noch nicht in einem echten Feed ausprobiert wurde.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Profile und einige Einstellungsseiten \u00f6ffnen sich in diesem neu signierten Build wieder.");
         table.put("Re-signed build fix",
@@ -267,6 +273,8 @@ public final class L10nTranslations {
                 "Erneut versuchen");
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Wenn du innerhalb von zehn Minuten zu Facebook zur\u00fcckkehrst, bleibst du an derselben Stelle. Zum Aktualisieren kannst du weiter nach unten ziehen.");
+        table.put("Save",
+                "Speichern");
         table.put("Save any story",
                 "Jede Story speichern");
         table.put("Save cancelled",
@@ -275,16 +283,21 @@ public final class L10nTranslations {
                 "Speicherordner");
         table.put("Save full report",
                 "Vollst\u00e4ndigen Bericht speichern");
+        table.put("Save the full report in Download/Morphe.",
+                "Vollst\u00e4ndigen Bericht unter Download/Morphe speichern.");
+        table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
+                "Speichert deine Schalter und den Ordner in einer Datei. Pause und Debug-Protokoll sind nicht enthalten.");
         table.put("Saved to %1$s",
                 "Gespeichert unter %1$s");
         table.put("Saved to the gallery",
                 "In der Galerie gespeichert");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Gespeichert. Starte Facebook neu, um diese \u00c4nderung zu \u00fcbernehmen.");
-        table.put("Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.",
-                "Speichert die Schalter und den Speicherordner aus den Abschnitten weiter oben in einer Datei deiner Wahl. Die Pause und die Debug-Protokollierung sind nicht dabei.");
         table.put("Saves will go to a folder named %1$s.",
                 "Was du speicherst, landet dann in einem Ordner namens %1$s.");
+    }
+
+    private static void fillDe2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Foto wird gespeichert");
         table.put("Saving a video",
@@ -295,9 +308,6 @@ public final class L10nTranslations {
                 "Wird gespeichert \u2026");
         table.put("Set when you patched",
                 "Beim Patchen festgelegt");
-    }
-
-    private static void fillDe2(Map<String, String> table) {
         table.put("Settings couldn't open",
                 "Einstellungen lie\u00dfen sich nicht \u00f6ffnen");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
@@ -391,7 +401,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildEs() {
-        Map<String, String> table = new HashMap<>(330);
+        Map<String, String> table = new HashMap<>(340);
         fillEs0(table);
         fillEs1(table);
         fillEs2(table);
@@ -433,12 +443,12 @@ public final class L10nTranslations {
                 "Tarjetas de anuncios entre las historias que public\u00f3 la gente.");
         table.put("Ad telemetry blocked",
                 "Telemetr\u00eda de anuncios bloqueada");
-        table.put("Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.",
-                "Agrega la opci\u00f3n Descargar en el tel\u00e9fono al men\u00fa de un video del feed o de Watch, debajo de las opciones propias de Facebook, y lo guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, el men\u00fa solo muestra las opciones propias de Facebook.");
+        table.put("Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.",
+                "A\u00f1ade Descargar en el tel\u00e9fono a los men\u00fas de videos del feed y Watch. Guarda la mayor calidad que transmite Facebook. Si est\u00e1 desactivado o en pausa, vuelve el men\u00fa de Facebook.");
         table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
                 "Agrega la opci\u00f3n Guardar al men\u00fa de cualquier historia, sea de quien sea, y la guarda con la mejor calidad que ofrece el reproductor. Con este interruptor desactivado o Hushfacebook en pausa, solo tus propias historias tienen la opci\u00f3n Guardar, y se usa el guardado propio de Facebook.");
-        table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
-                "Anuncios que llegan dentro de un lote de reels. Los banners y los anuncios a mitad de video siguen bloqueados mientras el parche est\u00e9 aplicado, diga lo que diga este interruptor o Pausar. Lo mismo pasa con los anuncios que la app inserta por su cuenta.");
+        table.put("Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.",
+                "Anuncios dentro de Reels. Los banners, los anuncios a mitad de video y los que inserta la app siguen bloqueados incluso en pausa.");
         table.put("Audience Network off",
                 "Sin Audience Network");
         table.put("Back",
@@ -449,12 +459,16 @@ public final class L10nTranslations {
                 "Cancelar");
         table.put("Changing these",
                 "C\u00f3mo cambiarlos");
-        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
-                "Elige un archivo de configuraci\u00f3n. Ver\u00e1s cu\u00e1ntos interruptores cambia antes de que cambie nada.");
+        table.put("Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.",
+                "Elige un nombre de carpeta en Movies y Pictures. Los caracteres no v\u00e1lidos se convierten en guiones bajos. D\u00e9jalo vac\u00edo para usar %1$s.");
+        table.put("Choose a settings file and preview what would change before importing.",
+                "Elige un archivo de configuraci\u00f3n y revisa los cambios antes de importarlo.");
         table.put("Clear diagnostic data",
                 "Borrar datos de diagn\u00f3stico");
-        table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
-                "Copia un informe breve o guarda el completo en Download/Morphe. Se omiten los enlaces, los ID de cuentas y de publicaciones, las cookies de sesi\u00f3n y los nombres.");
+        table.put("Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.",
+                "Copia un informe r\u00e1pido o guarda el completo en Download/Morphe. Se omiten nombres, ID, enlaces y cookies.");
+        table.put("Copy a short report to the clipboard.",
+                "Copia un informe breve en el portapapeles.");
         table.put("Copy quick report",
                 "Copiar informe r\u00e1pido");
         table.put("Couldn't import every setting. Check the switches on this screen.",
@@ -507,21 +521,25 @@ public final class L10nTranslations {
                 "Exportar configuraci\u00f3n");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook se cerr\u00f3 tres veces durante el primer minuto tras iniciarse, as\u00ed que Hushfacebook se paus\u00f3 solo.");
+        table.put("Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.",
+                "El modo oscuro de Facebook y esta pantalla usan los colores de tu fondo. Android 11 usa azul en su lugar. Activa el modo oscuro de Facebook para verlo.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
                 "Facebook no descarga anuncios ni su modelo de anuncios en segundo plano.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook no env\u00eda anuncios a otras apps de este tel\u00e9fono.");
-        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
-                "El modo oscuro de Facebook toma los colores de tu fondo de pantalla, y esta pantalla tambi\u00e9n. Android 11 no tiene colores de fondo de pantalla, as\u00ed que usa una paleta azul fija. Activa el modo oscuro en Facebook para verlo.");
-        table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
-                "A partir del pr\u00f3ximo inicio, todos los interruptores de arriba funcionan como si estuvieran desactivados, y en su lugar se ejecuta el c\u00f3digo propio de Facebook. El Registro de depuraci\u00f3n sigue funcionando y tu configuraci\u00f3n no cambia.");
+        table.put("Folder name",
+                "Nombre de carpeta");
+    }
+
+    private static void fillEs1(Map<String, String> table) {
+        table.put("Folder set to %1$s.",
+                "Carpeta establecida en %1$s.");
+        table.put("From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.",
+                "Desde el pr\u00f3ximo inicio, los interruptores de arriba dejan de actuar y vuelve el comportamiento de Facebook. El registro de depuraci\u00f3n sigue funcionando y tus elecciones se conservan.");
         table.put("Full report saved to %1$s",
                 "Informe completo guardado en %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, con los avisos de los proyectos en los que se basa");
-    }
-
-    private static void fillEs1(Map<String, String> table) {
         table.put("Hide \"People you may know\"",
                 "Ocultar \u201cPersonas que quiz\u00e1 conozcas\u201d");
         table.put("Hide \"Suggested for you\" posts",
@@ -586,8 +604,6 @@ public final class L10nTranslations {
                 "No se guard\u00f3: el archivo supera los 512 MB");
         table.put("OK",
                 "Aceptar");
-        table.put("One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.",
-                "Un nombre de carpeta para lo que guardes. Las barras y otros caracteres que no caben en el nombre de una carpeta se convierten en guiones bajos. D\u00e9jalo vac\u00edo para usar %1$s.");
         table.put("Open links in your browser",
                 "Abrir enlaces en tu navegador");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -596,10 +612,10 @@ public final class L10nTranslations {
                 "Pausar Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Publicaciones que Facebook clasifica como promociones y no como anuncios.");
+        table.put("Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.",
+                "Publicaciones que Facebook marca como creadas con IA. Las etiquetas que solo a\u00f1ade quien comparte se mantienen. Este interruptor empieza desactivado hasta que se pruebe en un feed real.");
         table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
                 "Publicaciones de personas y p\u00e1ginas que no sigues y de grupos a los que no te has unido que Facebook mete en tu feed.");
-        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
-                "Publicaciones que la propia detecci\u00f3n de Facebook marc\u00f3 como creadas con IA. Las que solo etiquet\u00f3 como IA quien las comparti\u00f3 se quedan. Este interruptor empieza desactivado porque todav\u00eda no se ha probado en un feed real.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Los perfiles y algunas p\u00e1ginas de Configuraci\u00f3n vuelven a abrirse en esta versi\u00f3n firmada de nuevo.");
         table.put("Re-signed build fix",
@@ -614,6 +630,8 @@ public final class L10nTranslations {
                 "Reintentar");
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Si vuelves a Facebook en menos de diez minutos, seguir\u00e1s donde estabas. Puedes deslizar hacia abajo para actualizar.");
+        table.put("Save",
+                "Guardar");
         table.put("Save any story",
                 "Guardar cualquier historia");
         table.put("Save cancelled",
@@ -622,16 +640,21 @@ public final class L10nTranslations {
                 "Carpeta de guardado");
         table.put("Save full report",
                 "Guardar informe completo");
+        table.put("Save the full report in Download/Morphe.",
+                "Guarda el informe completo en Download/Morphe.");
+        table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
+                "Guarda tus interruptores y la carpeta en un archivo. Pausa y el registro de depuraci\u00f3n no se incluyen.");
         table.put("Saved to %1$s",
                 "Se guard\u00f3 en %1$s");
         table.put("Saved to the gallery",
                 "Se guard\u00f3 en la galer\u00eda");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Guardado. Reinicia Facebook para aplicar este cambio.");
-        table.put("Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.",
-                "Guarda los interruptores y la carpeta de guardado de las secciones de arriba en el archivo que elijas. Pausar y el Registro de depuraci\u00f3n quedan fuera.");
         table.put("Saves will go to a folder named %1$s.",
                 "Lo que guardes ir\u00e1 a una carpeta llamada %1$s.");
+    }
+
+    private static void fillEs2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Guardando una foto");
         table.put("Saving a video",
@@ -642,9 +665,6 @@ public final class L10nTranslations {
                 "Guardando...");
         table.put("Set when you patched",
                 "Aplicado al parchear");
-    }
-
-    private static void fillEs2(Map<String, String> table) {
         table.put("Settings couldn't open",
                 "No se pudo abrir la configuraci\u00f3n");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
@@ -738,7 +758,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildIn() {
-        Map<String, String> table = new HashMap<>(330);
+        Map<String, String> table = new HashMap<>(340);
         fillIn0(table);
         fillIn1(table);
         fillIn2(table);
@@ -780,12 +800,12 @@ public final class L10nTranslations {
                 "Kartu iklan di antara cerita yang diposting orang.");
         table.put("Ad telemetry blocked",
                 "Telemetri iklan diblokir");
-        table.put("Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.",
-                "Menambahkan opsi Unduh ke ponsel ke menu video di Kabar Beranda atau Watch, di bawah opsi bawaan Facebook, dan menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, menu hanya menampilkan opsi bawaan Facebook.");
+        table.put("Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.",
+                "Menambahkan Unduh ke ponsel ke menu video beranda dan Watch. Menyimpan kualitas tertinggi yang dialirkan Facebook. Saat mati atau dijeda, menu Facebook kembali.");
         table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
                 "Menambahkan opsi Simpan ke menu cerita siapa pun dan menyimpannya dengan kualitas streaming terbaik dari pemutar. Jika nonaktif atau dijeda, opsi Simpan hanya ada di cerita Anda sendiri dan memakai fitur simpan bawaan Facebook.");
-        table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
-                "Iklan yang datang di dalam satu kumpulan reel. Banner dan iklan di tengah video tetap diblokir selama tambalan ini terpasang, apa pun status sakelar ini atau Jeda. Begitu juga iklan yang ditambahkan aplikasi dengan sendirinya.");
+        table.put("Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.",
+                "Iklan di dalam Reels. Banner, iklan di tengah video, dan iklan yang disisipkan aplikasi tetap diblokir saat dijeda.");
         table.put("Audience Network off",
                 "Audience Network nonaktif");
         table.put("Back",
@@ -796,12 +816,16 @@ public final class L10nTranslations {
                 "Batal");
         table.put("Changing these",
                 "Mengubah pilihan ini");
-        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
-                "Pilih file pengaturan. Anda akan melihat berapa sakelar yang diubahnya sebelum ada yang berubah.");
+        table.put("Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.",
+                "Pilih nama folder di Movies dan Pictures. Karakter yang tidak valid menjadi garis bawah. Kosongkan untuk memakai %1$s.");
+        table.put("Choose a settings file and preview what would change before importing.",
+                "Pilih berkas pengaturan dan lihat perubahan sebelum mengimpornya.");
         table.put("Clear diagnostic data",
                 "Hapus data diagnostik");
-        table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
-                "Salin laporan singkat, atau simpan laporan lengkap ke Download/Morphe. Tautan, ID akun dan postingan, cookie sesi, serta nama tidak disertakan.");
+        table.put("Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.",
+                "Salin laporan singkat atau simpan laporan lengkap di Download/Morphe. Nama, ID, tautan, dan cookie dihilangkan.");
+        table.put("Copy a short report to the clipboard.",
+                "Salin laporan singkat ke papan klip.");
         table.put("Copy quick report",
                 "Salin laporan singkat");
         table.put("Couldn't import every setting. Check the switches on this screen.",
@@ -854,21 +878,25 @@ public final class L10nTranslations {
                 "Ekspor pengaturan");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook tertutup tiga kali dalam satu menit setelah dibuka, jadi Hushfacebook menjeda dirinya sendiri.");
+        table.put("Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.",
+                "Mode gelap Facebook dan halaman ini memakai warna wallpaper Anda. Android 11 memakai biru. Aktifkan mode gelap Facebook untuk melihatnya.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
                 "Facebook tidak mengunduh iklan atau model iklannya di latar belakang.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook tidak menayangkan iklan ke aplikasi lain di ponsel ini.");
-        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
-                "Mode gelap Facebook memakai warna dari wallpaper Anda, begitu juga layar ini. Android 11 tidak punya warna wallpaper, jadi memakai palet biru tetap. Aktifkan mode gelap di Facebook untuk melihatnya.");
-        table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
-                "Setelah Facebook dimulai ulang, semua sakelar di atas dianggap nonaktif, dan kode Facebook sendiri yang berjalan sebagai gantinya. Pencatatan debug tetap berfungsi, dan pengaturan Anda tetap seperti semula.");
+        table.put("Folder name",
+                "Nama folder");
+    }
+
+    private static void fillIn1(Map<String, String> table) {
+        table.put("Folder set to %1$s.",
+                "Folder diatur menjadi %1$s.");
+        table.put("From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.",
+                "Mulai pembukaan berikutnya, tombol di atas berhenti bekerja dan perilaku Facebook kembali. Pencatatan debug tetap berjalan dan pilihan Anda tersimpan.");
         table.put("Full report saved to %1$s",
                 "Laporan lengkap disimpan ke %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, beserta pemberitahuan dari proyek yang menjadi dasarnya");
-    }
-
-    private static void fillIn1(Map<String, String> table) {
         table.put("Hide \"People you may know\"",
                 "Sembunyikan \u201cOrang yang Mungkin Anda Kenal\u201d");
         table.put("Hide \"Suggested for you\" posts",
@@ -933,8 +961,6 @@ public final class L10nTranslations {
                 "Tidak disimpan: file lebih dari 512 MB");
         table.put("OK",
                 "Oke");
-        table.put("One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.",
-                "Satu nama folder untuk semua yang Anda simpan. Garis miring dan karakter lain yang tidak boleh ada di nama folder diubah menjadi garis bawah. Biarkan kosong untuk memakai %1$s.");
         table.put("Open links in your browser",
                 "Buka tautan di browser Anda");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -943,10 +969,10 @@ public final class L10nTranslations {
                 "Jeda Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Postingan yang dikategorikan Facebook sebagai promosi, bukan iklan.");
+        table.put("Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.",
+                "Postingan yang ditandai Facebook sebagai buatan AI. Label yang hanya ditambahkan pengunggah tetap ada. Tombol ini awalnya mati sampai diuji di beranda sungguhan.");
         table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
                 "Postingan dari orang dan Halaman yang tidak Anda ikuti serta dari grup tempat Anda belum bergabung, yang diselipkan Facebook ke Kabar Beranda Anda.");
-        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
-                "Postingan yang ditandai oleh deteksi Facebook sendiri sebagai buatan AI. Postingan yang diberi label AI hanya oleh orang yang membagikannya tetap ditampilkan. Sakelar ini awalnya nonaktif karena belum pernah dicoba di Kabar Beranda sungguhan.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Profil dan beberapa halaman Pengaturan dapat dibuka lagi di build yang ditandatangani ulang ini.");
         table.put("Re-signed build fix",
@@ -961,6 +987,8 @@ public final class L10nTranslations {
                 "Coba lagi");
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Jika kembali ke Facebook dalam sepuluh menit, posisi beranda tetap sama. Tarik ke bawah untuk memuat ulang masih berfungsi.");
+        table.put("Save",
+                "Simpan");
         table.put("Save any story",
                 "Simpan cerita apa pun");
         table.put("Save cancelled",
@@ -969,16 +997,21 @@ public final class L10nTranslations {
                 "Folder simpan");
         table.put("Save full report",
                 "Simpan laporan lengkap");
+        table.put("Save the full report in Download/Morphe.",
+                "Simpan laporan lengkap di Download/Morphe.");
+        table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
+                "Simpan tombol dan folder Anda ke sebuah berkas. Jeda dan pencatatan debug tidak disertakan.");
         table.put("Saved to %1$s",
                 "Disimpan ke %1$s");
         table.put("Saved to the gallery",
                 "Disimpan ke galeri");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Tersimpan. Mulai ulang Facebook untuk menerapkan perubahan ini.");
-        table.put("Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.",
-                "Menyimpan sakelar dan folder simpan dari bagian-bagian di atas ke file pilihan Anda. Jeda dan Pencatatan debug tidak ikut disimpan.");
         table.put("Saves will go to a folder named %1$s.",
                 "Semua yang Anda simpan akan masuk ke folder bernama %1$s.");
+    }
+
+    private static void fillIn2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Menyimpan foto");
         table.put("Saving a video",
@@ -989,9 +1022,6 @@ public final class L10nTranslations {
                 "Menyimpan...");
         table.put("Set when you patched",
                 "Diatur saat Anda menambal");
-    }
-
-    private static void fillIn2(Map<String, String> table) {
         table.put("Settings couldn't open",
                 "Pengaturan tidak dapat dibuka");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
@@ -1085,7 +1115,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildPt_rBR() {
-        Map<String, String> table = new HashMap<>(330);
+        Map<String, String> table = new HashMap<>(340);
         fillPt_rBR0(table);
         fillPt_rBR1(table);
         fillPt_rBR2(table);
@@ -1127,12 +1157,12 @@ public final class L10nTranslations {
                 "An\u00fancios entre os stories que as pessoas postaram.");
         table.put("Ad telemetry blocked",
                 "Telemetria de an\u00fancios bloqueada");
-        table.put("Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.",
-                "Adiciona o item Baixar no celular ao menu de um v\u00eddeo no feed ou no Watch, abaixo dos itens do pr\u00f3prio Facebook, e salva na melhor qualidade que o player reproduz. Com esta op\u00e7\u00e3o desligada ou durante a pausa, o menu s\u00f3 mostra os itens do pr\u00f3prio Facebook.");
+        table.put("Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.",
+                "Adiciona Baixar no telefone aos menus de v\u00eddeo do feed e do Watch. Salva na maior qualidade transmitida pelo Facebook. Desligado ou em pausa, o menu do Facebook volta.");
         table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
                 "Adiciona o item Salvar ao menu do story de qualquer pessoa e salva na melhor qualidade que o player reproduz. Com esta op\u00e7\u00e3o desligada ou durante a pausa, o item Salvar s\u00f3 aparece nos seus pr\u00f3prios stories, e quem salva \u00e9 o pr\u00f3prio Facebook.");
-        table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
-                "An\u00fancios que chegam dentro de um lote de reels. Banners e an\u00fancios no meio do v\u00eddeo continuam bloqueados enquanto o patch estiver aplicado, independentemente desta op\u00e7\u00e3o ou da pausa. O mesmo vale para os an\u00fancios que o app adiciona por conta pr\u00f3pria.");
+        table.put("Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.",
+                "An\u00fancios dentro dos Reels. Banners, an\u00fancios no meio do v\u00eddeo e an\u00fancios inseridos pelo app continuam bloqueados mesmo durante a pausa.");
         table.put("Audience Network off",
                 "Audience Network desativado");
         table.put("Back",
@@ -1143,12 +1173,16 @@ public final class L10nTranslations {
                 "Cancelar");
         table.put("Changing these",
                 "Como mudar esses itens");
-        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
-                "Escolha um arquivo de configura\u00e7\u00f5es. Voc\u00ea vai ver quantas op\u00e7\u00f5es ele muda antes de qualquer altera\u00e7\u00e3o.");
+        table.put("Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.",
+                "Escolha o nome da pasta em Movies e Pictures. Caracteres inv\u00e1lidos viram sublinhados. Deixe em branco para usar %1$s.");
+        table.put("Choose a settings file and preview what would change before importing.",
+                "Escolha um arquivo de configura\u00e7\u00f5es e veja as mudan\u00e7as antes de importar.");
         table.put("Clear diagnostic data",
                 "Limpar dados de diagn\u00f3stico");
-        table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
-                "Copie um relat\u00f3rio curto ou salve o completo em Download/Morphe. Links, IDs de conta e de post, cookies de sess\u00e3o e nomes ficam de fora.");
+        table.put("Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.",
+                "Copie um relat\u00f3rio r\u00e1pido ou salve o completo em Download/Morphe. Nomes, IDs, links e cookies s\u00e3o omitidos.");
+        table.put("Copy a short report to the clipboard.",
+                "Copie um relat\u00f3rio curto para a \u00e1rea de transfer\u00eancia.");
         table.put("Copy quick report",
                 "Copiar relat\u00f3rio r\u00e1pido");
         table.put("Couldn't import every setting. Check the switches on this screen.",
@@ -1201,21 +1235,25 @@ public final class L10nTranslations {
                 "Exportar configura\u00e7\u00f5es");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "O Facebook fechou tr\u00eas vezes no primeiro minuto depois de abrir, ent\u00e3o o Hushfacebook entrou em pausa automaticamente.");
+        table.put("Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.",
+                "O modo escuro do Facebook e esta tela usam as cores do seu papel de parede. O Android 11 usa azul. Ative o modo escuro do Facebook para ver.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
                 "O Facebook n\u00e3o baixa an\u00fancios nem o modelo de an\u00fancios dele em segundo plano.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "O Facebook n\u00e3o envia an\u00fancios para outros apps deste celular.");
-        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
-                "O modo escuro do Facebook usa as cores do seu plano de fundo, e esta tela tamb\u00e9m. O Android 11 n\u00e3o tem cores de plano de fundo, ent\u00e3o usa uma paleta azul fixa. Ative o modo escuro no Facebook para ver.");
-        table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
-                "A partir da pr\u00f3xima abertura, todas as op\u00e7\u00f5es acima funcionam como se estivessem desligadas, e o c\u00f3digo do pr\u00f3prio Facebook roda no lugar. O Registro de depura\u00e7\u00e3o continua funcionando, e suas configura\u00e7\u00f5es ficam como est\u00e3o.");
+        table.put("Folder name",
+                "Nome da pasta");
+    }
+
+    private static void fillPt_rBR1(Map<String, String> table) {
+        table.put("Folder set to %1$s.",
+                "Pasta definida como %1$s.");
+        table.put("From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.",
+                "Na pr\u00f3xima abertura, os bot\u00f5es acima deixam de agir e o comportamento do Facebook volta. O registro de depura\u00e7\u00e3o continua funcionando e suas escolhas ficam salvas.");
         table.put("Full report saved to %1$s",
                 "Relat\u00f3rio completo salvo em %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, com os avisos dos projetos em que o Hushfacebook se baseia");
-    }
-
-    private static void fillPt_rBR1(Map<String, String> table) {
         table.put("Hide \"People you may know\"",
                 "Ocultar \u201cPessoas que voc\u00ea talvez conhe\u00e7a\u201d");
         table.put("Hide \"Suggested for you\" posts",
@@ -1280,8 +1318,6 @@ public final class L10nTranslations {
                 "N\u00e3o foi salvo: o arquivo tem mais de 512 MB");
         table.put("OK",
                 "OK");
-        table.put("One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.",
-                "Um nome de pasta para o que voc\u00ea salvar. Barras e outros caracteres que um nome de pasta n\u00e3o aceita viram sublinhados. Deixe em branco para usar %1$s.");
         table.put("Open links in your browser",
                 "Abrir links no seu navegador");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -1290,10 +1326,10 @@ public final class L10nTranslations {
                 "Pausar o Hushfacebook");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Posts que o Facebook classifica como promo\u00e7\u00f5es, e n\u00e3o como an\u00fancios.");
+        table.put("Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.",
+                "Publica\u00e7\u00f5es que o Facebook marca como feitas por IA. R\u00f3tulos adicionados s\u00f3 por quem compartilhou permanecem. Este bot\u00e3o come\u00e7a desligado at\u00e9 ser testado em um feed real.");
         table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
                 "Publica\u00e7\u00f5es de pessoas e P\u00e1ginas que voc\u00ea n\u00e3o segue e de grupos dos quais voc\u00ea n\u00e3o participa, que o Facebook coloca no seu feed.");
-        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
-                "Posts que a pr\u00f3pria detec\u00e7\u00e3o do Facebook marcou como feitos com IA. Um post que s\u00f3 quem compartilhou marcou como IA continua aparecendo. Esta op\u00e7\u00e3o come\u00e7a desligada porque ainda n\u00e3o foi testada em um feed de verdade.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Perfis e algumas p\u00e1ginas de Configura\u00e7\u00f5es voltam a abrir nesta vers\u00e3o reassinada.");
         table.put("Re-signed build fix",
@@ -1308,6 +1344,8 @@ public final class L10nTranslations {
                 "Tentar novamente");
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Se voc\u00ea voltar ao Facebook em at\u00e9 dez minutos, continuar\u00e1 de onde parou. Puxe para baixo para atualizar quando quiser.");
+        table.put("Save",
+                "Salvar");
         table.put("Save any story",
                 "Salvar qualquer story");
         table.put("Save cancelled",
@@ -1316,16 +1354,21 @@ public final class L10nTranslations {
                 "Pasta de destino");
         table.put("Save full report",
                 "Salvar relat\u00f3rio completo");
+        table.put("Save the full report in Download/Morphe.",
+                "Salve o relat\u00f3rio completo em Download/Morphe.");
+        table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
+                "Salve seus bot\u00f5es e a pasta em um arquivo. Pausa e registro de depura\u00e7\u00e3o n\u00e3o s\u00e3o inclu\u00eddos.");
         table.put("Saved to %1$s",
                 "Salvo em %1$s");
         table.put("Saved to the gallery",
                 "Salvo na galeria");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Salvo. Reinicie o Facebook para aplicar esta altera\u00e7\u00e3o.");
-        table.put("Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.",
-                "Salva as op\u00e7\u00f5es e a pasta de destino das se\u00e7\u00f5es acima em um arquivo que voc\u00ea escolher. A pausa e o Registro de depura\u00e7\u00e3o ficam de fora.");
         table.put("Saves will go to a folder named %1$s.",
                 "O que voc\u00ea salvar vai para uma pasta chamada %1$s.");
+    }
+
+    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Salvando uma foto");
         table.put("Saving a video",
@@ -1336,9 +1379,6 @@ public final class L10nTranslations {
                 "Salvando...");
         table.put("Set when you patched",
                 "Definido ao aplicar os patches");
-    }
-
-    private static void fillPt_rBR2(Map<String, String> table) {
         table.put("Settings couldn't open",
                 "N\u00e3o foi poss\u00edvel abrir as configura\u00e7\u00f5es");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",
@@ -1432,7 +1472,7 @@ public final class L10nTranslations {
     }
 
     private static Map<String, String> buildTr() {
-        Map<String, String> table = new HashMap<>(330);
+        Map<String, String> table = new HashMap<>(340);
         fillTr0(table);
         fillTr1(table);
         fillTr2(table);
@@ -1474,12 +1514,12 @@ public final class L10nTranslations {
                 "\u0130nsanlar\u0131n payla\u015ft\u0131\u011f\u0131 hikayeler aras\u0131ndaki reklam kartlar\u0131.");
         table.put("Ad telemetry blocked",
                 "Reklam telemetrisi engellendi");
-        table.put("Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.",
-                "Ak\u0131\u015ftaki veya Watch'taki bir videonun men\u00fcs\u00fcne, Facebook'un kendi se\u00e7eneklerinin alt\u0131na Telefona indir se\u00e7ene\u011fini ekler ve videoyu oynat\u0131c\u0131n\u0131n sundu\u011fu en iyi kalitede kaydeder. Kapal\u0131yken veya duraklat\u0131lm\u0131\u015fken men\u00fcde yaln\u0131zca Facebook'un kendi se\u00e7enekleri g\u00f6r\u00fcn\u00fcr.");
+        table.put("Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.",
+                "Ak\u0131\u015f ve Watch video men\u00fclerine Telefona indir se\u00e7ene\u011fini ekler. Facebook'un yay\u0131nlad\u0131\u011f\u0131 en y\u00fcksek kalitede kaydeder. Kapal\u0131yken veya duraklat\u0131ld\u0131\u011f\u0131nda Facebook men\u00fcs\u00fc geri gelir.");
         table.put("Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.",
                 "Kimin olursa olsun her hikayenin men\u00fcs\u00fcne Kaydet se\u00e7ene\u011fini ekler ve hikayeyi oynat\u0131c\u0131n\u0131n sundu\u011fu en iyi kalitede kaydeder. Kapal\u0131yken veya duraklat\u0131lm\u0131\u015fken Kaydet se\u00e7ene\u011fi yaln\u0131zca kendi hikayelerinde bulunur ve Facebook'un kendi kaydetme i\u015flevini \u00e7al\u0131\u015ft\u0131r\u0131r.");
-        table.put("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.",
-                "Reels videolar\u0131 aras\u0131nda gelen reklamlar. Banner ve video ortas\u0131 reklamlar ise yama uyguland\u0131\u011f\u0131 s\u00fcrece, bu anahtar veya Duraklatma ne derse desin, engellenmi\u015f kal\u0131r. Uygulaman\u0131n kendi ba\u015f\u0131na ekledi\u011fi reklamlar da \u00f6yle.");
+        table.put("Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.",
+                "Reels i\u00e7indeki reklamlar. Banner'lar, video ortas\u0131 reklamlar ve uygulaman\u0131n ekledi\u011fi reklamlar duraklat\u0131ld\u0131\u011f\u0131nda da engellenir.");
         table.put("Audience Network off",
                 "Audience Network kapal\u0131");
         table.put("Back",
@@ -1490,12 +1530,16 @@ public final class L10nTranslations {
                 "\u0130ptal");
         table.put("Changing these",
                 "Bunlar\u0131 de\u011fi\u015ftirmek");
-        table.put("Choose a settings file. You'll see how many switches it changes before anything does.",
-                "Bir ayar dosyas\u0131 se\u00e7. Herhangi bir \u015fey de\u011fi\u015fmeden \u00f6nce ka\u00e7 anahtar\u0131 de\u011fi\u015ftirece\u011fini g\u00f6r\u00fcrs\u00fcn.");
+        table.put("Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.",
+                "Movies ve Pictures alt\u0131nda bir klas\u00f6r ad\u0131 se\u00e7in. Ge\u00e7ersiz karakterler alt \u00e7izgiye d\u00f6n\u00fc\u015f\u00fcr. %1$s i\u00e7in bo\u015f b\u0131rak\u0131n.");
+        table.put("Choose a settings file and preview what would change before importing.",
+                "Bir ayar dosyas\u0131 se\u00e7in ve i\u00e7e aktarmadan \u00f6nce nelerin de\u011fi\u015fece\u011fini g\u00f6r\u00fcn.");
         table.put("Clear diagnostic data",
                 "Tan\u0131lama verilerini temizle");
-        table.put("Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.",
-                "K\u0131sa bir rapor kopyala veya tam raporu Download/Morphe klas\u00f6r\u00fcne kaydet. Ba\u011flant\u0131lar, hesap ve g\u00f6nderi kimlikleri, oturum \u00e7erezleri ve adlar dahil edilmez.");
+        table.put("Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.",
+                "K\u0131sa raporu kopyalay\u0131n veya tam raporu Download/Morphe konumuna kaydedin. Adlar, kimlikler, ba\u011flant\u0131lar ve \u00e7erezler \u00e7\u0131kar\u0131l\u0131r.");
+        table.put("Copy a short report to the clipboard.",
+                "K\u0131sa raporu panoya kopyalar.");
         table.put("Copy quick report",
                 "H\u0131zl\u0131 raporu kopyala");
         table.put("Couldn't import every setting. Check the switches on this screen.",
@@ -1548,21 +1592,25 @@ public final class L10nTranslations {
                 "Ayarlar\u0131 d\u0131\u015fa aktar");
         table.put("Facebook closed three times within a minute of starting, so Hushfacebook paused itself.",
                 "Facebook a\u00e7\u0131ld\u0131ktan sonraki bir dakika i\u00e7inde \u00fc\u00e7 kez kapand\u0131, bu y\u00fczden Hushfacebook kendini duraklatt\u0131.");
+        table.put("Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.",
+                "Facebook koyu modu ve bu ekran duvar k\u00e2\u011f\u0131d\u0131n\u0131z\u0131n renklerini kullan\u0131r. Android 11 bunun yerine mavi kullan\u0131r. G\u00f6rmek i\u00e7in Facebook koyu modunu a\u00e7\u0131n.");
         table.put("Facebook doesn't download ads or its ad model in the background.",
                 "Facebook reklamlar\u0131 veya reklam modelini arka planda indirmez.");
         table.put("Facebook doesn't serve ads to other apps on this phone.",
                 "Facebook bu telefondaki di\u011fer uygulamalara reklam sunmaz.");
-        table.put("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.",
-                "Facebook'un karanl\u0131k modu renklerini duvar ka\u011f\u0131d\u0131ndan al\u0131r, bu ekran da \u00f6yle. Android 11'de duvar ka\u011f\u0131d\u0131 renkleri olmad\u0131\u011f\u0131 i\u00e7in sabit bir mavi palet kullan\u0131l\u0131r. G\u00f6rmek i\u00e7in Facebook'ta karanl\u0131k modu a\u00e7.");
-        table.put("From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.",
-                "Bir sonraki a\u00e7\u0131l\u0131\u015ftan itibaren yukar\u0131daki her anahtar kapal\u0131ym\u0131\u015f gibi davran\u0131r ve yerine Facebook'un kendi kodu \u00e7al\u0131\u015f\u0131r. Hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc \u00e7al\u0131\u015fmaya devam eder ve ayarlar\u0131n oldu\u011fu gibi kal\u0131r.");
+        table.put("Folder name",
+                "Klas\u00f6r ad\u0131");
+    }
+
+    private static void fillTr1(Map<String, String> table) {
+        table.put("Folder set to %1$s.",
+                "Klas\u00f6r %1$s olarak ayarland\u0131.");
+        table.put("From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.",
+                "Sonraki a\u00e7\u0131l\u0131\u015ftan itibaren yukar\u0131daki anahtarlar \u00e7al\u0131\u015fmaz ve Facebook'un kendi davran\u0131\u015f\u0131 geri gelir. Hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc \u00e7al\u0131\u015fmaya devam eder ve se\u00e7imleriniz korunur.");
         table.put("Full report saved to %1$s",
                 "Tam rapor \u015furaya kaydedildi: %1$s");
         table.put("GPL-3.0, with the notices of the projects this is built on",
                 "GPL-3.0, \u00fczerine kuruldu\u011fu projelerin lisans bildirimleriyle");
-    }
-
-    private static void fillTr1(Map<String, String> table) {
         table.put("Hide \"People you may know\"",
                 "\u201cTan\u0131yor olabilece\u011fin ki\u015filer\u201d b\u00f6l\u00fcm\u00fcn\u00fc gizle");
         table.put("Hide \"Suggested for you\" posts",
@@ -1627,8 +1675,6 @@ public final class L10nTranslations {
                 "Kaydedilmedi: Dosya 512 MB'tan b\u00fcy\u00fck");
         table.put("OK",
                 "Tamam");
-        table.put("One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.",
-                "Kaydettiklerin i\u00e7in tek bir klas\u00f6r ad\u0131. E\u011fik \u00e7izgiler ve klas\u00f6r ad\u0131nda kullan\u0131lamayan di\u011fer karakterler alt \u00e7izgiye d\u00f6n\u00fc\u015f\u00fcr. %1$s kullanmak i\u00e7in bo\u015f b\u0131rak.");
         table.put("Open links in your browser",
                 "Ba\u011flant\u0131lar\u0131 taray\u0131c\u0131nda a\u00e7");
         table.put("Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.",
@@ -1637,10 +1683,10 @@ public final class L10nTranslations {
                 "Hushfacebook'u duraklat");
         table.put("Posts Facebook files as promotions rather than as ads.",
                 "Facebook'un reklam yerine tan\u0131t\u0131m olarak sayd\u0131\u011f\u0131 g\u00f6nderiler.");
+        table.put("Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.",
+                "Facebook'un yapay zek\u00e2 ile \u00fcretildi\u011fini i\u015faretledi\u011fi g\u00f6nderiler. Yaln\u0131zca payla\u015fan ki\u015finin ekledi\u011fi etiketler kal\u0131r. Bu anahtar ger\u00e7ek bir ak\u0131\u015fta test edilene kadar kapal\u0131 ba\u015flar.");
         table.put("Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.",
                 "Takip etmedi\u011fin ki\u015fi ve sayfalardan ve kat\u0131lmad\u0131\u011f\u0131n gruplardan Facebook'un ak\u0131\u015f\u0131na katt\u0131\u011f\u0131 g\u00f6nderiler.");
-        table.put("Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.",
-                "Facebook'un kendi tespitinin yapay zek\u00e2 ile \u00fcretilmi\u015f diye i\u015faretledi\u011fi g\u00f6nderiler. Yapay zek\u00e2 etiketini yaln\u0131zca payla\u015fan ki\u015finin ekledi\u011fi g\u00f6nderiler kal\u0131r. Bu anahtar hen\u00fcz ger\u00e7ek bir ak\u0131\u015fta denenmedi\u011fi i\u00e7in kapal\u0131 ba\u015flar.");
         table.put("Profiles and some Settings pages open again on this re-signed build.",
                 "Profiller ve baz\u0131 Ayarlar sayfalar\u0131 bu yeniden imzalanm\u0131\u015f s\u00fcr\u00fcmde tekrar a\u00e7\u0131l\u0131r.");
         table.put("Re-signed build fix",
@@ -1655,6 +1701,8 @@ public final class L10nTranslations {
                 "Yeniden dene");
         table.put("Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.",
                 "Facebook'a on dakika i\u00e7inde d\u00f6nersen kald\u0131\u011f\u0131n yer korunur. Yenilemek i\u00e7in a\u015fa\u011f\u0131 \u00e7ekmeye devam edebilirsin.");
+        table.put("Save",
+                "Kaydet");
         table.put("Save any story",
                 "Herhangi bir hikayeyi kaydet");
         table.put("Save cancelled",
@@ -1663,16 +1711,21 @@ public final class L10nTranslations {
                 "Kay\u0131t klas\u00f6r\u00fc");
         table.put("Save full report",
                 "Tam raporu kaydet");
+        table.put("Save the full report in Download/Morphe.",
+                "Tam raporu Download/Morphe konumuna kaydeder.");
+        table.put("Save your switches and folder to a file. Pause and debug logging aren't included.",
+                "Anahtarlar\u0131n\u0131z\u0131 ve klas\u00f6r\u00fcn\u00fcz\u00fc bir dosyaya kaydedin. Duraklatma ve hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc dahil edilmez.");
         table.put("Saved to %1$s",
                 "\u015euraya kaydedildi: %1$s");
         table.put("Saved to the gallery",
                 "Galeriye kaydedildi");
         table.put("Saved. Restart Facebook to apply this change.",
                 "Kaydedildi. Bu de\u011fi\u015fikli\u011fi uygulamak i\u00e7in Facebook'u yeniden ba\u015flat.");
-        table.put("Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.",
-                "Yukar\u0131daki b\u00f6l\u00fcmlerin anahtarlar\u0131n\u0131 ve kay\u0131t klas\u00f6r\u00fcn\u00fc se\u00e7ti\u011fin bir dosyaya kaydeder. Duraklatma ve Hata ay\u0131klama g\u00fcnl\u00fc\u011f\u00fc dahil edilmez.");
         table.put("Saves will go to a folder named %1$s.",
                 "Kaydettiklerin %1$s adl\u0131 bir klas\u00f6re gidecek.");
+    }
+
+    private static void fillTr2(Map<String, String> table) {
         table.put("Saving a photo",
                 "Foto\u011fraf kaydediliyor");
         table.put("Saving a video",
@@ -1683,9 +1736,6 @@ public final class L10nTranslations {
                 "Kaydediliyor...");
         table.put("Set when you patched",
                 "Yamalad\u0131\u011f\u0131nda ayarlananlar");
-    }
-
-    private static void fillTr2(Map<String, String> table) {
         table.put("Settings couldn't open",
                 "Ayarlar a\u00e7\u0131lamad\u0131");
         table.put("Settings couldn't refresh completely. Reopen settings and try again.",

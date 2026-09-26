@@ -25,6 +25,10 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.preference.TwoStatePreference;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -197,9 +201,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.AI_DETECTED_POSTS)) {
                 feed.addPreference(toggle(context, Settings.HIDE_AI_DETECTED_POSTS, L10n.t("Hide AI-detected posts"),
-                        L10n.t("Posts that Facebook's own detection marked as made with AI. A post labeled only by "
-                                + "the person who shared it stays. This one starts off because it hasn't been tried "
-                                + "on a real feed yet.")));
+                        L10n.t("Posts Facebook marks as AI-made. Labels added only by the person sharing stay. "
+                                + "This switch starts off until it's tested on a real feed.")));
             }
         }
 
@@ -227,8 +230,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             PreferenceCategory reels = category(screen, L10n.t("Reels and Watch"));
             if (build.contains(PatchFamily.SPONSORED_REELS)) {
                 reels.addPreference(toggle(context, Settings.HIDE_SPONSORED_REELS, L10n.t("Hide sponsored reels"),
-                        L10n.t("Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the "
-                                + "patch is in, whatever this switch or Pause says. So do ads the app adds on its own.")));
+                        L10n.t("Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.")));
             }
             if (build.contains(PatchFamily.REEL_DOWNLOAD)) {
                 reels.addPreference(toggle(context, Settings.DOWNLOAD_REELS, L10n.t("Download button on reels"),
@@ -242,9 +244,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             PreferenceCategory downloads = category(screen, L10n.t("Downloads"));
             if (build.contains(PatchFamily.VIDEO_DOWNLOAD)) {
                 downloads.addPreference(toggle(context, Settings.DOWNLOAD_VIDEOS, L10n.t("Download feed and Watch videos"),
-                        L10n.t("Adds Download to phone to the menu of a video in the feed or in Watch, below "
-                                + "Facebook's own items, and saves at the best quality the player streams. Off or "
-                                + "paused, the menu is Facebook's own.")));
+                        L10n.t("Adds Download to phone to feed and Watch video menus. Saves the highest quality "
+                                + "Facebook streams. Off or paused, Facebook's menu returns.")));
             }
             downloads.addPreference(folderRow(context));
         }
@@ -285,9 +286,8 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             if (build.contains(PatchFamily.MATERIAL_YOU_THEME)) {
                 patched.addPreference(info(context, L10n.t("Material You theme"),
-                        L10n.t("Facebook's dark mode takes its colours from your wallpaper, and this screen does too. "
-                                + "Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark "
-                                + "mode in Facebook to see it.")));
+                        L10n.t("Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue "
+                                + "instead. Turn on Facebook dark mode to see it.")));
             }
             if (build.contains(PatchFamily.RESTORE_TRUST)) {
                 patched.addPreference(info(context, L10n.t("Re-signed build fix"),
@@ -300,26 +300,25 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
 
         PreferenceCategory hushfacebook = category(screen, "Hushfacebook");
         hushfacebook.addPreference(toggle(context, BaseSettings.PAUSED, L10n.t("Pause Hushfacebook"),
-                L10n.t("From the next start, every switch above acts as if it were off, and Facebook's own code "
-                        + "runs in its place. Debug logging keeps working, and your settings stay as they are.")));
+                L10n.t("From the next start, the switches above stop running and Facebook's own behaviour returns. "
+                        + "Debug logging keeps working, and your choices stay.")));
         String stays = PatchFamily.staysWhilePausedSummary(build);
         if (stays != null) hushfacebook.addPreference(info(context, L10n.t(STAYS_WHILE_PAUSED), stays));
         // Morphe Manager can export the patch choices and the signing key, not these switches.
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.EXPORT,
                 L10n.t("Export settings"),
-                L10n.t("Saves the switches and the save folder from the sections above to a file you choose. "
-                        + "Pause and Debug logging stay out of it.")));
+                L10n.t("Save your switches and folder to a file. Pause and debug logging aren't included.")));
         hushfacebook.addPreference(new BackupRow(this, context, SettingsBackupPreference.IMPORT,
                 L10n.t("Import settings"),
-                L10n.t("Choose a settings file. You'll see how many switches it changes before anything does.")));
+                L10n.t("Choose a settings file and preview what would change before importing.")));
         hushfacebook.addPreference(toggle(context, BaseSettings.DEBUG, L10n.t("Debug logging"),
                 L10n.t("Writes what each patch does to the Android log. Leave it off unless you're reporting a problem.")));
         // Both rows come without a title of their own: Hushfeed's gave them one from string
         // resources that Facebook's APK doesn't have, and untitled they showed as blank rows.
         ExportDiagnosticReportPreference export = new ExportRow(context);
         export.setTitle(L10n.t("Export diagnostic report"));
-        export.setSummary(L10n.t("Copy a short report, or save the full one to Download/Morphe. Links, account and "
-                + "post ids, session cookies and names are left out."));
+        export.setSummary(L10n.t("Copy a quick report or save the full one to Download/Morphe. Names, IDs, links "
+                + "and cookies are omitted."));
         hushfacebook.addPreference(export);
         ClearLogBufferPreference clear = new ClearRow(context);
         clear.setTitle(L10n.t("Clear diagnostic data"));
@@ -371,9 +370,14 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         Canvas canvas = new Canvas(mark);
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setColor(fill);
-        canvas.drawCircle(diameter / 2f, diameter / 2f, diameter / 2f, paint);
-        if (!paused) {
-            paint.setColor(colors != null && !colors.light ? colors.background : Color.WHITE);
+        canvas.drawRoundRect(0, 0, diameter, diameter, diameter / 5f, diameter / 5f, paint);
+        paint.setColor(colors == null ? Color.WHITE : colors.onAccent);
+        if (paused) {
+            canvas.drawRoundRect(diameter * .32f, diameter * .27f, diameter * .43f, diameter * .73f,
+                    diameter * .05f, diameter * .05f, paint);
+            canvas.drawRoundRect(diameter * .57f, diameter * .27f, diameter * .68f, diameter * .73f,
+                    diameter * .05f, diameter * .05f, paint);
+        } else {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(diameter / 10f);
             paint.setStrokeCap(Paint.Cap.ROUND);
@@ -482,11 +486,12 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         row.setKey(Settings.SAVE_FOLDER.key);
         row.setTitle(L10n.t("Save folder"));
         row.setDialogTitle(L10n.t("Save folder"));
-        row.setDialogMessage(L10n.f("One folder name for your saves. Slashes and other characters a folder name "
-                + "can't hold become underscores. Leave it empty to use %1$s.", L10n.isolate(SaveFolder.DEFAULT)));
+        row.setDialogMessage(L10n.f("Choose a folder name under Movies and Pictures. Invalid characters become "
+                + "underscores. Leave blank for %1$s.", L10n.isolate(SaveFolder.DEFAULT)));
+        row.setPositiveButtonText(L10n.t("Save"));
         EditText field = row.getEditText();
         field.setSingleLine(true);
-        field.setHint(SaveFolder.DEFAULT);
+        field.setHint(L10n.t("Folder name"));
         row.setText(Settings.SAVE_FOLDER.savedValue());
         row.setOnPreferenceChangeListener((preference, typed) -> {
             String raw = typed == null ? "" : typed.toString();
@@ -495,6 +500,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             // Keeps the clean name in place of what was typed. The store changes, and the shared
             // page reads the setting from the row as it does for any change.
             ((FolderRow) preference).setText(clean);
+            Utils.showToastShort(L10n.f("Folder set to %1$s.", L10n.isolate(clean)));
             return false;
         });
         return row;
@@ -610,6 +616,27 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
     static final class ExportRow extends ExportDiagnosticReportPreference {
         ExportRow(Context context) {
             super(context);
+        }
+
+        @Override
+        protected CharSequence[] labels() {
+            return new CharSequence[]{
+                    choice(L10n.t(getContext(), "Copy quick report"),
+                            L10n.t(getContext(), "Copy a short report to the clipboard.")),
+                    choice(L10n.t(getContext(), "Save full report"),
+                            L10n.t(getContext(), "Save the full report in Download/Morphe."))};
+        }
+
+        private CharSequence choice(CharSequence title, CharSequence detail) {
+            SpannableStringBuilder label = new SpannableStringBuilder(title);
+            label.append('\n');
+            int start = label.length();
+            label.append(detail);
+            ScreenColors colors = ScreenColors.shown == null ? ScreenColors.DEFAULT : ScreenColors.shown;
+            label.setSpan(new ForegroundColorSpan(colors.summary), start, label.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            label.setSpan(new RelativeSizeSpan(.86f), start, label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return label;
         }
 
         @Override

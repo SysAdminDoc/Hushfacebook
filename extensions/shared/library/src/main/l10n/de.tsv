@@ -15,18 +15,18 @@ A file named %1$s in %2$s paused Hushfacebook.	Eine Datei namens %1$s in %2$s ha
 About	Info
 Ad cards between the stories people posted.	Werbekarten zwischen den Stories, die Leute gepostet haben.
 Ad telemetry blocked	Werbe-Telemetrie blockiert
-Adds Download to phone to the menu of a video in the feed or in Watch, below Facebook's own items, and saves at the best quality the player streams. Off or paused, the menu is Facebook's own.	Fügt „Aufs Handy herunterladen“ unter Facebooks eigenen Einträgen zum Menü eines Videos im Feed oder in Watch hinzu und speichert das Video in der besten Qualität, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, zeigt das Menü nur Facebooks eigene Einträge.
+Adds Download to phone to feed and Watch video menus. Saves the highest quality Facebook streams. Off or paused, Facebook's menu returns.	Fügt den Video-Menüs im Feed und in Watch „Auf Telefon herunterladen“ hinzu. Speichert die höchste von Facebook gestreamte Qualität. Ausgeschaltet oder pausiert erscheint wieder Facebooks Menü.
 Adds Save to the menu of anyone's story, and saves at the best quality the player streams. Off or paused, only your own stories have Save, and it's Facebook's own.	Fügt „Speichern“ zum Menü jeder Story hinzu, egal von wem, und speichert sie in der besten Qualität, die der Player streamt. Ist der Schalter aus oder Hushfacebook pausiert, gibt es „Speichern“ nur bei deinen eigenen Stories, und dort läuft Facebooks eigene Speicherfunktion.
-Ads that arrive inside a page of reels. Banners and mid-rolls stay blocked while the patch is in, whatever this switch or Pause says. So do ads the app adds on its own.	Anzeigen, die in einem Schwung Reels mitkommen. Banner und Werbeunterbrechungen bleiben blockiert, solange der Patch eingebaut ist, unabhängig von diesem Schalter und der Pause. Das gilt auch für Anzeigen, die die App selbst einfügt.
+Ads inside Reels. Banners, mid-rolls and app-inserted ads stay blocked even while paused.	Anzeigen in Reels. Banner, Werbeunterbrechungen und von der App eingefügte Anzeigen bleiben auch während einer Pause blockiert.
 AMOLED black theme	Schwarzes AMOLED-Design
 Audience Network off	Audience Network aus
 Back	Zurück
 Background ad prefetch blocked	Vorabladen von Werbung im Hintergrund blockiert
 Cancel	Abbrechen
 Changing these	So änderst du sie
-Choose a settings file. You'll see how many switches it changes before anything does.	Wähle eine Einstellungsdatei. Du siehst, wie viele Schalter sie ändert, bevor sich etwas ändert.
+Choose a settings file and preview what would change before importing.	Wähle eine Einstellungsdatei und sieh dir vor dem Import an, was sich ändern würde.
 Clear diagnostic data	Diagnosedaten löschen
-Copy a short report, or save the full one to Download/Morphe. Links, account and post ids, session cookies and names are left out.	Kopiere einen Kurzbericht oder speichere den vollständigen unter Download/Morphe. Links, Konto- und Beitrags-IDs, Sitzungscookies und Namen werden weggelassen.
+Copy a quick report or save the full one to Download/Morphe. Names, IDs, links and cookies are omitted.	Kopiere einen Kurzbericht oder speichere den vollständigen Bericht unter Download/Morphe. Namen, IDs, Links und Cookies werden ausgelassen.
 Copy quick report	Kurzbericht kopieren
 Couldn't import every setting. Check the switches on this screen.	Nicht alle Einstellungen ließen sich importieren. Prüfe die Schalter auf diesem Bildschirm.
 Couldn't import the settings. Nothing was changed.	Die Einstellungen ließen sich nicht importieren. Es wurde nichts geändert.
@@ -55,8 +55,8 @@ Export settings	Einstellungen exportieren
 Facebook closed three times within a minute of starting, so Hushfacebook paused itself.	Facebook wurde dreimal innerhalb einer Minute nach dem Start beendet, deshalb hat sich Hushfacebook selbst pausiert.
 Facebook doesn't download ads or its ad model in the background.	Facebook lädt im Hintergrund weder Werbung noch sein Werbemodell herunter.
 Facebook doesn't serve ads to other apps on this phone.	Facebook liefert keine Werbung an andere Apps auf diesem Handy aus.
-Facebook's dark mode takes its colours from your wallpaper, and this screen does too. Android 11 has no wallpaper colours, so it gets a fixed blue palette. Turn on dark mode in Facebook to see it.	Facebooks Dunkelmodus übernimmt die Farben deines Hintergrundbilds, und dieser Bildschirm ebenso. Android 11 hat keine Farben aus dem Hintergrundbild, daher gibt es dort eine feste blaue Palette. Schalte in Facebook den Dunkelmodus ein, um das zu sehen.
-From the next start, every switch above acts as if it were off, and Facebook's own code runs in its place. Debug logging keeps working, and your settings stay as they are.	Ab dem nächsten Start verhält sich jeder Schalter weiter oben, als wäre er aus, und stattdessen läuft Facebooks eigener Code. Die Debug-Protokollierung funktioniert weiter, und deine Einstellungen bleiben, wie sie sind.
+Facebook dark mode and this screen use your wallpaper colours. Android 11 uses blue instead. Turn on Facebook dark mode to see it.	Facebooks Dunkelmodus und diese Seite nutzen die Farben deines Hintergrundbilds. Android 11 nutzt stattdessen Blau. Aktiviere Facebooks Dunkelmodus, um es zu sehen.
+From the next start, the switches above stop running and Facebook's own behaviour returns. Debug logging keeps working, and your choices stay.	Ab dem nächsten Start wirken die obigen Schalter nicht mehr und Facebooks eigenes Verhalten kehrt zurück. Das Debug-Protokoll läuft weiter, und deine Auswahl bleibt erhalten.
 Full report saved to %1$s	Vollständiger Bericht gespeichert unter %1$s
 GPL-3.0, with the notices of the projects this is built on	GPL-3.0, mit den Hinweisen der Projekte, auf denen es aufbaut
 Hide "People you may know"	„Personen, die du kennen könntest“ ausblenden
@@ -90,13 +90,13 @@ No screenshot watching for ads, and no reports of which apps you install.	Keine 
 Not saved: that isn't a Facebook photo or video	Nicht gespeichert: Das ist kein Foto oder Video von Facebook
 Not saved: the file is over 512 MB	Nicht gespeichert: Die Datei ist über 512 MB groß
 OK	OK
-One folder name for your saves. Slashes and other characters a folder name can't hold become underscores. Leave it empty to use %1$s.	Ein Ordnername für alles, was du speicherst. Schrägstriche und andere Zeichen, die in einem Ordnernamen nicht stehen dürfen, werden zu Unterstrichen. Lass das Feld leer, um %1$s zu verwenden.
+Choose a folder name under Movies and Pictures. Invalid characters become underscores. Leave blank for %1$s.	Wähle einen Ordnernamen unter Movies und Pictures. Ungültige Zeichen werden zu Unterstrichen. Leer lassen für %1$s.
 Open links in your browser	Links in deinem Browser öffnen
 Paid ads in the feed. They're dropped before Facebook adds them, so no gap is left.	Bezahlte Anzeigen im Feed. Diese werden aussortiert, bevor Facebook sie einfügt, sodass keine Lücke bleibt.
 Pause Hushfacebook	Hushfacebook pausieren
 Posts Facebook files as promotions rather than as ads.	Beiträge, die Facebook als beworben statt als Anzeige einstuft.
 Posts Facebook slips into your feed from people and pages you don't follow and groups you haven't joined.	Beiträge von Personen und Seiten, denen du nicht folgst, und aus Gruppen, denen du nicht beigetreten bist, die Facebook in deinen Feed schiebt.
-Posts that Facebook's own detection marked as made with AI. A post labeled only by the person who shared it stays. This one starts off because it hasn't been tried on a real feed yet.	Beiträge, die Facebooks eigene Erkennung als mit KI erstellt markiert hat. Hat nur die Person, die einen Beitrag geteilt hat, ihn als KI gekennzeichnet, bleibt er sichtbar. Dieser Schalter ist anfangs aus, weil er noch nicht in einem echten Feed ausprobiert wurde.
+Posts Facebook marks as AI-made. Labels added only by the person sharing stay. This switch starts off until it's tested on a real feed.	Beiträge, die Facebook als KI-generiert markiert. Nur vom Verfasser hinzugefügte Kennzeichnungen bleiben. Der Schalter bleibt aus, bis er in einem echten Feed getestet wurde.
 Profiles and some Settings pages open again on this re-signed build.	Profile und einige Einstellungsseiten öffnen sich in diesem neu signierten Build wieder.
 Re-signed build fix	Fix für neu signierte Builds
 Reading the settings file	Einstellungsdatei wird gelesen
@@ -110,7 +110,7 @@ Save full report	Vollständigen Bericht speichern
 Saved to %1$s	Gespeichert unter %1$s
 Saved to the gallery	In der Galerie gespeichert
 Saved. Restart Facebook to apply this change.	Gespeichert. Starte Facebook neu, um diese Änderung zu übernehmen.
-Saves the switches and the save folder from the sections above to a file you choose. Pause and Debug logging stay out of it.	Speichert die Schalter und den Speicherordner aus den Abschnitten weiter oben in einer Datei deiner Wahl. Die Pause und die Debug-Protokollierung sind nicht dabei.
+Save your switches and folder to a file. Pause and debug logging aren't included.	Speichert deine Schalter und den Ordner in einer Datei. Pause und Debug-Protokoll sind nicht enthalten.
 Saves will go to a folder named %1$s.	Was du speicherst, landet dann in einem Ordner namens %1$s.
 Saving a photo	Foto wird gespeichert
 Saving a video	Video wird gespeichert
@@ -165,3 +165,8 @@ Keep feed position on return	Feedposition beim Zurückkehren beibehalten
 Returning to Facebook within ten minutes keeps your place. Pull to refresh still works.	Wenn du innerhalb von zehn Minuten zu Facebook zurückkehrst, bleibst du an derselben Stelle. Zum Aktualisieren kannst du weiter nach unten ziehen.
 A finished Story stays on screen until you tap or swipe. Turn this off for Facebook's timing.	Eine abgeschlossene Story bleibt sichtbar, bis du tippst oder wischst. Schalte dies aus, um Facebooks Zeitsteuerung zu nutzen.
 Stop Story auto-advance	Automatisches Weiterspringen bei Stories stoppen
+Copy a short report to the clipboard.	Kurzen Bericht in die Zwischenablage kopieren.
+Save the full report in Download/Morphe.	Vollständigen Bericht unter Download/Morphe speichern.
+Folder set to %1$s.	Ordner auf %1$s gesetzt.
+Save	Speichern
+Folder name	Ordnername
