@@ -124,6 +124,7 @@ public class SettingsBackupTest {
         for (BooleanSetting setting : SettingsBackup.ALLOWLIST) setting.resetToDefault();
         Settings.SAVE_FOLDER.resetToDefault();
         Settings.DOWNLOAD_QUALITY.resetToDefault();
+        Settings.FILENAME_TEMPLATE.resetToDefault();
         BaseSettings.PAUSED.resetToDefault();
         BaseSettings.DEBUG.resetToDefault();
         BaseSettings.DEBUG_LOG_FILTERS.resetToDefault();
@@ -160,9 +161,11 @@ public class SettingsBackupTest {
         }
         assertEquals("a setting in Settings that isn't a switch has no format in a settings file",
                 SettingsBackup.VALUES, notSwitches);
-        assertEquals(Arrays.<Setting<?>>asList(Settings.SAVE_FOLDER, Settings.DOWNLOAD_QUALITY), SettingsBackup.VALUES);
+        assertEquals(Arrays.<Setting<?>>asList(Settings.SAVE_FOLDER, Settings.DOWNLOAD_QUALITY, Settings.FILENAME_TEMPLATE),
+                SettingsBackup.VALUES);
         assertEquals(Settings.SAVE_FOLDER, SettingsBackup.FOLDER);
         assertEquals(Settings.DOWNLOAD_QUALITY, SettingsBackup.QUALITY);
+        assertEquals(Settings.FILENAME_TEMPLATE, SettingsBackup.FILE_NAME);
     }
 
     @Test
@@ -189,6 +192,7 @@ public class SettingsBackupTest {
         // Stored as it came, and written as the folder the saves really use.
         Settings.SAVE_FOLDER.save("../My/Clips");
         Settings.DOWNLOAD_QUALITY.save(DownloadQuality.P480);
+        Settings.FILENAME_TEMPLATE.save("../{video_id}");
         BaseSettings.PAUSED.save(true);
         BaseSettings.DEBUG.save(true);
         BaseSettings.DEBUG_LOG_FILTERS.save("downloads");
@@ -215,6 +219,7 @@ public class SettingsBackupTest {
         assertEquals("My_Clips", switches.get(SettingsBackup.FOLDER.key));
         // Saved, not what a paused Facebook is answered: paused, the quality answers the best.
         assertEquals("480p", switches.get(SettingsBackup.QUALITY.key));
+        assertEquals("{video_id}", switches.get(SettingsBackup.FILE_NAME.key));
         for (Setting<?> setting : Setting.allLoadedSettings()) {
             if (SettingsBackup.ALLOWLIST.contains(setting) || SettingsBackup.VALUES.contains(setting)) continue;
             assertFalse(setting.key + " is in the file", text.contains(setting.key));
@@ -597,6 +602,98 @@ public class SettingsBackupTest {
         assertEquals(DownloadQuality.P480, Settings.DOWNLOAD_QUALITY.savedValue());
     }
 
+    /**
+     * The file name goes out as the template the saves use and comes back only as one: a value the
+     * sanitizer would change, or that isn't text, refuses the whole file, so a file can't name a
+     * path, a photo's name, an extension or one name for every video. A character this phone
+     * doesn't know yet counts as an ordinary one.
+     */
+    @Test
+    public void theFileNameRoundTripsAndComesBackOnlyAsOneCleanName() throws Exception {
+        Settings.FILENAME_TEMPLATE.save("Reel {video_id}");
+        String file = SettingsBackup.create();
+        Settings.FILENAME_TEMPLATE.resetToDefault();
+
+        SettingsBackup.Snapshot snapshot = SettingsBackup.parse(file);
+        assertEquals("Reel {video_id}", snapshot.fileName);
+        assertEquals("Reel {video_id}", snapshot.fileNameChange());
+        assertEquals(Collections.singletonMap(SettingsBackup.FILE_NAME, "Reel {video_id}"), snapshot.changes());
+        assertEquals(1, SettingsBackup.apply(snapshot));
+        assertEquals("Reel {video_id}", Settings.FILENAME_TEMPLATE.savedValue());
+        assertEquals("a file read back is the file", file, SettingsBackup.create());
+        assertEquals("the same name again changes nothing", 0, SettingsBackup.parse(file).changes().size());
+
+        // Stored past the row as a name with no token, it goes out as the one the saves use.
+        Settings.FILENAME_TEMPLATE.save("Clip.mp4");
+        assertEquals("Clip_{date}", new JSONObject(SettingsBackup.create()).getJSONObject("settings")
+                .get(SettingsBackup.FILE_NAME.key));
+        Settings.FILENAME_TEMPLATE.save("Reel {video_id}");
+
+        Map<String, ?> before = store();
+        for (Object refused : new Object[]{"../{date}", "My/{date}", "a\\b", ".{date}", "{date}.", " {date}", "",
+                "a\u200Bb", "a\nb", repeat('a', 51), "Clip", "{date}.mp4", "FB_IMG_{date}", ".nomedia",
+                5, true, JSONObject.NULL, new JSONObject()}) {
+            JSONObject hostile = new JSONObject(file);
+            hostile.getJSONObject("settings").put(SettingsBackup.FILE_NAME.key, refused);
+            try {
+                SettingsBackup.parse(hostile.toString());
+                fail("a file with the name " + printable(String.valueOf(refused)) + " was read");
+            } catch (SettingsBackup.Rejected rejected) {
+                assertEquals(printable(String.valueOf(refused)), SettingsBackup.Reason.VALUE, rejected.reason);
+            }
+        }
+        assertEquals("a refused file wrote something", before, store());
+
+        String unknown = new String(Character.toChars(0x50000));
+        JSONObject newer = new JSONObject(file);
+        newer.getJSONObject("settings").put(SettingsBackup.FILE_NAME.key, "Clip " + unknown + " {date}");
+        assertEquals("Clip {date}", SettingsBackup.parse(newer.toString()).fileName);
+
+        // A file from before the name was carried leaves it alone.
+        SettingsBackup.Snapshot older = SettingsBackup.parse(fileWith(Settings.HIDE_SUGGESTED_POSTS, false));
+        assertNull(older.fileName);
+        assertNull(older.fileNameChange());
+        SettingsBackup.apply(older);
+        assertEquals("Reel {video_id}", Settings.FILENAME_TEMPLATE.savedValue());
+
+        // A preview kept across a rebuild keeps its name, and only a clean one comes back.
+        Bundle state = SettingsBackup.parse(file).toBundle();
+        assertEquals("Reel {video_id}", SettingsBackup.Snapshot.fromBundle(state).fileName);
+        state.putString("file_name", "../{date}");
+        assertNull(SettingsBackup.Snapshot.fromBundle(state).fileName);
+        state.putInt("file_name", 5);
+        assertNull(SettingsBackup.Snapshot.fromBundle(state).fileName);
+    }
+
+    /** A file that renames saved videos says so, before and after, beside what else it changes. */
+    @Test
+    public void importOfAFileNameSaysWhatVideosWillBeNamed() throws Exception {
+        JSONObject file = new JSONObject(fileWith(Settings.DOWNLOAD_REELS, false));
+        file.getJSONObject("settings").put(SettingsBackup.FILE_NAME.key, "{date}_{video_id}")
+                .put(SettingsBackup.QUALITY.key, "720p");
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            HushfacebookPreferenceFragment page = SettingsL10nTest.pageOf(SettingsL10nTest.show(activity));
+            deliver(activity, tap(activity, page, IMPORT_ROW), file.toString());
+            AlertDialog preview = shownPreview();
+            String quality = "Videos will save at " + app.morphe.extension.shared.L10n.isolate("720p")
+                    + ", or the closest quality each one has.";
+            String name = "Saved videos will be named " + app.morphe.extension.shared.L10n.isolate("{date}_{video_id}") + ".";
+            assertEquals("1 switch will change.\n\n" + quality + "\n\n" + name,
+                    String.valueOf(shadowOf(preview).getMessage()));
+            preview.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            settle();
+            assertEquals("Settings imported. 1 switch changed. " + quality + " " + name, ShadowToast.getTextOfLatestToast());
+            assertEquals("{date}_{video_id}", Settings.FILENAME_TEMPLATE.savedValue());
+            assertEquals("the name row still shows the old name",
+                    HushfacebookPreferenceFragment.fileNameSummary("{date}_{video_id}"),
+                    String.valueOf(page.findPreference(Settings.FILENAME_TEMPLATE.key).getSummary()));
+        }
+        assertEquals("Settings imported. " + "Saved videos will be named "
+                        + app.morphe.extension.shared.L10n.isolate("Clip") + ".",
+                SettingsBackupPreference.importedMessage(0, null, null, "Clip"));
+    }
+
     /** A preview kept across a rebuild keeps its quality, and only one this build offers comes back. */
     @Test
     public void aWaitingImportKeepsItsQualityOnlyWhileItIsOne() throws Exception {
@@ -883,7 +980,7 @@ public class SettingsBackupTest {
         assertEquals("Settings imported. Videos will save at the best quality. Saves will go to a folder named "
                         + app.morphe.extension.shared.L10n.isolate("Clips") + ".",
                 SettingsBackupPreference.importedMessage(0, "Clips",
-                        DownloadQuality.BEST));
+                        DownloadQuality.BEST, null));
     }
 
     @Test

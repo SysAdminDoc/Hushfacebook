@@ -268,8 +268,8 @@ public class SettingsBackupPreference extends Preference {
     }
 
     /**
-     * How many switches the waiting file changes, the folder it moves the saves to, the quality it
-     * sets, and what's in it that this build doesn't know.
+     * How many switches the waiting file changes, what it does to the download settings, and what's
+     * in it that this build doesn't know.
      */
     static void showPreview(HushfacebookPreferenceFragment page) {
         if (page.importPreview != null) return;
@@ -289,7 +289,7 @@ public class SettingsBackupPreference extends Preference {
             if (switches > 0) {
                 parts.add(L10n.quantity(switches, "%1$d switch will change.", "%1$d switches will change.", switches));
             }
-            parts.addAll(valueSentences(snapshot.folderChange(), snapshot.qualityChange()));
+            parts.addAll(valueSentences(snapshot.folderChange(), snapshot.qualityChange(), snapshot.fileNameChange()));
             message = String.join("\n\n", parts);
         }
         if (snapshot.unknown > 0) {
@@ -334,11 +334,18 @@ public class SettingsBackupPreference extends Preference {
         }
     }
 
+    /** The sentence that says what saved videos are named after an import, for [template]. */
+    static String fileNameSentence(String template) {
+        return L10n.f("Saved videos will be named %1$s.", L10n.isolate(template));
+    }
+
     /** A sentence for each download setting an import changes, in the order the screen shows them. */
-    static List<String> valueSentences(@Nullable String folder, @Nullable DownloadQuality quality) {
+    static List<String> valueSentences(@Nullable String folder, @Nullable DownloadQuality quality,
+                                       @Nullable String fileName) {
         List<String> sentences = new ArrayList<>();
         if (quality != null) sentences.add(qualitySentence(quality));
         if (folder != null) sentences.add(folderSentence(folder));
+        if (fileName != null) sentences.add(fileNameSentence(fileName));
         return sentences;
     }
 
@@ -354,7 +361,8 @@ public class SettingsBackupPreference extends Preference {
         // The page shows what the store now holds rather than reading its own switches back into it.
         AbstractPreferenceFragment.settingImportInProgress = true;
         // Counted before the write, which makes every change match the store.
-        String done = importedMessage(snapshot.switchChanges(), snapshot.folderChange(), snapshot.qualityChange());
+        String done = importedMessage(snapshot.switchChanges(), snapshot.folderChange(), snapshot.qualityChange(),
+                snapshot.fileNameChange());
         boolean accepted = Utils.runOnBackgroundThread(() -> {
             try {
                 SettingsBackup.apply(snapshot);
@@ -384,14 +392,15 @@ public class SettingsBackupPreference extends Preference {
      * What the toast after an import says: how many switches changed, then a sentence for each
      * download setting that did. A folder alone keeps the one sentence it always had.
      */
-    static String importedMessage(int switches, @Nullable String folder, @Nullable DownloadQuality quality) {
-        if (switches == 0 && folder != null && quality == null) {
+    static String importedMessage(int switches, @Nullable String folder, @Nullable DownloadQuality quality,
+                                  @Nullable String fileName) {
+        if (switches == 0 && folder != null && quality == null && fileName == null) {
             return L10n.f("Settings imported. Saves will go to a folder named %1$s.", L10n.isolate(folder));
         }
         List<String> parts = new ArrayList<>();
         parts.add(switches == 0 ? L10n.t("Settings imported.") : L10n.quantity(switches,
                 "Settings imported. %1$d switch changed.", "Settings imported. %1$d switches changed.", switches));
-        parts.addAll(valueSentences(folder, quality));
+        parts.addAll(valueSentences(folder, quality, fileName));
         return String.join(" ", parts);
     }
 

@@ -32,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import app.morphe.extension.facebook.download.DownloadQuality;
+import app.morphe.extension.facebook.download.FileNameTemplate;
 import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.settings.EnumSetting;
@@ -47,13 +48,14 @@ import app.morphe.extension.shared.settings.StringSetting;
  * over. This writes them to a JSON file the person chooses and reads one back.
  *
  * <p>Only the switches in {@link #ALLOWLIST} and the download settings in {@link #VALUES} (the
- * save folder and the save quality) go out or come in. Pause, safe mode, the debug settings, the
+ * save folder, the save quality and the video file name) go out or come in. Pause, safe mode, the debug settings, the
  * app language and the counters Hushfacebook keeps for itself stay out, and so do the log, the
  * diagnostic data and anything about the person or the phone: a file is a format name, a version
- * number, one true or false per switch, one folder name and one quality. An import applies what
- * it read in one preference commit. A file that is too large, isn't JSON, names something twice,
- * holds a value of the wrong type, a folder that isn't one clean folder name or a quality this
- * build doesn't offer, or comes from a newer version changes nothing.
+ * number, one true or false per switch, one folder name, one quality and one file name template.
+ * An import applies what it read in one preference commit. A file that is too large, isn't JSON,
+ * names something twice, holds a value of the wrong type, a folder or a template that isn't one
+ * clean name, or a quality this build doesn't offer, or comes from a newer version changes
+ * nothing.
  *
  * <p>Call the file and preference work on a worker thread.
  */
@@ -111,8 +113,15 @@ public final class SettingsBackup {
      */
     static final EnumSetting<DownloadQuality> QUALITY = Settings.DOWNLOAD_QUALITY;
 
+    /**
+     * The name saved videos get, held in a file as the clean template the saves use and taken back
+     * only as one, like the folder ({@link FileNameTemplate#isImportable}).
+     */
+    static final StringSetting FILE_NAME = Settings.FILENAME_TEMPLATE;
+
     /** The settings a file carries that aren't switches, in the order Settings declares them. */
-    static final List<Setting<?>> VALUES = Collections.unmodifiableList(Arrays.<Setting<?>>asList(FOLDER, QUALITY));
+    static final List<Setting<?>> VALUES = Collections.unmodifiableList(
+            Arrays.<Setting<?>>asList(FOLDER, QUALITY, FILE_NAME));
 
     /**
      * Bounds for the parser, well past anything this class writes, so a file built to be
@@ -171,14 +180,15 @@ public final class SettingsBackup {
     }
 
     /**
-     * What a file says: a value for each switch it names, the folder and the quality when it names
-     * them, and how many other names it holds.
+     * What a file says: a value for each switch it names, the folder, the quality and the file
+     * name when it names them, and how many other names it holds.
      */
     public static final class Snapshot {
         private static final String SWITCHES = "switches";
         private static final String UNKNOWN = "unknown";
         private static final String FOLDER_NAME = "folder";
         private static final String QUALITY_NAME = "quality";
+        private static final String FILE_NAME_NAME = "file_name";
 
         /** In {@link #ALLOWLIST} order, and only the switches the file named. */
         final Map<BooleanSetting, Boolean> values;
@@ -188,14 +198,18 @@ public final class SettingsBackup {
         /** The save quality the file holds, or null when it names none. */
         @Nullable
         final DownloadQuality quality;
+        /** The clean file name template the file holds, or null when it names none. */
+        @Nullable
+        final String fileName;
         /** Names the file holds that aren't settings this build knows. They're left out. */
         final int unknown;
 
         Snapshot(Map<BooleanSetting, Boolean> values, @Nullable String folder, @Nullable DownloadQuality quality,
-                 int unknown) {
+                 @Nullable String fileName, int unknown) {
             this.values = Collections.unmodifiableMap(values);
             this.folder = folder;
             this.quality = quality;
+            this.fileName = fileName;
             this.unknown = unknown;
         }
 
@@ -214,6 +228,8 @@ public final class SettingsBackup {
             if (folderChange != null) changes.put(FOLDER, folderChange);
             DownloadQuality qualityChange = qualityChange();
             if (qualityChange != null) changes.put(QUALITY, qualityChange);
+            String fileNameChange = fileNameChange();
+            if (fileNameChange != null) changes.put(FILE_NAME, fileNameChange);
             return changes;
         }
 
@@ -242,6 +258,13 @@ public final class SettingsBackup {
             return quality == null || quality == QUALITY.savedValue() ? null : quality;
         }
 
+        /** The template this file sets, or null when it names none or the one saves already use. */
+        @Nullable
+        String fileNameChange() {
+            if (fileName == null) return null;
+            return fileName.equals(FileNameTemplate.sanitize(FILE_NAME.savedValue())) ? null : fileName;
+        }
+
         /** For the settings page's saved state, so a preview outlives the page being rebuilt. */
         Bundle toBundle() {
             Bundle switches = new Bundle();
@@ -252,6 +275,7 @@ public final class SettingsBackup {
             state.putBundle(SWITCHES, switches);
             if (folder != null) state.putString(FOLDER_NAME, folder);
             if (quality != null) state.putString(QUALITY_NAME, quality.fileValue);
+            if (fileName != null) state.putString(FILE_NAME_NAME, fileName);
             state.putInt(UNKNOWN, unknown);
             return state;
         }
@@ -273,8 +297,11 @@ public final class SettingsBackup {
                 if (value instanceof Boolean) values.put(setting, (Boolean) value);
             }
             Object folder = state.get(FOLDER_NAME);
+            Object fileName = state.get(FILE_NAME_NAME);
             return new Snapshot(values, folder instanceof String && SaveFolder.isClean((String) folder)
-                    ? (String) folder : null, DownloadQuality.fromFile(state.get(QUALITY_NAME)), unknown);
+                    ? (String) folder : null, DownloadQuality.fromFile(state.get(QUALITY_NAME)),
+                    fileName instanceof String && FileNameTemplate.isClean((String) fileName) ? (String) fileName : null,
+                    unknown);
         }
     }
 
@@ -290,6 +317,7 @@ public final class SettingsBackup {
         // The name the saves use, so a file never carries one an import would refuse.
         switches.put(FOLDER.key, SaveFolder.sanitize(FOLDER.savedValue()));
         switches.put(QUALITY.key, QUALITY.savedValue().fileValue);
+        switches.put(FILE_NAME.key, FileNameTemplate.sanitize(FILE_NAME.savedValue()));
         return new JSONObject()
                 .put(FORMAT_NAME, FORMAT)
                 .put(SCHEMA_NAME, SCHEMA)
@@ -375,6 +403,7 @@ public final class SettingsBackup {
         Map<BooleanSetting, Boolean> found = new HashMap<>();
         String folder = null;
         DownloadQuality quality = null;
+        String fileName = null;
         JSONObject values = (JSONObject) settings;
         for (Iterator<String> names = values.keys(); names.hasNext(); ) {
             String name = names.next();
@@ -391,6 +420,14 @@ public final class SettingsBackup {
             if (QUALITY.key.equals(name)) {
                 quality = DownloadQuality.fromFile(values.opt(name));
                 if (quality == null) throw new Rejected(Reason.VALUE, "Not a save quality: " + name);
+                continue;
+            }
+            if (FILE_NAME.key.equals(name)) {
+                Object value = values.opt(name);
+                if (!(value instanceof String) || !FileNameTemplate.isImportable((String) value)) {
+                    throw new Rejected(Reason.VALUE, "Not one clean file name: " + name);
+                }
+                fileName = FileNameTemplate.sanitize((String) value);
                 continue;
             }
             BooleanSetting setting = known.get(name);
@@ -411,14 +448,14 @@ public final class SettingsBackup {
             Boolean value = found.get(setting);
             if (value != null) ordered.put(setting, value);
         }
-        return new Snapshot(ordered, folder, quality, unknown);
+        return new Snapshot(ordered, folder, quality, fileName, unknown);
     }
 
     /**
-     * Writes the switches, the folder and the quality a file changes, all of them in one preference
+     * Writes the switches and the download settings a file changes, all of them in one preference
      * commit. A setting the file doesn't name is left as it is.
      *
-     * @return how many settings changed, the folder and the quality counted as one each.
+     * @return how many settings changed, each download setting counted as one.
      * @throws ApplyFailed when the commit failed. {@link Setting#saveAll} puts the switches
      *                     back; {@link ApplyFailed#rolledBack} says whether that worked.
      */

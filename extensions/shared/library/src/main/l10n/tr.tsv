@@ -186,3 +186,9 @@ Videos will save at the best quality.	Videolar en iyi kalitede kaydedilecek.
 Videos will save at their lowest quality, for the smallest files.	Videolar en düşük kalitelerinde kaydedilecek, böylece dosyalar en küçük olur.
 Videos will save at %1$s, or the closest quality each one has.	Videolar %1$s kalitesinde ya da her birinin sahip olduğu en yakın kalitede kaydedilecek.
 Settings imported.	Ayarlar içe aktarıldı.
+Video file name	Video dosya adı
+%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s kaydetme tarihine ve saatine, %2$s ise videonun Facebook'taki numarasına dönüşür. İkisini de içermeyen bir ada tarih eklenir. Geçersiz karakterler alt çizgiye dönüşür. %3$s için boş bırakın.
+Videos are named %1$s. Photos keep Facebook's own %2$s names.	Videoların adı %1$s olur. Fotoğraflar Facebook'un kendi %2$s adlarını korur.
+Saved videos will be named %1$s.	Kaydedilen videoların adı %1$s olacak.
+File name	Dosya adı
+File name set to %1$s.	Dosya adı %1$s olarak ayarlandı.

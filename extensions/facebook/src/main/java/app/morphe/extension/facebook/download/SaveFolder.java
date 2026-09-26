@@ -59,13 +59,18 @@ public final class SaveFolder {
      */
     public static boolean isImportable(String name) {
         if (name == null || name.isEmpty()) return false;
+        return isClean(withUnknownAsKnown(name));
+    }
+
+    /** [name] with each character this phone doesn't know turned into one every phone does. */
+    static String withUnknownAsKnown(String name) {
         StringBuilder known = new StringBuilder(name.length());
         for (int i = 0; i < name.length(); ) {
             int codePoint = name.codePointAt(i);
             i += Character.charCount(codePoint);
             known.appendCodePoint(Character.getType(codePoint) == Character.UNASSIGNED ? STAND_IN : codePoint);
         }
-        return isClean(known.toString());
+        return known.toString();
     }
 
     /** A symbol every phone knows and sanitize keeps as it is (black star). */
@@ -89,7 +94,17 @@ public final class SaveFolder {
      * composes. Nothing left means {@link #DEFAULT}. Running it on its own answer changes nothing.
      */
     public static String sanitize(String raw) {
-        if (raw == null) return DEFAULT;
+        String name = clean(raw, MAX_CODE_POINTS);
+        return name.isEmpty() ? DEFAULT : name;
+    }
+
+    /**
+     * {@link #sanitize}'s rules with a bound of [maxCodePoints] and no default: nothing left is an
+     * empty answer. A video's file name template is cleaned by the same rules
+     * ({@link FileNameTemplate}), since it becomes a name in the same folder.
+     */
+    static String clean(String raw, int maxCodePoints) {
+        if (raw == null) return "";
 
         String text = Normalizer.normalize(raw, Normalizer.Form.NFKC);
 
@@ -130,8 +145,7 @@ public final class SaveFolder {
         // Taking a character out can leave a mark next to a letter it now composes with, so the
         // result is folded again. That's what makes a second run change nothing.
         String name = Normalizer.normalize(out, Normalizer.Form.NFKC);
-        name = trim(truncate(name));
-        return name.isEmpty() ? DEFAULT : name;
+        return trim(truncate(name, maxCodePoints));
     }
 
     private static boolean trimmable(char c, char separator) {
@@ -139,7 +153,7 @@ public final class SaveFolder {
     }
 
     /** Spaces and dots off both ends, as often as it takes. */
-    private static String trim(String text) {
+    static String trim(String text) {
         int start = 0;
         int end = text.length();
         while (start < end && (text.charAt(start) == ' ' || text.charAt(start) == '.')) start++;
@@ -147,9 +161,9 @@ public final class SaveFolder {
         return text.substring(start, end);
     }
 
-    private static String truncate(String text) {
-        if (text.codePointCount(0, text.length()) <= MAX_CODE_POINTS) return text;
-        return text.substring(0, text.offsetByCodePoints(0, MAX_CODE_POINTS));
+    private static String truncate(String text, int maxCodePoints) {
+        if (text.codePointCount(0, text.length()) <= maxCodePoints) return text;
+        return text.substring(0, text.offsetByCodePoints(0, maxCodePoints));
     }
 
     /** A character that splits a path, looks like it does, or can't stand in a FAT name. */

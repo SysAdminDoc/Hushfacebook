@@ -186,3 +186,9 @@ Videos will save at the best quality.	Video akan disimpan dengan kualitas terbai
 Videos will save at their lowest quality, for the smallest files.	Video akan disimpan dengan kualitas terendahnya, agar ukuran filenya sekecil mungkin.
 Videos will save at %1$s, or the closest quality each one has.	Video akan disimpan dalam %1$s, atau kualitas terdekat yang dimiliki tiap video.
 Settings imported.	Pengaturan diimpor.
+Video file name	Nama file video
+%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s diganti dengan tanggal dan waktu penyimpanan, %2$s dengan nomor video di Facebook. Nama tanpa keduanya akan ditambahi tanggal. Karakter yang tidak valid menjadi garis bawah. Kosongkan untuk memakai %3$s.
+Videos are named %1$s. Photos keep Facebook's own %2$s names.	Video diberi nama %1$s. Foto tetap memakai nama %2$s bawaan Facebook.
+Saved videos will be named %1$s.	Video yang disimpan akan diberi nama %1$s.
+File name	Nama file
+File name set to %1$s.	Nama file diatur menjadi %1$s.

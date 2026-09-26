@@ -7,6 +7,7 @@ package app.morphe.extension.facebook.settings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -35,6 +36,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
+import org.robolectric.shadows.ShadowToast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +68,7 @@ public class HushfacebookPreferenceFragmentTest {
         PauseForTests.resume();
         Settings.SAVE_FOLDER.resetToDefault();
         Settings.DOWNLOAD_QUALITY.resetToDefault();
+        Settings.FILENAME_TEMPLATE.resetToDefault();
     }
 
     @Test
@@ -243,7 +246,7 @@ public class HushfacebookPreferenceFragmentTest {
                 if (rows.get(i) instanceof HushfacebookPreferenceFragment.FolderRow) folderAt = i;
             }
             assertNotNull("no quality row with a download in the build", quality);
-            assertTrue("the quality row isn't next to the folder", qualityAt == folderAt - 1);
+            assertEquals("the quality row isn't next to the folder", folderAt - 1, qualityAt);
             assertEquals(Settings.DOWNLOAD_QUALITY.key, quality.getKey());
             assertEquals("Download quality", String.valueOf(quality.getTitle()));
 
@@ -286,6 +289,76 @@ public class HushfacebookPreferenceFragmentTest {
             for (Preference row : rowsOf(controller)) {
                 assertFalse("a quality row with no download in the build",
                         row instanceof HushfacebookPreferenceFragment.QualityRow);
+            }
+        }
+    }
+
+    /**
+     * The video file name's row, next to the folder, keeps the one clean template a save would use,
+     * whatever is typed into it, says so in a toast when it changed what was typed, says what videos
+     * and photos are named, and names both tokens in its dialog.
+     */
+    @Test
+    public void theFileNameRowKeepsOneCleanTemplateNextToTheFolder() {
+        PatchFamily.inBuildForTests = EnumSet.of(PatchFamily.VIDEO_DOWNLOAD);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            List<Preference> rows = rowsOf(controller);
+            HushfacebookPreferenceFragment.FileNameRow name = null;
+            int nameAt = -1;
+            int folderAt = -1;
+            for (int i = 0; i < rows.size(); i++) {
+                if (rows.get(i) instanceof HushfacebookPreferenceFragment.FileNameRow) {
+                    name = (HushfacebookPreferenceFragment.FileNameRow) rows.get(i);
+                    nameAt = i;
+                }
+                if (rows.get(i) instanceof HushfacebookPreferenceFragment.FolderRow) folderAt = i;
+            }
+            assertNotNull("no file name row with a download in the build", name);
+            assertEquals("the file name row isn't next to the folder", folderAt + 1, nameAt);
+            assertEquals(Settings.FILENAME_TEMPLATE.key, name.getKey());
+            assertEquals("Video file name", String.valueOf(name.getTitle()));
+            assertEquals("Videos are named " + L10n.isolate("FB_VID_{date}") + ". Photos keep Facebook's own "
+                    + L10n.isolate("FB_IMG_") + " names.", String.valueOf(name.getSummary()));
+            String message = String.valueOf(name.getDialogMessage());
+            assertTrue(message, message.contains(L10n.isolate("{date}")) && message.contains(L10n.isolate("{video_id}"))
+                    && message.contains(L10n.isolate("FB_VID_{date}")));
+            // The folder's dialog, in the same words: a Save button and a hint that says what goes in.
+            assertEquals("Save", String.valueOf(name.getPositiveButtonText()));
+            assertEquals("File name", String.valueOf(name.getEditText().getHint()));
+
+            Preference.OnPreferenceChangeListener ok = name.getOnPreferenceChangeListener();
+            assertFalse("a path was kept as typed", ok.onPreferenceChange(name, "../Reels/{video_id}"));
+            ShadowLooper.idleMainLooper();
+            assertEquals("Reels_{video_id}", name.getText());
+            assertEquals("Reels_{video_id}", Settings.FILENAME_TEMPLATE.savedValue());
+            assertEquals(HushfacebookPreferenceFragment.fileNameSummary("Reels_{video_id}"), String.valueOf(name.getSummary()));
+            assertEquals("File name set to " + L10n.isolate("Reels_{video_id}") + ".", ShadowToast.getTextOfLatestToast());
+
+            // A name that would be the same for every video gets the date.
+            assertFalse("a name with no token was kept", ok.onPreferenceChange(name, "Clip"));
+            ShadowLooper.idleMainLooper();
+            assertEquals("Clip_{date}", name.getText());
+            assertEquals("Clip_{date}", Settings.FILENAME_TEMPLATE.savedValue());
+            assertEquals("File name set to " + L10n.isolate("Clip_{date}") + ".", ShadowToast.getTextOfLatestToast());
+
+            ShadowToast.reset();
+            assertTrue("a clean template was changed", ok.onPreferenceChange(name, "{date} {video_id}"));
+            name.setText("{date} {video_id}");
+            ShadowLooper.idleMainLooper();
+            assertEquals("{date} {video_id}", Settings.FILENAME_TEMPLATE.savedValue());
+            assertNull("a clean template raised a toast", ShadowToast.getLatestToast());
+
+            assertFalse("an empty template was kept", ok.onPreferenceChange(name, " . "));
+            ShadowLooper.idleMainLooper();
+            assertEquals("FB_VID_{date}", name.getText());
+            assertEquals("FB_VID_{date}", Settings.FILENAME_TEMPLATE.savedValue());
+        }
+
+        PatchFamily.inBuildForTests = EnumSet.of(PatchFamily.SPONSORED_POSTS);
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            for (Preference row : rowsOf(controller)) {
+                assertFalse("a file name row with no download in the build",
+                        row instanceof HushfacebookPreferenceFragment.FileNameRow);
             }
         }
     }

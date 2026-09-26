@@ -46,13 +46,21 @@ final class MediaStoreWriter implements Downloader.Sink {
     private final Context context;
     private final boolean video;
 
+    /** The video's id on Facebook, for the file name's {video_id}, or null when the save has none. */
+    private final String videoId;
+
     private Uri item;
     private OutputStream stream;
     private String location;
 
     MediaStoreWriter(Context applicationContext, boolean video) {
+        this(applicationContext, video, null);
+    }
+
+    MediaStoreWriter(Context applicationContext, boolean video, String videoId) {
         this.context = applicationContext;
         this.video = video;
+        this.videoId = videoId;
     }
 
     /**
@@ -165,14 +173,26 @@ final class MediaStoreWriter implements Downloader.Sink {
         String suffix = EXTENSIONS.get(mime);
         if (suffix == null) suffix = video ? ".mp4" : ".jpg";
 
-        // Facebook's own naming, so that files from this patch and from Facebook sit together.
-        String prefix = video ? "FB_VID_" : "FB_IMG_";
+        Date now = new Date();
+        if (video) {
+            // The person's template, read here, per file, and cleaned where it's read. As it
+            // ships it's Facebook's own FB_VID_ name.
+            String template = FileNameTemplate.current();
+            if (!FileNameTemplate.isVideoId(videoId) && FileNameTemplate.usesVideoId(template)) {
+                // Without the date in it, the name would come out the same for every such save,
+                // and MediaStore refuses a name once it has numbered it 31 times.
+                final String instead = FileNameTemplate.usesDate(template)
+                    ? "it's left out" : "the date and time go on the end";
+                Logger.diagnosticInfo(DiagnosticCategory.DOWNLOADS, SOURCE,
+                    () -> "the file name asks for the video id and this save has none, so " + instead);
+            }
+            return FileNameTemplate.videoName(template, now, videoId) + suffix;
+        }
 
+        // Facebook's own naming, so that files from this patch and from Facebook sit together.
         // The locale has to be fixed. Under a Thai or an Arabic locale the default calendar
         // writes Buddhist years or Eastern Arabic digits into the file name.
-        String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-
-        return prefix + stamp + suffix;
+        return FileNameTemplate.PHOTO_PREFIX + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(now) + suffix;
     }
 
     /**

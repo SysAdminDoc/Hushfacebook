@@ -315,6 +315,7 @@ public class SettingsL10nTest {
 
             addSettingsFileText(activity, rows, shown);
             addDownloadSettingsText(shown);
+            addTypedNameToasts(rows, shown);
 
             // What the diagnostics rows say in a toast, with nothing to export or clear.
             LogBufferManager.exportToClipboard();
@@ -427,9 +428,29 @@ public class SettingsL10nTest {
             shown.add(HushfacebookPreferenceFragment.qualityLabel(quality));
             shown.add(HushfacebookPreferenceFragment.qualitySummary(quality));
             shown.add(SettingsBackupPreference.qualitySentence(quality));
-            shown.add(SettingsBackupPreference.importedMessage(0, null, quality));
-            shown.add(SettingsBackupPreference.importedMessage(2, "Clips", quality));
+            shown.add(SettingsBackupPreference.importedMessage(0, null, quality, null));
+            shown.add(SettingsBackupPreference.importedMessage(2, "Clips", quality, "Clip {date}"));
         }
+        shown.add(HushfacebookPreferenceFragment.fileNameSummary("Reel {video_id}"));
+        shown.add(SettingsBackupPreference.fileNameSentence("Reel {video_id}"));
+        shown.add(SettingsBackupPreference.importedMessage(0, null, null, "Reel {video_id}"));
+    }
+
+    /**
+     * The toast the folder and file name rows raise when what's typed isn't a clean name, and they
+     * keep the one the saves will use instead.
+     */
+    private static void addTypedNameToasts(List<Preference> rows, Set<String> shown) {
+        String[][] typed = {{Settings.SAVE_FOLDER.key, "../Clips"}, {Settings.FILENAME_TEMPLATE.key, "Clip"}};
+        for (String[] row : typed) {
+            Preference preference = find(rows, row[0]);
+            assertFalse(row[0] + " kept " + row[1], preference.getOnPreferenceChangeListener()
+                    .onPreferenceChange(preference, row[1]));
+            ShadowLooper.idleMainLooper();
+            addToast(shown);
+        }
+        Settings.SAVE_FOLDER.resetToDefault();
+        Settings.FILENAME_TEMPLATE.resetToDefault();
     }
 
     private static AlertDialog importPreview(Activity activity, List<Preference> rows, String file) throws Exception {
@@ -504,11 +525,16 @@ public class SettingsL10nTest {
             Preference preference = group.getPreference(i);
             shown.add(String.valueOf(preference.getTitle()));
             if (preference.getSummary() != null) shown.add(String.valueOf(preference.getSummary()));
-            // A row's own dialog: its title and message, and a list's choices.
+            // A row's own dialog: its title and message, a field's button and hint, and a list's choices.
             if (preference instanceof android.preference.DialogPreference) {
                 android.preference.DialogPreference dialog = (android.preference.DialogPreference) preference;
                 if (dialog.getDialogTitle() != null) shown.add(String.valueOf(dialog.getDialogTitle()));
                 if (dialog.getDialogMessage() != null) shown.add(String.valueOf(dialog.getDialogMessage()));
+            }
+            if (preference instanceof android.preference.EditTextPreference) {
+                android.preference.EditTextPreference field = (android.preference.EditTextPreference) preference;
+                if (field.getPositiveButtonText() != null) shown.add(String.valueOf(field.getPositiveButtonText()));
+                if (field.getEditText().getHint() != null) shown.add(String.valueOf(field.getEditText().getHint()));
             }
             if (preference instanceof android.preference.ListPreference) {
                 for (CharSequence entry : ((android.preference.ListPreference) preference).getEntries()) {

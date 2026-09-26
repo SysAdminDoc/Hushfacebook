@@ -51,6 +51,7 @@ import androidx.annotation.Nullable;
 import java.util.Set;
 
 import app.morphe.extension.facebook.download.DownloadQuality;
+import app.morphe.extension.facebook.download.FileNameTemplate;
 import app.morphe.extension.facebook.download.SaveFolder;
 import app.morphe.extension.shared.L10n;
 import app.morphe.extension.shared.Utils;
@@ -269,6 +270,7 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
             }
             downloads.addPreference(qualityRow(context));
             downloads.addPreference(folderRow(context));
+            downloads.addPreference(fileNameRow(context));
         }
 
         if (build.contains(PatchFamily.EXTERNAL_BROWSER) || build.contains(PatchFamily.SANITIZE_SHARING_LINKS)) {
@@ -584,6 +586,44 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         return row;
     }
 
+    /**
+     * The name every saved video gets, next to the folder it goes to. What's typed is cleaned the
+     * way the folder is, and held to the gallery's naming, so the row, the setting and the next
+     * save all show the one template the save will use.
+     */
+    static FileNameRow fileNameRow(Context context) {
+        FileNameRow row = new FileNameRow(context);
+        row.setKey(Settings.FILENAME_TEMPLATE.key);
+        row.setTitle(L10n.t("Video file name"));
+        row.setDialogTitle(L10n.t("Video file name"));
+        row.setDialogMessage(L10n.f("%1$s becomes the date and time of the save, %2$s the video's number on "
+                        + "Facebook. A name with neither gets the date added. Invalid characters become underscores. "
+                        + "Leave blank for %3$s.",
+                L10n.isolate(FileNameTemplate.DATE), L10n.isolate(FileNameTemplate.VIDEO_ID),
+                L10n.isolate(FileNameTemplate.DEFAULT)));
+        row.setPositiveButtonText(L10n.t("Save"));
+        EditText field = row.getEditText();
+        field.setSingleLine(true);
+        field.setHint(L10n.t("File name"));
+        row.setText(Settings.FILENAME_TEMPLATE.savedValue());
+        row.setOnPreferenceChangeListener((preference, typed) -> {
+            String raw = typed == null ? "" : typed.toString();
+            String clean = FileNameTemplate.sanitize(raw);
+            if (clean.equals(raw)) return true;
+            // Keeps the clean template in place of what was typed, as the folder row does.
+            ((FileNameRow) preference).setText(clean);
+            Utils.showToastShort(L10n.f("File name set to %1$s.", L10n.isolate(clean)));
+            return false;
+        });
+        return row;
+    }
+
+    /** "Videos are named FB_VID_{date}. Photos keep Facebook's own FB_IMG_ names." for [template]. */
+    static String fileNameSummary(String template) {
+        return L10n.f("Videos are named %1$s. Photos keep Facebook's own %2$s names.",
+                L10n.isolate(template), L10n.isolate(FileNameTemplate.PHOTO_PREFIX));
+    }
+
     /** "Videos go to Movies/Clips and photos to Pictures/Clips." for the folder [leaf]. */
     static String folderSummary(String leaf) {
         String videos = Environment.DIRECTORY_MOVIES + "/" + leaf;
@@ -684,6 +724,37 @@ public final class HushfacebookPreferenceFragment extends AbstractPreferenceFrag
         }
 
         /** Its edit dialog takes the screen's colours, as the other rows' dialogs do. */
+        @Override
+        protected void showDialog(Bundle state) {
+            super.showDialog(state);
+            if (getDialog() instanceof AlertDialog) ScreenColors.dialog((AlertDialog) getDialog());
+        }
+    }
+
+    /**
+     * The video file name's row. Its summary follows its text, whoever sets it: the person, the
+     * shared page syncing it from the setting, or an import.
+     */
+    static final class FileNameRow extends EditTextPreference {
+        FileNameRow(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void setText(String text) {
+            super.setText(text);
+            setSummary(fileNameSummary(FileNameTemplate.sanitize(text)));
+        }
+
+        @Override
+        protected void onBindView(View view) {
+            super.onBindView(view);
+            showAllText(view);
+            ScreenColors.row(view, this);
+            view.setAccessibilityDelegate(new RowSemantics(this, Button.class));
+        }
+
+        /** Its edit dialog takes the screen's colours, as the folder's does. */
         @Override
         protected void showDialog(Bundle state) {
             super.showDialog(state);

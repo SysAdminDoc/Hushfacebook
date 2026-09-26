@@ -186,3 +186,9 @@ Videos will save at the best quality.	Os vídeos vão ser salvos na melhor quali
 Videos will save at their lowest quality, for the smallest files.	Os vídeos vão ser salvos na qualidade mais baixa deles, para os arquivos ficarem os menores possíveis.
 Videos will save at %1$s, or the closest quality each one has.	Os vídeos vão ser salvos em %1$s ou na qualidade mais próxima que cada um tiver.
 Settings imported.	Configurações importadas.
+Video file name	Nome do arquivo de vídeo
+%1$s becomes the date and time of the save, %2$s the video's number on Facebook. A name with neither gets the date added. Invalid characters become underscores. Leave blank for %3$s.	%1$s vira a data e a hora em que o vídeo foi salvo, e %2$s vira o número do vídeo no Facebook. Um nome sem nenhum dos dois recebe a data. Caracteres inválidos viram sublinhados. Deixe em branco para usar %3$s.
+Videos are named %1$s. Photos keep Facebook's own %2$s names.	Os vídeos se chamam %1$s. As fotos mantêm os nomes %2$s do próprio Facebook.
+Saved videos will be named %1$s.	Os vídeos salvos vão se chamar %1$s.
+File name	Nome do arquivo
+File name set to %1$s.	Nome do arquivo definido como %1$s.

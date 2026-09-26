@@ -9,6 +9,9 @@ Every Hushfacebook release, newest first.
 * **Facebook:** A save now reports a gallery write failure when the file stream can't close or the pending entry can't be published. Unfinished entries are removed.
 * **Facebook:** If the gallery won't remove an unfinished save, Hushfacebook remembers it and tries again the next time Facebook starts.
 * **Facebook:** The Hushfacebook item now stays first when you long-press Facebook's icon. Facebook adds its own Notifications, Friends and Reels shortcuts ahead of it whenever it posts some notifications, and a launcher that shows only a few shortcuts, or fewer next to a notification, left Hushfacebook off the end (#2).
+* **Facebook:** Download any reel is on by default now, so a fresh patch puts a Download button beside every reel. Its switch in Hushfacebook's settings still takes it out.
+* **Facebook:** A new Download quality setting holds story, reel and feed video saves to 1080p, 720p, 480p or 360p, or picks the smallest file. Best stays the default. A video with nothing at or under your pick saves at the closest quality above it, so a save never fails over the setting.
+* **Facebook:** A new Video file name setting names saved videos from a template with `{date}` and `{video_id}`. It starts as Facebook's own `FB_VID_{date}`, and photos keep their `FB_IMG_` names. A name that would repeat on every save gets the date added. The quality and the file name travel in settings files, and an import refuses a value this version can't use.
 
 ## 0.1.6 (2026-09-26)
 

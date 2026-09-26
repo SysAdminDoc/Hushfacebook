@@ -154,7 +154,46 @@ public final class ReelDownload implements Function1<Object, Object> {
             return;
         }
 
-        MediaDownload.saveVideo(context, source, hdField, sdField, manifestField);
+        MediaDownload.saveVideo(context, source, hdField, sdField, manifestField, videoIdOf(playerParams));
+    }
+
+    /** What Facebook's player params say of themselves on 577 and 580, before the id. */
+    private static final String ID_PREFIX = "VideoId: ";
+
+    /**
+     * The reel's id on Facebook, for the file name, or {@code null}.
+     *
+     * <p>Facebook's player params keep their class name, and their toString says {@code "VideoId: "}
+     * and the id: a kept string and the id field, joined, in both 577 and 580. The sidebar holds a
+     * rich params object with one field of that type, so this reads that field, or the params
+     * themselves when they're what was handed over. Two such fields leave no way to tell which is
+     * the reel on the screen, and a wrong id would name the file after another video, so neither is
+     * read. Anything else, or anything but digits after the prefix, is no id. Never throws.
+     */
+    static String videoIdOf(Object params) {
+        try {
+            if (params == null) return null;
+            if (params.getClass().getName().equals(VIDEO_PLAYER_PARAMS)) return idFrom(params.toString());
+            java.lang.reflect.Field only = null;
+            for (java.lang.reflect.Field field : params.getClass().getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) continue;
+                if (!field.getType().getName().equals(VIDEO_PLAYER_PARAMS)) continue;
+                if (only != null) return null;
+                only = field;
+            }
+            if (only == null) return null;
+            only.setAccessible(true);
+            Object plain = only.get(params);
+            return plain == null ? null : idFrom(plain.toString());
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static String idFrom(String said) {
+        if (said == null || !said.startsWith(ID_PREFIX)) return null;
+        String id = said.substring(ID_PREFIX.length());
+        return FileNameTemplate.isVideoId(id) ? id : null;
     }
 
     private static final String VIDEO_DATA_SOURCE = "com.facebook.video.engine.api.VideoDataSource";
